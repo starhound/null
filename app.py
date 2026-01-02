@@ -400,7 +400,7 @@ class NullApp(App):
                 full_response += chunk
                 block_state.content_output = full_response
                 # Update widget with just the chunk as it appends
-                widget.update_output(chunk)
+                widget.update_output(full_response)
 
             block_state.is_running = False
             widget.set_loading(False) # Stop spinner if any
@@ -436,6 +436,8 @@ class NullApp(App):
         
         # Append status
         status_msg = f"\n\n> 🤖 **Executing:** `{command}`...\n"
+        # We can put this in exec output temporarily or thinking?
+        # Let's put it in thinking to show transition.
         ai_block.content_output += status_msg
         ai_widget.update_output(ai_block.content_output)
         
@@ -454,8 +456,13 @@ class NullApp(App):
             if rc != 0:
                 result_md += f"\n*Exit Code: {rc}*\n"
             
-            ai_block.content_output += result_md
-            ai_widget.update_output(ai_block.content_output)
+            # Store in dedicated execution field
+            ai_block.content_exec_output = result_md
+            
+            # Trigger widget update
+            # We need to manually call update_output (or a specific method)
+            # Our widget.update_output implementation now looks at block state.
+            ai_widget.update_output("") # Argument ignored for AI_RESPONSE in new logic
             
             # Stop loading
             ai_widget.set_loading(False)

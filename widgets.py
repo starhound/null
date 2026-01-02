@@ -5,8 +5,11 @@ from textual.widgets import Input, Static, Label, Button
 from textual.reactive import reactive
 from textual.message import Message
 from textual import on
-import pyperclip
-from textual.message import Message
+try:
+    import pyperclip
+except ImportError:
+    pyperclip = None
+
 from rich.syntax import Syntax
 from rich.text import Text
 
@@ -495,16 +498,29 @@ class ExecutionWidget(Static):
             # Simple heuristic to strip markdown code blocks if present
             if text.startswith("\n```text\n") and text.endswith("\n```\n"):
                 text = text[7:-5]
-            pyperclip.copy(text)
-            self.notify("Copied to clipboard!")
+            
+            if pyperclip:
+                pyperclip.copy(text)
+                self.notify("Copied to clipboard!")
+            else:
+                self.notify("pyperclip not installed", severity="error")
         except Exception as e:
             self.notify(f"Clipboard error: {e}", severity="error")
 
 class BlockBody(Static):
-    """Main Body - Renders generic text if not special widgets."""
-    # ... logic to dispatch? 
-    # Actually, BlockWidget should compose ThinkingWidget AND ExecutionWidget.
-    pass
+    """Body containing the simple text content (e.g. User Input)."""
+    DEFAULT_CSS = """
+    BlockBody {
+        padding: 0 1; 
+        color: $text;
+    }
+    """
+    def __init__(self, text: str):
+        super().__init__()
+        self.text = text
+    
+    def compose(self) -> ComposeResult:
+        yield Label(self.text)
 
 class BlockFooter(Static):
     """Footer showing exit code/status."""
@@ -543,27 +559,77 @@ class BlockWidget(Static):
     def __init__(self, block: BlockState):
         super().__init__()
         self.block = block
-        self.body_widget = BlockBody(block)
+        self.header = BlockHeader(block)
+        
+        # Sub-widgets
+        self.body_widget = None # For simple text (User Query)
+        self.thinking_widget = None 
+        self.exec_widget = None
         self.footer_widget = BlockFooter(block)
 
+        if block.type == BlockType.AI_RESPONSE:
+            self.thinking_widget = ThinkingWidget(block)
+            self.exec_widget = ExecutionWidget(block)
+        else:
+            # Command or AI Query
+            # For AI Query, content_input is the text.
+            # For Command (CLI mode), content_input is command, content_output is result.
+            # But we merged AI Response.
+            # Let's keep it simple: If not AI_RESPONSE, just show generic body.
+            text = block.content_input if block.type == BlockType.AI_QUERY else block.content_output
+            if block.type == BlockType.COMMAND:
+                 # CLI command output
+                 text = block.content_output
+            self.body_widget = BlockBody(text)
+
     def compose(self) -> ComposeResult:
-        yield BlockHeader(self.block)
-        yield self.body_widget
+        yield self.header
+        
+        if self.thinking_widget:
+            yield self.thinking_widget
+        
+        if self.exec_widget:
+            yield self.exec_widget
+            
+        if self.body_widget:
+            yield self.body_widget
+            
         yield self.footer_widget
 
     def update_output(self, new_chunk: str):
-        self.body_widget.content_text = new_chunk
-        # Force scroll if needed
-        # self.scroll_visible() 
+        # Dispatch update
+        if self.block.type == BlockType.AI_RESPONSE:
+            # We assume new_chunk is appended to content_output (Thinking)
+            # UNLESS app.py updates content_exec_output using a different specific method?
+            # app.py calls `widget.update_output(chunk)` for AI text.
+            # app.py calls `widget.update_output(full_exec)` for execution?
+            # We need to distinguish or update properties directly.
+            
+            # For now, let's assume `update_output` is for the MAIN text stream (Thinking).
+            self.block.content_output = new_chunk # app.py passes full text usually? No, execute_ai passes chunk?
+            # execute_ai passes chunk.
+            # run_agent_command passes full text.
+            # This is messy.
+            
+            # Let's rely on Reactive?
+            # If app.py updates block.content_output, does widget know?
+            # We need to manually update widget reactive props.
+            if self.thinking_widget:
+                 self.thinking_widget.thinking_text = self.block.content_output
+            if self.exec_widget:
+                 self.exec_widget.exec_output = self.block.content_exec_output
+                 
+        else:
+             # Standard body update
+             # self.body_widget.update(...) # Body is static label?
+             # Re-mount or update generic text
+             pass
 
     def update_metadata(self):
-        header = self.query_one(BlockHeader)
-        header.remove()
-        self.mount(BlockHeader(self.block), before=self.body_widget)
-
-    def set_loading(self, loading: bool):
-        self.block.content_output += new_chunk
-        self.body_widget.content_text = self.block.content_output
+        self.header.remove()
+        self.header = BlockHeader(self.block)
+        # We need to mount it at top
+        self.mount(self.header, before=self.children[0])
 
     def set_loading(self, loading: bool):
         self.block.is_running = loading
