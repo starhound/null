@@ -46,7 +46,7 @@ ModalScreen {
 
 HistoryViewport {
     height: 1fr;
-    padding: 1 2;
+    padding: 1 0 0 1;
     margin: 0;
     background: $background;
     scrollbar-size-vertical: 1;
@@ -64,7 +64,7 @@ HistoryViewport {
 #input-container {
     height: auto;
     min-height: 3;
-    margin: 0 2 1 2;
+    margin: 0 0 0 1;
     padding: 0 1;
     background: $surface;
     border: round $panel;
@@ -167,9 +167,16 @@ StatusBar {
     height: 1;
     background: $panel;
     layout: horizontal;
-    padding: 0 3;
-    margin: 0 2;
+    padding: 0 2;
+    margin: 0;
     color: $text-muted;
+}
+
+Footer {
+    dock: bottom;
+    height: 1;
+    margin: 0;
+    padding: 0;
 }
 
 StatusBar .status-sep {
