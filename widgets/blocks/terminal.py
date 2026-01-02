@@ -104,6 +104,10 @@ class TerminalBlock(Widget):
 
     def _send_mouse_event(self, event, button_code: int) -> None:
         """Send mouse event as ANSI sequence."""
+        # Allow native selection if Shift is held (standard terminal behavior)
+        if event.shift:
+            return
+
         # Check if mouse reporting is enabled in pyte screen
         # modes 1000, 1002, 1006 etc.
         # pyte.modes: 1000 (MOUSE_X10), 1002 (MOUSE_DRAG), 1003 (MOUSE_MOTION), 1006 (MOUSE_SGR)

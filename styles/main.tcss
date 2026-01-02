@@ -1712,22 +1712,22 @@ StatusBar .process-inactive {
 }
 
 /* TUI Mode Styles */
-CommandBlock.mode-tui {
-    border: double $success;
+ CommandBlock.mode-tui {
+    border: double $accent;
     background: #000000;
 }
 
 CommandBlock.mode-tui:focus-within {
-    border: double $success;
+    border: double $accent;
     background: #000000;
 }
 
 CommandBlock.mode-tui BlockHeader {
-    color: $success;
-    border-bottom: solid $success;
+    color: $accent;
+    border-bottom: solid $accent;
 }
 
 .prompt-symbol-tui {
-    color: $success;
+    color: $accent;
     text-style: bold;
 }
