@@ -17,10 +17,14 @@ class NullApp(App):
         layout: vertical;
     }
 
+    HistoryViewport {
+        height: 1fr;
+    }
+
     #input-container {
-        height: 3;
-        padding: 0 1;
-        margin-top: 1;
+        height: auto;
+        min-height: 3;
+        padding: 1;
         background: $surface;
         border-top: solid $surface-lighten-2;
     }

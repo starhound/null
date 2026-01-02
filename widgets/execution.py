@@ -117,15 +117,33 @@ class ExecutionWidget(Static):
 
     @on(Button.Pressed, "#copy-btn")
     def copy_output(self):
-        text = self.block.content_exec_output
+        text = getattr(self.block, 'content_exec_output', '') or ''
+        if not text:
+            self.notify("Nothing to copy", severity="warning")
+            return
+
         try:
-            if text.startswith("\n```text\n") and text.endswith("\n```\n"):
-                text = text[7:-5]
+            # Strip markdown code fences if present
+            if text.startswith("```") and text.endswith("```"):
+                lines = text.split('\n')
+                if len(lines) > 2:
+                    text = '\n'.join(lines[1:-1])
 
             if pyperclip:
                 pyperclip.copy(text)
                 self.notify("Copied to clipboard!")
             else:
-                self.notify("pyperclip not installed", severity="error")
+                # Fallback: try using subprocess for Linux/macOS
+                import subprocess
+                import sys
+                if sys.platform == 'linux':
+                    try:
+                        subprocess.run(['xclip', '-selection', 'clipboard'],
+                                      input=text.encode(), check=True)
+                        self.notify("Copied to clipboard!")
+                        return
+                    except (subprocess.CalledProcessError, FileNotFoundError):
+                        pass
+                self.notify("Install pyperclip: pip install pyperclip", severity="warning")
         except Exception as e:
-            self.notify(f"Clipboard error: {e}", severity="error")
+            self.notify(f"Copy failed: {e}", severity="error")

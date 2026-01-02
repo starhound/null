@@ -78,7 +78,8 @@ class BlockHeader(Static):
             icon = "◆"
             icon_class = "prompt-symbol-response"
             text_class = "header-text-ai"
-            display_text = "AI Response"
+            # Show the original query if available
+            display_text = self.block.content_input if self.block.content_input else "AI Response"
         else:
             icon = ">"
             icon_class = "prompt-symbol-cli"

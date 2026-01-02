@@ -6,9 +6,9 @@ class HistoryViewport(VerticalScroll):
 
     DEFAULT_CSS = """
     HistoryViewport {
-        height: 1fr;
         padding: 1;
         background: $background;
+        scrollbar-gutter: stable;
     }
     """
 
