@@ -1,97 +1,52 @@
+<p align="center">
+  <img src="docs/null_graphic.png" alt="Null Terminal" width="600">
+</p>
+
 # Null Terminal
 
-**Null** is a modern, block-based terminal emulator and shell wrapper built with Python and Textual. It re-imagines the command-line interface by separating interactions into distinct "Blocks", decoupling input from output, and integrating "Bring Your Own Model" (BYOM) AI directly into the workflow.
+> **"Code in the Void."**
+
+Null Terminal is a next-generation TUI (Terminal User Interface) designed for the modern AI-integrated workflow. Built on [Textual](https://textual.textualize.io/), it blends the raw power of the command line with the intelligence of LLMs, all wrapped in a sleek, cyber-noir aesthetic.
+
+## 📖 Documentation
+
+-   [**User Guide**](docs/USER_GUIDE.md): Keybindings, commands, and configuration.
+-   [**Architecture**](docs/ARCHITECTURE.md): System design, event loops, and state management.
+-   [**Development**](docs/DEVELOPMENT.md): Setup, contributing, and extending the codebase.
 
 ## ✨ Features
 
-*   **Block-Based UI**: Commands and outputs are isolated in scrollable blocks.
-*   **Detached Input**: Type without your cursor getting lost in streaming output.
-*   **AI Integration**: Seamlessly switch between local (Ollama, LM Studio) and cloud (OpenAI, Azure, Bedrock, xAI) models.
-*   **Secure Storage**: Configuration and history uses SQLite, with sensitive keys encrypted via OS Keyring.
-*   **Command Palette**: Access themes, models, and help via `Ctrl+P`.
-*   **Cross-Platform**: Runs on Windows, Linux, and macOS.
+-   **AI Integration**: Seamless chat with OpenAI, Ollama, LM Studio, and more.
+-   **Context Awareness**: Smartly manages files and conversation history.
+-   **Local Tool Use**: AI can run commands, read files, and analyze code directly.
+-   **Chain of Thought**: Visualize the reasoning process of advanced models (e.g., DeepSeek R1).
+-   **Cyber-Noir Aesthetics**: Beautiful, customizable themes and animations.
 
-## 🚀 Installation
+## 🚀 Quick Start
 
-Requires Python 3.11+.
-
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/starhound/null.git
-    cd null
-    ```
-
-2.  **Install dependencies** (using `uv` is recommended):
+1.  **Install dependencies**:
     ```bash
     uv sync
-    # OR
-    pip install -r requirements.txt
     ```
 
-3.  **Run the application**:
+2.  **Run the terminal**:
     ```bash
     uv run main.py
-    # OR
-    python main.py
     ```
 
-## 🎮 Usage
+3.  **Configure**:
+    Press `F3` or type `/settings` to configure your AI provider and theme.
 
-### Basic Commands
-Type any shell command (`ls`, `echo`, `git status`) and press **Enter**.
+## ⌨️ Key Controls
 
-### AI Integration
-Null Terminal supports multiple AI providers.
+-   `Ctrl+P`: Focus Prompt
+-   `F1`: Help
+-   `F2`: Model Selection
+-   `F3`: Settings
+-   `Ctrl+D`: Quit
 
-1.  **Select a Provider**:
-    *   Command: `/provider`
-    *   Palette: `Ctrl+P` -> "Select Provider"
-    *   Shortcut: `F4`
+---
 
-2.  **Configure**:
-    *   Enter your **API Key** or **Endpoint URL** in the popup form.
-
-3.  **Select a Model**:
-    *   Command: `/model` or `/model <provider> <name>`
-    *   Palette: `Ctrl+P` -> "Select Model"
-    *   Shortcut: `F2`
-
-### Key Bindings
-
-| Key | Action |
-| :--- | :--- |
-| `Ctrl+C` | Quit Application |
-| `Ctrl+L` | Clear History (Visual) |
-| `Ctrl+P` | Open Command Palette |
-| `F1` | Show Help |
-| `F2` | Select AI Model |
-| `F3` | Change Theme |
-| `F4` | Configure AI Provider |
-| `Up/Down` | Cycle Command History |
-
-### Slash Commands
-
-*   `/help`: Show available commands.
-*   `/theme <name>`: Switch theme (e.g., `monokai`, `dracula`).
-*   `/provider`: Configure AI provider.
-*   `/model`: List/Select AI models.
-*   `/clear`: Clear the viewport.
-*   `/quit`: Exit.
-
-## 🛠️ Configuration
-
-Configuration is stored in `~/.null/null.db`.
-*   **Sensitive Data**: API keys are encrypted using `cryptography` + system keyring (or a secure local key file fallback).
-*   **History**: Command history is persisted to the database.
-
-## 🤝 Contributing
-
-PRs are welcome! Please ensure you use `uv` for dependency management.
-
-1.  Fork the repo.
-2.  Create a feature branch.
-3.  Submit a Pull Request.
-
-## 📄 License
-
-MIT License.
+<p align="center">
+  Built with 🖤 by Starhound
+</p>
