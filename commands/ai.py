@@ -115,21 +115,8 @@ class AICommands(CommandMixin):
     async def cmd_model(self, args: list[str]):
         """Select or set AI model."""
         if not args:
-            if not self.app.ai_provider:
-                self.notify("AI Provider not initialized.", severity="error")
-                return
-
-            self.notify("Fetching models...")
-            models = await self.app.ai_provider.list_models()
-
-            def on_model_select(selected_model):
-                if selected_model:
-                    Config.update_key(["ai", "model"], str(selected_model))
-                    self.app.ai_provider.model = str(selected_model)
-                    self.notify(f"Model set to {selected_model}")
-
-            from screens import ModelListScreen
-            self.app.push_screen(ModelListScreen(models), on_model_select)
+            # Use the consistent global model selector that supports all providers
+            self.app.action_select_model()
 
         elif len(args) == 2:
             Config.update_key(["ai", "provider"], args[0])

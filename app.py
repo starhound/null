@@ -357,11 +357,13 @@ class NullApp(App):
             if selection:
                 provider_name, model_name = selection
                 
-                # If the selected model belongs to a DIFFERENT provider than active,
-                # we should switch the active provider to match!
-                current_provider_name = Config.get("ai.provider")
+                # Normalize provider name
+                provider_name = provider_name.lower()
                 
-                if provider_name != current_provider_name:
+                # Check if we need to switch active provider
+                current_provider = Config.get("ai.provider", "").lower()
+                
+                if provider_name != current_provider:
                      Config.set("ai.provider", provider_name)
                      self.notify(f"Switched provider to {provider_name}")
                 
@@ -369,7 +371,7 @@ class NullApp(App):
                 Config.set(f"ai.{provider_name}.model", str(model_name))
                 self.notify(f"Model set to {model_name}")
                 
-                # Refresh everything
+                # Force refresh of provider instance
                 self.ai_provider = self.ai_manager.get_provider(provider_name)
                 # Ensure the provider instance knows its model (some store it internally)
                 if self.ai_provider:
