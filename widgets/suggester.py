@@ -51,6 +51,7 @@ class CommandSuggester(Static):
 
     commands_data = {
         "/help": {"desc": "Show help screen", "args": []},
+        "/config": {"desc": "Open settings", "args": []},
         "/provider": {"desc": "Select AI provider", "args": ["ollama", "openai", "lm_studio", "azure", "bedrock", "xai"]},
         "/model": {"desc": "Select AI model", "args": []},
         "/theme": {"desc": "Change UI theme", "args": ["null-dark", "null-warm", "null-mono", "null-light", "dracula", "nord", "monokai"]},

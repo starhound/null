@@ -205,8 +205,13 @@ CommandBlock {
     background: transparent;
     color: $text;
     margin: 0 0 1 0;
-    padding: 0 1 1 1;
-    border-left: solid $success;
+    padding: 0 1 0 1;
+    border-left: wide $success;
+}
+
+CommandBlock BlockHeader {
+    background: $success 10%;
+    padding: 0 1;
 }
 
 /* ==========================================================================
@@ -221,7 +226,18 @@ AIResponseBlock {
     color: $text;
     margin: 0 0 1 0;
     padding: 0 1 0 1;
-    border-left: solid $primary;
+    border-left: wide $primary;
+}
+
+AIResponseBlock BlockHeader {
+    background: $primary 10%;
+    padding: 0 1;
+}
+
+AIResponseBlock BlockMeta {
+    background: transparent;
+    padding: 0 1;
+    margin: 0;
 }
 
 /* ==========================================================================
@@ -235,8 +251,13 @@ SystemBlock {
     background: transparent;
     color: $text;
     margin: 0 0 1 0;
-    padding: 0 1 1 1;
-    border-left: solid $secondary;
+    padding: 0 1 0 1;
+    border-left: wide $secondary;
+}
+
+SystemBlock BlockHeader {
+    background: $secondary 10%;
+    padding: 0 1;
 }
 
 /* ==========================================================================
@@ -261,28 +282,33 @@ BlockHeader .prompt-symbol {
 
 BlockHeader .prompt-symbol-cli {
     color: $success;
+    text-style: bold;
 }
 
 BlockHeader .prompt-symbol-query {
     color: $warning;
+    text-style: bold;
 }
 
 BlockHeader .prompt-symbol-response {
     color: $primary;
+    text-style: bold;
 }
 
 BlockHeader .prompt-symbol-system {
     color: $secondary;
+    text-style: bold;
 }
 
 BlockHeader .header-text {
-    color: $text-muted;
+    color: $text;
     width: 1fr;
 }
 
 BlockHeader .header-text-cli {
     color: $text;
     width: 1fr;
+    text-style: bold;
 }
 
 BlockHeader .header-text-ai {
@@ -294,6 +320,7 @@ BlockHeader .header-text-ai {
 BlockHeader .header-text-system {
     color: $secondary;
     width: 1fr;
+    text-style: italic;
 }
 
 BlockHeader .timestamp {
@@ -308,8 +335,8 @@ BlockHeader .timestamp {
 BlockMeta {
     layout: horizontal;
     height: 1;
-    padding: 0 0 0 3;
-    margin: 0 0 1 0;
+    padding: 0 1;
+    margin: 0;
     background: transparent;
     color: $text-muted;
 }
@@ -322,7 +349,7 @@ BlockMeta .meta-sep {
 
 BlockMeta .meta-value {
     color: $text-muted;
-    text-style: dim;
+    text-style: dim italic;
 }
 
 BlockMeta .meta-spacer {
@@ -334,12 +361,11 @@ BlockMeta .meta-action {
     height: 1;
     margin-left: 2;
     color: $text-muted;
-    text-style: dim;
 }
 
 BlockMeta .meta-action:hover {
     color: $primary;
-    text-style: none;
+    text-style: bold;
 }
 
 /* ==========================================================================
@@ -349,8 +375,10 @@ BlockMeta .meta-action:hover {
 BlockBody {
     height: auto;
     min-height: 0;
-    padding: 0 2;
+    padding: 1 1;
+    margin-left: 2;
     color: $text;
+    border-left: wide $surface;
 }
 
 BlockBody #body-content {
@@ -383,23 +411,23 @@ BlockFooter .running-spinner {
 }
 
 /* ==========================================================================
-   Thinking Widget
+   Thinking Widget - AI Response Content
    ========================================================================== */
 
 ThinkingWidget {
     height: auto;
     min-height: 0;
-    padding: 0 0 0 3;
-    margin: 0;
+    padding: 0;
+    margin: 0 0 0 2;
 }
 
 ThinkingWidget .thinking-header {
     layout: horizontal;
     height: 1;
     width: 100%;
-    padding: 0;
+    padding: 0 1;
     margin-bottom: 0;
-    background: transparent;
+    background: $primary 15%;
     display: none;
 }
 
@@ -417,30 +445,30 @@ ThinkingWidget .spinner.complete {
 }
 
 ThinkingWidget .thinking-label {
-    color: $text-muted;
-    text-style: dim italic;
+    color: $primary;
+    text-style: italic;
     padding-left: 1;
     width: 1fr;
 }
 
 ThinkingWidget .toggle-hint {
     color: $text-muted;
-    text-style: dim;
 }
 
 ThinkingWidget .toggle-hint:hover {
     color: $primary;
-    text-style: none;
+    text-style: bold;
 }
 
 ThinkingWidget .peek-window {
     height: 4;
     max-height: 4;
     margin: 0;
-    padding: 0;
+    padding: 0 1;
     background: transparent;
     color: $text;
     scrollbar-size: 0 0;
+    border-left: wide $surface;
 }
 
 ThinkingWidget .peek-window.expanded {
@@ -458,17 +486,18 @@ ThinkingWidget .peek-window.empty {
     height: 0;
     max-height: 0;
     display: none;
+    border: none;
 }
 
 /* ==========================================================================
-   Execution Widget
+   Execution Widget - Tool/Command Results
    ========================================================================== */
 
 ExecutionWidget {
     height: auto;
     min-height: 0;
-    padding: 0 0 0 3;
-    margin: 0;
+    padding: 0;
+    margin: 1 0 0 2;
     background: transparent;
 }
 
@@ -478,25 +507,25 @@ ExecutionWidget .hidden {
 
 ExecutionWidget #exec-container {
     padding: 0;
+    border-left: wide $warning;
 }
 
 ExecutionWidget .exec-header {
     layout: horizontal;
     height: 1;
     width: 100%;
-    padding: 0;
+    padding: 0 1;
     margin-bottom: 0;
-    background: transparent;
+    background: $warning 15%;
 }
 
 ExecutionWidget .exec-title {
-    color: $text-muted;
+    color: $warning;
     width: 1fr;
-    text-style: dim;
 }
 
 ExecutionWidget .exec-icon {
-    color: $success;
+    color: $warning;
     min-width: 2;
 }
 
@@ -505,19 +534,18 @@ ExecutionWidget .copy-btn {
     height: 1;
     background: transparent;
     color: $text-muted;
-    text-style: dim;
 }
 
 ExecutionWidget .copy-btn:hover {
-    color: $primary;
-    text-style: none;
+    color: $warning;
+    text-style: bold;
 }
 
 ExecutionWidget .exec-scroll {
     height: auto;
     margin: 0;
     padding: 1;
-    background: $surface;
+    background: $surface 50%;
     color: $text;
     overflow: hidden;
 }
@@ -586,4 +614,385 @@ HistorySearch .no-results {
     padding: 0 1;
     color: $text-muted;
     text-style: italic;
+}
+
+/* ==========================================================================
+   Modal Screens - Common
+   ========================================================================== */
+
+/* Help Screen */
+HelpScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+HelpScreen #help-container {
+    width: 60%;
+    height: auto;
+    max-height: 80%;
+    background: $surface;
+    border: round $primary;
+    padding: 1 2;
+}
+
+HelpScreen #help-container > Label {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+HelpScreen DataTable {
+    height: auto;
+    max-height: 20;
+    margin-bottom: 1;
+}
+
+HelpScreen #close_btn {
+    width: 100%;
+    height: 1;
+    min-width: 8;
+    border: none;
+    background: $surface-lighten-2;
+    color: $text;
+    margin-top: 1;
+}
+
+HelpScreen #close_btn:hover {
+    background: $primary;
+    color: $text;
+}
+
+/* ==========================================================================
+   Selection Screens
+   ========================================================================== */
+
+SelectionListScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+SelectionListScreen #selection-container {
+    width: 40%;
+    min-width: 30;
+    height: auto;
+    max-height: 60%;
+    background: $surface;
+    border: round $primary;
+    padding: 1 2;
+    layout: vertical;
+}
+
+SelectionListScreen #selection-container > Label {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+SelectionListScreen ListView {
+    height: auto;
+    max-height: 15;
+    margin: 0;
+    padding: 0;
+    background: $surface-darken-1;
+}
+
+SelectionListScreen ListItem {
+    padding: 0 1;
+    height: 1;
+}
+
+SelectionListScreen ListItem:hover {
+    background: $surface-lighten-1;
+}
+
+SelectionListScreen #cancel_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $surface-lighten-2;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+SelectionListScreen #cancel_btn:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   Provider Config Screen
+   ========================================================================== */
+
+ProviderConfigScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+ProviderConfigScreen #config-container {
+    width: 50%;
+    min-width: 40;
+    height: auto;
+    background: $surface;
+    border: round $primary;
+    padding: 1 2;
+    layout: vertical;
+}
+
+ProviderConfigScreen #config-container > Label:first-child {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+ProviderConfigScreen .input-label {
+    margin-top: 1;
+    margin-bottom: 0;
+    color: $text-muted;
+}
+
+ProviderConfigScreen Input {
+    margin-bottom: 0;
+}
+
+ProviderConfigScreen #buttons {
+    layout: horizontal;
+    align: center middle;
+    margin-top: 1;
+    height: 1;
+    width: 100%;
+}
+
+ProviderConfigScreen #save {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $success;
+    color: $text;
+    margin-right: 1;
+}
+
+ProviderConfigScreen #save:hover {
+    background: $success-lighten-1;
+}
+
+ProviderConfigScreen #cancel {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $surface-lighten-2;
+    color: $text-muted;
+}
+
+ProviderConfigScreen #cancel:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   MCP Server Config Screen
+   ========================================================================== */
+
+MCPServerConfigScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+MCPServerConfigScreen #mcp-config-container {
+    width: 60%;
+    min-width: 50;
+    height: auto;
+    background: $surface;
+    border: round $primary;
+    padding: 1 2;
+    layout: vertical;
+}
+
+MCPServerConfigScreen #mcp-config-container > Label:first-child {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+MCPServerConfigScreen .input-label {
+    margin-top: 1;
+    margin-bottom: 0;
+    color: $text-muted;
+}
+
+MCPServerConfigScreen .input-hint {
+    color: $text-muted;
+    text-style: italic dim;
+    margin-bottom: 0;
+}
+
+MCPServerConfigScreen Input {
+    margin-bottom: 0;
+}
+
+MCPServerConfigScreen #buttons {
+    layout: horizontal;
+    align: center middle;
+    margin-top: 2;
+    height: 1;
+    width: 100%;
+}
+
+MCPServerConfigScreen #save {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $success;
+    color: $text;
+    margin-right: 1;
+}
+
+MCPServerConfigScreen #save:hover {
+    background: $success-lighten-1;
+}
+
+MCPServerConfigScreen #cancel {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $surface-lighten-2;
+    color: $text-muted;
+}
+
+MCPServerConfigScreen #cancel:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   Config Screen (Settings)
+   ========================================================================== */
+
+ConfigScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+ConfigScreen #config-outer {
+    width: 70%;
+    min-width: 60;
+    height: 85%;
+    background: $surface;
+    border: round $primary;
+    padding: 0;
+}
+
+ConfigScreen #config-header {
+    height: 3;
+    background: $primary;
+    padding: 1 2;
+}
+
+ConfigScreen #config-header Label {
+    text-style: bold;
+    color: $text;
+}
+
+ConfigScreen TabbedContent {
+    height: 1fr;
+}
+
+ConfigScreen TabPane {
+    padding: 1 2;
+}
+
+ConfigScreen .settings-scroll {
+    height: 100%;
+}
+
+ConfigScreen .setting-row {
+    layout: horizontal;
+    height: auto;
+    min-height: 3;
+    padding: 1 0;
+    border-bottom: solid $surface-lighten-1;
+}
+
+ConfigScreen .setting-info {
+    width: 1fr;
+    height: auto;
+}
+
+ConfigScreen .setting-label {
+    text-style: bold;
+    color: $text;
+}
+
+ConfigScreen .setting-hint {
+    color: $text-muted;
+    text-style: italic;
+}
+
+ConfigScreen .setting-control {
+    width: auto;
+    min-width: 20;
+    height: auto;
+    align: right middle;
+}
+
+ConfigScreen .setting-control Input {
+    width: 20;
+}
+
+ConfigScreen .setting-control Select {
+    width: 20;
+}
+
+ConfigScreen .setting-control Switch {
+    width: auto;
+}
+
+ConfigScreen #config-footer {
+    height: 3;
+    layout: horizontal;
+    align: center middle;
+    padding: 0 2;
+    background: $surface-darken-1;
+    dock: bottom;
+}
+
+ConfigScreen #save-btn {
+    width: auto;
+    min-width: 12;
+    height: 1;
+    margin-right: 1;
+    background: $success;
+    color: $text;
+    border: none;
+}
+
+ConfigScreen #save-btn:hover {
+    background: $success-lighten-1;
+}
+
+ConfigScreen #cancel-btn {
+    width: auto;
+    min-width: 12;
+    height: 1;
+    background: $surface-lighten-2;
+    color: $text-muted;
+    border: none;
+}
+
+ConfigScreen #cancel-btn:hover {
+    background: $error;
+    color: $text;
+}
+
+ConfigScreen #reset-btn {
+    width: auto;
+    min-width: 16;
+    height: 1;
+    margin-left: 2;
+    background: $warning;
+    color: $text;
+    border: none;
+}
+
+ConfigScreen .spacer {
+    width: 1fr;
 }
