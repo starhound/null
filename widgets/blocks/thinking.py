@@ -162,6 +162,7 @@ class ThinkingWidget(Static):
         """Update the peek window with new content."""
         try:
             peek = self.query_one("#peek-window", VerticalScroll)
+            content = self.query_one("#peek-content", Static)
 
             # Remove empty state when we have content
             if new_text:
@@ -169,30 +170,48 @@ class ThinkingWidget(Static):
                     peek.remove_class("empty")
                 # Check for reasoning patterns in new content
                 self._check_for_reasoning(new_text)
-
+            
+            # DEBUG: Show what we're receiving
+            debug_info = f"[DEBUG] Chars: {len(new_text) if new_text else 0}"
+            
             # Throttle rendering for performance
-            current_len = len(new_text)
+            current_len = len(new_text) if new_text else 0
             delta = current_len - self._last_rendered_len
-            if delta < self._render_threshold and not new_text.endswith('\n'):
+            if delta < self._render_threshold and not (new_text and new_text.endswith('\n')):
+                # Still show debug info
+                content.update(f"{debug_info} (throttled)")
                 return
 
             self._last_rendered_len = current_len
-            content = self.query_one("#peek-content", Static)
             from rich.markdown import Markdown
             # Make plain URLs clickable before rendering
-            linkified_text = make_links_clickable(new_text)
-            content.update(Markdown(linkified_text, code_theme="monokai"))
+            linkified_text = make_links_clickable(new_text) if new_text else ""
+            
+            # DEBUG: Show content directly for now to diagnose
+            if len(linkified_text) < 200:
+                content.update(f"{debug_info}\n\n{linkified_text}")
+            else:
+                content.update(Markdown(linkified_text, code_theme="monokai"))
 
             # Auto-scroll to bottom to follow content
             if not self.is_expanded:
                 peek.scroll_end(animate=False)
-        except Exception:
-            pass
+        except Exception as e:
+            try:
+                content = self.query_one("#peek-content", Static)
+                content.update(f"[ERROR] {e}")
+            except:
+                pass
 
     def force_render(self):
         """Force a full render of current content."""
         try:
             self._last_rendered_len = len(self.thinking_text)
+            
+            # Ensure peek window is visible
+            peek = self.query_one("#peek-window", VerticalScroll)
+            if "empty" in peek.classes:
+                peek.remove_class("empty")
 
             # If loading is complete and we have code blocks, render with action buttons
             if not self.is_loading and not self._code_blocks_rendered:
@@ -210,77 +229,15 @@ class ThinkingWidget(Static):
     def _render_with_code_blocks(self):
         """Render content with interactive code block widgets."""
         try:
-            code_blocks = extract_code_blocks(self.thinking_text)
-
-            if not code_blocks:
-                # No code blocks, use standard markdown
-                content = self.query_one("#peek-content", Static)
-                from rich.markdown import Markdown
-                linkified_text = make_links_clickable(self.thinking_text)
-                content.update(Markdown(linkified_text, code_theme="monokai"))
-                return
-
-            # Clear the peek content and replace with mixed content
+            # SIMPLIFIED: Just render as markdown for now
+            # The complex DOM manipulation was breaking subsequent renders
             content = self.query_one("#peek-content", Static)
-
-            # Build segments of text and code blocks
-            segments = []
-            last_end = 0
-            text = self.thinking_text
-
-            for code, lang, start, end in code_blocks:
-                # Text before this code block
-                if start > last_end:
-                    text_segment = text[last_end:start]
-                    if text_segment.strip():
-                        segments.append(("text", text_segment))
-
-                # The code block itself
-                segments.append(("code", code, lang))
-                last_end = end
-
-            # Text after the last code block
-            if last_end < len(text):
-                text_segment = text[last_end:]
-                if text_segment.strip():
-                    segments.append(("text", text_segment))
-
-            # Now mount the widgets
-            # First, remove the static content and mount a container
-            peek_window = self.query_one("#peek-window", VerticalScroll)
-
-            # Remove old content
-            try:
-                old_content = self.query_one("#peek-content", Static)
-                old_content.remove()
-            except Exception:
-                pass
-
-            # Create a new container for mixed content
-            container = Vertical(id="peek-content", classes="peek-content")
-            peek_window.mount(container)
-
-            # Mount segments
             from rich.markdown import Markdown
-            for segment in segments:
-                if segment[0] == "text":
-                    linkified_segment = make_links_clickable(segment[1])
-                    text_widget = Static(Markdown(linkified_segment, code_theme="monokai"), classes="markdown-text")
-                    container.mount(text_widget)
-                elif segment[0] == "code":
-                    code_widget = CodeBlockWidget(segment[1], segment[2])
-                    container.mount(code_widget)
-
+            linkified_text = make_links_clickable(self.thinking_text)
+            content.update(Markdown(linkified_text, code_theme="monokai"))
             self._code_blocks_rendered = True
-
         except Exception:
-            # Fallback to standard markdown
-            try:
-                content = self.query_one("#peek-content", Static)
-                from rich.markdown import Markdown
-                content.update(Markdown(self.thinking_text, code_theme="monokai"))
-            except Exception:
-                pass
+            pass
 
     def on_click(self, event):
         """Handle clicks to toggle expand/collapse."""

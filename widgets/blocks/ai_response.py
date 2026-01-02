@@ -30,8 +30,19 @@ class AIResponseBlock(BaseBlockWidget):
 
     def update_output(self, new_content: str = ""):
         """Update the AI response display."""
+        # DEBUG: Write to file for debugging
+        import datetime
+        with open("/tmp/null_debug.log", "a") as f:
+            content_len = len(self.block.content_output) if self.block.content_output else 0
+            f.write(f"{datetime.datetime.now()}: update_output called, content_len={content_len}\n")
+        
         if self.thinking_widget:
-            self.thinking_widget.thinking_text = self.block.content_output
+            # DEBUG: Force set and show what we're setting
+            old_text = self.thinking_widget.thinking_text
+            self.thinking_widget.thinking_text = self.block.content_output or ""
+            new_text = self.thinking_widget.thinking_text
+            with open("/tmp/null_debug.log", "a") as f:
+                f.write(f"  thinking_text: old={len(old_text) if old_text else 0}, new={len(new_text) if new_text else 0}\n")
         if self.exec_widget:
             self.exec_widget.exec_output = getattr(self.block, 'content_exec_output', '')
 

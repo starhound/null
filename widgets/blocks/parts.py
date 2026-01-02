@@ -109,8 +109,27 @@ class BlockMeta(Static):
 
         # Action labels for AI responses
         if self.block.type == BlockType.AI_RESPONSE and not self.block.is_running:
-            yield Static("edit", id="edit-btn", classes="meta-action")
-            yield Static("retry", id="retry-btn", classes="meta-action")
+            yield Label("edit", id="edit-btn", classes="meta-action")
+            yield Label("retry", id="retry-btn", classes="meta-action")
+
+    def on_click(self, event) -> None:
+        """Handle clicks on action buttons."""
+        # Check if we clicked on edit or retry buttons
+        try:
+            edit_btn = self.query_one("#edit-btn")
+            retry_btn = self.query_one("#retry-btn")
+            
+            # Check which button was clicked by position
+            if edit_btn.region.contains(event.x, event.y):
+                from widgets.blocks.base import BaseBlockWidget
+                self.post_message(BaseBlockWidget.EditRequested(self.block.id, self.block.content_input))
+                event.stop()
+            elif retry_btn.region.contains(event.x, event.y):
+                from widgets.blocks.base import BaseBlockWidget
+                self.post_message(BaseBlockWidget.RetryRequested(self.block.id))
+                event.stop()
+        except Exception:
+            pass
 
 
 class BlockBody(Static):

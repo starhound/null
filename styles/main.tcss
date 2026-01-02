@@ -259,16 +259,14 @@ ThinkingWidget {
 ThinkingWidget .thinking-header {
     layout: horizontal;
     height: 1;
+    min-height: 1;
     width: 100%;
     padding: 0 2;
     margin-bottom: 0;
     background: transparent;
-    display: none;
 }
 
-ThinkingWidget .thinking-header.loading {
-    display: block;
-}
+/* .loading class no longer needed for visibility - header always visible */
 
 ThinkingWidget .spinner {
     color: $primary;
@@ -296,19 +294,23 @@ ThinkingWidget .toggle-hint:hover {
 }
 
 ThinkingWidget .peek-window {
-    height: 4;
-    max-height: 4;
-    margin: 0;
+    height: auto;
+    min-height: 3;
+    max-height: 10;
+    margin: 0 2;
     padding: 1 2;
     background: transparent;
     color: $text;
     scrollbar-size: 0 0;
+    border: round $primary 60%;
 }
 
 ThinkingWidget .peek-window.expanded {
     height: auto;
-    max-height: 100%;
-    scrollbar-size: 0 0;
+    min-height: 5;
+    max-height: 40;
+    scrollbar-size: 1 1;
+    overflow-y: auto;
 }
 
 ThinkingWidget .peek-content {
@@ -317,9 +319,9 @@ ThinkingWidget .peek-content {
 }
 
 ThinkingWidget .peek-window.empty {
-    height: 0;
-    max-height: 0;
-    display: none;
+    min-height: 0;
+    max-height: 1;
+    border: none;
 }
 
 /* --- Code Block Widget --- */
@@ -642,6 +644,8 @@ AIResponseBlock BlockBody {
 }
 
 AIResponseBlock BlockMeta {
+    height: auto;
+    min-height: 1;
     background: transparent;
     padding: 0 3;
     margin: 0;
