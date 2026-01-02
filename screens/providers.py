@@ -114,9 +114,9 @@ class ProvidersScreen(ModalScreen):
         if info.get("requires_api_key"):
             return bool(Config.get(f"ai.{provider_name}.api_key"))
         elif info.get("requires_endpoint"):
-            # Local providers - check if endpoint is set or use default
-            return True  # Always "configured" for local providers
-        return True
+            # Local providers - check if endpoint is explicitly set
+            return bool(Config.get(f"ai.{provider_name}.endpoint"))
+        return False
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         button_id = event.button.id

@@ -36,21 +36,25 @@ class AIResponseBlock(BaseBlockWidget):
             self.exec_widget.exec_output = getattr(self.block, 'content_exec_output', '')
 
     def update_metadata(self):
-        """Refresh the header and metadata widgets."""
+        """Refresh the metadata widget to show updated values."""
         try:
-            self.header.remove()
-            self.header = BlockHeader(self.block)
-            self.mount(self.header, before=self.children[0])
-
-            if self.meta_widget:
+            # Remove old meta widget if it exists
+            if self.meta_widget and self.meta_widget in self.children:
                 self.meta_widget.remove()
-                self.meta_widget = BlockMeta(self.block)
-                if len(self.children) > 1:
-                    self.mount(self.meta_widget, after=self.header)
-                else:
-                    self.mount(self.meta_widget)
-        except Exception:
-            pass
+
+            # Create new meta widget with current metadata
+            self.meta_widget = BlockMeta(self.block)
+
+            # Find the position after header
+            children_list = list(self.children)
+            if children_list:
+                # Mount after first child (header)
+                self.mount(self.meta_widget, after=children_list[0])
+            else:
+                self.mount(self.meta_widget)
+        except Exception as e:
+            # Log error for debugging
+            self.log.error(f"Failed to update metadata: {e}")
 
     def set_loading(self, loading: bool):
         """Set the loading state and update widgets."""

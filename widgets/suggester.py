@@ -44,10 +44,17 @@ class CommandSuggester(Static):
         for i, item in enumerate(items):
             if i == self._selected_index:
                 item.add_class("--highlight")
-                # Scroll the selected item into view
-                item.scroll_visible()
             else:
                 item.remove_class("--highlight")
+
+        # Scroll the ListView to keep selected item visible
+        if items and 0 <= self._selected_index < len(items):
+            try:
+                lv = self.query_one(ListView)
+                selected_item = items[self._selected_index]
+                lv.scroll_to_widget(selected_item)
+            except Exception:
+                pass
 
     def _apply_selection(self):
         """Apply the current selection to the input."""

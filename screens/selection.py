@@ -3,7 +3,9 @@
 from typing import Callable, Coroutine, Any, Optional, Dict, List, Tuple
 from textual.timer import Timer
 from textual.reactive import reactive
-from textual.widgets import Static
+from textual.widgets import Static, Input, Collapsible
+from textual.containers import VerticalScroll
+from textual.message import Message
 
 from .base import ModalScreen, ComposeResult, Binding, Container, Label, ListView, ListItem, Button
 
@@ -105,45 +107,68 @@ class SelectionListScreen(ModalScreen):
         self.dismiss(None)
 
 
+class ModelItem(Static):
+    """A clickable model item."""
+
+    class Selected(Message):
+        """Message sent when a model is selected."""
+        def __init__(self, provider: str, model: str):
+            super().__init__()
+            self.provider = provider
+            self.model = model
+
+    def __init__(self, provider: str, model: str):
+        super().__init__(f"  {model}")
+        self.provider = provider
+        self.model = model
+        self.add_class("model-item")
+
+    def on_click(self):
+        """Handle click on model item."""
+        self.post_message(self.Selected(self.provider, self.model))
+
+
 class ModelListScreen(ModalScreen):
-    """Screen to select an AI model with streaming async loading."""
+    """Screen to select an AI model with collapsible provider sections."""
 
     BINDINGS = [Binding("escape", "dismiss", "Close")]
     SPINNER_FRAMES = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
     is_loading = reactive(True)
+    search_query = reactive("")
 
     def __init__(self, fetch_func: Optional[Callable] = None):
-        """Initialize model list screen.
-
-        Args:
-            fetch_func: The AIManager instance to fetch models from
-        """
+        """Initialize model list screen."""
         super().__init__()
-        self.ai_manager = fetch_func  # Actually receives the manager's method
+        self.ai_manager = fetch_func
         self._spinner_index = 0
         self._spinner_timer: Optional[Timer] = None
-        self._flattened_items: List[Optional[tuple]] = []
         self._models_by_provider: Dict[str, List[str]] = {}
-        self._completed_providers = 0
         self._total_providers = 0
 
     def compose(self) -> ComposeResult:
-        with Container(id="selection-container"):
+        with Container(id="model-selection-container"):
             yield Label("Select a Model", id="model-title")
+            yield Input(placeholder="Search models...", id="model-search")
             yield Label("", id="loading-indicator")
-            yield ListView(id="item_list")
+            with VerticalScroll(id="model-scroll"):
+                yield Static("", id="model-content")
             yield Button("Cancel [Esc]", variant="default", id="cancel_btn")
 
     def on_mount(self):
         """Start loading models after screen is rendered."""
         self._start_spinner()
-        # Use set_timer to ensure screen fully renders first
         self.set_timer(0.1, self._start_loading)
+
+    def on_input_changed(self, event: Input.Changed):
+        """Handle search input changes."""
+        if event.input.id == "model-search":
+            self.search_query = event.value.lower()
+            if not self.is_loading:
+                self._update_collapsibles()
 
     def _start_loading(self):
         """Start the model loading worker in a thread."""
-        # Use thread=True to run in a separate thread, not the event loop
         self.run_worker(self._fetch_models_in_thread, thread=True)
 
     def _start_spinner(self):
@@ -169,7 +194,7 @@ class ModelListScreen(ModalScreen):
             if self._total_providers > 0:
                 indicator.update(
                     f"{self.SPINNER_FRAMES[self._spinner_index]} "
-                    f"Loading models ({self._completed_providers}/{self._total_providers} providers)..."
+                    f"Loading models..."
                 )
             else:
                 indicator.update(f"{self.SPINNER_FRAMES[self._spinner_index]} Checking providers...")
@@ -177,44 +202,34 @@ class ModelListScreen(ModalScreen):
             pass
 
     def _fetch_models_in_thread(self) -> Tuple[Dict[str, List[str]], int]:
-        """Synchronous model fetching - runs in a separate thread via run_worker(thread=True).
-
-        Returns: (models_by_provider dict, total_provider_count)
-        """
+        """Synchronous model fetching - runs in a separate thread."""
         import asyncio
 
         try:
-            # Get reference to app's ai_manager
             if not hasattr(self.app, 'ai_manager'):
                 return {}, 0
 
             manager = self.app.ai_manager
-
-            # Get usable providers (this does sync SQLite calls)
             usable = manager.get_usable_providers()
             if not usable:
                 return {}, 0
 
-            # Create a new event loop for this thread
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
             try:
-                # Run the async fetch in this thread's event loop
                 result = loop.run_until_complete(manager.list_all_models())
                 return result, len(usable)
             finally:
                 loop.close()
 
-        except Exception as e:
-            # Log error but don't crash
+        except Exception:
             return {}, 0
 
     def on_worker_state_changed(self, event) -> None:
         """Handle worker completion - update UI with results."""
         from textual.worker import WorkerState
 
-        # Only handle model fetch workers (name contains our method name)
         if "_fetch_models" not in str(event.worker.name):
             return
 
@@ -229,8 +244,7 @@ class ModelListScreen(ModalScreen):
                     self._show_no_providers()
                     return
 
-                # Update UI with results
-                self._update_list()
+                self._update_collapsibles()
                 self._stop_spinner()
                 self.is_loading = False
                 self._finalize_list()
@@ -248,14 +262,16 @@ class ModelListScreen(ModalScreen):
             self._stop_spinner()
             self.is_loading = False
 
-    def _update_list(self):
-        """Update the list view with current models."""
+    def _update_collapsibles(self):
+        """Update the collapsible sections with models."""
         try:
-            listview = self.query_one("#item_list", ListView)
-            listview.clear()
-            self._flattened_items = []
+            scroll = self.query_one("#model-scroll", VerticalScroll)
 
-            # Sort providers: active first, then alphabetically
+            # Remove old content
+            content = self.query_one("#model-content", Static)
+            content.remove()
+
+            # Get sorted providers: active first, then alphabetically
             from config import Config
             active_provider = Config.get("ai.provider")
 
@@ -264,29 +280,40 @@ class ModelListScreen(ModalScreen):
                 key=lambda p: (0 if p == active_provider else 1, p)
             )
 
+            # Create collapsibles for each provider
             for provider in sorted_providers:
                 models = self._models_by_provider[provider]
                 if not models:
                     continue
 
-                # Provider header with model count
-                header_text = f"[{provider.upper()}] ({len(models)} models)"
-                header = ListItem(Label(header_text), disabled=True)
-                header.add_class("list-header")
-                listview.mount(header)
-                self._flattened_items.append(None)
+                # Filter by search query
+                if self.search_query:
+                    filtered = [m for m in models if self.search_query in m.lower()]
+                else:
+                    filtered = models
 
-                # Models (limit display for very long lists)
-                display_models = models[:50]  # Show first 50
-                for model in display_models:
-                    item = ListItem(Label(f"  {model}"))
-                    listview.mount(item)
-                    self._flattened_items.append((provider, model))
+                if not filtered and self.search_query:
+                    continue  # Skip provider if no matches
 
-                if len(models) > 50:
-                    more = ListItem(Label(f"  ... and {len(models) - 50} more"), disabled=True)
-                    listview.mount(more)
-                    self._flattened_items.append(None)
+                # Create collapsible with count
+                is_active = provider == active_provider
+                title = f"{provider.upper()} ({len(filtered)}{'+' if len(filtered) < len(models) else ''} models)"
+                if is_active:
+                    title = f"● {title}"
+
+                # Expand active provider or first provider
+                collapsed = not is_active
+
+                collapsible = Collapsible(title=title, collapsed=collapsed, id=f"provider-{provider}")
+                scroll.mount(collapsible)
+
+                # Add model items inside the collapsible
+                for model in filtered[:100]:  # Limit to 100 per provider
+                    item = ModelItem(provider, model)
+                    collapsible.mount(item)
+
+                if len(filtered) > 100:
+                    collapsible.mount(Static(f"  ... and {len(filtered) - 100} more", classes="more-label"))
 
         except Exception:
             pass
@@ -305,9 +332,9 @@ class ModelListScreen(ModalScreen):
                 indicator.update(f"✓ Found {total_models} models from {provider_count} provider(s)")
                 indicator.add_class("success")
 
-            # Focus the list
-            listview = self.query_one("#item_list", ListView)
-            listview.focus()
+            # Focus the search input
+            search = self.query_one("#model-search", Input)
+            search.focus()
 
         except Exception:
             pass
@@ -319,11 +346,10 @@ class ModelListScreen(ModalScreen):
             indicator.update("No providers configured")
             indicator.add_class("error")
 
-            listview = self.query_one("#item_list", ListView)
-            listview.clear()
-            listview.mount(ListItem(Label("No providers configured. Use F4 to add one.")))
-            listview.mount(ListItem(Label("Local: ollama, lm_studio (no API key needed)")))
-            listview.mount(ListItem(Label("Cloud: openai, anthropic, nvidia, groq...")))
+            scroll = self.query_one("#model-scroll", VerticalScroll)
+            scroll.mount(Static("No providers configured. Use /providers to add one."))
+            scroll.mount(Static("Local: ollama, lm_studio (no API key needed)"))
+            scroll.mount(Static("Cloud: openai, anthropic, nvidia, groq..."))
         except Exception:
             pass
 
@@ -336,20 +362,9 @@ class ModelListScreen(ModalScreen):
         except Exception:
             pass
 
-    def on_list_view_selected(self, message: ListView.Selected):
-        if self.is_loading:
-            return
-
-        index = self.query_one("#item_list", ListView).index
-
-        if index is not None and 0 <= index < len(self._flattened_items):
-            selection = self._flattened_items[index]
-            if selection:
-                provider, model = selection
-                self.dismiss((provider, model))
-                return
-
-        self.dismiss(None)
+    def on_model_item_selected(self, message: ModelItem.Selected):
+        """Handle model selection from ModelItem."""
+        self.dismiss((message.provider, message.model))
 
     def on_button_pressed(self, event: Button.Pressed):
         self.dismiss(None)

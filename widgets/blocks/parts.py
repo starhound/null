@@ -56,7 +56,7 @@ class BlockHeader(Static):
 
 
 class BlockMeta(Static):
-    """Metadata bar for AI responses showing model, tokens, context."""
+    """Metadata bar for AI responses showing provider, model, tokens, context."""
 
     def __init__(self, block: BlockState):
         super().__init__()
@@ -66,6 +66,11 @@ class BlockMeta(Static):
         meta = self.block.metadata or {}
         parts = []
 
+        # Provider
+        provider = meta.get("provider", "")
+        if provider:
+            parts.append(provider)
+
         # Model
         model = meta.get("model", "")
         if model:
@@ -73,10 +78,15 @@ class BlockMeta(Static):
                 model = model.split("/")[-1]
             parts.append(model)
 
-        # Tokens
+        # Tokens (input/output)
         tokens = meta.get("tokens", "")
         if tokens:
             parts.append(tokens)
+
+        # Cost if available
+        cost = meta.get("cost", "")
+        if cost:
+            parts.append(cost)
 
         # Context
         ctx = meta.get("context", "")

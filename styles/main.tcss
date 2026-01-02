@@ -128,19 +128,22 @@ CommandSuggester {
     width: auto;
     max-width: 60;
     height: auto;
-    max-height: 10;
+    max-height: 12;
     background: $surface;
     border: round $primary;
     display: none;
     padding: 0 1;
+    overflow-y: auto;
 }
 
 CommandSuggester ListView {
     height: auto;
+    max-height: 10;
     width: 100%;
     margin: 0;
     padding: 0;
     background: transparent;
+    overflow-y: auto;
 }
 
 CommandSuggester ListItem {
@@ -789,7 +792,7 @@ BlockMeta .meta-sep {
 
 BlockMeta .meta-value {
     color: $text-muted;
-    text-style: dim italic;
+    text-style: italic;
 }
 
 BlockMeta .meta-spacer {
@@ -1075,11 +1078,11 @@ ModelListScreen {
     /* Inherits from ModalScreen */
 }
 
-ModelListScreen #selection-container {
-    width: 50%;
-    min-width: 40;
+ModelListScreen #model-selection-container {
+    width: 60%;
+    min-width: 50;
     height: auto;
-    max-height: 70%;
+    max-height: 80%;
     background: $surface;
     border: round $primary;
     padding: 1 2;
@@ -1090,6 +1093,17 @@ ModelListScreen #model-title {
     margin-bottom: 1;
     text-style: bold;
     color: $primary;
+}
+
+ModelListScreen #model-search {
+    margin-bottom: 1;
+    border: round $primary 50%;
+    background: $panel;
+    height: 3;
+}
+
+ModelListScreen #model-search:focus {
+    border: round $primary;
 }
 
 ModelListScreen #loading-indicator {
@@ -1109,27 +1123,45 @@ ModelListScreen #loading-indicator.error {
     text-style: bold;
 }
 
-ModelListScreen ListView {
+ModelListScreen #model-scroll {
     height: auto;
-    max-height: 20;
+    max-height: 25;
+    background: $panel;
+    padding: 0 1;
+}
+
+ModelListScreen Collapsible {
     margin: 0;
     padding: 0;
-    background: $panel;
+    background: transparent;
 }
 
-ModelListScreen ListItem {
-    padding: 0 1;
-    height: 1;
-}
-
-ModelListScreen ListItem.list-header {
+ModelListScreen CollapsibleTitle {
     color: $accent;
     text-style: bold;
-    background: $background;
+    padding: 0 1;
 }
 
-ModelListScreen ListItem:hover {
+ModelListScreen CollapsibleTitle:hover {
     background: $surface;
+}
+
+ModelListScreen .model-item {
+    padding: 0 2;
+    height: 1;
+    color: $text;
+}
+
+ModelListScreen .model-item:hover {
+    background: $primary 30%;
+    color: $text;
+    text-style: bold;
+}
+
+ModelListScreen .more-label {
+    color: $text-muted;
+    text-style: italic;
+    padding: 0 2;
 }
 
 ModelListScreen #cancel_btn {

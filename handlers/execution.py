@@ -75,7 +75,8 @@ class ExecutionHandler:
 
             # Store metadata
             block_state.metadata = {
-                "model": f"{provider_name}/{model_name}",
+                "provider": provider_name,
+                "model": model_name,
                 "context": f"~{context_info.estimated_tokens} tokens ({context_info.message_count} msgs)",
                 "persona": active_key
             }
