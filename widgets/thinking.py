@@ -13,6 +13,7 @@ class ThinkingWidget(Static):
     DEFAULT_CSS = """
     ThinkingWidget {
         height: auto;
+        min-height: 0;
         padding: 0 1;
         margin: 0;
     }

@@ -249,12 +249,18 @@ class BlockFooter(Static):
     DEFAULT_CSS = """
     BlockFooter {
         height: auto;
+        min-height: 0;
         padding: 0 2;
         color: $text-muted;
     }
 
     BlockFooter.empty-footer {
         display: none;
+        height: 0;
+        min-height: 0;
+        max-height: 0;
+        padding: 0;
+        margin: 0;
     }
 
     .exit-error {

@@ -30,6 +30,7 @@ class BlockWidget(Static):
     BlockWidget {
         layout: vertical;
         height: auto;
+        min-height: 0;
         background: $surface-darken-1;
         margin-bottom: 1;
         padding: 0;

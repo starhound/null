@@ -19,6 +19,7 @@ class ExecutionWidget(Static):
     DEFAULT_CSS = """
     ExecutionWidget {
         height: auto;
+        min-height: 0;
         padding: 0;
         margin: 0;
         background: transparent;
