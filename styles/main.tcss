@@ -380,6 +380,7 @@ ExecutionWidget .hidden {
 }
 
 ExecutionWidget #exec-container {
+    height: auto;
     padding: 0;
     border: round $warning 60%;
     margin: 0 2;
@@ -388,6 +389,7 @@ ExecutionWidget #exec-container {
 ExecutionWidget .exec-header {
     layout: horizontal;
     height: 1;
+    min-height: 1;
     width: 100%;
     padding: 0 2;
     margin-bottom: 0;
@@ -420,25 +422,18 @@ ExecutionWidget .copy-btn:hover {
 
 ExecutionWidget .exec-scroll {
     height: auto;
+    max-height: 20;
     margin: 0;
     padding: 1 2;
     background: transparent;
     color: $text;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 ExecutionWidget #exec-content {
     width: 100%;
     height: auto;
     padding: 0;
-}
-
-ExecutionWidget .exec-scroll {
-    height: auto;
-    max-height: 60vh;
-    padding: 1 2;
-    overflow-y: auto;
-    background: transparent;
 }
 
 /* --- History Search --- */
