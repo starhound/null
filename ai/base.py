@@ -215,14 +215,22 @@ def get_model_context_size(model_name: str) -> int:
     """Get context size for a model, with fallback to default."""
     model_lower = model_name.lower()
 
-    # Check exact match first
-    if model_lower in KNOWN_MODEL_CONTEXTS:
-        return KNOWN_MODEL_CONTEXTS[model_lower]
+    # Find the longest matching prefix (most specific match)
+    best_match_len = 0
+    best_size = 4096
+    found = False
 
-    # Check partial matches (e.g., "llama3.1:8b" matches "llama3.1")
     for known, size in KNOWN_MODEL_CONTEXTS.items():
-        if model_lower.startswith(known):
-            return size
+        # Check if model name starts with the known key OR if known key is contained in model name
+        # (e.g. "my-qwen3-coder" contains "qwen3-coder")
+        if known in model_lower:
+            if len(known) > best_match_len:
+                best_match_len = len(known)
+                best_size = size
+                found = True
+
+    if found:
+        return best_size
 
     # Default fallback
     return 4096
