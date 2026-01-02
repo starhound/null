@@ -16,20 +16,27 @@ class NullApp(App):
     Screen {
         layout: vertical;
     }
-    
+
     #input-container {
         height: 3;
-        padding: 0 1; 
+        padding: 0 1;
+        margin-top: 1;
         background: $surface;
+        border-top: solid $surface-lighten-2;
     }
 
     InputController {
         width: 100%;
     }
-    
+
+    /* AI mode input styling */
     .ai-mode {
-        border: solid $accent-lighten-2;
-        color: $text-accent;
+        border: solid $warning;
+        background: $surface-darken-1;
+    }
+
+    .ai-mode:focus {
+        border: solid $warning-lighten-1;
     }
     """
 
@@ -403,8 +410,15 @@ class NullApp(App):
                 widget.update_output(full_response)
 
             block_state.is_running = False
-            widget.set_loading(False) # Stop spinner if any
-            
+
+            # Update metadata with token estimate (rough: ~4 chars per token)
+            response_tokens = len(full_response) // 4
+            context_tokens = len(context_str) // 4
+            block_state.metadata["tokens"] = f"~{response_tokens} out / ~{context_tokens} ctx"
+            widget.update_metadata()
+
+            widget.set_loading(False)
+
             # Post-generation: Check for Agentic Command
             # Parser for Markdown Code Blocks
             # We look for ```bash ... ``` or ```sh ... ```
@@ -494,18 +508,13 @@ class NullApp(App):
 
     async def execute_block(self, block: BlockState, widget: BlockWidget):
         """Helper to run the command and update the widget."""
-        
+
         # Callback to update the widget interface from the executor stream
         def update_callback(line: str):
-            # We must schedule the update on the main thread/loop if we were outside of it,
-            # but run_worker runs in asyncio context where we can modify properties unless
-            # threading is involved. Textual is async-native.
-            # However, `ExecutionEngine` logic might run blocking if not carefully designed,
-            # but ours is using asyncio.create_subprocess_shell.
-            
-            # Since ExecutionEngine calls this callback, let's update the widget.
-            # Safe to update reactive properties directly as we are on the main loop.
-            widget.update_output(line)
+            # Accumulate output to block state
+            block.content_output += line
+            # Update widget display
+            widget.update_output()
 
         # Non-blocking run
         exit_code = await self.executor.run_command_and_get_rc(block.content_input, update_callback)

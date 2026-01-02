@@ -1,0 +1,138 @@
+from textual.app import ComposeResult
+from textual.widgets import Static
+
+from models import BlockState, BlockType
+from .block_parts import BlockHeader, BlockBody, BlockFooter, BlockMeta
+from .thinking import ThinkingWidget
+from .execution import ExecutionWidget
+
+
+class BlockWidget(Static):
+    """A widget representing a single interaction block."""
+
+    DEFAULT_CSS = """
+    BlockWidget {
+        layout: vertical;
+        background: $surface-darken-1;
+        margin-bottom: 1;
+        padding: 0;
+        border-left: thick $surface-lighten-2;
+    }
+
+    /* CLI Command blocks - green accent */
+    BlockWidget.block-command {
+        border-left: thick $success;
+        background: $surface-darken-2;
+        padding-bottom: 1;
+    }
+
+    /* AI Query blocks - amber/yellow accent */
+    BlockWidget.block-ai-query {
+        border-left: thick $warning;
+        background: $surface-darken-1;
+        padding-bottom: 1;
+    }
+
+    /* AI Response blocks - blue/purple accent */
+    BlockWidget.block-ai-response {
+        border-left: thick $primary;
+        background: $surface;
+        padding-bottom: 1;
+        margin-bottom: 2;
+    }
+    """
+
+    def __init__(self, block: BlockState):
+        super().__init__()
+        self.block = block
+
+        # Add type-specific CSS class
+        if block.type == BlockType.COMMAND:
+            self.add_class("block-command")
+        elif block.type == BlockType.AI_QUERY:
+            self.add_class("block-ai-query")
+        elif block.type == BlockType.AI_RESPONSE:
+            self.add_class("block-ai-response")
+
+        self.header = BlockHeader(block)
+        self.meta_widget = None
+
+        # Sub-widgets
+        self.body_widget = None
+        self.thinking_widget = None
+        self.exec_widget = None
+        self.footer_widget = BlockFooter(block)
+
+        if block.type == BlockType.AI_RESPONSE:
+            self.meta_widget = BlockMeta(block)
+            self.thinking_widget = ThinkingWidget(block)
+            self.exec_widget = ExecutionWidget(block)
+        else:
+            text = block.content_input if block.type == BlockType.AI_QUERY else block.content_output
+            if block.type == BlockType.COMMAND:
+                text = block.content_output
+            self.body_widget = BlockBody(text)
+
+    def compose(self) -> ComposeResult:
+        yield self.header
+
+        if self.meta_widget:
+            yield self.meta_widget
+
+        if self.thinking_widget:
+            yield self.thinking_widget
+
+        if self.exec_widget:
+            yield self.exec_widget
+
+        if self.body_widget:
+            yield self.body_widget
+
+        yield self.footer_widget
+
+    def update_output(self, new_content: str = ""):
+        """Update the block's output display. Uses block state for content."""
+        if self.block.type == BlockType.AI_RESPONSE:
+            if self.thinking_widget:
+                self.thinking_widget.thinking_text = self.block.content_output
+            if self.exec_widget:
+                self.exec_widget.exec_output = getattr(self.block, 'content_exec_output', '')
+        else:
+            if self.body_widget:
+                self.body_widget.content_text = self.block.content_output
+
+    def update_metadata(self):
+        """Refresh the header and metadata widgets."""
+        try:
+            # Update header
+            self.header.remove()
+            self.header = BlockHeader(self.block)
+            self.mount(self.header, before=self.children[0])
+
+            # Update metadata widget if present
+            if self.meta_widget:
+                self.meta_widget.remove()
+                self.meta_widget = BlockMeta(self.block)
+                # Mount after header
+                if len(self.children) > 1:
+                    self.mount(self.meta_widget, after=self.header)
+                else:
+                    self.mount(self.meta_widget)
+        except Exception:
+            pass
+
+    def set_loading(self, loading: bool):
+        self.block.is_running = loading
+        self.footer_widget.remove()
+        self.footer_widget = BlockFooter(self.block)
+        self.mount(self.footer_widget)
+
+        # Update thinking widget loading state
+        if self.thinking_widget:
+            if not loading:
+                self.thinking_widget.stop_loading()
+                self.thinking_widget.force_render()
+
+    def set_exit_code(self, code: int):
+        self.block.exit_code = code
+        self.set_loading(False)
