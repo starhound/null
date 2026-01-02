@@ -267,9 +267,9 @@ class ModelListScreen(ModalScreen):
         try:
             scroll = self.query_one("#model-scroll", VerticalScroll)
 
-            # Remove old content
-            content = self.query_one("#model-content", Static)
-            content.remove()
+            # Remove ALL children from scroll (including old collapsibles)
+            for child in list(scroll.children):
+                child.remove()
 
             # Get sorted providers: active first, then alphabetically
             from config import Config
@@ -301,19 +301,20 @@ class ModelListScreen(ModalScreen):
                 if is_active:
                     title = f"● {title}"
 
-                # Expand active provider or first provider
-                collapsed = not is_active
+                # Expand active provider or first provider, or if searching
+                collapsed = not is_active and not self.search_query
 
-                collapsible = Collapsible(title=title, collapsed=collapsed, id=f"provider-{provider}")
-                scroll.mount(collapsible)
-
-                # Add model items inside the collapsible
+                # Build list of model widgets to pass to Collapsible
+                model_widgets = []
                 for model in filtered[:100]:  # Limit to 100 per provider
-                    item = ModelItem(provider, model)
-                    collapsible.mount(item)
-
+                    model_widgets.append(ModelItem(provider, model))
+                
                 if len(filtered) > 100:
-                    collapsible.mount(Static(f"  ... and {len(filtered) - 100} more", classes="more-label"))
+                    model_widgets.append(Static(f"  ... and {len(filtered) - 100} more", classes="more-label"))
+
+                # Create collapsible WITH the children
+                collapsible = Collapsible(*model_widgets, title=title, collapsed=collapsed, id=f"provider-{provider}")
+                scroll.mount(collapsible)
 
         except Exception:
             pass

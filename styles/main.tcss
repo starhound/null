@@ -16,6 +16,19 @@ $text-dim: $foreground 40%;
 /* Lighter surface variants (derived from theme) */
 $surface-light: $surface;
 $panel-light: $panel;
+
+/* ==========================================================================
+   Global Scrollbar Styles
+   ========================================================================== */
+
+VerticalScroll, HorizontalScroll {
+    scrollbar-size: 1 1;
+    scrollbar-background: transparent;
+    scrollbar-color: $text-dim;
+    scrollbar-color-hover: $text-muted;
+    scrollbar-color-active: $primary;
+}
+
 /* ==========================================================================
    Layout
    ========================================================================== */
@@ -63,30 +76,30 @@ HistoryViewport {
 
 #input-container {
     height: auto;
-    min-height: 3;
-    margin: 0 0 0 1;
-    padding: 0 1;
-    background: $surface;
-    border: round $panel;
+    min-height: 4;
+    width: 100%;
+    margin-top: 1;
+    padding: 1 2;
+    background: $background;
+    border-top: solid $panel;
 }
 
 #input-container:focus-within {
-    border: round $primary;
-    background: $surface-light;
+    background: $background;
 }
 
 #input-container.ai-mode {
-    border: round $warning 50%;
+    border-top: solid $warning 60%;
 }
 
 #input-container.ai-mode:focus-within {
-    border: round $warning;
-    background: $surface-light;
+    background: $background;
 }
 
 #prompt-line {
     height: 1;
-    padding: 0;
+    padding: 0 0;
+    margin-bottom: 1;
     color: $success;
     text-style: bold;
 }
@@ -122,15 +135,15 @@ InputController > .text-area--selection {
 CommandSuggester {
     layer: overlay;
     dock: bottom;
-    margin-bottom: 5;
-    margin-left: 4;
-    margin-right: 4;
+    margin-bottom: 4;
+    margin-left: 2;
+    margin-right: 2;
     width: auto;
     max-width: 60;
     height: auto;
     max-height: 12;
     background: $surface;
-    border: round $primary;
+    border: round $panel;
     display: none;
     padding: 0 1;
     overflow-y: auto;
@@ -1273,6 +1286,140 @@ ProviderConfigScreen #connection-status.success {
 ProviderConfigScreen #connection-status.error {
     color: $error;
     text-style: bold;
+}
+
+/* ==========================================================================
+   Config Screen (Settings)
+   ========================================================================== */
+
+ConfigScreen {
+    /* Inherits from ModalScreen */
+}
+
+ConfigScreen #config-outer {
+    width: 90%;
+    min-width: 70;
+    max-width: 120;
+    height: 85%;
+    background: $surface;
+    border: round $panel;
+    padding: 1 2;
+}
+
+ConfigScreen #config-header {
+    height: 1;
+    padding: 0;
+}
+
+ConfigScreen #config-header Label {
+    text-style: bold;
+    color: $accent;
+}
+
+ConfigScreen TabbedContent {
+    height: 1fr;
+}
+
+ConfigScreen .settings-scroll {
+    height: 1fr;
+    padding: 0 1;
+    scrollbar-size-vertical: 1;
+    scrollbar-background: transparent;
+    scrollbar-color: $text-dim;
+    scrollbar-color-hover: $text-muted;
+}
+
+ConfigScreen .settings-header {
+    height: auto;
+    margin: 0;
+    padding: 0;
+    color: $accent;
+    text-style: bold;
+}
+
+ConfigScreen .setting-row {
+    height: auto;
+    padding: 0;
+    margin: 0;
+}
+
+ConfigScreen .terminal-info {
+    background: $panel 30%;
+    padding: 0;
+    height: auto;
+}
+
+ConfigScreen .setting-info {
+    width: 1fr;
+}
+
+ConfigScreen .setting-label {
+    color: $text;
+}
+
+ConfigScreen .setting-hint {
+    color: $text-muted;
+    text-style: italic;
+}
+
+ConfigScreen .setting-warning {
+    color: $warning;
+    padding: 0;
+    margin: 0;
+    height: auto;
+}
+
+ConfigScreen .setting-control {
+    width: auto;
+    min-width: 30;
+}
+
+ConfigScreen #config-footer {
+    height: 3;
+    padding: 0 1;
+    dock: bottom;
+}
+
+ConfigScreen #save-btn {
+    margin-right: 1;
+    min-width: 12;
+    height: 3;
+    background: $success;
+    color: $background;
+    text-style: bold;
+}
+
+ConfigScreen #save-btn:hover {
+    background: $success 80%;
+}
+
+ConfigScreen #cancel-btn {
+    min-width: 12;
+    height: 3;
+    background: $panel;
+    color: $text;
+}
+
+ConfigScreen #cancel-btn:hover {
+    background: $error;
+    color: $text;
+}
+
+ConfigScreen .spacer {
+    width: 1fr;
+}
+
+ConfigScreen #reset-btn {
+    min-width: 16;
+    height: 3;
+    color: $warning;
+    background: transparent;
+    border: solid $warning;
+}
+
+ConfigScreen #reset-btn:hover {
+    background: $warning;
+    color: $background;
 }
 
 /* ==========================================================================

@@ -67,7 +67,23 @@ class ConfigScreen(ModalScreen):
 
     def _appearance_settings(self) -> ComposeResult:
         """Appearance tab settings."""
+        from utils.terminal import get_terminal_info
+        
         s = self.settings.appearance
+        term_info = get_terminal_info()
+
+        # Show detected terminal info
+        yield Static("Terminal Detection", classes="settings-header")
+        
+        font_support = "✓ Supported" if term_info.supports_font_change else "✗ Not supported"
+        with Horizontal(classes="setting-row terminal-info"):
+            with Vertical(classes="setting-info"):
+                yield Label(f"Detected: {term_info.name}", classes="setting-label")
+                yield Label(f"Font control: {font_support}", classes="setting-hint")
+            with Horizontal(classes="setting-control"):
+                yield Static("")  # Placeholder for alignment
+
+        yield Static("Theme", classes="settings-header")
 
         themes = [
             ("null-dark", "Null Dark"),
@@ -85,6 +101,16 @@ class ConfigScreen(ModalScreen):
             Select([(name, value) for value, name in themes], value=s.theme, id="theme")
         )
 
+        # Font settings - show with info about terminal support
+        yield Static("Font Settings", classes="settings-header")
+        
+        if not term_info.supports_font_change:
+            yield Label(
+                f"⚠ {term_info.name} does not support runtime font changes. "
+                "Edit your terminal config directly.",
+                classes="setting-warning"
+            )
+
         fonts = [
             ("monospace", "Monospace (Default)"),
             ("Fira Code", "Fira Code"),
@@ -96,14 +122,14 @@ class ConfigScreen(ModalScreen):
         yield from self._setting_row(
             "appearance.font_family",
             "Font Family",
-            "Terminal font (requires terminal support)",
+            f"Terminal font {'(applied to terminal)' if term_info.supports_font_change else '(reference only)'}",
             Select([(name, value) for value, name in fonts], value=s.font_family, id="font_family")
         )
 
         yield from self._setting_row(
             "appearance.font_size",
             "Font Size",
-            "Font size in pixels (terminal dependent)",
+            f"Font size in pixels {'(applied to terminal)' if term_info.supports_font_change else '(reference only)'}",
             Input(value=str(s.font_size), type="integer", id="font_size")
         )
 
@@ -113,6 +139,8 @@ class ConfigScreen(ModalScreen):
             "Line spacing multiplier (e.g., 1.4)",
             Input(value=str(s.line_height), type="number", id="line_height")
         )
+
+        yield Static("Display Options", classes="settings-header")
 
         yield from self._setting_row(
             "appearance.show_timestamps",
