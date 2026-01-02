@@ -243,16 +243,16 @@ ThinkingWidget {
     min-height: 0;
     padding: 0;
     margin: 0;
-    background: $surface;
+    background: transparent;
 }
 
 ThinkingWidget .thinking-header {
     layout: horizontal;
     height: 1;
     width: 100%;
-    padding: 0 1;
+    padding: 0 2;
     margin-bottom: 0;
-    background: $secondary 25%;
+    background: transparent;
     display: none;
 }
 
@@ -261,7 +261,7 @@ ThinkingWidget .thinking-header.loading {
 }
 
 ThinkingWidget .spinner {
-    color: $secondary;
+    color: $primary;
     min-width: 2;
 }
 
@@ -270,18 +270,18 @@ ThinkingWidget .spinner.complete {
 }
 
 ThinkingWidget .thinking-label {
-    color: $secondary;
+    color: $text-muted;
     text-style: italic;
     padding-left: 1;
     width: 1fr;
 }
 
 ThinkingWidget .toggle-hint {
-    color: $text-muted;
+    color: $text-dim;
 }
 
 ThinkingWidget .toggle-hint:hover {
-    color: $secondary;
+    color: $primary;
     text-style: bold;
 }
 
@@ -289,11 +289,10 @@ ThinkingWidget .peek-window {
     height: 4;
     max-height: 4;
     margin: 0;
-    padding: 0 1;
-    background: $surface-light;
-    color: $text-muted;
+    padding: 1 2;
+    background: transparent;
+    color: $text;
     scrollbar-size: 0 0;
-    border-left: wide $secondary 40%;
 }
 
 ThinkingWidget .peek-window.expanded {
@@ -311,7 +310,49 @@ ThinkingWidget .peek-window.empty {
     height: 0;
     max-height: 0;
     display: none;
-    border: none;
+}
+
+/* --- Code Block Widget --- */
+
+.code-block-container {
+    margin: 1 0;
+    border: round $accent 60%;
+    background: transparent;
+}
+
+.code-block-header {
+    height: 1;
+    padding: 0 2;
+    background: transparent;
+    border-bottom: dashed $accent 40%;
+}
+
+.code-lang-label {
+    color: $accent;
+    text-style: bold;
+}
+
+.code-header-spacer {
+    width: 1fr;
+}
+
+.code-action {
+    margin-left: 1;
+    color: $text-dim;
+}
+
+.code-action:hover {
+    color: $accent;
+    text-style: bold;
+}
+
+.code-action-run:hover {
+    color: $success;
+}
+
+.code-block-content {
+    padding: 1 2;
+    background: transparent;
 }
 
 /* --- Execution Widget --- */
@@ -321,7 +362,7 @@ ExecutionWidget {
     min-height: 0;
     padding: 0;
     margin: 1 0 0 0;
-    background: $surface;
+    background: transparent;
 }
 
 ExecutionWidget .hidden {
@@ -330,16 +371,18 @@ ExecutionWidget .hidden {
 
 ExecutionWidget #exec-container {
     padding: 0;
-    border-left: wide $warning;
+    border: round $warning 60%;
+    margin: 0 2;
 }
 
 ExecutionWidget .exec-header {
     layout: horizontal;
     height: 1;
     width: 100%;
-    padding: 0 1;
+    padding: 0 2;
     margin-bottom: 0;
-    background: $warning 25%;
+    background: transparent;
+    border-bottom: dashed $warning 40%;
 }
 
 ExecutionWidget .exec-title {
@@ -356,7 +399,7 @@ ExecutionWidget .copy-btn {
     width: auto;
     height: 1;
     background: transparent;
-    color: $text-muted;
+    color: $text-dim;
 }
 
 ExecutionWidget .copy-btn:hover {
@@ -367,8 +410,8 @@ ExecutionWidget .copy-btn:hover {
 ExecutionWidget .exec-scroll {
     height: auto;
     margin: 0;
-    padding: 1;
-    background: $surface-light;
+    padding: 1 2;
+    background: transparent;
     color: $text;
     overflow: hidden;
 }
@@ -531,119 +574,127 @@ CommandBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: $surface;
+    background: transparent;
     color: $text;
     margin: 1 0;
     padding: 0;
-    border: round $success 50%;
+    border: round $success;
 }
 
 CommandBlock:focus-within {
     border: round $success;
+    background: $success 5%;
 }
 
 CommandBlock BlockHeader {
-    background: $success 20%;
+    background: transparent;
     padding: 0 2;
-    border-bottom: solid $success 30%;
+    color: $success;
+    border-bottom: dashed $success 40%;
 }
 
 CommandBlock BlockBody {
-    background: $surface;
-    padding: 1 2;
+    background: transparent;
+    padding: 1 3;
 }
 
 AIResponseBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: $surface;
+    background: transparent;
     color: $text;
     margin: 1 0;
     padding: 0;
-    border: round $primary 50%;
+    border: round $primary;
 }
 
 AIResponseBlock:focus-within {
     border: round $primary;
+    background: $primary 5%;
 }
 
 AIResponseBlock BlockHeader {
-    background: $primary 20%;
+    background: transparent;
     padding: 0 2;
-    border-bottom: solid $primary 30%;
+    color: $primary;
+    border-bottom: dashed $primary 40%;
 }
 
 AIResponseBlock BlockBody {
-    background: $surface;
-    padding: 1 2;
+    background: transparent;
+    padding: 1 3;
 }
 
 AIResponseBlock BlockMeta {
-    background: $panel;
-    padding: 0 2;
+    background: transparent;
+    padding: 0 3;
     margin: 0;
-    border-top: solid $primary 20%;
+    color: $text-muted;
+    border-top: dashed $primary 30%;
 }
 
 SystemBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: $surface;
+    background: transparent;
     color: $text;
     margin: 1 0;
     padding: 0;
-    border: round $secondary 50%;
+    border: round $secondary;
 }
 
 SystemBlock:focus-within {
     border: round $secondary;
+    background: $secondary 5%;
 }
 
 SystemBlock BlockHeader {
-    background: $secondary 20%;
+    background: transparent;
     padding: 0 2;
-    border-bottom: solid $secondary 30%;
+    color: $secondary;
+    border-bottom: dashed $secondary 40%;
 }
 
 SystemBlock BlockBody {
-    background: $surface;
-    padding: 1 2;
+    background: transparent;
+    padding: 1 3;
 }
 
 ToolCallBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: $surface;
+    background: transparent;
     color: $text;
     margin: 1 0;
     padding: 0;
-    border: round $accent 50%;
+    border: round $accent;
 }
 
 ToolCallBlock:focus-within {
     border: round $accent;
+    background: $accent 5%;
 }
 
 ToolCallBlock BlockHeader {
-    background: $accent 25%;
+    background: transparent;
     padding: 0 2;
-    color: $text;
-    border-bottom: solid $accent 30%;
+    color: $accent;
+    border-bottom: dashed $accent 40%;
 }
 
 ToolCallBlock BlockBody {
-    background: $surface;
-    padding: 1 2;
+    background: transparent;
+    padding: 1 3;
 }
 
 ToolCallBlock BlockMeta {
-    background: $panel;
-    padding: 0 2;
+    background: transparent;
+    padding: 0 3;
     color: $text-muted;
-    border-top: solid $accent 20%;
+    border-top: dashed $accent 30%;
 }
 
 /* --- Block Parts: Header --- */

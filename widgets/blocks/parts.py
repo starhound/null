@@ -124,17 +124,22 @@ class BlockBody(Static):
             pass
 
     def _make_links_clickable(self, text: str) -> Text:
-        """Convert plain text with URLs to Rich Text with clickable links."""
+        """Convert plain text with URLs to Rich Text with clickable links.
+
+        Also handles command separators and prompts with styling.
+        """
         if not text:
             return Text("")
 
         result = Text()
         last_end = 0
 
+        # First, handle URLs
         for match in URL_PATTERN.finditer(text):
-            # Add text before the URL
+            # Add text before the URL (with separator styling)
             if match.start() > last_end:
-                result.append(text[last_end:match.start()])
+                segment = text[last_end:match.start()]
+                self._append_styled_segment(result, segment)
 
             # Add the URL as a clickable link
             url = match.group(0)
@@ -143,9 +148,31 @@ class BlockBody(Static):
 
         # Add remaining text after last URL
         if last_end < len(text):
-            result.append(text[last_end:])
+            segment = text[last_end:]
+            self._append_styled_segment(result, segment)
 
         return result
+
+    def _append_styled_segment(self, result: Text, segment: str):
+        """Append a text segment with appropriate styling for separators and prompts."""
+        # Split by lines to handle separators and prompts
+        lines = segment.split('\n')
+        for i, line in enumerate(lines):
+            if i > 0:
+                result.append('\n')
+
+            # Style command separators (dim)
+            if line.startswith('┄') or line.startswith('─'):
+                result.append(line, style="dim")
+            # Style command prompts (bold green)
+            elif line.startswith('❯ '):
+                result.append('❯ ', style="bold green")
+                result.append(line[2:], style="bold")
+            elif line.startswith('$ '):
+                result.append('$ ', style="bold green")
+                result.append(line[2:], style="bold")
+            else:
+                result.append(line)
 
 
 class BlockFooter(Static):

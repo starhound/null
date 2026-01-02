@@ -88,14 +88,18 @@ class InputHandler:
         else:
             await self._create_cli_block(cmd)
 
+    # Unicode box-drawing rule for separating command chains
+    COMMAND_SEPARATOR = "┄" * 40
+
     async def _append_to_cli_block(self, cmd: str):
         """Append command to existing CLI block."""
         block = self.app.current_cli_block
         widget = self.app.current_cli_widget
 
         if block.content_output:
-            block.content_output += "\n"
-        block.content_output += f"$ {cmd}\n"
+            # Add visual separator between command chains
+            block.content_output += f"\n{self.COMMAND_SEPARATOR}\n\n"
+        block.content_output += f"❯ {cmd}\n"
         widget.update_output()
         widget.scroll_visible()
 
