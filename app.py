@@ -7,7 +7,7 @@ import os
 
 from config import Config
 from models import BlockState, BlockType
-from widgets import InputController, HistoryViewport, BlockWidget, CommandSuggester, StatusBar, HistorySearch
+from widgets import InputController, HistoryViewport, BlockWidget, BaseBlockWidget, CommandSuggester, StatusBar, HistorySearch
 from executor import ExecutionEngine
 from mcp import MCPManager
 
@@ -509,7 +509,7 @@ class NullApp(App):
         self._update_status_bar()
         self._update_prompt()
 
-    async def on_block_widget_retry_requested(self, message: BlockWidget.RetryRequested):
+    async def on_block_widget_retry_requested(self, message: BaseBlockWidget.RetryRequested):
         """Handle retry button click - regenerate AI response."""
         # Find the block
         block = next((b for b in self.blocks if b.id == message.block_id), None)
@@ -525,7 +525,7 @@ class NullApp(App):
 
         await self.regenerate_block(block, widget)
 
-    async def on_block_widget_edit_requested(self, message: BlockWidget.EditRequested):
+    async def on_block_widget_edit_requested(self, message: BaseBlockWidget.EditRequested):
         """Handle edit button click - populate input with original query."""
         input_ctrl = self.query_one("#input", InputController)
         input_ctrl.text = message.content
@@ -535,15 +535,15 @@ class NullApp(App):
             input_ctrl.toggle_mode()
         self.notify("Edit and resubmit your query")
 
-    def _find_widget_for_block(self, block_id: str) -> BlockWidget:
+    def _find_widget_for_block(self, block_id: str) -> BaseBlockWidget:
         """Find the BlockWidget for a given block ID."""
         history_vp = self.query_one("#history", HistoryViewport)
-        for widget in history_vp.query(BlockWidget):
+        for widget in history_vp.query(BaseBlockWidget):
             if widget.block.id == block_id:
                 return widget
         return None
 
-    async def regenerate_block(self, block: BlockState, widget: BlockWidget):
+    async def regenerate_block(self, block: BlockState, widget: BaseBlockWidget):
         """Regenerate an AI response block with the same query."""
         if not self.ai_provider:
             self.notify("AI Provider not configured", severity="error")
@@ -977,7 +977,7 @@ class NullApp(App):
             self.notify(f"Unknown command: {command}", severity="warning")
 
 
-    async def execute_ai(self, prompt: str, block_state: BlockState, widget: BlockWidget):
+    async def execute_ai(self, prompt: str, block_state: BlockState, widget: BaseBlockWidget):
         """Worker to execute AI generation."""
         try:
             from context import ContextManager # Lazy import
@@ -1077,7 +1077,7 @@ class NullApp(App):
             widget.update_output(f"Error: {str(e)}")
             self._active_worker = None
 
-    def run_agent_command(self, command: str, ai_block: BlockState, ai_widget: BlockWidget):
+    def run_agent_command(self, command: str, ai_block: BlockState, ai_widget: BaseBlockWidget):
         """Execute a command requested by the Agent, executing INLINE."""
         
         # Append status
@@ -1137,7 +1137,7 @@ class NullApp(App):
             
         self.run_worker(run_inline())
 
-    async def execute_block(self, block: BlockState, widget: BlockWidget):
+    async def execute_block(self, block: BlockState, widget: BaseBlockWidget):
         """Helper to run the command and update the widget."""
 
         # Callback to update the widget interface from the executor stream
@@ -1156,7 +1156,7 @@ class NullApp(App):
         # Auto-save session
         self._auto_save()
 
-    async def execute_cli_append(self, cmd: str, block: BlockState, widget: BlockWidget):
+    async def execute_cli_append(self, cmd: str, block: BlockState, widget: BaseBlockWidget):
         """Execute a command and append output to existing CLI block."""
 
         def update_callback(line: str):

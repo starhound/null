@@ -91,7 +91,6 @@ class BlockHeader(Static):
             icon = "◆"
             icon_class = "prompt-symbol-response"
             text_class = "header-text-ai"
-            # Show the original query if available
             display_text = self.block.content_input if self.block.content_input else "AI Response"
         elif self.block.type == BlockType.SYSTEM_MSG:
             icon = "●"
@@ -215,8 +214,9 @@ class BlockBody(Static):
 
     DEFAULT_CSS = """
     BlockBody {
+        height: auto;
+        min-height: 0;
         padding: 0 2;
-        margin-bottom: 1;
         color: $text;
     }
 
@@ -256,11 +256,6 @@ class BlockFooter(Static):
 
     BlockFooter.empty-footer {
         display: none;
-        height: 0;
-        min-height: 0;
-        max-height: 0;
-        padding: 0;
-        margin: 0;
     }
 
     .exit-error {
@@ -277,11 +272,19 @@ class BlockFooter(Static):
     def __init__(self, block: BlockState):
         super().__init__()
         self.block = block
+        if not self._has_content():
+            self.add_class("empty-footer")
+
+    def _has_content(self) -> bool:
+        """Check if footer should show content."""
+        if self.block.exit_code is not None and self.block.exit_code != 0:
+            return True
+        if self.block.is_running:
+            return True
+        return False
 
     def compose(self) -> ComposeResult:
         if self.block.exit_code is not None and self.block.exit_code != 0:
             yield Label(f"Exit Code: {self.block.exit_code}", classes="exit-error")
         elif self.block.is_running:
             yield Label("Running...", classes="running-spinner")
-        else:
-            self.add_class("empty-footer")
