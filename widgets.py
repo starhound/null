@@ -402,9 +402,7 @@ class ThinkingWidget(Static):
         padding-left: 2;
         border-left: heavy $primary;
     }
-    .thinking-content.visible {
-        display: block;
-    }
+
     """
     
     thinking_text = reactive("")
@@ -418,26 +416,25 @@ class ThinkingWidget(Static):
         yield Static("", classes="thinking-content", id="thinking-content")
 
     def watch_thinking_text(self, new_text: str):
+        # self.notify(f"Thinking Watch: {len(new_text)} chars")
         content = self.query_one("#thinking-content", Static)
         from rich.markdown import Markdown
         content.update(Markdown(new_text))
         
     @on(Button.Pressed)
+    @on(Button.Pressed)
     def toggle_thinking(self):
         content = self.query_one("#thinking-content")
-        # specific check for class based toggling might be flaky if styles conflict
-        # Let's simple toggle the class but ALSO force update the content just in case
-        content.toggle_class("visible")
+        btn = self.query_one(Button)
         
-        # Force re-render of markdown if it was lost?
-        if content.has_class("visible"):
+        if content.styles.display == "none":
+            content.styles.display = "block"
+            btn.label = "▼ Thinking..."
+            # Force update just in case
             from rich.markdown import Markdown
             content.update(Markdown(self.thinking_text))
-
-        btn = self.query_one(Button)
-        if content.has_class("visible"):
-            btn.label = "▼ Thinking..."
         else:
+            content.styles.display = "none"
             btn.label = "▶ Thinking..."
 
 
@@ -448,6 +445,11 @@ class ExecutionWidget(Static):
         height: auto;
         padding: 0 1;
         margin-top: 1;
+        background: $surface;
+        border-top: solid $accent;
+    }
+    .hidden {
+        display: none;
     }
     .exec-header {
         layout: horizontal;
@@ -475,28 +477,26 @@ class ExecutionWidget(Static):
         self.block = block
 
     def compose(self) -> ComposeResult:
-        # If there is output, show header + content
-        yield Static(id="exec-area")
-
-    def watch_exec_output(self, new_text: str):
-        # We only rebuild if there is content
-        area = self.query_one("#exec-area")
-        area.remove_children()
-        
-        if new_text:
-            # Header with Copy
-            with Container(classes="exec-header"):
+        # Persistent container, hidden by default if empty
+        with Container(id="exec-container", classes="hidden"):
+             with Container(classes="exec-header"):
                  yield Label("Command Output", classes="exec-title")
                  yield Button("Copy", classes="copy-btn", id="copy-btn")
-            
-            # Content
-            # We assume it's text, or markdown code block? 
-            # App handles formatting in previous implementation. 
-            # Let's just render the raw text in a rich Syntax or Markdown block? 
-            # The app was appending ```text ... ```. 
-            # Let's stick to Markdown update for now.
+             yield Static(id="exec-content")
+
+    def watch_exec_output(self, new_text: str):
+        container = self.query_one("#exec-container")
+        content = self.query_one("#exec-content", Static)
+        
+        if new_text:
+            container.remove_class("hidden")
             from rich.markdown import Markdown
-            area.mount(Static(Markdown(new_text)))
+            # Use Markdown? Or just text? Text is safer for raw output.
+            # But we wrap in ```text currently.
+            content.update(Markdown(new_text))
+        else:
+            container.add_class("hidden")
+            content.update("")
 
     @on(Button.Pressed, "#copy-btn")
     def copy_output(self):
@@ -607,21 +607,6 @@ class BlockWidget(Static):
     def update_output(self, new_chunk: str):
         # Dispatch update
         if self.block.type == BlockType.AI_RESPONSE:
-            # We assume new_chunk is appended to content_output (Thinking)
-            # UNLESS app.py updates content_exec_output using a different specific method?
-            # app.py calls `widget.update_output(chunk)` for AI text.
-            # app.py calls `widget.update_output(full_exec)` for execution?
-            # We need to distinguish or update properties directly.
-            
-            # For now, let's assume `update_output` is for the MAIN text stream (Thinking).
-            self.block.content_output = new_chunk # app.py passes full text usually? No, execute_ai passes chunk?
-            # execute_ai passes chunk.
-            # run_agent_command passes full text.
-            # This is messy.
-            
-            # Let's rely on Reactive?
-            # If app.py updates block.content_output, does widget know?
-            # We need to manually update widget reactive props.
             if self.thinking_widget:
                  self.thinking_widget.thinking_text = self.block.content_output
             if self.exec_widget:
@@ -629,9 +614,8 @@ class BlockWidget(Static):
                  
         else:
              # Standard body update
-             # self.body_widget.update(...) # Body is static label?
-             # Re-mount or update generic text
-             pass
+             if self.body_widget:
+                 self.body_widget.content_text = new_chunk
 
     def update_metadata(self):
         self.header.remove()

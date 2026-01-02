@@ -409,8 +409,9 @@ class NullApp(App):
             # Parser for Markdown Code Blocks
             # We look for ```bash ... ``` or ```sh ... ```
             import re
-            # Matches ```bash\n(content)\n```
-            code_block_match = re.search(r"```(bash|sh)\n(.*?)```", full_response, re.DOTALL)
+            # Matches ```(bash|sh|console|shell)\n(content)\n```
+            # Allow permissive whitespace around language
+            code_block_match = re.search(r"```\s*(bash|sh|console|shell)\s+\n?(.*?)```", full_response, re.DOTALL)
             
             command_to_run = None
             if code_block_match:
@@ -438,26 +439,40 @@ class NullApp(App):
         status_msg = f"\n\n> 🤖 **Executing:** `{command}`...\n"
         # We can put this in exec output temporarily or thinking?
         # Let's put it in thinking to show transition.
-        ai_block.content_output += status_msg
-        ai_widget.update_output(ai_block.content_output)
+        # DEBUG: Temporarily disable appending to thinking to see if it fixes "jumbling"
+        # ai_block.content_output += status_msg
+        # ai_widget.update_output(ai_block.content_output)
         
         async def run_inline():
             try:
                 output_buffer = []
                 def callback(line):
                     output_buffer.append(line)
+                    # Stream update
+                    current_text = "".join(output_buffer)
+                    ai_block.content_exec_output = f"\n```text\n{current_text}\n```\n"
+                    # Describe the update on the main thread via call_from_thread just in case?
+                    # Textual apps are not thread safe if modifying widgets from threads.
+                    # But run_worker runs in the same event loop usually.
+                    # However, read_line await is async.
+                    # Let's try direct update first.
+                    ai_widget.update_output("")
+
                 
                 # Execute
                 rc = await self.executor.run_command_and_get_rc(command, callback)
+                
                 output_text = "".join(output_buffer)
                 
+                if not output_text.strip():
+                     output_text = "(Command execution completed with no output)"
+                
                 # Append Output
-                # Sanitize?
                 result_md = f"\n```text\n{output_text}\n```\n"
                 if rc != 0:
                     result_md += f"\n*Exit Code: {rc}*\n"
                 
-                # Store in dedicated execution field
+                # Final store
                 ai_block.content_exec_output = result_md
                 
                 # Trigger widget update
