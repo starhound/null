@@ -1,5 +1,7 @@
 from textual.app import ComposeResult
-from textual.widgets import Static
+from textual.widgets import Static, Button
+from textual.message import Message
+from textual import on
 
 from models import BlockState, BlockType
 from .block_parts import BlockHeader, BlockBody, BlockFooter, BlockMeta
@@ -9,6 +11,19 @@ from .execution import ExecutionWidget
 
 class BlockWidget(Static):
     """A widget representing a single interaction block."""
+
+    class RetryRequested(Message):
+        """Sent when user clicks retry button."""
+        def __init__(self, block_id: str):
+            self.block_id = block_id
+            super().__init__()
+
+    class EditRequested(Message):
+        """Sent when user clicks edit button."""
+        def __init__(self, block_id: str, content: str):
+            self.block_id = block_id
+            self.content = content
+            super().__init__()
 
     DEFAULT_CSS = """
     BlockWidget {
@@ -37,6 +52,12 @@ class BlockWidget(Static):
         background: $surface;
         margin-bottom: 1;
     }
+
+    /* System message blocks - cyan accent */
+    BlockWidget.block-system {
+        border-left: thick $secondary;
+        background: $surface-darken-1;
+    }
     """
 
     def __init__(self, block: BlockState):
@@ -50,6 +71,8 @@ class BlockWidget(Static):
             self.add_class("block-ai-query")
         elif block.type == BlockType.AI_RESPONSE:
             self.add_class("block-ai-response")
+        elif block.type == BlockType.SYSTEM_MSG:
+            self.add_class("block-system")
 
         self.header = BlockHeader(block)
         self.meta_widget = None
@@ -133,3 +156,15 @@ class BlockWidget(Static):
     def set_exit_code(self, code: int):
         self.block.exit_code = code
         self.set_loading(False)
+
+    @on(Button.Pressed, "#retry-btn")
+    def on_retry_pressed(self, event: Button.Pressed):
+        """Handle retry button click."""
+        event.stop()
+        self.post_message(self.RetryRequested(self.block.id))
+
+    @on(Button.Pressed, "#edit-btn")
+    def on_edit_pressed(self, event: Button.Pressed):
+        """Handle edit button click."""
+        event.stop()
+        self.post_message(self.EditRequested(self.block.id, self.block.content_input))

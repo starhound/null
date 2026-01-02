@@ -90,6 +90,9 @@ class ExecutionWidget(Static):
     def __init__(self, block: BlockState):
         super().__init__()
         self.block = block
+        # Initialize from block state for restored sessions
+        if hasattr(block, 'content_exec_output') and block.content_exec_output:
+            self.exec_output = block.content_exec_output
 
     def compose(self) -> ComposeResult:
         with Container(id="exec-container", classes="hidden"):

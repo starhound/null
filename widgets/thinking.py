@@ -106,6 +106,11 @@ class ThinkingWidget(Static):
         self._render_threshold = 40
         self._spinner_index = 0
         self._spinner_timer: Timer | None = None
+        # Initialize loading state from block
+        self.is_loading = block.is_running
+        # Initialize content if block has output
+        if block.content_output:
+            self.thinking_text = block.content_output
 
     def compose(self) -> ComposeResult:
         with Static(classes="thinking-header"):
@@ -118,8 +123,32 @@ class ThinkingWidget(Static):
             yield Static("", classes="peek-content", id="peek-content")
 
     def on_mount(self):
-        """Start the spinner animation."""
-        self._spinner_timer = self.set_interval(0.08, self._animate_spinner)
+        """Start the spinner animation if loading."""
+        if self.is_loading:
+            self._spinner_timer = self.set_interval(0.08, self._animate_spinner)
+        else:
+            # Already complete, update UI
+            self.call_later(self._init_complete_state)
+
+    def _init_complete_state(self):
+        """Initialize UI for completed state."""
+        try:
+            spinner = self.query_one("#spinner", Label)
+            status = self.query_one("#status-label", Label)
+            spinner.add_class("complete")
+            spinner.update("✓")
+            status.update("Response complete")
+            # Force render the content
+            if self.thinking_text:
+                self.force_render()
+        except Exception:
+            pass
+
+    def start_loading(self):
+        """Start the loading animation (for retry)."""
+        self.is_loading = True
+        if not self._spinner_timer:
+            self._spinner_timer = self.set_interval(0.08, self._animate_spinner)
 
     def _animate_spinner(self):
         """Animate the spinner."""

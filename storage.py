@@ -147,6 +147,15 @@ class StorageManager:
         # Return reversed so latest is last in list (for easy up/cycling)
         return [row['command'] for row in cursor.fetchall()][::-1]
 
+    def search_history(self, query: str, limit: int = 20) -> List[str]:
+        """Search history for commands matching query."""
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT DISTINCT command FROM history WHERE command LIKE ? ORDER BY id DESC LIMIT ?",
+            (f"%{query}%", limit)
+        )
+        return [row['command'] for row in cursor.fetchall()]
+
     # Session Management
     def _get_sessions_dir(self) -> Path:
         """Get sessions directory, create if needed."""

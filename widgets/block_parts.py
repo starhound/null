@@ -1,6 +1,7 @@
 from textual.app import ComposeResult
-from textual.widgets import Static, Label
+from textual.widgets import Static, Label, Button
 from textual.reactive import reactive
+from textual import on
 
 from models import BlockState, BlockType
 
@@ -37,6 +38,13 @@ class BlockHeader(Static):
         margin-right: 1;
     }
 
+    /* System message symbol - cyan/secondary */
+    .prompt-symbol-system {
+        color: $secondary;
+        margin-right: 1;
+        text-style: bold;
+    }
+
     .header-text {
         color: $text;
         width: 1fr;
@@ -50,6 +58,11 @@ class BlockHeader(Static):
 
     .header-text-ai {
         color: $text;
+        width: 1fr;
+    }
+
+    .header-text-system {
+        color: $secondary;
         width: 1fr;
     }
 
@@ -80,6 +93,11 @@ class BlockHeader(Static):
             text_class = "header-text-ai"
             # Show the original query if available
             display_text = self.block.content_input if self.block.content_input else "AI Response"
+        elif self.block.type == BlockType.SYSTEM_MSG:
+            icon = "●"
+            icon_class = "prompt-symbol-system"
+            text_class = "header-text-system"
+            display_text = self.block.content_input if self.block.content_input else "System"
         else:
             icon = ">"
             icon_class = "prompt-symbol-cli"
@@ -128,6 +146,25 @@ class BlockMeta(Static):
         color: $warning;
         text-style: italic;
     }
+
+    .meta-spacer {
+        width: 1fr;
+    }
+
+    .meta-action {
+        min-width: 3;
+        height: 1;
+        border: none;
+        padding: 0;
+        margin: 0 1;
+        background: transparent;
+        color: $text-muted;
+    }
+
+    .meta-action:hover {
+        color: $primary;
+        text-style: bold;
+    }
     """
 
     def __init__(self, block: BlockState):
@@ -165,6 +202,14 @@ class BlockMeta(Static):
         if persona and persona != "default":
             yield Label(f"persona: ", classes="meta-label")
             yield Label(f"{persona}", classes="meta-value")
+
+        # Spacer to push actions to right
+        yield Label("", classes="meta-spacer")
+
+        # Action buttons for AI responses
+        if self.block.type == BlockType.AI_RESPONSE and not self.block.is_running:
+            yield Button("[edit]", id="edit-btn", classes="meta-action")
+            yield Button("[retry]", id="retry-btn", classes="meta-action")
 
 
 class BlockBody(Static):

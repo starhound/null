@@ -1,11 +1,13 @@
 from textual.app import App, ComposeResult
 from textual.containers import Container
-from textual.widgets import Footer, TextArea
+from textual.widgets import Footer, TextArea, Label
+from pathlib import Path
 import asyncio
+import os
 
 from config import Config
 from models import BlockState, BlockType
-from widgets import InputController, HistoryViewport, BlockWidget, CommandSuggester
+from widgets import InputController, HistoryViewport, BlockWidget, CommandSuggester, StatusBar, HistorySearch
 from executor import ExecutionEngine
 
 from ai.factory import AIFactory
@@ -23,10 +25,21 @@ class NullApp(App):
 
     #input-container {
         height: auto;
-        min-height: 3;
-        padding: 1;
+        min-height: 4;
+        padding: 0 1;
         background: $surface;
         border-top: solid $surface-lighten-2;
+    }
+
+    #prompt-line {
+        height: 1;
+        padding: 0;
+        color: $success;
+        text-style: bold;
+    }
+
+    #prompt-line.ai-mode {
+        color: $warning;
     }
 
     InputController {
@@ -39,6 +52,7 @@ class NullApp(App):
         ("ctrl+c", "smart_quit", "Quit"),
         ("ctrl+l", "clear_history", "Clear History"),
         ("ctrl+s", "quick_export", "Export"),
+        ("ctrl+r", "search_history", "Search History"),
         ("f1", "open_help", "Help"),
         ("f2", "select_model", "Select Model"),
         ("f3", "select_theme", "Change Theme"),
@@ -87,6 +101,40 @@ class NullApp(App):
     def action_quick_export(self):
         """Quick export to markdown (Ctrl+S)."""
         self._do_export("md")
+
+    def action_search_history(self):
+        """Open history search (Ctrl+R)."""
+        try:
+            history_search = self.query_one("#history-search", HistorySearch)
+            history_search.show()
+        except Exception:
+            pass
+
+    def on_history_search_selected(self, message: HistorySearch.Selected):
+        """Handle history search selection."""
+        input_ctrl = self.query_one("#input", InputController)
+        input_ctrl.text = message.command
+        input_ctrl.focus()
+        input_ctrl.move_cursor((len(message.command), 0))
+
+    def on_history_search_cancelled(self, message: HistorySearch.Cancelled):
+        """Handle history search cancellation."""
+        input_ctrl = self.query_one("#input", InputController)
+        input_ctrl.focus()
+
+    async def _show_system_output(self, title: str, content: str):
+        """Display system output in a dedicated block."""
+        block = BlockState(
+            type=BlockType.SYSTEM_MSG,
+            content_input=title,
+            content_output=content,
+            is_running=False
+        )
+        # Don't add to blocks list (ephemeral system output)
+        history_vp = self.query_one("#history", HistoryViewport)
+        block_widget = BlockWidget(block)
+        await history_vp.mount(block_widget)
+        block_widget.scroll_visible()
 
     def _do_export(self, format: str = "md"):
         """Export conversation to file."""
@@ -253,15 +301,101 @@ class NullApp(App):
         # Suggester layer at Screen level to avoid clipping (overlay)
         from widgets import CommandSuggester
         yield CommandSuggester(id="suggester")
+        yield HistorySearch(id="history-search")
 
         yield HistoryViewport(id="history")
         with Container(id="input-container"):
+            yield Label(self._get_prompt_text(), id="prompt-line")
             input_widget = InputController(placeholder="Type a command...", id="input")
             # Load history
-            history = Config._get_storage().get_last_history()
-            input_widget.history = history
+            cmd_history = Config._get_storage().get_last_history()
+            input_widget.cmd_history = cmd_history
             yield input_widget
+        yield StatusBar(id="status-bar")
         yield Footer()
+
+    def _get_prompt_text(self) -> str:
+        """Get the prompt text showing cwd."""
+        try:
+            cwd = Path.cwd()
+            home = Path.home()
+            # Replace home with ~
+            try:
+                rel = "~/" + str(cwd.relative_to(home))
+            except ValueError:
+                rel = str(cwd)
+            return f"$ {rel}"
+        except Exception:
+            return "$ ."
+
+    def _update_prompt(self):
+        """Update the prompt line with current directory."""
+        try:
+            prompt_label = self.query_one("#prompt-line", Label)
+            input_ctrl = self.query_one("#input", InputController)
+
+            prompt_label.update(self._get_prompt_text())
+
+            # Update styling based on mode
+            if input_ctrl.is_ai_mode:
+                prompt_label.add_class("ai-mode")
+                # Change prompt symbol for AI mode
+                cwd_part = self._get_prompt_text()[2:]  # Remove "$ "
+                prompt_label.update(f"? {cwd_part}")
+            else:
+                prompt_label.remove_class("ai-mode")
+        except Exception:
+            pass
+
+    async def _handle_builtin_command(self, cmd: str) -> bool:
+        """Handle shell builtins that need special handling. Returns True if handled."""
+        cmd_stripped = cmd.strip()
+
+        # Handle cd command
+        if cmd_stripped == "cd" or cmd_stripped.startswith("cd "):
+            parts = cmd_stripped.split(maxsplit=1)
+            if len(parts) == 1:
+                # cd with no args -> go home
+                target = Path.home()
+            else:
+                path_arg = parts[1].strip()
+                # Handle ~ expansion
+                if path_arg.startswith("~"):
+                    if path_arg == "~" or path_arg.startswith("~/"):
+                        path_arg = str(Path.home()) + path_arg[1:]
+                # Handle - (previous directory) - simplified, just ignore for now
+                if path_arg == "-":
+                    self.notify("cd - not supported", severity="warning")
+                    return True
+                target = Path(path_arg)
+
+            try:
+                # Resolve relative to current directory
+                if not target.is_absolute():
+                    target = Path.cwd() / target
+                target = target.resolve()
+
+                if not target.exists():
+                    self.notify(f"cd: no such directory: {parts[1] if len(parts) > 1 else '~'}", severity="error")
+                    return True
+                if not target.is_dir():
+                    self.notify(f"cd: not a directory: {parts[1]}", severity="error")
+                    return True
+
+                os.chdir(target)
+                self._update_prompt()
+            except PermissionError:
+                self.notify(f"cd: permission denied: {parts[1] if len(parts) > 1 else '~'}", severity="error")
+            except Exception as e:
+                self.notify(f"cd: {e}", severity="error")
+            return True
+
+        # Handle pwd command
+        if cmd_stripped == "pwd":
+            await self._show_system_output("pwd", str(Path.cwd()))
+            return True
+
+        return False
 
     async def on_mount(self):
         """Load previous session on startup."""
@@ -277,12 +411,129 @@ class NullApp(App):
             history_vp.scroll_end(animate=False)
             self.notify(f"Restored {len(saved_blocks)} blocks from previous session")
 
+        # Initialize status bar
+        self._update_status_bar()
+
+        # Start periodic health check for AI provider
+        self.set_interval(30, self._check_provider_health)
+        # Also check immediately
+        self.call_later(self._check_provider_health)
+
     def _auto_save(self):
         """Auto-save current session (debounced)."""
         try:
             Config._get_storage().save_current_session(self.blocks)
+            # Also update status bar with new context size
+            self._update_status_bar()
         except Exception:
             pass
+
+    def _update_status_bar(self):
+        """Update status bar with current state."""
+        try:
+            status_bar = self.query_one("#status-bar", StatusBar)
+
+            # Update mode
+            input_ctrl = self.query_one("#input", InputController)
+            status_bar.set_mode(input_ctrl.mode)
+
+            # Update context size
+            from context import ContextManager
+            context_str = ContextManager.get_context(self.blocks)
+            status_bar.set_context(len(context_str))
+
+            # Update provider
+            provider_name = self.config.get("ai", {}).get("provider", "none")
+            status_bar.provider_name = provider_name
+        except Exception:
+            pass
+
+    async def _check_provider_health(self):
+        """Check if AI provider is connected."""
+        try:
+            status_bar = self.query_one("#status-bar", StatusBar)
+
+            if not self.ai_provider:
+                status_bar.provider_status = "disconnected"
+                return
+
+            status_bar.provider_status = "checking"
+            connected = await self.ai_provider.validate_connection()
+            status_bar.provider_status = "connected" if connected else "disconnected"
+        except Exception:
+            try:
+                status_bar = self.query_one("#status-bar", StatusBar)
+                status_bar.provider_status = "disconnected"
+            except Exception:
+                pass
+
+    def on_input_controller_toggled(self, message: InputController.Toggled):
+        """Handle mode toggle from InputController."""
+        self._update_status_bar()
+        self._update_prompt()
+
+    async def on_block_widget_retry_requested(self, message: BlockWidget.RetryRequested):
+        """Handle retry button click - regenerate AI response."""
+        # Find the block
+        block = next((b for b in self.blocks if b.id == message.block_id), None)
+        if not block:
+            self.notify("Block not found", severity="error")
+            return
+
+        # Find the widget
+        widget = self._find_widget_for_block(message.block_id)
+        if not widget:
+            self.notify("Widget not found", severity="error")
+            return
+
+        await self.regenerate_block(block, widget)
+
+    async def on_block_widget_edit_requested(self, message: BlockWidget.EditRequested):
+        """Handle edit button click - populate input with original query."""
+        input_ctrl = self.query_one("#input", InputController)
+        input_ctrl.text = message.content
+        input_ctrl.focus()
+        # Ensure we're in AI mode
+        if not input_ctrl.is_ai_mode:
+            input_ctrl.toggle_mode()
+        self.notify("Edit and resubmit your query")
+
+    def _find_widget_for_block(self, block_id: str) -> BlockWidget:
+        """Find the BlockWidget for a given block ID."""
+        history_vp = self.query_one("#history", HistoryViewport)
+        for widget in history_vp.query(BlockWidget):
+            if widget.block.id == block_id:
+                return widget
+        return None
+
+    async def regenerate_block(self, block: BlockState, widget: BlockWidget):
+        """Regenerate an AI response block with the same query."""
+        if not self.ai_provider:
+            self.notify("AI Provider not configured", severity="error")
+            return
+
+        # Clear output and reset state
+        block.content_output = ""
+        block.content_exec_output = ""
+        block.is_running = True
+        block.exit_code = None
+
+        # Reset widget display
+        widget.set_loading(True)
+        if widget.thinking_widget:
+            widget.thinking_widget.thinking_text = ""
+            widget.thinking_widget.start_loading()
+        if widget.exec_widget:
+            widget.exec_widget.exec_output = ""
+
+        # Update metadata to show regenerating
+        widget.update_metadata()
+
+        # Run AI worker
+        self._ai_cancelled = False
+        self._active_worker = self.run_worker(
+            self.execute_ai(block.content_input, block, widget)
+        )
 
     async def on_text_area_changed(self, message: TextArea.Changed):
         # Update command suggester when text changes
@@ -290,7 +541,7 @@ class NullApp(App):
         suggester.update_filter(message.text_area.text)
 
 
-    async def on_input_submitted(self, message: InputController.Submitted):
+    async def on_input_controller_submitted(self, message: InputController.Submitted):
         # Hide suggester
         self.query_one("#suggester", CommandSuggester).display = False
         
@@ -349,6 +600,10 @@ class NullApp(App):
         else:
             # CLI Mode Logic - Use continuous block
             input_ctrl.value = ""
+
+            # Handle cd command specially (subprocess can't change parent's cwd)
+            if await self._handle_builtin_command(cmd_text):
+                return
 
             # Check if we have an active CLI block to append to
             if self.current_cli_block and self.current_cli_widget:
@@ -508,10 +763,13 @@ class NullApp(App):
             elif subcommand == "list":
                 sessions = storage.list_sessions()
                 if sessions:
-                    msg = "Sessions: " + ", ".join(s["name"] for s in sessions[:5])
-                    if len(sessions) > 5:
-                        msg += f" (+{len(sessions) - 5} more)"
-                    self.notify(msg)
+                    lines = []
+                    for s in sessions:
+                        saved_at = s.get("saved_at", "")[:16].replace("T", " ")
+                        blocks = s.get("block_count", 0)
+                        lines.append(f"  {s['name']:20} {saved_at:16} ({blocks} blocks)")
+                    content = "\n".join(lines)
+                    await self._show_system_output("/session list", content)
                 else:
                     self.notify("No saved sessions", severity="warning")
 
@@ -527,6 +785,30 @@ class NullApp(App):
 
             else:
                 self.notify("Usage: /session [save|load|list|new] [name]", severity="error")
+
+        elif command == "status":
+            # Show current status in a system block
+            provider = self.config.get("ai", {}).get("provider", "none")
+            model = self.config.get("ai", {}).get("model", "none")
+            persona = self.config.get("ai", {}).get("active_prompt", "default")
+            blocks_count = len(self.blocks)
+
+            from context import ContextManager
+            context_str = ContextManager.get_context(self.blocks)
+            context_chars = len(context_str)
+            context_tokens = context_chars // 4
+
+            status_bar = self.query_one("#status-bar", StatusBar)
+            provider_status = status_bar.provider_status
+
+            lines = [
+                f"  Provider:      {provider} ({provider_status})",
+                f"  Model:         {model}",
+                f"  Persona:       {persona}",
+                f"  Blocks:        {blocks_count}",
+                f"  Context:       ~{context_tokens} tokens ({context_chars} chars)",
+            ]
+            await self._show_system_output("/status", "\n".join(lines))
 
         elif command == "quit" or command == "exit":
             self.exit()
