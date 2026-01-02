@@ -127,36 +127,28 @@ class CommandPalette(Static, can_focus=True):
         actions = []
 
         # Get slash commands dynamically from the command handler
-        try:
-            # Navigate to the NullApp - self.app might be a Screen if in modal
-            app = self.app
-            while hasattr(app, 'app') and app.app is not None:
-                app = app.app
+        # Note: self.app always returns the App instance directly in Textual
+        if hasattr(self.app, 'command_handler'):
+            command_handler = self.app.command_handler
+            for cmd_info in command_handler.get_all_commands():
+                # Main command
+                actions.append(PaletteAction(
+                    name=f"/{cmd_info.name}",
+                    description=cmd_info.description,
+                    shortcut=cmd_info.shortcut,
+                    category="commands",
+                    action_id=f"slash:/{cmd_info.name}"
+                ))
 
-            if hasattr(app, 'command_handler'):
-                command_handler = app.command_handler
-                for cmd_info in command_handler.get_all_commands():
-                    # Main command
+                # Subcommands if any
+                for subcmd, subdesc in cmd_info.subcommands:
                     actions.append(PaletteAction(
-                        name=f"/{cmd_info.name}",
-                        description=cmd_info.description,
-                        shortcut=cmd_info.shortcut,
+                        name=f"/{cmd_info.name} {subcmd}",
+                        description=subdesc,
+                        shortcut="",
                         category="commands",
-                        action_id=f"slash:/{cmd_info.name}"
+                        action_id=f"slash:/{cmd_info.name} {subcmd}"
                     ))
-
-                    # Subcommands if any
-                    for subcmd, subdesc in cmd_info.subcommands:
-                        actions.append(PaletteAction(
-                            name=f"/{cmd_info.name} {subcmd}",
-                            description=subdesc,
-                            shortcut="",
-                            category="commands",
-                            action_id=f"slash:/{cmd_info.name} {subcmd}"
-                        ))
-        except Exception:
-            # Fallback if command handler not available
-            pass
 
         # Key binding actions
         keybindings = [

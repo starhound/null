@@ -47,7 +47,6 @@ class SlashCommandHandler:
             "status": (self._core.cmd_status, CommandInfo("status", "Show current status")),
             "clear": (self._core.cmd_clear, CommandInfo("clear", "Clear history and context", "Ctrl+L")),
             "quit": (self._core.cmd_quit, CommandInfo("quit", "Exit application", "Ctrl+C")),
-            "quit": (self._core.cmd_quit, CommandInfo("quit", "Exit application", "Ctrl+C")),
             "exit": (self._core.cmd_exit, CommandInfo("exit", "Exit application")),
             
             # SSH commands
