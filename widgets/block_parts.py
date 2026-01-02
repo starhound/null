@@ -16,6 +16,7 @@ class BlockHeader(Static):
         background: $surface;
         color: $text;
         padding: 0 1;
+        margin-bottom: 1;
     }
 
     /* CLI command symbol - green */
@@ -118,6 +119,7 @@ class BlockMeta(Static):
         layout: horizontal;
         height: 1;
         padding: 0 2;
+        margin-bottom: 1;
         background: $surface-darken-1;
         color: $text-muted;
     }
@@ -213,9 +215,9 @@ class BlockBody(Static):
 
     DEFAULT_CSS = """
     BlockBody {
-        padding: 1 2;
+        padding: 0 2;
+        margin-bottom: 1;
         color: $text;
-        min-height: 1;
     }
 
     #body-content {

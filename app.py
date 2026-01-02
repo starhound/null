@@ -356,6 +356,10 @@ class NullApp(App):
 
         # Handle cd command
         if cmd_stripped == "cd" or cmd_stripped.startswith("cd "):
+            # Reset CLI session so next command creates a new block
+            self.current_cli_block = None
+            self.current_cli_widget = None
+
             parts = cmd_stripped.split(maxsplit=1)
             if len(parts) == 1:
                 # cd with no args -> go home
@@ -395,6 +399,9 @@ class NullApp(App):
 
         # Handle pwd command
         if cmd_stripped == "pwd":
+            # Reset CLI session so next command creates a new block
+            self.current_cli_block = None
+            self.current_cli_widget = None
             cwd_str = str(Path.cwd())
             await self._show_system_output("pwd", cwd_str)
             return True

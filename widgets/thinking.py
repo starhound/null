@@ -13,7 +13,7 @@ class ThinkingWidget(Static):
     DEFAULT_CSS = """
     ThinkingWidget {
         height: auto;
-        padding: 1 1 0 1;
+        padding: 0 1;
         margin: 0;
     }
 
@@ -58,7 +58,7 @@ class ThinkingWidget(Static):
     .peek-window {
         height: 4;
         max-height: 4;
-        margin: 0 1;
+        margin: 0 1 1 1;
         padding: 1;
         border-left: wide $primary 50%;
         background: $surface-darken-2;

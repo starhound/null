@@ -19,9 +19,14 @@ class ExecutionWidget(Static):
     DEFAULT_CSS = """
     ExecutionWidget {
         height: auto;
+        padding: 0;
+        margin: 0;
+        background: transparent;
+    }
+
+    ExecutionWidget.has-content {
         padding: 0 1;
         margin-top: 1;
-        background: transparent;
     }
 
     .hidden {
@@ -107,10 +112,12 @@ class ExecutionWidget(Static):
             content = self.query_one("#exec-content", Static)
 
             if new_text:
+                self.add_class("has-content")
                 container.remove_class("hidden")
                 from rich.markdown import Markdown
                 content.update(Markdown(new_text, code_theme="monokai"))
             else:
+                self.remove_class("has-content")
                 container.add_class("hidden")
                 content.update("")
         except Exception:

@@ -29,6 +29,7 @@ class BlockWidget(Static):
     DEFAULT_CSS = """
     BlockWidget {
         layout: vertical;
+        height: auto;
         background: $surface-darken-1;
         margin-bottom: 1;
         padding: 0;
