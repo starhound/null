@@ -316,8 +316,9 @@ class ModelListScreen(ModalScreen):
                 collapsible = Collapsible(*model_widgets, title=title, collapsed=collapsed, id=f"provider-{provider}")
                 scroll.mount(collapsible)
 
-        except Exception:
-            pass
+        except Exception as e:
+            self.log.error(f"Failed to update model list: {e}")
+            self._show_error(f"Failed to display models: {str(e)[:50]}")
 
     def _finalize_list(self):
         """Finalize the list after loading completes."""

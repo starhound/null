@@ -112,6 +112,36 @@ class AIFactory:
             "requires_api_key": True,
             "requires_endpoint": False,
         },
+        "perplexity": {
+            "name": "Perplexity",
+            "description": "Online LLMs (Sonar)",
+            "requires_api_key": True,
+            "requires_endpoint": False,
+        },
+        "custom": {
+            "name": "Custom HTTP",
+            "description": "Any OpenAI-compatible API",
+            "requires_api_key": True,
+            "requires_endpoint": True,
+        },
+        "huggingface": {
+            "name": "HuggingFace",
+            "description": "Inference API (TGI/v1)",
+            "requires_api_key": True,
+            "requires_endpoint": False,
+        },
+        "llama_cpp": {
+            "name": "Llama.cpp Server",
+            "description": "Local Llama.cpp (OpenAI format)",
+            "requires_api_key": False,
+            "requires_endpoint": True,
+        },
+        "cloudflare": {
+            "name": "Cloudflare Workers AI",
+            "description": "Workers AI (Llama, etc.)",
+            "requires_api_key": True,
+            "requires_endpoint": True,
+        },
     }
 
     @staticmethod
@@ -236,6 +266,43 @@ class AIFactory:
                 api_key=config.get("api_key", ""),
                 base_url="https://api.deepseek.com/v1",
                 model=get("model", "deepseek-chat")
+            )
+
+        elif provider_name == "perplexity":
+            return OpenAICompatibleProvider(
+                api_key=config.get("api_key", ""),
+                base_url="https://api.perplexity.ai",
+                model=get("model", "llama-3.1-sonar-large-128k-online")
+            )
+
+        elif provider_name == "custom":
+            return OpenAICompatibleProvider(
+                api_key=config.get("api_key", ""),
+                base_url=get("endpoint", "http://localhost:8000/v1"),
+                model=get("model", "custom-model")
+            )
+
+        elif provider_name == "cloudflare":
+            account_id = config.get("account_id", "")
+            return OpenAICompatibleProvider(
+                api_key=config.get("api_key", ""),
+                base_url=f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1",
+                model=get("model", "@cf/meta/llama-3-8b-instruct")
+            )
+
+        elif provider_name == "huggingface":
+            model_id = get("model", "meta-llama/Meta-Llama-3-8B-Instruct")
+            return OpenAICompatibleProvider(
+                api_key=config.get("api_key", ""),
+                base_url=f"https://api-inference.huggingface.co/models/{model_id}/v1",
+                model=model_id
+            )
+
+        elif provider_name == "llama_cpp":
+            return OpenAICompatibleProvider(
+                api_key="token-not-needed",
+                base_url=get("endpoint", "http://localhost:8000/v1"),
+                model=get("model", "default")
             )
 
         # =====================================================================

@@ -81,6 +81,9 @@ class AICommands(CommandMixin):
             "endpoint": sm.get_config(f"ai.{provider_name}.endpoint", ""),
             "region": sm.get_config(f"ai.{provider_name}.region", ""),
             "model": sm.get_config(f"ai.{provider_name}.model", ""),
+            "project_id": sm.get_config(f"ai.{provider_name}.project_id", ""),
+            "account_id": sm.get_config(f"ai.{provider_name}.account_id", ""),
+            "api_version": sm.get_config(f"ai.{provider_name}.api_version", ""),
         }
 
         def on_config_saved(result):

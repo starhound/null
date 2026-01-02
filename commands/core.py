@@ -97,7 +97,6 @@ class CoreCommands(CommandMixin):
             return
 
         from utils.ssh_client import SSHSession
-        from utils.ssh_client import SSHSession
         from screens.ssh import SSHScreen
         
         # Resolve jump host if configured
@@ -107,9 +106,9 @@ class CoreCommands(CommandMixin):
         if jump_alias:
             jump_config = self.app.storage.get_ssh_host(jump_alias)
             if not jump_config:
-                 self.notify(f"Jump host alias not found: {jump_alias}", severity="error")
-                 return
-                 
+                self.notify(f"Jump host alias not found: {jump_alias}", severity="error")
+                return
+
             tunnel_session = SSHSession(
                 hostname=jump_config['hostname'],
                 port=jump_config['port'],

@@ -74,14 +74,13 @@ class InputController(TextArea):
                 if complete:
                     parts = self.text.split(" ")
                     if len(parts) == 1:
-                        # Complete command and add space for args
-                        self.text = complete + " "
+                        # Execute the completed command directly
+                        self.text = complete
                     else:
-                        # Complete argument
-                        self.text = parts[0] + " " + complete + " "
+                        # Complete argument and execute
+                        self.text = parts[0] + " " + complete
                     suggester.display = False
-                    self.move_cursor((len(self.text), 0))
-                    return
+                    # Fall through to execute the command
         except Exception:
             pass
 

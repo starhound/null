@@ -70,6 +70,26 @@ class ProviderConfigScreen(ModalScreen):
         "deepseek": {
             "api_key": ("API Key", "sk-...", True),
         },
+        "perplexity": {
+            "api_key": ("API Key", "pplx-...", True),
+        },
+        "custom": {
+            "api_key": ("API Key (Optional)", "", True),
+            "endpoint": ("Base URL", "http://localhost:8000/v1", False),
+            "model": ("Model Name", "my-model", False),
+        },
+        "cloudflare": {
+            "api_key": ("API Token", "", True),
+            "account_id": ("Account ID", "", False),
+            "model": ("Model Name", "@cf/meta/llama-3-8b-instruct", False),
+        },
+        "huggingface": {
+            "api_key": ("HF Token", "hf_...", True),
+            "model": ("Model ID", "meta-llama/Meta-Llama-3-8B-Instruct", False),
+        },
+        "llama_cpp": {
+            "endpoint": ("Server URL", "http://localhost:8000/v1", False),
+        },
     }
 
     def __init__(self, provider: str, current_config: dict):

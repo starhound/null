@@ -505,7 +505,7 @@ class NullApp(App):
         except Exception:
             pass
 
-    async def on_block_widget_retry_requested(self, message: BaseBlockWidget.RetryRequested):
+    async def on_base_block_widget_retry_requested(self, message: BaseBlockWidget.RetryRequested):
         """Handle retry button click."""
         block = next((b for b in self.blocks if b.id == message.block_id), None)
         if not block:
@@ -519,7 +519,7 @@ class NullApp(App):
 
         await self.execution_handler.regenerate_ai(block, widget)
 
-    async def on_block_widget_edit_requested(self, message: BaseBlockWidget.EditRequested):
+    async def on_base_block_widget_edit_requested(self, message: BaseBlockWidget.EditRequested):
         """Handle edit button click."""
         input_ctrl = self.query_one("#input", InputController)
         input_ctrl.text = message.content

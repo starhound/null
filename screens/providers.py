@@ -15,12 +15,15 @@ from ai.factory import AIFactory
 class ProviderRow(Horizontal):
     """A single provider row with status and actions."""
 
+    can_focus = True
+
     def __init__(self, provider_name: str, info: dict, is_active: bool, is_configured: bool):
         super().__init__()
         self.provider_name = provider_name
         self.info = info
         self.is_active = is_active
         self.is_configured = is_configured
+        self.add_class("provider-row")
 
     def compose(self) -> ComposeResult:
         # Status indicator
@@ -53,11 +56,30 @@ class ProviderRow(Horizontal):
 class ProvidersScreen(ModalScreen):
     """Screen to manage AI providers."""
 
-    BINDINGS = [Binding("escape", "dismiss", "Close")]
+    BINDINGS = [
+        Binding("escape", "dismiss", "Close"),
+        Binding("up", "focus_prev", "Previous", show=False),
+        Binding("down", "focus_next", "Next", show=False),
+        Binding("enter", "configure_focused", "Configure", show=False),
+    ]
 
     def __init__(self):
         super().__init__()
         self._active_provider = Config.get("ai.provider")
+
+    def action_focus_prev(self):
+        """Move focus to previous provider row."""
+        self.focus_previous()
+
+    def action_focus_next(self):
+        """Move focus to next provider row."""
+        self.focus_next()
+
+    def action_configure_focused(self):
+        """Configure the currently focused provider."""
+        focused = self.focused
+        if isinstance(focused, ProviderRow):
+            self.dismiss(("configure", focused.provider_name))
 
     def compose(self) -> ComposeResult:
         with Container(id="providers-container"):
