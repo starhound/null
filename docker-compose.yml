@@ -1,5 +1,5 @@
 services:
-  app:
+  null-term:
     build: .
     image: null-terminal
     container_name: null-terminal

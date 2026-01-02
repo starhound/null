@@ -14,29 +14,60 @@ class SSHAddScreen(ModalScreen):
     }
 
     #ssh-form {
-        width: 60;
+        width: 50;
         height: auto;
+        max-height: 90%;
         background: $surface;
         border: thick $primary;
-        padding: 1 2;
+        padding: 0 1; 
+        /* Removed vertical padding to let content drive height */
     }
 
+    /* Header styling */
+    .header {
+        text-align: center;
+        text-style: bold;
+        border-bottom: solid $primary;
+        margin: 1 0;
+        color: $text;
+        height: auto;
+    }
+
+    /* Labels */
     #ssh-form Label {
         margin-top: 1;
         width: 100%;
+        color: $text-muted;
+        height: 1;
     }
     
-    #ssh-form .input-row {
-        height: auto;
-        margin-bottom: 0;
-    }
-
+    /* Inputs */
     #ssh-form Input {
-        margin-bottom: 0;
+        margin: 0;
+        height: 1;
+        border: none;
+        background: $panel;
+        padding: 0 1;
+        min-height: 1;
+    }
+    
+    /* Creds row grid */
+    #creds-row {
+        height: auto;
+        grid-size: 2;
+        grid-gutter: 1;
+        margin-top: 0;
+    }
+    
+    #creds-row Vertical {
+        height: auto;
+        width: 100%;
     }
 
+    /* Actions */
     #form-actions {
-        margin-top: 2;
+        margin-top: 1;
+        margin-bottom: 1;
         align: right middle;
         height: auto;
         width: 100%;
@@ -44,13 +75,9 @@ class SSHAddScreen(ModalScreen):
 
     #form-actions Button {
         margin-left: 1;
-    }
-    
-    .header {
-        text-align: center;
-        text-style: bold;
-        border-bottom: solid $primary;
-        margin-bottom: 1;
+        min-width: 8;
+        height: 1;
+        border: none;
     }
     """
 

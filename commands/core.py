@@ -97,20 +97,46 @@ class CoreCommands(CommandMixin):
             return
 
         from utils.ssh_client import SSHSession
+        from utils.ssh_client import SSHSession
         from screens.ssh import SSHScreen
         
+        # Resolve jump host if configured
+        tunnel_session = None
+        jump_alias = host_config.get('jump_host')
+        
+        if jump_alias:
+            jump_config = self.app.storage.get_ssh_host(jump_alias)
+            if not jump_config:
+                 self.notify(f"Jump host alias not found: {jump_alias}", severity="error")
+                 return
+                 
+            tunnel_session = SSHSession(
+                hostname=jump_config['hostname'],
+                port=jump_config['port'],
+                username=jump_config['username'],
+                password=jump_config['password'],
+                key_path=jump_config['key_path']
+            )
+
         session = SSHSession(
             hostname=host_config['hostname'],
             port=host_config['port'],
             username=host_config['username'],
             password=host_config['password'],
-            key_path=host_config['key_path']
+            key_path=host_config['key_path'],
+            tunnel=tunnel_session
         )
         
         self.app.push_screen(SSHScreen(session, alias))
 
     async def cmd_ssh_add(self, args: list[str]):
-        """Add SSH host: /ssh-add <alias> <host> <user> [port]"""
+        """Add SSH host: /ssh-add [alias host user port key] or interactive form."""
+        if not args:
+            # Show interactive form
+            from screens.ssh_add import SSHAddScreen
+            self.app.push_screen(SSHAddScreen())
+            return
+
         if len(args) < 3:
             self.notify("Usage: /ssh-add <alias> <host> <user> [port] [key_path]", severity="error")
             return
@@ -120,11 +146,6 @@ class CoreCommands(CommandMixin):
         username = args[2]
         port = int(args[3]) if len(args) > 3 else 22
         key_path = args[4] if len(args) > 4 else None
-        
-        # Password usually requires secure prompt, for now we add without password 
-        # or rely on key. User can use config command later to set password if we implement it.
-        # OR we could accept password as arg but that's insecure in history.
-        # Prefer key auth.
         
         self.app.storage.add_ssh_host(alias, hostname, port, username, key_path)
         self.notify(f"Added SSH host: {alias}")
