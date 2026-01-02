@@ -65,6 +65,12 @@ class PaletteAction:
 class PaletteItem(Static):
     """Single item in the command palette results."""
 
+    class Selected(Message):
+        """Sent when item is clicked."""
+        def __init__(self, action: PaletteAction):
+            self.action = action
+            super().__init__()
+
     def __init__(self, action: PaletteAction, **kwargs):
         super().__init__(**kwargs)
         self.action = action
@@ -75,6 +81,11 @@ class PaletteItem(Static):
         yield Label(self.action.name, classes="palette-item-name")
         yield Label(self.action.description, classes="palette-item-desc")
         yield Label(shortcut_display, classes="palette-item-shortcut")
+
+    def on_click(self, event):
+        """Handle click to select this item."""
+        event.stop()
+        self.post_message(self.Selected(self.action))
 
 
 class CommandPalette(Static, can_focus=True):
@@ -117,26 +128,32 @@ class CommandPalette(Static, can_focus=True):
 
         # Get slash commands dynamically from the command handler
         try:
-            command_handler = self.app.command_handler
-            for cmd_info in command_handler.get_all_commands():
-                # Main command
-                actions.append(PaletteAction(
-                    name=f"/{cmd_info.name}",
-                    description=cmd_info.description,
-                    shortcut=cmd_info.shortcut,
-                    category="commands",
-                    action_id=f"slash:/{cmd_info.name}"
-                ))
+            # Navigate to the NullApp - self.app might be a Screen if in modal
+            app = self.app
+            while hasattr(app, 'app') and app.app is not None:
+                app = app.app
 
-                # Subcommands if any
-                for subcmd, subdesc in cmd_info.subcommands:
+            if hasattr(app, 'command_handler'):
+                command_handler = app.command_handler
+                for cmd_info in command_handler.get_all_commands():
+                    # Main command
                     actions.append(PaletteAction(
-                        name=f"/{cmd_info.name} {subcmd}",
-                        description=subdesc,
-                        shortcut="",
+                        name=f"/{cmd_info.name}",
+                        description=cmd_info.description,
+                        shortcut=cmd_info.shortcut,
                         category="commands",
-                        action_id=f"slash:/{cmd_info.name} {subcmd}"
+                        action_id=f"slash:/{cmd_info.name}"
                     ))
+
+                    # Subcommands if any
+                    for subcmd, subdesc in cmd_info.subcommands:
+                        actions.append(PaletteAction(
+                            name=f"/{cmd_info.name} {subcmd}",
+                            description=subdesc,
+                            shortcut="",
+                            category="commands",
+                            action_id=f"slash:/{cmd_info.name} {subcmd}"
+                        ))
         except Exception:
             # Fallback if command handler not available
             pass
@@ -215,6 +232,12 @@ class CommandPalette(Static, can_focus=True):
         """Execute current selection on Enter."""
         event.stop()
         self._execute_current()
+
+    def on_palette_item_selected(self, event: PaletteItem.Selected):
+        """Handle click on a palette item."""
+        event.stop()
+        self.remove_class("visible")
+        self.post_message(self.ActionSelected(event.action))
 
     def action_select_prev(self):
         """Move selection up."""
