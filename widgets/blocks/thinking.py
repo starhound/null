@@ -16,6 +16,9 @@ class ThinkingWidget(Static):
     is_loading = reactive(True)
     is_expanded = reactive(False)
 
+    # Common reasoning tags used by models (DeepSeek-R1, QwQ, etc.)
+    REASONING_PATTERNS = ("<think>", "<thinking>", "<reasoning>", "<thought>")
+
     def __init__(self, block: BlockState):
         super().__init__()
         self.block = block
@@ -23,11 +26,34 @@ class ThinkingWidget(Static):
         self._render_threshold = 40
         self._spinner_index = 0
         self._spinner_timer: Timer | None = None
+        self._detected_reasoning = False
         # Initialize loading state from block
         self.is_loading = block.is_running
         # Initialize content if block has output
         if block.content_output:
             self.thinking_text = block.content_output
+            self._check_for_reasoning(block.content_output)
+
+    def _check_for_reasoning(self, text: str) -> bool:
+        """Detect if output contains reasoning tags."""
+        if self._detected_reasoning:
+            return True
+        text_lower = text.lower()
+        for pattern in self.REASONING_PATTERNS:
+            if pattern in text_lower:
+                self._detected_reasoning = True
+                self._update_label_for_reasoning()
+                return True
+        return False
+
+    def _update_label_for_reasoning(self):
+        """Update the status label when reasoning is detected."""
+        try:
+            status = self.query_one("#status-label", Label)
+            if self.is_loading:
+                status.update("Thinking...")
+        except Exception:
+            pass
 
     def compose(self) -> ComposeResult:
         header_classes = "thinking-header loading" if self.is_loading else "thinking-header"
@@ -101,11 +127,13 @@ class ThinkingWidget(Static):
             if loading:
                 spinner.remove_class("complete")
                 spinner.update(self.SPINNER_FRAMES[0])
-                status.update("Generating response...")
+                label = "Thinking..." if self._detected_reasoning else "Generating..."
+                status.update(label)
             else:
                 spinner.add_class("complete")
                 spinner.update("✓")
-                status.update("Response complete")
+                label = "Thought complete" if self._detected_reasoning else "Response complete"
+                status.update(label)
                 if self._spinner_timer:
                     self._spinner_timer.stop()
         except Exception:
@@ -136,6 +164,8 @@ class ThinkingWidget(Static):
             if new_text:
                 if "empty" in peek.classes:
                     peek.remove_class("empty")
+                # Check for reasoning patterns in new content
+                self._check_for_reasoning(new_text)
 
             # Throttle rendering for performance
             current_len = len(new_text)

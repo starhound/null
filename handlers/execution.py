@@ -148,7 +148,7 @@ class ExecutionHandler:
         full_response = ""
         current_messages = list(messages)
         iteration = 0
-        max_iterations = 10  # Prevent infinite tool loops
+        max_iterations = 3  # Limit tool loops - most tasks need 1-2
 
         while iteration < max_iterations:
             iteration += 1
@@ -187,16 +187,17 @@ class ExecutionHandler:
             if not pending_tool_calls:
                 break
 
-            # Process tool calls
+            # Process tool calls (only take the first one to prevent over-eager behavior)
+            tool_to_run = pending_tool_calls[:1]
             tool_results = await self._process_tool_calls(
-                pending_tool_calls, block_state, widget, registry
+                tool_to_run, block_state, widget, registry
             )
 
             if not tool_results:
                 # User cancelled or no results
                 break
 
-            # Add assistant message with tool calls
+            # Add assistant message with tool call
             assistant_msg = {
                 "role": "assistant",
                 "content": full_response,
@@ -209,18 +210,24 @@ class ExecutionHandler:
                             "arguments": json.dumps(tc.arguments)
                         }
                     }
-                    for tc in pending_tool_calls
+                    for tc in tool_to_run
                 ]
             }
             current_messages.append(assistant_msg)
 
-            # Add tool results
+            # Add tool result
             for result in tool_results:
                 current_messages.append({
                     "role": "tool",
                     "tool_call_id": result.tool_call_id,
                     "content": result.content
                 })
+
+            # After first tool success, stop unless it was an error
+            if iteration == 1 and tool_results and not tool_results[0].is_error:
+                # Give LLM one chance to provide a brief summary, but don't pass tools
+                # to prevent further tool calls
+                break
 
             # Clear prompt for next iteration (context is in messages)
             prompt = ""
