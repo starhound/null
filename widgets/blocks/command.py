@@ -100,9 +100,10 @@ class CommandBlock(BaseBlockWidget):
         """Set the loading state and update footer."""
         self.block.is_running = loading
 
-        # If stopping, also exit TUI mode
-        if not loading and self._mode == "tui":
-            self.switch_to_line()
+        # We keep the TUI mode active even after process exit so the user
+        # can still see the final state of the terminal.
+        # if not loading and self._mode == "tui":
+        #    self.switch_to_line()
 
         try:
             self.footer_widget.remove()

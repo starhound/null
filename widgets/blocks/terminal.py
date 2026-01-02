@@ -24,7 +24,12 @@ class TerminalBlock(Widget):
         border: solid $primary 40%;
         overflow: hidden;
     }
+    TerminalBlock:focus {
+        border: double $accent;
+    }
     """
+
+    can_focus = True
 
     class InputRequested(Message):
         """Message to send input data to the process."""
@@ -91,6 +96,7 @@ class TerminalBlock(Widget):
 
     def on_mouse_down(self, event) -> None:
         """Handle mouse down events."""
+        self.focus()
         self._send_mouse_event(event, 0)
 
     def on_mouse_up(self, event) -> None:
