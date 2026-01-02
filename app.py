@@ -598,6 +598,36 @@ class NullApp(App):
 
         # Create a system block to show the output
         result_title = f"Code Execution ({language})"
+        # ... (rest of method)
+
+    async def on_stop_button_pressed(self, message):
+        """Handle stop button click from blocks."""
+        from widgets.blocks.parts import StopButton
+        if not isinstance(message, StopButton.Pressed):
+            return
+
+        block_id = message.block_id
+        self.notify(f"Stopping block {block_id[:8]}...")
+
+        # Case 1: Active AI Worker
+        # We generally only have one active AI worker at a time in this architecture
+        if self._active_worker and self._active_worker.is_running:
+            # We assume the stop button pressed corresponds to the active worker
+            # In a multi-worker future, we'd need to map block_id -> worker
+            self._ai_cancelled = True
+            self._active_worker.cancel()
+            self.notify("AI generation stopped", severity="warning")
+            return
+
+        # Case 2: CLI Process
+        # Check if it's a known process
+        if self.process_manager.is_running(block_id):
+            self.process_manager.stop(block_id)
+            self.notify("Process stopped", severity="warning")
+            return
+            
+        # Fallback
+        self.notify("No active process found for this block", severity="warning")
         if exit_code != 0:
             result_title += f" [exit: {exit_code}]"
 

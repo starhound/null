@@ -382,74 +382,7 @@ ThinkingWidget .peek-window.empty {
 
 /* --- Execution Widget --- */
 
-ExecutionWidget {
-    height: auto;
-    min-height: 0;
-    padding: 0;
-    margin: 1 0 0 0;
-    background: transparent;
-}
 
-ExecutionWidget .hidden {
-    display: none;
-}
-
-ExecutionWidget #exec-container {
-    height: auto;
-    padding: 0;
-    border: round $warning 60%;
-    margin: 0 2;
-}
-
-ExecutionWidget .exec-header {
-    layout: horizontal;
-    height: 1;
-    min-height: 1;
-    width: 100%;
-    padding: 0 2;
-    margin-bottom: 0;
-    background: transparent;
-    border-bottom: dashed $warning 40%;
-}
-
-ExecutionWidget .exec-title {
-    color: $warning;
-    width: 1fr;
-}
-
-ExecutionWidget .exec-icon {
-    color: $warning;
-    min-width: 2;
-}
-
-ExecutionWidget .copy-btn {
-    width: auto;
-    min-width: 4;
-    height: 1;
-    background: transparent;
-    color: $primary;
-}
-
-ExecutionWidget .copy-btn:hover {
-    color: $warning;
-    text-style: bold;
-}
-
-ExecutionWidget .exec-scroll {
-    height: auto;
-    max-height: 20;
-    margin: 0;
-    padding: 1 2;
-    background: transparent;
-    color: $text;
-    overflow-y: auto;
-}
-
-ExecutionWidget #exec-content {
-    width: 100%;
-    height: auto;
-    padding: 0;
-}
 
 /* --- History Search --- */
 
@@ -1730,4 +1663,109 @@ CommandBlock.mode-tui BlockHeader {
 .prompt-symbol-tui {
     color: $accent;
     text-style: bold;
+}
+
+/* --- ExecutionWidget (Collapsible) --- */
+ExecutionWidget {
+    background: transparent;
+    border: none;
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    display: none;
+}
+
+ExecutionWidget.has-content {
+    display: block;
+}
+
+ExecutionWidget .hidden {
+    display: none;
+}
+
+ExecutionWidget #exec-container {
+    background: $surface-darken-1;
+    layout: vertical;
+    width: 100%;
+    height: auto;
+    border: round $surface-darken-3;
+    margin: 0 1;
+}
+
+ExecutionWidget .exec-header {
+    layout: horizontal;
+    height: 1;
+    width: 100%;
+    padding: 0 1;
+    background: $surface-darken-2;
+    color: $text-muted;
+    border-bottom: solid $surface-darken-3;
+}
+
+ExecutionWidget .exec-header:hover {
+    background: $surface;
+    color: $text;
+}
+
+ExecutionWidget .exec-title {
+    width: auto;
+    color: $text-muted;
+    text-style: bold;
+}
+
+ExecutionWidget .exec-icon {
+    width: 2;
+    color: $warning;
+    display: none;
+}
+
+ExecutionWidget .toggle-icon {
+    width: 2;
+    color: $warning;
+    content-align: center middle;
+}
+
+ExecutionWidget .exec-count {
+    width: 1fr;
+    margin-left: 1;
+    color: $text-muted;
+    text-style: italic;
+}
+
+ExecutionWidget .copy-btn {
+    width: 6;
+    min-width: 6;
+    content-align: center middle;
+    color: $text-muted;
+    background: transparent;
+    border: none;
+}
+
+ExecutionWidget .copy-btn:hover {
+    color: $success;
+    text-style: bold;
+}
+
+ExecutionWidget .exec-scroll {
+    width: 100%;
+    height: auto;
+    max-height: 20;
+    overflow-y: auto;
+    padding: 0 1;
+    background: $surface-darken-1;
+}
+
+ExecutionWidget #exec-container.collapsed .exec-scroll {
+    display: none;
+}
+
+ExecutionWidget #exec-container.collapsed {
+    height: 1;
+    border-bottom: none;
+}
+
+ExecutionWidget #exec-content {
+    width: 100%;
+    height: auto;
 }

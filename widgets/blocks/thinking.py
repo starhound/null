@@ -178,8 +178,6 @@ class ThinkingWidget(Static):
             current_len = len(new_text) if new_text else 0
             delta = current_len - self._last_rendered_len
             if delta < self._render_threshold and not (new_text and new_text.endswith('\n')):
-                # Still show debug info
-                content.update(f"{debug_info} (throttled)")
                 return
 
             self._last_rendered_len = current_len
@@ -187,11 +185,7 @@ class ThinkingWidget(Static):
             # Make plain URLs clickable before rendering
             linkified_text = make_links_clickable(new_text) if new_text else ""
             
-            # DEBUG: Show content directly for now to diagnose
-            if len(linkified_text) < 200:
-                content.update(f"{debug_info}\n\n{linkified_text}")
-            else:
-                content.update(Markdown(linkified_text, code_theme="monokai"))
+            content.update(Markdown(linkified_text, code_theme="monokai"))
 
             # Auto-scroll to bottom to follow content
             if not self.is_expanded:

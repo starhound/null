@@ -17,6 +17,7 @@ class ExecutionWidget(Static):
     """Widget for command execution output with copy button."""
 
     exec_output = reactive("")
+    is_expanded = reactive(False)
 
     def __init__(self, block: BlockState):
         super().__init__()
@@ -26,24 +27,76 @@ class ExecutionWidget(Static):
             self.exec_output = block.content_exec_output
 
     def compose(self) -> ComposeResult:
-        with Container(id="exec-container", classes="hidden"):
-            with Static(classes="exec-header"):
-                yield Label("⚡", classes="exec-icon")
-                yield Label("Execution", classes="exec-title")
+        with Container(id="exec-container", classes="hidden collapsed"):
+            # Header is clickable to toggle
+            with Static(classes="exec-header", id="exec-header"):
+                yield Label("▶", classes="toggle-icon", id="toggle-icon")
+                yield Label("⚡ Execution Log", classes="exec-title")
+                yield Label("", classes="exec-count", id="exec-count")
                 yield Static("copy", classes="copy-btn", id="copy-btn")
-            with Container(classes="exec-scroll"):
+            
+            # Content container
+            with Container(classes="exec-scroll", id="exec-scroll"):
                 yield Static(id="exec-content")
+
+    def watch_is_expanded(self, expanded: bool):
+        """Toggle expanded state."""
+        try:
+            container = self.query_one("#exec-container")
+            icon = self.query_one("#toggle-icon", Label)
+            
+            if expanded:
+                container.remove_class("collapsed")
+                icon.update("▼")
+            else:
+                container.add_class("collapsed")
+                icon.update("▶")
+        except Exception:
+            pass
+
+    def on_click(self, event: Click):
+        """Handle clicks."""
+        # Toggle on header click (but not on copy button)
+        if event.y == 0 and "copy-btn" not in str(event.target.classes):
+            self.is_expanded = not self.is_expanded
+            event.stop()
 
     def watch_exec_output(self, new_text: str):
         try:
             container = self.query_one("#exec-container")
             content = self.query_one("#exec-content", Static)
+            count_label = self.query_one("#exec-count", Label)
 
             if new_text:
                 self.add_class("has-content")
                 container.remove_class("hidden")
+                
+                # Update content
                 from rich.markdown import Markdown
                 content.update(Markdown(new_text, code_theme="monokai"))
+                
+                # Update summary count (e.g. number of tool calls)
+                import re
+                tool_matches = re.findall(r'\*\*Tool Call: (.*?)\*\*', new_text)
+                if tool_matches:
+                    # Join unique names or sequentially? Sequential is better for history.
+                    # Flatten/simplify showing only unique names if many? 
+                    # Let's show first 3-4 distinct tools.
+                    unique_tools = []
+                    seen = set()
+                    for t in tool_matches:
+                        if t not in seen:
+                            unique_tools.append(t)
+                            seen.add(t)
+                    
+                    summary_text = ", ".join(unique_tools)
+                    if len(summary_text) > 40:
+                        summary_text = summary_text[:37] + "..."
+                    
+                    count_label.update(f"({summary_text})")
+                else:
+                    count_label.update("")
+                    
             else:
                 self.remove_class("has-content")
                 container.add_class("hidden")
