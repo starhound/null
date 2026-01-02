@@ -63,7 +63,7 @@ class CommandBlock(BaseBlockWidget):
             cols=120
         )
         self.mount(self._terminal_widget, before=self.footer_widget)
-        self._terminal_widget.focus()
+        # self._terminal_widget.focus()  # User requested no auto-focus
 
         return self._terminal_widget
 
