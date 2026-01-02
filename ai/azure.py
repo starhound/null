@@ -17,7 +17,7 @@ class AzureProvider(LLMProvider):
             stream = await self.client.chat.completions.create(
                 model=self.deployment_name,
                 messages=[
-                    {"role": "system", "content": "You are a helpful command line assistant. Provide only the shell command requested."},
+                    {"role": "system", "content": "You are a helpful AI assistant integrated into a terminal. You can answer questions or provide commands."},
                     {"role": "user", "content": f"{context}\n\nUser: {prompt}"}
                 ],
                 stream=True

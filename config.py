@@ -2,7 +2,10 @@ from storage import StorageManager
 import os
 
 # Keys that should be encrypted
-SENSITIVE_KEYS = {"ai.api_key", "ai.secret_key"}
+SENSITIVE_KEYS = {
+    "ai.openai.api_key", "ai.azure.api_key", "ai.xai.api_key", 
+    "ai.bedrock.secret_key", "ai.lm_studio.api_key"
+}
 
 class Config:
     @staticmethod
@@ -12,17 +15,18 @@ class Config:
     @staticmethod
     def load_all():
         # Helper to load common config into a dict for easy access
-        # In a full db implementation, we might cache this or query on demand.
-        # For now, let's just query specific keys we use often.
         sm = Config._get_storage()
+        provider = sm.get_config("ai.provider", "ollama")
         return {
             "theme": sm.get_config("theme", "monokai"),
             "shell": sm.get_config("shell", os.environ.get("SHELL", "bash")),
             "ai": {
-                "provider": sm.get_config("ai.provider", "ollama"),
-                "model": sm.get_config("ai.model", "llama3"),
-                "endpoint": sm.get_config("ai.endpoint", "http://localhost:11434"),
-                "api_key": sm.get_config("ai.api_key", ""),
+                "provider": provider,
+                # Dynamic load based on active provider
+                "model": sm.get_config(f"ai.{provider}.model", "llama3"),
+                "endpoint": sm.get_config(f"ai.{provider}.endpoint", "http://localhost:11434"),
+                "api_key": sm.get_config(f"ai.{provider}.api_key", ""),
+                "region": sm.get_config(f"ai.{provider}.region", ""),
             }
         }
 

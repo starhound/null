@@ -26,6 +26,11 @@ class NullApp(App):
     InputController {
         width: 100%;
     }
+    
+    .ai-mode {
+        border: solid $accent-lighten-2;
+        color: $text-accent;
+    }
     """
 
     BINDINGS = [
@@ -35,11 +40,20 @@ class NullApp(App):
         ("f2", "select_model", "Select Model"),
         ("f3", "select_theme", "Change Theme"),
         ("f4", "select_provider", "Select Provider"),
-        ("ctrl+p", "command_palette", "Palette"), 
+        ("ctrl+space", "toggle_ai", "Toggle AI Mode"),
+        ("ctrl+t", "toggle_ai", "Toggle AI Mode"),
+        ("ctrl+b", "toggle_ai", "Toggle AI Mode"),
+        # Textual adds Ctrl+P automatically, removing manual binding to avoid duplicate in Footer
     ]
     
     # Removed manual get_system_commands override as it was causing issues.
     # Bindings above will populate the palette.
+
+    def action_toggle_ai_mode(self):
+        self.query_one("#input", InputController).toggle_mode()
+        # Toggle Footer description? 
+        # The mode property in input controller handles the message posting if needed, 
+        # but the border change is enough visual cue.
 
     def action_open_help(self):
         """Show the help screen."""
@@ -53,39 +67,53 @@ class NullApp(App):
             if not provider_name:
                 return
             
-            # Now show config screen
-            # Load existing config for this provider if any
-            # Note: config structure right now is flat under 'ai'. 
-            # We should probably store per-provider config?
-            # For MVP, we just overwrite the 'ai' keys.
-            current = self.config.get("ai", {})
-            
-            # Pre-fill if we are editing the currently active provider, otherwise empty?
-            # User might want to switch back to openai and keep key.
-            # Ideally Config should store `ai.openai.api_key`, `ai.ollama.endpoint`.
-            # But Config.load_all() currently flattens it.
-            # Let's assume we just ask every time for now or read standard keys if I updated Config.
-            # To respect "Secure" storage, we can't easily peek all keys without `get_config`.
+            # Load config for this SPECIFIC provider from DB to pre-fill
+            # structure: ai.<provider_name>.api_key, etc.
+            sm = Config._get_storage()
+            current_conf = {
+                "api_key": sm.get_config(f"ai.{provider_name}.api_key", ""),
+                "endpoint": sm.get_config(f"ai.{provider_name}.endpoint", ""),
+                "region": sm.get_config(f"ai.{provider_name}.region", ""),
+                "model": sm.get_config(f"ai.{provider_name}.model", ""),
+                # Special defaults fallback if empty
+            }
             
             from screens import ProviderConfigScreen
             
             def on_config_saved(result):
-                if result:
-                    # Save all
-                    Config.update_key(["ai", "provider"], provider_name)
+                if result is not None:
+                    # Save provider-specific config
                     for k, v in result.items():
-                        if v: # Only save if not empty
-                            Config.update_key(["ai", k], v)
+                         # We allow saving empty strings to clear configs if needed, or just ignore
+                         Config.set(f"ai.{provider_name}.{k}", v)
+                    
+                    # Set active provider
+                    Config.set("ai.provider", provider_name)
                     
                     self.notify(f"Provider switched to {provider_name}")
-                    # Re-init
-                    self.config = Config.load_all()
+                    
+                    # Re-init AI Provider with new settings
+                    # We need to construct the config dict expected by AIFactory
+                    # which expects keys like 'api_key', 'endpoint' at top level of the dict passed to it.
+                    provider_config = {
+                        "provider": provider_name,
+                        "api_key": result.get("api_key") or Config.get(f"ai.{provider_name}.api_key"),
+                        "endpoint": result.get("endpoint") or Config.get(f"ai.{provider_name}.endpoint"),
+                        "region": result.get("region") or Config.get(f"ai.{provider_name}.region"),
+                        "model": result.get("model") or Config.get(f"ai.{provider_name}.model"),
+                        "api_version": Config.get(f"ai.{provider_name}.api_version"), # For Azure if we added it to UI
+                    }
+                    
                     try:
-                        self.ai_provider = AIFactory.get_provider(self.config["ai"])
+                        self.ai_provider = AIFactory.get_provider(provider_config)
+                        # Also update local config object if we rely on it elsewhere? 
+                        # self.config["ai"] is getting stale. 
+                        # Let's verify if we need to reload Config.load_all().
+                        self.config = Config.load_all() # This might need updating to pull from specific provider
                     except Exception as e:
                         self.notify(f"Error initializing provider: {e}", severity="error")
 
-            self.push_screen(ProviderConfigScreen(provider_name, current), on_config_saved)
+            self.push_screen(ProviderConfigScreen(provider_name, current_conf), on_config_saved)
 
         from screens import SelectionListScreen
         self.push_screen(SelectionListScreen("Select Provider", providers), on_provider_selected)
@@ -151,38 +179,70 @@ class NullApp(App):
             return
             
         cmd_text = message.value
+        input_ctrl = self.query_one("#input", InputController)
         
         # Add to widgets history
-        input_ctrl = self.query_one("#input", InputController)
         input_ctrl.add_to_history(cmd_text)
 
-        # Persist to DB
+        # Persist to DB if command
+        # For AI queries, maybe we don't persist to command history or maybe we do?
+        # Typically command history assumes repeatable commands. AI queries are just chats.
+        # Let's persist everything for now so user can up-arrow.
         Config._get_storage().add_history(cmd_text)
 
         # Slash Command Handling
         if cmd_text.startswith("/"):
             await self.handle_slash_command(cmd_text)
-            self.query_one("#input", InputController).value = ""
+            input_ctrl.value = ""
             return
+            
+        # Check Mode
+        if input_ctrl.is_ai_mode:
+             # AI Mode Logic
+             if not self.ai_provider:
+                 self.notify("AI Provider not configured. Use /provider.", severity="error")
+                 self.action_select_provider()
+                 return
+                 
+             # Create AI Query Block
+             block = BlockState(type=BlockType.AI_QUERY, content_input=cmd_text)
+             self.blocks.append(block)
+             input_ctrl.value = ""
+             
+             history_vp = self.query_one("#history", HistoryViewport)
+             block_widget = BlockWidget(block)
+             await history_vp.mount(block_widget)
+             block_widget.scroll_visible()
+             
+             # Create Placeholder Response Block
+             resp_block = BlockState(type=BlockType.AI_RESPONSE, content_input="")
+             self.blocks.append(resp_block)
+             resp_widget = BlockWidget(resp_block)
+             await history_vp.mount(resp_widget)
+             
+             # Run AI worker
+             self.run_worker(self.execute_ai(cmd_text, resp_block, resp_widget))
+             
+        else:
+            # CLI Mode Logic
+            # Create new Block State
+            block = BlockState(
+                type=BlockType.COMMAND,
+                content_input=cmd_text
+            )
+            self.blocks.append(block)
 
-        # Create new Block State
-        block = BlockState(
-            type=BlockType.COMMAND,
-            content_input=cmd_text
-        )
-        self.blocks.append(block)
+            # Clear input
+            input_ctrl.value = ""
 
-        # Clear input
-        self.query_one("#input", InputController).value = ""
+            # Create and Add Block Widget to History
+            history_vp = self.query_one("#history", HistoryViewport)
+            block_widget = BlockWidget(block)
+            await history_vp.mount(block_widget)
+            block_widget.scroll_visible() # Auto-scroll to new block
 
-        # Create and Add Block Widget to History
-        history = self.query_one("#history", HistoryViewport)
-        block_widget = BlockWidget(block)
-        await history.mount(block_widget)
-        block_widget.scroll_visible() # Auto-scroll to new block
-
-        # Execute Command
-        self.run_worker(self.execute_block(block, block_widget))
+            # Execute Command
+            self.run_worker(self.execute_block(block, block_widget))
 
     async def handle_slash_command(self, text: str):
         parts = text.split()
@@ -201,6 +261,9 @@ class NullApp(App):
                 return
             Config.update_key(["theme"], args[0])
             self.notify(f"Theme set to {args[0]}")
+            
+        elif command == "ai" or command == "chat":
+            self.action_toggle_ai_mode()
             
         elif command == "model":
             if not args:
@@ -242,6 +305,34 @@ class NullApp(App):
         else:
             self.notify(f"Unknown command: {command}", severity="warning")
 
+
+    async def execute_ai(self, prompt: str, block_state: BlockState, widget: BlockWidget):
+        """Worker to execute AI generation."""
+        try:
+            from context import ContextManager # Lazy import
+            
+            # Gather context
+            context_str = ContextManager.get_context(self.blocks[:-2]) # Exclude current query and response
+            
+            # DEBUG: Notify context size
+            self.notify(f"Context gathered: {len(context_str)} chars from {len(self.blocks[:-2])} blocks")
+            
+            full_response = ""
+            
+            # Streaming generation
+            async for chunk in self.ai_provider.generate(prompt, context_str):
+                full_response += chunk
+                block_state.content_output = full_response
+                # Update widget with just the chunk as it appends
+                widget.update_output(chunk)
+
+            block_state.is_running = False
+            widget.set_loading(False) # Stop spinner if any
+            
+        except Exception as e:
+            block_state.content_output = f"AI Error: {str(e)}"
+            block_state.is_running = False
+            widget.update_output(f"Error: {str(e)}")
 
     async def execute_block(self, block: BlockState, widget: BlockWidget):
         """Helper to run the command and update the widget."""

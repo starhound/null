@@ -20,11 +20,33 @@ class InputController(Input):
         ("down", "history_down", "Next Command"),
     ]
 
+    class Toggled(Message):
+        """Sent when input mode is toggled."""
+        def __init__(self, mode: str):
+            self.mode = mode
+            super().__init__()
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.history: list[str] = []
         self.history_index: int = -1
-        self.current_input: str = "" # To store what user typed before going up
+        self.current_input: str = "" 
+        self.mode: str = "CLI" # "CLI" or "AI"
+
+    @property
+    def is_ai_mode(self) -> bool:
+        return self.mode == "AI"
+
+    def toggle_mode(self):
+        if self.mode == "CLI":
+            self.mode = "AI"
+            self.add_class("ai-mode")
+            self.placeholder = "Ask AI..."
+        else:
+            self.mode = "CLI"
+            self.remove_class("ai-mode")
+            self.placeholder = "Type a command..."
+        self.post_message(self.Toggled(self.mode))
 
     def on_mount(self):
         self.focus()
@@ -80,6 +102,10 @@ class BlockHeader(Static):
         color: $accent;
         margin-right: 1;
     }
+    .prompt-symbol-ai {
+        color: $warning;
+        margin-right: 1;
+    }
     .command-text {
         color: $success-lighten-2;
         text-style: bold;
@@ -97,8 +123,18 @@ class BlockHeader(Static):
         self.block = block
 
     def compose(self) -> ComposeResult:
-        yield Label("➜", classes="prompt-symbol")
-        yield Label(self.block.content_input, classes="command-text")
+        icon = "➜"
+        header_class = "prompt-symbol"
+        
+        if self.block.type == BlockType.AI_QUERY:
+            icon = "🤖" # or ?
+            header_class = "prompt-symbol-ai"
+        elif self.block.type == BlockType.AI_RESPONSE:
+            icon = "✨"
+            header_class = "prompt-symbol-ai"
+            
+        yield Label(icon, classes=header_class)
+        yield Label(self.block.content_input or "AI Generating...", classes="command-text")
         
         # Format timestamp
         ts_str = self.block.timestamp.strftime("%H:%M:%S")
@@ -121,9 +157,11 @@ class BlockBody(Static):
         self.content_text = block.content_output
 
     def watch_content_text(self, new_text: str):
-        # We can eventually add syntax highlighting here
-        # For now, plain text
-        self.update(new_text)
+        if self.block.type == BlockType.AI_RESPONSE:
+            from rich.markdown import Markdown
+            self.update(Markdown(new_text))
+        else:
+            self.update(new_text)
 
 class BlockFooter(Static):
     """Footer showing exit code/status."""
@@ -174,13 +212,15 @@ class BlockWidget(Static):
         self.block.content_output += new_chunk
         self.body_widget.content_text = self.block.content_output
 
-    def set_exit_code(self, code: int):
-        self.block.exit_code = code
-        self.block.is_running = False
-        # Re-render footer to show exit code or remove spinner
+    def set_loading(self, loading: bool):
+        self.block.is_running = loading
         self.footer_widget.remove()
         self.footer_widget = BlockFooter(self.block)
         self.mount(self.footer_widget)
+
+    def set_exit_code(self, code: int):
+        self.block.exit_code = code
+        self.set_loading(False)
 
 class HistoryViewport(VerticalScroll):
     """Scrollable container for blocks."""

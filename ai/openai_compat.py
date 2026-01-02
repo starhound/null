@@ -15,7 +15,7 @@ class OpenAICompatibleProvider(LLMProvider):
             stream = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a helpful command line assistant. Provide only the shell command requested, no markdown fences unless complex."},
+                    {"role": "system", "content": "You are a helpful AI assistant integrated into a terminal. You can answer questions about the terminal history or provide commands/explanations as requested."},
                     {"role": "user", "content": f"{context}\n\nUser: {prompt}"}
                 ],
                 stream=True

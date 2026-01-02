@@ -13,7 +13,7 @@ class OllamaProvider(LLMProvider):
         url = f"{self.endpoint}/api/generate"
         payload = {
             "model": self.model,
-            "prompt": f"{context}\n\nUser Question: {prompt}\n\nStrict Command Line Answer:",
+            "prompt": f"{context}\n\nUser: {prompt}\n\nAssistant:",
             "stream": True
         }
         

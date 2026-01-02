@@ -28,7 +28,7 @@ class BedrockProvider(LLMProvider):
                 "messages": [
                     {
                         "role": "user",
-                        "content": f"{context}\n\nUser Question: {prompt}\n\nProvide only the command."
+                        "content": f"{context}\n\nUser: {prompt}\n\nAssistant:"
                     }
                 ]
             })

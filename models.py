@@ -7,6 +7,7 @@ import uuid
 class BlockType(Enum):
     COMMAND = "command"
     AI_RESPONSE = "ai"
+    AI_QUERY = "ai_query"
     SYSTEM_MSG = "system"
 
 @dataclass

@@ -39,6 +39,7 @@ class HelpScreen(ModalScreen):
         table.add_columns("Command", "Description")
         table.add_rows([
             ("/help", "Show this help screen"),
+            ("/provider", "Select and configure AI provider"),
             ("/theme <name>", "Change the UI theme (e.g. monokai, dracula)"),
             ("/model", "List available AI models"),
             ("/model <provider> <name>", "Set AI provider and model"),
@@ -94,8 +95,14 @@ class SelectionListScreen(ModalScreen):
             yield Button("Cancel", variant="error", id="cancel_btn")
 
     def on_list_view_selected(self, message: ListView.Selected):
-        item_name = message.item.children[0].renderable
-        self.dismiss(str(item_name))
+        # Robustly get selected item value via index
+        # message.item is the selected ListItem
+        # We can find its index in the list view to map back to self.items
+        index = self.query_one(ListView).index
+        if index is not None and 0 <= index < len(self.items):
+             self.dismiss(str(self.items[index]))
+        else:
+             self.dismiss(None)
 
     def on_button_pressed(self, event: Button.Pressed):
         self.dismiss(None)
@@ -166,13 +173,14 @@ class ProviderConfigScreen(ModalScreen):
                 self.inputs["api_key"] = inp
                 yield inp
 
+            # Custom Endpoint providers
             if self.provider in ["ollama", "lm_studio", "azure"]:
-                yield Label("Endpoint URL:", classes="input-label")
+                yield Label("Endpoint URL (Optional if default):", classes="input-label")
                 default_url = "http://localhost:11434" if self.provider == "ollama" else ""
                 if self.provider == "lm_studio": default_url = "http://localhost:1234/v1"
                 
                 inp = Input(
-                    placeholder="https://...", 
+                    placeholder=f"Default: {default_url}" if default_url else "https://...", 
                     id="endpoint",
                     value=self.current_config.get("endpoint", default_url)
                 )
@@ -189,15 +197,8 @@ class ProviderConfigScreen(ModalScreen):
                 self.inputs["region"] = inp
                 yield inp
             
-            # Common fields
-            yield Label("Default Model (Optional):", classes="input-label")
-            inp = Input(
-                placeholder="Model name...", 
-                id="model",
-                value=self.current_config.get("model", "")
-            )
-            self.inputs["model"] = inp
-            yield inp
+            # Removed "Default Model" field to simplify config. 
+            # Users should use /model to select from available list after auth.
             
             with Container(id="buttons"):
                 yield Button("Save", variant="primary", id="save")
