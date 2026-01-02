@@ -1516,6 +1516,11 @@ ProvidersScreen ProviderRow:hover {
     background: $surface;
 }
 
+ProvidersScreen ProviderRow:focus {
+    background: $primary 20%;
+    border-left: thick $primary;
+}
+
 ProvidersScreen .provider-status {
     width: 3;
     text-style: bold;
