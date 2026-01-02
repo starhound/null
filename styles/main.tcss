@@ -1769,3 +1769,69 @@ ExecutionWidget #exec-content {
     width: 100%;
     height: auto;
 }
+
+/* --- Response Widget --- */
+
+ResponseWidget {
+    width: 100%;
+    height: auto;
+    margin: 1 0 0 0;
+    padding: 0;
+    background: transparent;
+    display: block;
+}
+
+ResponseWidget.hidden {
+    display: none;
+}
+
+ResponseWidget .response-container {
+    background: $surface-darken-1;
+    border: solid $success 60%;
+    layout: vertical;
+    width: 100%;
+    height: auto;
+    padding: 0;
+}
+
+ResponseWidget .response-header {
+    layout: horizontal;
+    height: 1;
+    width: 100%;
+    padding: 0 1;
+    background: $surface-darken-2;
+    color: $success;
+    border-bottom: solid $surface-darken-3;
+}
+
+ResponseWidget .response-icon {
+    width: 2;
+    color: $success;
+}
+
+ResponseWidget .response-title {
+    width: 1fr;
+    color: $success;
+    text-style: bold;
+}
+
+ResponseWidget #response-content {
+    width: 100%;
+    height: auto;
+    padding: 1 2;
+    color: $text;
+}
+
+/* --- Response Widget: Simple Mode --- */
+ResponseWidget .response-container.simple {
+    border: none;
+    background: transparent;
+}
+
+ResponseWidget .response-container.simple .response-header {
+    display: none;
+}
+
+ResponseWidget .response-container.simple #response-content {
+    padding: 0;
+}

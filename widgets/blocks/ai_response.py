@@ -7,7 +7,7 @@ from .base import BaseBlockWidget
 from .parts import BlockHeader, BlockMeta, BlockFooter
 from .thinking import ThinkingWidget
 from .execution import ExecutionWidget
-
+from .response import ResponseWidget
 
 class AIResponseBlock(BaseBlockWidget):
     """Block widget for AI responses with thinking and execution sections."""
@@ -18,6 +18,7 @@ class AIResponseBlock(BaseBlockWidget):
         self.meta_widget = BlockMeta(block)
         self.thinking_widget = ThinkingWidget(block)
         self.exec_widget = ExecutionWidget(block)
+        self.response_widget = ResponseWidget(block)
         self.footer_widget = BlockFooter(block)
 
     def compose(self) -> ComposeResult:
@@ -25,26 +26,56 @@ class AIResponseBlock(BaseBlockWidget):
         yield self.meta_widget
         yield self.thinking_widget
         yield self.exec_widget
+        yield self.response_widget
         if self.footer_widget._has_content():
             yield self.footer_widget
 
     def update_output(self, new_content: str = ""):
         """Update the AI response display."""
-        # DEBUG: Write to file for debugging
-        import datetime
-        with open("/tmp/null_debug.log", "a") as f:
-            content_len = len(self.block.content_output) if self.block.content_output else 0
-            f.write(f"{datetime.datetime.now()}: update_output called, content_len={content_len}\n")
+        full_text = self.block.content_output or ""
         
+        # Split Reasoning vs Final Answer
+        # We look for <think> ... </think> style reasoning
+        reasoning = ""
+        final_answer = full_text
+        
+        lower_text = full_text.lower()
+        if "<think>" in lower_text:
+            if "</think>" in lower_text:
+                # Completed reasoning
+                parts = full_text.split("</think>", 1)
+                reasoning_raw = parts[0]
+                final_answer = parts[1].strip()
+                
+                # Clean up opening tag
+                if "<think>" in reasoning_raw:
+                     reasoning = reasoning_raw.split("<think>", 1)[1].strip()
+                else:
+                     reasoning = reasoning_raw # Should be rare
+            else:
+                # Still streaming reasoning
+                final_answer = "" # No answer yet
+                parts = full_text.split("<think>", 1)
+                if len(parts) > 1:
+                    reasoning = parts[1].strip()
+                else:
+                    reasoning = full_text # Edge case
+        
+        # Update widgets
         if self.thinking_widget:
-            # DEBUG: Force set and show what we're setting
-            old_text = self.thinking_widget.thinking_text
-            self.thinking_widget.thinking_text = self.block.content_output or ""
-            new_text = self.thinking_widget.thinking_text
-            with open("/tmp/null_debug.log", "a") as f:
-                f.write(f"  thinking_text: old={len(old_text) if old_text else 0}, new={len(new_text) if new_text else 0}\n")
+            self.thinking_widget.thinking_text = reasoning
+            
+        exec_out = getattr(self.block, 'content_exec_output', '')
         if self.exec_widget:
-            self.exec_widget.exec_output = getattr(self.block, 'content_exec_output', '')
+            self.exec_widget.exec_output = exec_out
+
+        if self.response_widget:
+            self.response_widget.content_text = final_answer
+            
+            # Simple mode if no reasoning and no execution
+            # This distinguishes "Chat" from "Agent" visually
+            is_simple = (not reasoning) and (not exec_out)
+            self.response_widget.set_simple(is_simple)
 
     def update_metadata(self):
         """Refresh the metadata widget to show updated values."""
