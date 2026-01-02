@@ -187,11 +187,22 @@ KNOWN_MODEL_CONTEXTS = {
     "mixtral": 32768,
     "codellama": 16384,
     "deepseek-coder": 16384,
-    "qwen2.5-coder": 32768,
+    # Qwen models
+    "qwen": 32768,
+    "qwen2": 32768,
     "qwen2.5": 32768,
+    "qwen2.5-coder": 32768,
+    "qwen3": 40000,
+    "qwen3-coder": 40000,
+    # Other local models  
     "phi3": 128000,
     "phi4": 16384,
     "gemma2": 8192,
+    "gemma": 8192,
+    "starcoder": 8192,
+    "codestral": 32768,
+    "yi": 32768,
+    "internlm": 32768,
 }
 
 

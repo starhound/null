@@ -127,6 +127,9 @@ class NullApp(App):
         self.set_interval(30, self._check_provider_health)
         self.call_later(self._check_provider_health)
         self.run_worker(self._init_mcp())
+        
+        # Auto-detect model for local providers
+        self.run_worker(self._detect_local_model())
 
     async def _init_mcp(self):
         """Initialize MCP server connections."""
@@ -135,6 +138,23 @@ class NullApp(App):
             tools = self.mcp_manager.get_all_tools()
             if tools:
                 self.notify(f"MCP: Connected with {len(tools)} tools available")
+        except Exception:
+            pass
+
+    async def _detect_local_model(self):
+        """Auto-detect model for local providers (lm_studio, ollama)."""
+        try:
+            provider_name = Config.get("ai.provider")
+            if provider_name not in ("lm_studio", "ollama"):
+                return
+            
+            # Fetch models to trigger auto-detection
+            _, models, _ = await self.ai_manager._fetch_models_for_provider(provider_name)
+            
+            if models and self.ai_provider:
+                # Update the cached provider reference
+                self.ai_provider = self.ai_manager.get_provider(provider_name)
+                self._update_status_bar()
         except Exception:
             pass
 

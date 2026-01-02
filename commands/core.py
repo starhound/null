@@ -25,8 +25,16 @@ class CoreCommands(CommandMixin):
         """Show current status."""
         from context import ContextManager
 
-        provider = self.app.config.get("ai", {}).get("provider", "none")
-        model = self.app.config.get("ai", {}).get("model", "none")
+        provider_name = self.app.config.get("ai", {}).get("provider", "none")
+        
+        # Get model from actual provider instance (most accurate)
+        if self.app.ai_provider and self.app.ai_provider.model:
+            model = self.app.ai_provider.model
+        else:
+            # Fallback to config
+            from config import Config
+            model = Config.get(f"ai.{provider_name}.model") or "none"
+        
         persona = self.app.config.get("ai", {}).get("active_prompt", "default")
         blocks_count = len(self.app.blocks)
 
@@ -42,7 +50,7 @@ class CoreCommands(CommandMixin):
         session_cost = status_bar.session_cost
 
         lines = [
-            f"  Provider:      {provider} ({provider_status})",
+            f"  Provider:      {provider_name} ({provider_status})",
             f"  Model:         {model}",
             f"  Persona:       {persona}",
             f"  Blocks:        {blocks_count}",

@@ -38,6 +38,14 @@ class AIManager:
 
             provider = AIFactory.get_provider(provider_config)
             self._providers[name] = provider
+            
+            # Auto-detect model for local providers if using default model
+            local_providers = {"lm_studio", "ollama"}
+            if name in local_providers and provider.model in ("local-model", "llama3.2"):
+                # Try to detect loaded model synchronously on first use
+                # This will be updated async when list_all_models is called
+                pass
+            
             return provider
         except Exception:
             return None
@@ -121,6 +129,17 @@ class AIManager:
                 provider.list_models(),
                 timeout=10.0  # 10 second timeout per provider
             )
+            
+            # Auto-update model name for local providers using default
+            local_providers = {"lm_studio", "ollama"}
+            if provider_name in local_providers and models:
+                current_model = provider.model
+                # If using a default/placeholder model name, update to first available
+                if current_model in ("local-model", "llama3.2", ""):
+                    provider.model = models[0]
+                    # Also save to config so it persists
+                    Config.set(f"ai.{provider_name}.model", models[0])
+            
             return (provider_name, models or [], None)
 
         except asyncio.TimeoutError:
