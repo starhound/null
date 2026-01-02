@@ -1,5 +1,9 @@
 """Selection list screens."""
 
+from typing import Callable, Coroutine, Any, Optional
+from textual.timer import Timer
+from textual.reactive import reactive
+
 from .base import ModalScreen, ComposeResult, Binding, Container, Label, ListView, ListItem, Button
 
 
@@ -36,8 +40,118 @@ class SelectionListScreen(ModalScreen):
         self.dismiss(None)
 
 
-class ModelListScreen(SelectionListScreen):
-    """Screen to select an AI model."""
+class ModelListScreen(ModalScreen):
+    """Screen to select an AI model with async loading support."""
 
-    def __init__(self, models: list[str]):
-        super().__init__("Select a Model", models)
+    BINDINGS = [Binding("escape", "dismiss", "Close")]
+    SPINNER_FRAMES = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+
+    is_loading = reactive(True)
+
+    def __init__(
+        self,
+        models: Optional[list[str]] = None,
+        fetch_func: Optional[Callable[[], Coroutine[Any, Any, list[str]]]] = None
+    ):
+        """Initialize model list screen.
+
+        Args:
+            models: Pre-fetched list of models (if available)
+            fetch_func: Async function to fetch models (if models not provided)
+        """
+        super().__init__()
+        self.items = models or []
+        self.fetch_func = fetch_func
+        self._spinner_index = 0
+        self._spinner_timer: Optional[Timer] = None
+        self.is_loading = not bool(models)
+
+    def compose(self) -> ComposeResult:
+        with Container(id="selection-container"):
+            yield Label("Select a Model", id="model-title")
+            yield Label("", id="loading-indicator", classes="loading-spinner")
+            yield ListView(id="item_list")
+            yield Button("Cancel [Esc]", variant="default", id="cancel_btn")
+
+    def on_mount(self):
+        """Start loading models if needed."""
+        if self.is_loading and self.fetch_func:
+            self._start_spinner()
+            self.run_worker(self._fetch_models())
+        elif self.items:
+            self._populate_list()
+
+    def _start_spinner(self):
+        """Start the loading spinner animation."""
+        try:
+            indicator = self.query_one("#loading-indicator", Label)
+            indicator.update(f"{self.SPINNER_FRAMES[0]} Loading models...")
+            indicator.display = True
+            self._spinner_timer = self.set_interval(0.08, self._animate_spinner)
+        except Exception:
+            pass
+
+    def _stop_spinner(self):
+        """Stop the loading spinner."""
+        if self._spinner_timer:
+            self._spinner_timer.stop()
+            self._spinner_timer = None
+        try:
+            indicator = self.query_one("#loading-indicator", Label)
+            indicator.display = False
+        except Exception:
+            pass
+
+    def _animate_spinner(self):
+        """Animate the spinner frame."""
+        self._spinner_index = (self._spinner_index + 1) % len(self.SPINNER_FRAMES)
+        try:
+            indicator = self.query_one("#loading-indicator", Label)
+            indicator.update(f"{self.SPINNER_FRAMES[self._spinner_index]} Loading models...")
+        except Exception:
+            pass
+
+    async def _fetch_models(self):
+        """Fetch models using the provided function."""
+        try:
+            if self.fetch_func:
+                self.items = await self.fetch_func()
+        except Exception as e:
+            self.notify(f"Failed to fetch models: {e}", severity="error")
+            self.items = []
+        finally:
+            self.is_loading = False
+            self._stop_spinner()
+            self._populate_list()
+
+    def _populate_list(self):
+        """Populate the list view with models."""
+        try:
+            listview = self.query_one("#item_list", ListView)
+            listview.clear()
+
+            if not self.items:
+                listview.mount(ListItem(Label("No models found")))
+            else:
+                for model in self.items:
+                    listview.mount(ListItem(Label(model)))
+
+            # Focus the list
+            listview.focus()
+        except Exception:
+            pass
+
+    def on_list_view_selected(self, message: ListView.Selected):
+        if self.is_loading:
+            return
+        index = self.query_one("#item_list", ListView).index
+        if index is not None and 0 <= index < len(self.items):
+            self.dismiss(str(self.items[index]))
+        else:
+            self.dismiss(None)
+
+    def on_button_pressed(self, event: Button.Pressed):
+        self.dismiss(None)
+
+    def action_dismiss(self):
+        self.dismiss(None)

@@ -112,42 +112,34 @@ class CommandPalette(Static, can_focus=True):
         yield Label("Up/Down to navigate, Enter to execute, Esc to close", id="palette-hint")
 
     def _build_actions(self) -> list[PaletteAction]:
-        """Build the list of all available actions."""
+        """Build the list of all available actions dynamically."""
         actions = []
 
-        # Slash commands
-        slash_commands = [
-            ("/help", "Show help screen", "F1"),
-            ("/config", "Open settings", ""),
-            ("/settings", "Open settings", ""),
-            ("/provider", "Select AI provider", "F4"),
-            ("/model", "Select AI model", "F2"),
-            ("/theme", "Change UI theme", "F3"),
-            ("/prompts", "Manage system prompts", ""),
-            ("/export md", "Export conversation to Markdown", "Ctrl+S"),
-            ("/export json", "Export conversation to JSON", ""),
-            ("/session save", "Save current session", ""),
-            ("/session load", "Load a saved session", ""),
-            ("/session list", "List saved sessions", ""),
-            ("/session new", "Start new session", ""),
-            ("/mcp list", "List MCP servers", ""),
-            ("/mcp tools", "Show available MCP tools", ""),
-            ("/status", "Show current status", ""),
-            ("/clear", "Clear history", "Ctrl+L"),
-            ("/compact", "Summarize context", ""),
-            ("/quit", "Exit application", "Ctrl+C"),
-            ("/ai", "Toggle AI mode", ""),
-            ("/chat", "Toggle AI mode", ""),
-        ]
+        # Get slash commands dynamically from the command handler
+        try:
+            command_handler = self.app.command_handler
+            for cmd_info in command_handler.get_all_commands():
+                # Main command
+                actions.append(PaletteAction(
+                    name=f"/{cmd_info.name}",
+                    description=cmd_info.description,
+                    shortcut=cmd_info.shortcut,
+                    category="commands",
+                    action_id=f"slash:/{cmd_info.name}"
+                ))
 
-        for cmd, desc, shortcut in slash_commands:
-            actions.append(PaletteAction(
-                name=cmd,
-                description=desc,
-                shortcut=shortcut,
-                category="commands",
-                action_id=f"slash:{cmd}"
-            ))
+                # Subcommands if any
+                for subcmd, subdesc in cmd_info.subcommands:
+                    actions.append(PaletteAction(
+                        name=f"/{cmd_info.name} {subcmd}",
+                        description=subdesc,
+                        shortcut="",
+                        category="commands",
+                        action_id=f"slash:/{cmd_info.name} {subcmd}"
+                    ))
+        except Exception:
+            # Fallback if command handler not available
+            pass
 
         # Key binding actions
         keybindings = [

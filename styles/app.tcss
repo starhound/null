@@ -833,6 +833,74 @@ SelectionListScreen #cancel_btn:hover {
 }
 
 /* ==========================================================================
+   Model List Screen (with async loading)
+   ========================================================================== */
+
+ModelListScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+ModelListScreen #selection-container {
+    width: 50%;
+    min-width: 40;
+    height: auto;
+    max-height: 70%;
+    background: $surface;
+    border: round $primary;
+    padding: 1 2;
+    layout: vertical;
+}
+
+ModelListScreen #model-title {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+ModelListScreen #loading-indicator {
+    height: 1;
+    color: $warning;
+    text-style: italic;
+    margin-bottom: 1;
+}
+
+ModelListScreen .loading-spinner {
+    color: $primary;
+}
+
+ModelListScreen ListView {
+    height: auto;
+    max-height: 20;
+    margin: 0;
+    padding: 0;
+    background: $surface-darken-1;
+}
+
+ModelListScreen ListItem {
+    padding: 0 1;
+    height: 1;
+}
+
+ModelListScreen ListItem:hover {
+    background: $surface-lighten-1;
+}
+
+ModelListScreen #cancel_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $surface-lighten-2;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+ModelListScreen #cancel_btn:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
    Provider Config Screen
    ========================================================================== */
 

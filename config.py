@@ -31,7 +31,7 @@ class Config:
                 "api_key": sm.get_config(f"ai.{provider}.api_key", ""),
                 "region": sm.get_config(f"ai.{provider}.region", ""),
                 "agent_mode": agent_mode,
-                "active_prompt": "agent",
+                "active_prompt": sm.get_config("ai.active_prompt", "default"),
                 "prompts": {
                     "default": """You are an autonomous AI agent running in a Linux terminal. 
 You have access to a tool to execute shell commands. use it to answer the user's request.

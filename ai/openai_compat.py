@@ -51,12 +51,23 @@ class OpenAICompatibleProvider(LLMProvider):
         chat_messages = self._build_messages(prompt, messages, system_prompt)
 
         try:
-            stream = await self.client.chat.completions.create(
-                model=self.model,
-                messages=chat_messages,
-                stream=True,
-                stream_options={"include_usage": True}
-            )
+            # Try with stream_options first, fall back without if not supported
+            params = {
+                "model": self.model,
+                "messages": chat_messages,
+                "stream": True,
+            }
+
+            # Some servers (like LM Studio) may not support stream_options
+            try:
+                stream = await self.client.chat.completions.create(
+                    **params,
+                    stream_options={"include_usage": True}
+                )
+            except Exception:
+                # Fallback without stream_options
+                stream = await self.client.chat.completions.create(**params)
+
             async for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
@@ -79,7 +90,6 @@ class OpenAICompatibleProvider(LLMProvider):
                 "model": self.model,
                 "messages": chat_messages,
                 "stream": True,
-                "stream_options": {"include_usage": True}
             }
 
             # Only add tools if provided
@@ -87,7 +97,15 @@ class OpenAICompatibleProvider(LLMProvider):
                 params["tools"] = tools
                 params["tool_choice"] = "auto"
 
-            stream = await self.client.chat.completions.create(**params)
+            # Try with stream_options first (for usage tracking), fall back if not supported
+            try:
+                stream = await self.client.chat.completions.create(
+                    **params,
+                    stream_options={"include_usage": True}
+                )
+            except Exception:
+                # Some servers (LM Studio, etc.) don't support stream_options
+                stream = await self.client.chat.completions.create(**params)
 
             # Track tool calls being built up across chunks
             current_tool_calls: Dict[int, Dict[str, Any]] = {}

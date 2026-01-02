@@ -265,25 +265,28 @@ class NullApp(App):
 
     def action_select_model(self):
         """Select an AI model."""
-        async def populate_and_show():
-            if not self.ai_provider:
-                self.notify("AI Provider not initialized. Selecting provider...", severity="warning")
-                self.action_select_provider()
-                return
+        if not self.ai_provider:
+            self.notify("AI Provider not initialized. Selecting provider...", severity="warning")
+            self.action_select_provider()
+            return
 
-            self.notify("Fetching models...")
-            models = await self.ai_provider.list_models()
+        # Get current provider to save model under correct key
+        current_provider = Config.get("ai.provider") or "ollama"
 
-            def on_model_select(selected_model):
-                if selected_model:
-                    Config.update_key(["ai", "model"], str(selected_model))
-                    self.notify(f"Model set to {selected_model}")
-                    if self.ai_provider:
-                        self.ai_provider.model = str(selected_model)
+        def on_model_select(selected_model):
+            if selected_model:
+                # Save model under provider-specific key (e.g., ai.nvidia.model)
+                Config.set(f"ai.{current_provider}.model", str(selected_model))
+                self.notify(f"Model set to {selected_model}")
+                if self.ai_provider:
+                    self.ai_provider.model = str(selected_model)
+                self._update_status_bar()
 
-            self.push_screen(ModelListScreen(models), on_model_select)
-
-        self.run_worker(populate_and_show())
+        # Show screen immediately with async fetch - no freezing!
+        self.push_screen(
+            ModelListScreen(fetch_func=self.ai_provider.list_models),
+            on_model_select
+        )
 
     def action_select_theme(self):
         """Change the application theme."""
@@ -577,8 +580,8 @@ class NullApp(App):
             input_ctrl = self.query_one("#input", InputController)
             status_bar.set_mode(input_ctrl.mode)
 
-            # Set agent mode status
-            agent_mode = self.config.get("ai", {}).get("agent_mode", False)
+            # Get FRESH config values (Config.get reads from storage)
+            agent_mode = Config.get("ai.agent_mode") or False
             status_bar.set_agent_mode(agent_mode)
 
             from context import ContextManager
@@ -592,7 +595,8 @@ class NullApp(App):
 
             status_bar.set_context(len(context_str), context_limit)
 
-            provider_name = self.config.get("ai", {}).get("provider", "none")
+            # Get fresh provider name
+            provider_name = Config.get("ai.provider") or "none"
             status_bar.provider_name = provider_name
         except Exception:
             pass

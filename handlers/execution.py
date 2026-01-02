@@ -34,10 +34,15 @@ class ExecutionHandler:
         try:
             from context import ContextManager
             from prompts import get_prompt_manager
+            from config import Config
 
-            # Get system prompt from prompt manager
-            active_key = self.app.config.get("ai", {}).get("active_prompt", "default")
-            provider_name = self.app.config.get("ai", {}).get("provider", "")
+            # Get FRESH config values (not stale self.app.config)
+            provider_name = Config.get("ai.provider") or ""
+            active_key = Config.get("ai.active_prompt") or "default"
+
+            # Get model directly from provider (always current)
+            model_name = self.app.ai_provider.model if self.app.ai_provider else ""
+
             prompt_manager = get_prompt_manager()
             system_prompt = prompt_manager.get_prompt_content(active_key, provider_name)
 
@@ -54,7 +59,6 @@ class ExecutionHandler:
 
             # Check if we're using unknown model with default context
             from ai.base import KNOWN_MODEL_CONTEXTS
-            model_name = self.app.config['ai']['model']
             if model_name.lower() not in KNOWN_MODEL_CONTEXTS:
                 is_known = any(model_name.lower().startswith(k) for k in KNOWN_MODEL_CONTEXTS)
                 if not is_known:
@@ -514,8 +518,8 @@ class ExecutionHandler:
         block_state.is_running = False
         self.app._active_worker = None
 
-        # Get model name for cost calculation
-        model_name = self.app.config.get('ai', {}).get('model', '')
+        # Get model name directly from provider (always current)
+        model_name = self.app.ai_provider.model if self.app.ai_provider else ""
 
         # Update metadata with token info
         if usage:
