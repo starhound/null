@@ -364,14 +364,21 @@ class ConfigScreen(ModalScreen):
 
         new_settings = self._collect_values()
         save_settings(new_settings)
-        
+
         # SYNC TO SQLITE (Config)
         # Ensure critical keys used by app logic are synced
+        Config.set("theme", new_settings.appearance.theme)
         Config.set("ai.provider", new_settings.ai.provider)
         Config.set("ai.autocomplete.enabled", str(new_settings.ai.autocomplete_enabled))
         Config.set("ai.autocomplete.provider", new_settings.ai.autocomplete_provider)
         Config.set("ai.autocomplete.model", new_settings.ai.autocomplete_model)
-        
+
+        # Apply theme immediately
+        try:
+            self.app.theme = new_settings.appearance.theme
+        except Exception:
+            pass
+
         self.dismiss(new_settings)
 
     def action_cancel(self):

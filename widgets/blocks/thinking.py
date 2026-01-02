@@ -6,6 +6,7 @@ from textual.timer import Timer
 
 from models import BlockState
 from .code_block import CodeBlockWidget, extract_code_blocks
+from utils.text import make_links_clickable
 
 
 class ThinkingWidget(Static):
@@ -178,7 +179,9 @@ class ThinkingWidget(Static):
             self._last_rendered_len = current_len
             content = self.query_one("#peek-content", Static)
             from rich.markdown import Markdown
-            content.update(Markdown(new_text, code_theme="monokai"))
+            # Make plain URLs clickable before rendering
+            linkified_text = make_links_clickable(new_text)
+            content.update(Markdown(linkified_text, code_theme="monokai"))
 
             # Auto-scroll to bottom to follow content
             if not self.is_expanded:
@@ -198,7 +201,9 @@ class ThinkingWidget(Static):
                 # Standard markdown rendering during streaming
                 content = self.query_one("#peek-content", Static)
                 from rich.markdown import Markdown
-                content.update(Markdown(self.thinking_text, code_theme="monokai"))
+                # Make plain URLs clickable before rendering
+                linkified_text = make_links_clickable(self.thinking_text)
+                content.update(Markdown(linkified_text, code_theme="monokai"))
         except Exception:
             pass
 
@@ -211,7 +216,8 @@ class ThinkingWidget(Static):
                 # No code blocks, use standard markdown
                 content = self.query_one("#peek-content", Static)
                 from rich.markdown import Markdown
-                content.update(Markdown(self.thinking_text, code_theme="monokai"))
+                linkified_text = make_links_clickable(self.thinking_text)
+                content.update(Markdown(linkified_text, code_theme="monokai"))
                 return
 
             # Clear the peek content and replace with mixed content
@@ -258,7 +264,8 @@ class ThinkingWidget(Static):
             from rich.markdown import Markdown
             for segment in segments:
                 if segment[0] == "text":
-                    text_widget = Static(Markdown(segment[1], code_theme="monokai"), classes="markdown-text")
+                    linkified_segment = make_links_clickable(segment[1])
+                    text_widget = Static(Markdown(linkified_segment, code_theme="monokai"), classes="markdown-text")
                     container.mount(text_widget)
                 elif segment[0] == "code":
                     code_widget = CodeBlockWidget(segment[1], segment[2])

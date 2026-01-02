@@ -62,6 +62,13 @@ class AICommands(CommandMixin):
                 except Exception as e:
                     self.notify(f"Error initializing provider: {e}", severity="error")
 
+            elif action == "unconfigured":
+                # Provider config was removed
+                self.notify(f"Removed {provider_name} configuration")
+                # Reload config and update status bar
+                self.app.config = Config.load_all()
+                self.app._update_status_bar()
+
         self.app.push_screen(ProvidersScreen(), on_providers_result)
 
     def _open_provider_config(self, provider_name: str):

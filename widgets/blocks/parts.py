@@ -1,8 +1,17 @@
+import re
 from textual.app import ComposeResult
 from textual.widgets import Static, Label
 from textual.reactive import reactive
+from rich.text import Text
 
 from models import BlockState, BlockType
+
+
+# URL pattern for making links clickable in plain text output
+URL_PATTERN = re.compile(
+    r'(https?://|ftp://)[^\s<>\[\]\"\'`\)]+',
+    re.IGNORECASE
+)
 
 
 class BlockHeader(Static):
@@ -105,14 +114,38 @@ class BlockBody(Static):
         self.content_text = self._initial_text
 
     def compose(self) -> ComposeResult:
-        yield Static(self._initial_text, id="body-content")
+        yield Static(self._make_links_clickable(self._initial_text), id="body-content")
 
     def watch_content_text(self, new_text: str):
         try:
             content = self.query_one("#body-content", Static)
-            content.update(new_text)
+            content.update(self._make_links_clickable(new_text))
         except Exception:
             pass
+
+    def _make_links_clickable(self, text: str) -> Text:
+        """Convert plain text with URLs to Rich Text with clickable links."""
+        if not text:
+            return Text("")
+
+        result = Text()
+        last_end = 0
+
+        for match in URL_PATTERN.finditer(text):
+            # Add text before the URL
+            if match.start() > last_end:
+                result.append(text[last_end:match.start()])
+
+            # Add the URL as a clickable link
+            url = match.group(0)
+            result.append(url, style=f"link {url} underline cyan")
+            last_end = match.end()
+
+        # Add remaining text after last URL
+        if last_end < len(text):
+            result.append(text[last_end:])
+
+        return result
 
 
 class BlockFooter(Static):

@@ -46,7 +46,7 @@ ModalScreen {
 
 HistoryViewport {
     height: 1fr;
-    padding: 0;
+    padding: 1 2;
     margin: 0;
     background: $background;
     scrollbar-size-vertical: 1;
@@ -64,18 +64,23 @@ HistoryViewport {
 #input-container {
     height: auto;
     min-height: 3;
+    margin: 0 2 1 2;
     padding: 0 1;
     background: $surface;
-    border-top: solid $panel;
+    border: round $panel;
 }
 
 #input-container:focus-within {
-    border-top: solid $primary;
+    border: round $primary;
     background: $surface-light;
 }
 
+#input-container.ai-mode {
+    border: round $warning 50%;
+}
+
 #input-container.ai-mode:focus-within {
-    border-top: solid $warning;
+    border: round $warning;
     background: $surface-light;
 }
 
@@ -96,7 +101,7 @@ InputController {
     min-height: 1;
     max-height: 8;
     border: none;
-    padding: 0;
+    padding: 0 1;
     background: transparent;
     color: $text;
 }
@@ -117,15 +122,15 @@ InputController > .text-area--selection {
 CommandSuggester {
     layer: overlay;
     dock: bottom;
-    margin-bottom: 4;
-    margin-left: 2;
-    margin-right: 2;
+    margin-bottom: 5;
+    margin-left: 4;
+    margin-right: 4;
     width: auto;
     max-width: 60;
     height: auto;
     max-height: 10;
-    background: $panel;
-    border: solid $surface;
+    background: $surface;
+    border: round $primary;
     display: none;
     padding: 0 1;
 }
@@ -162,7 +167,8 @@ StatusBar {
     height: 1;
     background: $panel;
     layout: horizontal;
-    padding: 0 2;
+    padding: 0 3;
+    margin: 0 2;
     color: $text-muted;
 }
 
@@ -514,8 +520,9 @@ BaseBlockWidget {
     min-height: 0;
     background: $surface;
     color: $text;
-    margin: 1 1;
+    margin: 1 0;
     padding: 0;
+    border: round $panel;
 }
 
 /* --- Block Types --- */
@@ -524,97 +531,119 @@ CommandBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: $success 10%;
+    background: $surface;
     color: $text;
-    margin: 1 1;
+    margin: 1 0;
     padding: 0;
-    border-left: wide $success;
+    border: round $success 50%;
+}
+
+CommandBlock:focus-within {
+    border: round $success;
 }
 
 CommandBlock BlockHeader {
-    background: $success 25%;
-    padding: 0 1;
+    background: $success 20%;
+    padding: 0 2;
+    border-bottom: solid $success 30%;
 }
 
 CommandBlock BlockBody {
     background: $surface;
-    border-left: solid $success 30%;
+    padding: 1 2;
 }
 
 AIResponseBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: $primary 10%;
+    background: $surface;
     color: $text;
-    margin: 1 1;
+    margin: 1 0;
     padding: 0;
-    border-left: wide $primary;
+    border: round $primary 50%;
+}
+
+AIResponseBlock:focus-within {
+    border: round $primary;
 }
 
 AIResponseBlock BlockHeader {
-    background: $primary 25%;
-    padding: 0 1;
+    background: $primary 20%;
+    padding: 0 2;
+    border-bottom: solid $primary 30%;
 }
 
 AIResponseBlock BlockBody {
     background: $surface;
-    border-left: solid $primary 30%;
+    padding: 1 2;
 }
 
 AIResponseBlock BlockMeta {
     background: $panel;
-    padding: 0 1;
+    padding: 0 2;
     margin: 0;
+    border-top: solid $primary 20%;
 }
 
 SystemBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: $secondary 10%;
+    background: $surface;
     color: $text;
-    margin: 1 1;
+    margin: 1 0;
     padding: 0;
-    border-left: wide $secondary;
+    border: round $secondary 50%;
+}
+
+SystemBlock:focus-within {
+    border: round $secondary;
 }
 
 SystemBlock BlockHeader {
-    background: $secondary 25%;
-    padding: 0 1;
+    background: $secondary 20%;
+    padding: 0 2;
+    border-bottom: solid $secondary 30%;
 }
 
 SystemBlock BlockBody {
     background: $surface;
-    border-left: solid $secondary 30%;
+    padding: 1 2;
 }
 
 ToolCallBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: $accent 10%;
+    background: $surface;
     color: $text;
-    margin: 1 1;
+    margin: 1 0;
     padding: 0;
-    border-left: wide $accent;
+    border: round $accent 50%;
+}
+
+ToolCallBlock:focus-within {
+    border: round $accent;
 }
 
 ToolCallBlock BlockHeader {
-    background: $accent 30%;
-    padding: 0 1;
-    color: $accent;
+    background: $accent 25%;
+    padding: 0 2;
+    color: $text;
+    border-bottom: solid $accent 30%;
 }
 
 ToolCallBlock BlockBody {
     background: $surface;
-    border-left: solid $accent 30%;
+    padding: 1 2;
 }
 
 ToolCallBlock BlockMeta {
     background: $panel;
-    padding: 0 1;
+    padding: 0 2;
     color: $text-muted;
+    border-top: solid $accent 20%;
 }
 
 /* --- Block Parts: Header --- */
@@ -727,13 +756,14 @@ BlockBody {
     height: auto;
     min-height: 0;
     padding: 1 2;
-    margin-left: 0;
+    margin: 0;
     color: $text;
-    background: $surface;
+    background: transparent;
 }
 
 BlockBody #body-content {
     width: 100%;
+    padding: 0;
 }
 
 /* --- Block Parts: Footer --- */
@@ -742,7 +772,7 @@ BlockFooter {
     height: auto;
     min-height: 0;
     padding: 0 2;
-    background: $surface;
+    background: transparent;
     color: $text-muted;
 }
 
@@ -1258,6 +1288,22 @@ ProvidersScreen .provider-btn-active {
 
 ProvidersScreen .provider-btn-active:hover {
     background: $success;
+    color: $text;
+    text-style: bold;
+}
+
+ProvidersScreen .provider-btn-remove {
+    width: auto;
+    min-width: 8;
+    height: 1;
+    background: $error 30%;
+    color: $text-muted;
+    border: none;
+    margin-left: 1;
+}
+
+ProvidersScreen .provider-btn-remove:hover {
+    background: $error;
     color: $text;
     text-style: bold;
 }

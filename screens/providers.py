@@ -41,9 +41,13 @@ class ProviderRow(Horizontal):
         # Configure button
         yield Button("Configure", id=f"config-{self.provider_name}", classes="provider-btn")
 
-        # Set Active button (only if configured)
+        # Set Active button (only if configured and not already active)
         if self.is_configured and not self.is_active:
             yield Button("Set Active", id=f"activate-{self.provider_name}", classes="provider-btn-active")
+
+        # Unconfigure button (only if configured and not active)
+        if self.is_configured and not self.is_active:
+            yield Button("Remove", id=f"unconfigure-{self.provider_name}", classes="provider-btn-remove")
 
 
 class ProvidersScreen(ModalScreen):
@@ -133,6 +137,19 @@ class ProvidersScreen(ModalScreen):
             Config.set("ai.provider", provider_name)
             self.dismiss(("activated", provider_name))
             return
+
+        if button_id and button_id.startswith("unconfigure-"):
+            provider_name = button_id.replace("unconfigure-", "")
+            # Remove provider configuration from database
+            self._unconfigure_provider(provider_name)
+            self.dismiss(("unconfigured", provider_name))
+            return
+
+    def _unconfigure_provider(self, provider_name: str):
+        """Remove all configuration for a provider from the database."""
+        sm = Config._get_storage()
+        # Delete all keys starting with ai.<provider_name>.
+        sm.delete_config_prefix(f"ai.{provider_name}.")
 
     def action_dismiss(self):
         self.dismiss(None)

@@ -127,11 +127,23 @@ class StorageManager:
         stored_val = value
         if is_sensitive:
             stored_val = self.security.encrypt(value)
-            
+
         cursor.execute("""
             INSERT OR REPLACE INTO config (key, value, is_sensitive)
             VALUES (?, ?, ?)
         """, (key, stored_val, is_sensitive))
+        self.conn.commit()
+
+    def delete_config(self, key: str):
+        """Delete a config key from the database."""
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM config WHERE key = ?", (key,))
+        self.conn.commit()
+
+    def delete_config_prefix(self, prefix: str):
+        """Delete all config keys starting with a prefix."""
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM config WHERE key LIKE ?", (f"{prefix}%",))
         self.conn.commit()
 
     def add_history(self, command: str, exit_code: int = 0):
