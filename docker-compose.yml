@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    image: null-terminal
+    container_name: null-terminal
+    stdin_open: true # -i
+    tty: true # -t
+    volumes:
+      - ${HOME}/.null:/root/.null
+    environment:
+      - TERM=xterm-256color
+    # network_mode: host is optional but helpful for a network tool. 
+    # However, it binds all ports. For a terminal client, it's fine.
+    network_mode: host

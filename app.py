@@ -62,6 +62,11 @@ class NullApp(App):
             self.theme = "null-dark"
 
         self.blocks = []
+        
+        # Initialize Storage
+        from storage import StorageManager
+        self.storage = StorageManager()
+        
         self.executor = ExecutionEngine()
 
         # CLI session tracking

@@ -108,6 +108,26 @@ class StorageManager:
                 exit_code INTEGER
             )
         """)
+
+        # SSH Hosts Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ssh_hosts (
+                alias TEXT PRIMARY KEY,
+                hostname TEXT NOT NULL,
+                port INTEGER DEFAULT 22,
+                username TEXT,
+                key_path TEXT,
+                encrypted_password TEXT,
+                jump_host TEXT
+            )
+        """)
+        
+        # Migration: Add jump_host if missing
+        try:
+            cursor.execute("ALTER TABLE ssh_hosts ADD COLUMN jump_host TEXT")
+        except Exception:
+            # Column likely exists
+            pass
         
         self.conn.commit()
 
@@ -271,6 +291,49 @@ class StorageManager:
         current = self._get_current_session_file()
         if current.exists():
             current.unlink()
+
+    # SSH Management
+    def add_ssh_host(self, alias: str, hostname: str, port: int = 22, 
+                     username: str = None, key_path: str = None, password: str = None,
+                     jump_host: str = None):
+        """Add or update an SSH host config."""
+        cursor = self.conn.cursor()
+        
+        enc_pass = None
+        if password:
+            enc_pass = self.security.encrypt(password)
+            
+        cursor.execute("""
+            INSERT OR REPLACE INTO ssh_hosts (alias, hostname, port, username, key_path, encrypted_password, jump_host)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (alias, hostname, port, username, key_path, enc_pass, jump_host))
+        self.conn.commit()
+
+    def get_ssh_host(self, alias: str) -> Optional[Dict[str, Any]]:
+        """Get host config by alias."""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM ssh_hosts WHERE alias = ?", (alias,))
+        row = cursor.fetchone()
+        if row:
+            data = dict(row)
+            if data['encrypted_password']:
+                data['password'] = self.security.decrypt(data['encrypted_password'])
+            else:
+                data['password'] = None
+            return data
+        return None
+
+    def list_ssh_hosts(self) -> List[Dict[str, Any]]:
+        """List all SSH hosts."""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT alias, hostname, port, username, jump_host FROM ssh_hosts ORDER BY alias")
+        return [dict(row) for row in cursor.fetchall()]
+
+    def delete_ssh_host(self, alias: str):
+        """Delete an SSH host."""
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM ssh_hosts WHERE alias = ?", (alias,))
+        self.conn.commit()
 
     def close(self):
         self.conn.close()

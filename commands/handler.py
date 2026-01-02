@@ -47,7 +47,14 @@ class SlashCommandHandler:
             "status": (self._core.cmd_status, CommandInfo("status", "Show current status")),
             "clear": (self._core.cmd_clear, CommandInfo("clear", "Clear history and context", "Ctrl+L")),
             "quit": (self._core.cmd_quit, CommandInfo("quit", "Exit application", "Ctrl+C")),
+            "quit": (self._core.cmd_quit, CommandInfo("quit", "Exit application", "Ctrl+C")),
             "exit": (self._core.cmd_exit, CommandInfo("exit", "Exit application")),
+            
+            # SSH commands
+            "ssh": (self._core.cmd_ssh, CommandInfo("ssh", "Connect to SSH host (e.g. /ssh alias)")),
+            "ssh-add": (self._core.cmd_ssh_add, CommandInfo("ssh-add", "Add (save) a new SSH host")),
+            "ssh-list": (self._core.cmd_ssh_list, CommandInfo("ssh-list", "List saved SSH hosts")),
+            "ssh-del": (self._core.cmd_ssh_del, CommandInfo("ssh-del", "Delete a saved SSH host")),
 
             # AI commands
             "provider": (self._ai.cmd_provider, CommandInfo(

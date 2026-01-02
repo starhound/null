@@ -97,6 +97,10 @@ class CommandSuggester(Static):
             "/status": {"desc": "Show current status", "args": []},
             "/clear": {"desc": "Clear history", "args": []},
             "/compact": {"desc": "Summarize context", "args": []},
+            "/ssh": {"desc": "Connect to SSH host", "args": []},
+            "/ssh-add": {"desc": "Add new SSH host", "args": []},
+            "/ssh-list": {"desc": "List SSH hosts", "args": []},
+            "/ssh-del": {"desc": "Delete SSH host", "args": []},
             "/quit": {"desc": "Exit application", "args": []}
         }
 

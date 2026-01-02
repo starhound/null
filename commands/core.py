@@ -82,3 +82,72 @@ class CoreCommands(CommandMixin):
     async def cmd_exit(self, args: list[str]):
         """Exit the application (alias)."""
         self.app.exit()
+
+    async def cmd_ssh(self, args: list[str]):
+        """Connect to an SSH host: /ssh <alias>"""
+        if not args:
+            self.notify("Usage: /ssh <alias>", severity="error")
+            return
+
+        alias = args[0]
+        host_config = self.app.storage.get_ssh_host(alias)
+        
+        if not host_config:
+            self.notify(f"Unknown host alias: {alias}", severity="error")
+            return
+
+        from utils.ssh_client import SSHSession
+        from screens.ssh import SSHScreen
+        
+        session = SSHSession(
+            hostname=host_config['hostname'],
+            port=host_config['port'],
+            username=host_config['username'],
+            password=host_config['password'],
+            key_path=host_config['key_path']
+        )
+        
+        self.app.push_screen(SSHScreen(session, alias))
+
+    async def cmd_ssh_add(self, args: list[str]):
+        """Add SSH host: /ssh-add <alias> <host> <user> [port]"""
+        if len(args) < 3:
+            self.notify("Usage: /ssh-add <alias> <host> <user> [port] [key_path]", severity="error")
+            return
+
+        alias = args[0]
+        hostname = args[1]
+        username = args[2]
+        port = int(args[3]) if len(args) > 3 else 22
+        key_path = args[4] if len(args) > 4 else None
+        
+        # Password usually requires secure prompt, for now we add without password 
+        # or rely on key. User can use config command later to set password if we implement it.
+        # OR we could accept password as arg but that's insecure in history.
+        # Prefer key auth.
+        
+        self.app.storage.add_ssh_host(alias, hostname, port, username, key_path)
+        self.notify(f"Added SSH host: {alias}")
+
+    async def cmd_ssh_list(self, args: list[str]):
+        """List saved SSH hosts."""
+        hosts = self.app.storage.list_ssh_hosts()
+        if not hosts:
+            self.notify("No SSH hosts saved.")
+            return
+
+        lines = [f"SSH Hosts:", "----------"]
+        for h in hosts:
+            lines.append(f"{h['alias']}: {h['username']}@{h['hostname']}:{h['port']}")
+            
+        await self.show_output("/ssh-list", "\n".join(lines))
+
+    async def cmd_ssh_del(self, args: list[str]):
+        """Delete SSH host: /ssh-del <alias>"""
+        if not args:
+            self.notify("Usage: /ssh-del <alias>", severity="error")
+            return
+            
+        alias = args[0]
+        self.app.storage.delete_ssh_host(alias)
+        self.notify(f"Deleted SSH host: {alias}")
