@@ -407,9 +407,10 @@ ExecutionWidget .exec-icon {
 
 ExecutionWidget .copy-btn {
     width: auto;
+    min-width: 4;
     height: 1;
     background: transparent;
-    color: $text-dim;
+    color: $primary;
 }
 
 ExecutionWidget .copy-btn:hover {
@@ -428,7 +429,16 @@ ExecutionWidget .exec-scroll {
 
 ExecutionWidget #exec-content {
     width: 100%;
+    height: auto;
     padding: 0;
+}
+
+ExecutionWidget .exec-scroll {
+    height: auto;
+    max-height: 60vh;
+    padding: 1 2;
+    overflow-y: auto;
+    background: transparent;
 }
 
 /* --- History Search --- */
@@ -778,6 +788,7 @@ BlockHeader .timestamp {
 BlockMeta {
     layout: horizontal;
     height: 1;
+    min-height: 1;
     padding: 0 1;
     margin: 0;
     background: transparent;
@@ -801,9 +812,10 @@ BlockMeta .meta-spacer {
 
 BlockMeta .meta-action {
     width: auto;
+    min-width: 4;
     height: 1;
     margin-left: 2;
-    color: $text-muted;
+    color: $primary;
 }
 
 BlockMeta .meta-action:hover {
