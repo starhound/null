@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.containers import Container
-from textual.widgets import Footer, Input
+from textual.widgets import Footer, TextArea
 import asyncio
 
 from config import Config
@@ -32,21 +32,13 @@ class NullApp(App):
     InputController {
         width: 100%;
     }
-
-    /* AI mode input styling */
-    .ai-mode {
-        border: solid $warning;
-        background: $surface-darken-1;
-    }
-
-    .ai-mode:focus {
-        border: solid $warning-lighten-1;
-    }
     """
 
     BINDINGS = [
-        ("ctrl+c", "quit", "Quit"),
+        ("escape", "cancel_operation", "Cancel"),
+        ("ctrl+c", "smart_quit", "Quit"),
         ("ctrl+l", "clear_history", "Clear History"),
+        ("ctrl+s", "quick_export", "Export"),
         ("f1", "open_help", "Help"),
         ("f2", "select_model", "Select Model"),
         ("f3", "select_theme", "Change Theme"),
@@ -54,7 +46,6 @@ class NullApp(App):
         ("ctrl+space", "toggle_ai", "Toggle AI Mode"),
         ("ctrl+t", "toggle_ai", "Toggle AI Mode"),
         ("ctrl+b", "toggle_ai", "Toggle AI Mode"),
-        # Textual adds Ctrl+P automatically, removing manual binding to avoid duplicate in Footer
     ]
     
     # Removed manual get_system_commands override as it was causing issues.
@@ -62,9 +53,54 @@ class NullApp(App):
 
     def action_toggle_ai_mode(self):
         self.query_one("#input", InputController).toggle_mode()
-        # Toggle Footer description? 
-        # The mode property in input controller handles the message posting if needed, 
-        # but the border change is enough visual cue.
+
+    def action_cancel_operation(self):
+        """Cancel any running operation (Escape key)."""
+        cancelled = False
+
+        # Cancel CLI command execution
+        if self.executor.is_running:
+            self.executor.cancel()
+            cancelled = True
+
+        # Cancel AI generation
+        if self._active_worker and not self._active_worker.is_finished:
+            self._ai_cancelled = True
+            self._active_worker.cancel()
+            cancelled = True
+
+        if cancelled:
+            self.notify("Operation cancelled", severity="warning")
+
+    def action_smart_quit(self):
+        """Smart Ctrl+C: Cancel if busy, quit if idle."""
+        if self.executor.is_running or (self._active_worker and not self._active_worker.is_finished):
+            self.action_cancel_operation()
+        else:
+            self.exit()
+
+    @property
+    def is_busy(self) -> bool:
+        """Check if any operation is currently running."""
+        return self.executor.is_running or (self._active_worker and not self._active_worker.is_finished)
+
+    def action_quick_export(self):
+        """Quick export to markdown (Ctrl+S)."""
+        self._do_export("md")
+
+    def _do_export(self, format: str = "md"):
+        """Export conversation to file."""
+        from models import save_export
+
+        if not self.blocks:
+            self.notify("Nothing to export", severity="warning")
+            return
+
+        try:
+            filepath = save_export(self.blocks, format)
+            self.notify(f"Exported to {filepath}")
+        except Exception as e:
+            self.notify(f"Export failed: {e}", severity="error")
 
     def action_open_help(self):
         """Show the help screen."""
@@ -200,6 +236,12 @@ class NullApp(App):
         self.config = Config.load_all()
         self.blocks = [] # List[BlockState]
         self.executor = ExecutionEngine()
+        # Track active CLI session for continuous block
+        self.current_cli_block = None
+        self.current_cli_widget = None
+        # Track active operations for cancellation
+        self._ai_cancelled = False
+        self._active_worker = None
         # AI Provider
         try:
             self.ai_provider = AIFactory.get_provider(self.config["ai"])
@@ -211,7 +253,7 @@ class NullApp(App):
         # Suggester layer at Screen level to avoid clipping (overlay)
         from widgets import CommandSuggester
         yield CommandSuggester(id="suggester")
-        
+
         yield HistoryViewport(id="history")
         with Container(id="input-container"):
             input_widget = InputController(placeholder="Type a command...", id="input")
@@ -221,11 +263,31 @@ class NullApp(App):
             yield input_widget
         yield Footer()
 
-    async def on_input_changed(self, message: Input.Changed):
-        # We check filter here or let InputController drive?
-        # Let's keep filter update here as it's clean, but key handling moves.
+    async def on_mount(self):
+        """Load previous session on startup."""
+        storage = Config._get_storage()
+        saved_blocks = storage.load_session()
+        if saved_blocks:
+            self.blocks = saved_blocks
+            history_vp = self.query_one("#history", HistoryViewport)
+            for block in self.blocks:
+                block.is_running = False  # Mark as complete
+                block_widget = BlockWidget(block)
+                await history_vp.mount(block_widget)
+            history_vp.scroll_end(animate=False)
+            self.notify(f"Restored {len(saved_blocks)} blocks from previous session")
+
+    def _auto_save(self):
+        """Auto-save current session (debounced)."""
+        try:
+            Config._get_storage().save_current_session(self.blocks)
+        except Exception:
+            pass
+
+    async def on_text_area_changed(self, message: TextArea.Changed):
+        # Update command suggester when text changes
         suggester = self.query_one("#suggester", CommandSuggester)
-        suggester.update_filter(message.value)
+        suggester.update_filter(message.text_area.text)
 
 
     async def on_input_submitted(self, message: InputController.Submitted):
@@ -255,6 +317,9 @@ class NullApp(App):
             
         # Check Mode
         if input_ctrl.is_ai_mode:
+             # Switching to AI mode ends CLI session
+             self.current_cli_block = None
+             self.current_cli_widget = None
              # AI Mode Logic
              if not self.ai_provider:
                  self.notify("AI Provider not configured. Use /provider.", severity="error")
@@ -277,30 +342,49 @@ class NullApp(App):
              await history_vp.mount(block_widget)
              block_widget.scroll_visible()
              
-             # Run AI worker
-             # We pass the same block/widget for both purposes
-             self.run_worker(self.execute_ai(cmd_text, block, block_widget))
+             # Run AI worker and track for cancellation
+             self._ai_cancelled = False
+             self._active_worker = self.run_worker(self.execute_ai(cmd_text, block, block_widget))
              
         else:
-            # CLI Mode Logic
-            # Create new Block State
-            block = BlockState(
-                type=BlockType.COMMAND,
-                content_input=cmd_text
-            )
-            self.blocks.append(block)
-
-            # Clear input
+            # CLI Mode Logic - Use continuous block
             input_ctrl.value = ""
 
-            # Create and Add Block Widget to History
-            history_vp = self.query_one("#history", HistoryViewport)
-            block_widget = BlockWidget(block)
-            await history_vp.mount(block_widget)
-            block_widget.scroll_visible() # Auto-scroll to new block
+            # Check if we have an active CLI block to append to
+            if self.current_cli_block and self.current_cli_widget:
+                # Append to existing CLI block
+                block = self.current_cli_block
+                widget = self.current_cli_widget
 
-            # Execute Command
-            self.run_worker(self.execute_block(block, block_widget))
+                # Add separator and new command prompt
+                if block.content_output:
+                    block.content_output += "\n"
+                block.content_output += f"$ {cmd_text}\n"
+                widget.update_output()
+                widget.scroll_visible()
+
+                # Execute and append output
+                self.run_worker(self.execute_cli_append(cmd_text, block, widget))
+            else:
+                # Create new CLI block
+                block = BlockState(
+                    type=BlockType.COMMAND,
+                    content_input=cmd_text
+                )
+                self.blocks.append(block)
+
+                # Track as current CLI session
+                self.current_cli_block = block
+
+                # Create and Add Block Widget to History
+                history_vp = self.query_one("#history", HistoryViewport)
+                block_widget = BlockWidget(block)
+                self.current_cli_widget = block_widget
+                await history_vp.mount(block_widget)
+                block_widget.scroll_visible()
+
+                # Execute Command
+                self.run_worker(self.execute_block(block, block_widget))
 
     async def handle_slash_command(self, text: str):
         parts = text.split()
@@ -357,10 +441,93 @@ class NullApp(App):
             self.action_select_prompt()
             
         elif command == "clear":
-             # Implementation for clear history widget visual only
+             # Clear history and reset CLI session
+             self.current_cli_block = None
+             self.current_cli_widget = None
              history = self.query_one("#history", HistoryViewport)
              await history.remove_children()
              
+        elif command == "export":
+            # Export conversation: /export [md|json]
+            format = args[0] if args else "md"
+            if format not in ("md", "json", "markdown"):
+                self.notify("Usage: /export [md|json]", severity="error")
+                return
+            if format == "markdown":
+                format = "md"
+            self._do_export(format)
+
+        elif command == "session":
+            # Session management: /session [save|load|list|new] [name]
+            if not args:
+                self.notify("Usage: /session [save|load|list|new] [name]", severity="warning")
+                return
+
+            subcommand = args[0]
+            name = args[1] if len(args) > 1 else None
+            storage = Config._get_storage()
+
+            if subcommand == "save":
+                filepath = storage.save_session(self.blocks, name)
+                self.notify(f"Session saved to {filepath}")
+
+            elif subcommand == "load":
+                if name:
+                    blocks = storage.load_session(name)
+                    if blocks:
+                        # Clear current and load
+                        self.blocks = blocks
+                        self.current_cli_block = None
+                        self.current_cli_widget = None
+                        history = self.query_one("#history", HistoryViewport)
+                        await history.remove_children()
+                        for block in self.blocks:
+                            block.is_running = False
+                            block_widget = BlockWidget(block)
+                            await history.mount(block_widget)
+                        history.scroll_end(animate=False)
+                        self.notify(f"Loaded session: {name}")
+                    else:
+                        self.notify(f"Session not found: {name}", severity="error")
+                else:
+                    # Show session list for selection
+                    sessions = storage.list_sessions()
+                    if sessions:
+                        names = [s["name"] for s in sessions]
+                        from screens import SelectionListScreen
+
+                        def on_select(selected):
+                            if selected:
+                                # Run load with selected name
+                                self.call_later(lambda: self.run_worker(self.handle_slash_command(f"/session load {selected}")))
+
+                        self.push_screen(SelectionListScreen("Load Session", names), on_select)
+                    else:
+                        self.notify("No saved sessions found", severity="warning")
+
+            elif subcommand == "list":
+                sessions = storage.list_sessions()
+                if sessions:
+                    msg = "Sessions: " + ", ".join(s["name"] for s in sessions[:5])
+                    if len(sessions) > 5:
+                        msg += f" (+{len(sessions) - 5} more)"
+                    self.notify(msg)
+                else:
+                    self.notify("No saved sessions", severity="warning")
+
+            elif subcommand == "new":
+                # Clear and start fresh
+                self.blocks = []
+                self.current_cli_block = None
+                self.current_cli_widget = None
+                storage.clear_current_session()
+                history = self.query_one("#history", HistoryViewport)
+                await history.remove_children()
+                self.notify("Started new session")
+
+            else:
+                self.notify("Usage: /session [save|load|list|new] [name]", severity="error")
+
         elif command == "quit" or command == "exit":
             self.exit()
         else:
@@ -408,12 +575,19 @@ class NullApp(App):
             # Let's pass it as a kwargs or separate arg if generate supports it.
             # I will update generate signature in base and all providers.
             async for chunk in self.ai_provider.generate(prompt, context_str, system_prompt=system_prompt):
+                # Check for cancellation
+                if self._ai_cancelled:
+                    full_response += "\n\n[Cancelled]"
+                    block_state.content_output = full_response
+                    widget.update_output(full_response)
+                    break
+
                 full_response += chunk
                 block_state.content_output = full_response
-                # Update widget with just the chunk as it appends
                 widget.update_output(full_response)
 
             block_state.is_running = False
+            self._active_worker = None
 
             # Update metadata with token estimate (rough: ~4 chars per token)
             response_tokens = len(full_response) // 4
@@ -422,6 +596,9 @@ class NullApp(App):
             widget.update_metadata()
 
             widget.set_loading(False)
+
+            # Auto-save session
+            self._auto_save()
 
             # Post-generation: Check for Agentic Command
             # Parser for Markdown Code Blocks
@@ -445,10 +622,17 @@ class NullApp(App):
                 # We are already on the main thread (async worker), so call_later is sufficient/correct
                 self.call_later(self.run_agent_command, command_to_run, block_state, widget)
             
+        except asyncio.CancelledError:
+            block_state.content_output += "\n\n[Cancelled]"
+            block_state.is_running = False
+            widget.update_output(block_state.content_output)
+            widget.set_loading(False)
+            self._active_worker = None
         except Exception as e:
             block_state.content_output = f"AI Error: {str(e)}"
             block_state.is_running = False
             widget.update_output(f"Error: {str(e)}")
+            self._active_worker = None
 
     def run_agent_command(self, command: str, ai_block: BlockState, ai_widget: BlockWidget):
         """Execute a command requested by the Agent, executing INLINE."""
@@ -522,9 +706,29 @@ class NullApp(App):
 
         # Non-blocking run
         exit_code = await self.executor.run_command_and_get_rc(block.content_input, update_callback)
-        
+
         # Final update
         widget.set_exit_code(exit_code)
+
+        # Auto-save session
+        self._auto_save()
+
+    async def execute_cli_append(self, cmd: str, block: BlockState, widget: BlockWidget):
+        """Execute a command and append output to existing CLI block."""
+
+        def update_callback(line: str):
+            block.content_output += line
+            widget.update_output()
+
+        exit_code = await self.executor.run_command_and_get_rc(cmd, update_callback)
+
+        # Show exit code inline if non-zero
+        if exit_code != 0:
+            block.content_output += f"[exit: {exit_code}]\n"
+            widget.update_output()
+
+        # Auto-save session
+        self._auto_save()
 
     def action_clear_history(self):
         # Implementation for Phase 2, but stub shortcut is here

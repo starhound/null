@@ -147,5 +147,109 @@ class StorageManager:
         # Return reversed so latest is last in list (for easy up/cycling)
         return [row['command'] for row in cursor.fetchall()][::-1]
 
+    # Session Management
+    def _get_sessions_dir(self) -> Path:
+        """Get sessions directory, create if needed."""
+        sessions_dir = Path.home() / ".null" / "sessions"
+        sessions_dir.mkdir(parents=True, exist_ok=True)
+        return sessions_dir
+
+    def _get_current_session_file(self) -> Path:
+        """Get path to current session file."""
+        return self._get_sessions_dir() / "current.json"
+
+    def save_session(self, blocks: List[Any], name: Optional[str] = None) -> Path:
+        """Save session to JSON file."""
+        import json
+        from models import BlockState
+
+        sessions_dir = self._get_sessions_dir()
+
+        if name:
+            filename = f"session-{name}.json"
+        else:
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            filename = f"session-{timestamp}.json"
+
+        # Serialize blocks
+        data = {
+            "saved_at": datetime.now().isoformat(),
+            "blocks": [b.to_dict() if isinstance(b, BlockState) else b for b in blocks]
+        }
+
+        filepath = sessions_dir / filename
+        filepath.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+        # Also save as current
+        self._get_current_session_file().write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+        return filepath
+
+    def save_current_session(self, blocks: List[Any]):
+        """Quick save to current session (for auto-save)."""
+        import json
+        from models import BlockState
+
+        if not blocks:
+            return
+
+        data = {
+            "saved_at": datetime.now().isoformat(),
+            "blocks": [b.to_dict() if isinstance(b, BlockState) else b for b in blocks]
+        }
+
+        self._get_current_session_file().write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    def load_session(self, name: Optional[str] = None) -> List[Any]:
+        """Load session from JSON file."""
+        import json
+        from models import BlockState
+
+        sessions_dir = self._get_sessions_dir()
+
+        if name:
+            filepath = sessions_dir / f"session-{name}.json"
+        else:
+            filepath = self._get_current_session_file()
+
+        if not filepath.exists():
+            return []
+
+        try:
+            data = json.loads(filepath.read_text(encoding="utf-8"))
+            blocks = [BlockState.from_dict(b) for b in data.get("blocks", [])]
+            return blocks
+        except Exception:
+            return []
+
+    def list_sessions(self) -> List[Dict[str, Any]]:
+        """List all saved sessions."""
+        sessions = []
+        sessions_dir = self._get_sessions_dir()
+
+        for f in sorted(sessions_dir.glob("session-*.json"), reverse=True):
+            if f.name == "current.json":
+                continue
+            try:
+                import json
+                data = json.loads(f.read_text(encoding="utf-8"))
+                name = f.stem.replace("session-", "")
+                sessions.append({
+                    "name": name,
+                    "saved_at": data.get("saved_at", ""),
+                    "block_count": len(data.get("blocks", [])),
+                    "path": str(f)
+                })
+            except Exception:
+                pass
+
+        return sessions
+
+    def clear_current_session(self):
+        """Delete current session file."""
+        current = self._get_current_session_file()
+        if current.exists():
+            current.unlink()
+
     def close(self):
         self.conn.close()

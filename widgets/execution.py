@@ -108,7 +108,7 @@ class ExecutionWidget(Static):
             if new_text:
                 container.remove_class("hidden")
                 from rich.markdown import Markdown
-                content.update(Markdown(new_text))
+                content.update(Markdown(new_text, code_theme="monokai"))
             else:
                 container.add_class("hidden")
                 content.update("")

@@ -62,6 +62,8 @@ class CommandSuggester(Static):
         "/ai": {"desc": "Toggle AI Mode", "args": []},
         "/chat": {"desc": "Toggle AI Mode", "args": []},
         "/prompts": {"desc": "Select System Persona", "args": ["default", "pirate", "concise", "agent"]},
+        "/export": {"desc": "Export conversation", "args": ["md", "json"]},
+        "/session": {"desc": "Manage sessions", "args": ["save", "load", "list", "new"]},
         "/clear": {"desc": "Clear history", "args": []},
         "/quit": {"desc": "Exit application", "args": []}
     }

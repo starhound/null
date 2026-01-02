@@ -205,6 +205,10 @@ class BlockFooter(Static):
         color: $text-muted;
     }
 
+    BlockFooter.empty-footer {
+        display: none;
+    }
+
     .exit-error {
         color: $error;
         text-style: bold;
@@ -225,3 +229,5 @@ class BlockFooter(Static):
             yield Label(f"Exit Code: {self.block.exit_code}", classes="exit-error")
         elif self.block.is_running:
             yield Label("Running...", classes="running-spinner")
+        else:
+            self.add_class("empty-footer")

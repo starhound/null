@@ -23,22 +23,19 @@ class BlockWidget(Static):
     BlockWidget.block-command {
         border-left: thick $success;
         background: $surface-darken-2;
-        padding-bottom: 1;
     }
 
     /* AI Query blocks - amber/yellow accent */
     BlockWidget.block-ai-query {
         border-left: thick $warning;
         background: $surface-darken-1;
-        padding-bottom: 1;
     }
 
     /* AI Response blocks - blue/purple accent */
     BlockWidget.block-ai-response {
         border-left: thick $primary;
         background: $surface;
-        padding-bottom: 1;
-        margin-bottom: 2;
+        margin-bottom: 1;
     }
     """
 

@@ -190,7 +190,7 @@ class ThinkingWidget(Static):
             self._last_rendered_len = current_len
             content = self.query_one("#peek-content", Static)
             from rich.markdown import Markdown
-            content.update(Markdown(new_text))
+            content.update(Markdown(new_text, code_theme="monokai"))
 
             # Auto-scroll to bottom in peek mode
             if not self.is_expanded:
@@ -204,7 +204,7 @@ class ThinkingWidget(Static):
             self._last_rendered_len = len(self.thinking_text)
             content = self.query_one("#peek-content", Static)
             from rich.markdown import Markdown
-            content.update(Markdown(self.thinking_text))
+            content.update(Markdown(self.thinking_text, code_theme="monokai"))
         except Exception:
             pass
 
