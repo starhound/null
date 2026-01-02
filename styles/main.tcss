@@ -1700,3 +1700,13 @@ ToolsScreen #close_btn:hover {
     color: $background;
     text-style: bold;
 }
+
+/* Process Indicator */
+StatusBar .process-active {
+    color: $success;
+    text-style: bold;
+}
+
+StatusBar .process-inactive {
+    color: $text-muted;
+}

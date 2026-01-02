@@ -89,6 +89,58 @@ class TerminalBlock(Widget):
             self.post_message(self.InputRequested(data, self.block_id))
             event.stop()
 
+    def on_mouse_down(self, event) -> None:
+        """Handle mouse down events."""
+        self._send_mouse_event(event, 0)
+
+    def on_mouse_up(self, event) -> None:
+        """Handle mouse up events."""
+        self._send_mouse_event(event, 3)
+
+    # def on_mouse_move(self, event) -> None:
+    #    """Handle mouse move events (drag)."""
+    #    if event.button:
+    #        self._send_mouse_event(event, 32) # specialized drag code if needed
+
+    def _send_mouse_event(self, event, button_code: int) -> None:
+        """Send mouse event as ANSI sequence."""
+        # Check if mouse reporting is enabled in pyte screen
+        # modes 1000, 1002, 1006 etc.
+        # pyte.modes: 1000 (MOUSE_X10), 1002 (MOUSE_DRAG), 1003 (MOUSE_MOTION), 1006 (MOUSE_SGR)
+        # We need to know if the application requested mouse events.
+        
+        # Check if any mouse mode is active
+        mouse_modes = {1000, 1002, 1003, 1006}
+        if not (self.pyte_screen.mode & mouse_modes):
+             return
+
+        x = event.x + 1
+        y = event.y + 1
+        
+        # SGR mouse encoding: \e[<r;c;m
+        # button_code: 0=left, 1=middle, 2=right, 3=release
+        
+        # Map button to code
+        code = 0
+        if event.button == 1: code = 0  # Left
+        elif event.button == 2: code = 2  # Right
+        elif event.button == 3: code = 1  # Middle
+        
+        if button_code == 3: # Release
+            action = "m"
+        else:
+            action = "M"
+            
+        # Modifiers
+        if event.ctrl: code += 16
+        if event.shift: code += 4
+        if event.meta: code += 8
+        
+        # Protocol: CSI < button ; x ; y M (or m for release)
+        seq = f"\x1b[<{code};{x};{y}{action}"
+        
+        self.post_message(self.InputRequested(seq.encode(), self.block_id))
+
     def _key_to_bytes(self, event: Key) -> Optional[bytes]:
         """Convert a key event to bytes for the terminal."""
         key = event.key

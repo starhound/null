@@ -31,7 +31,9 @@ class NullApp(App):
 
     BINDINGS = [
         ("escape", "cancel_operation", "Cancel"),
-        ("ctrl+c", "smart_quit", "Quit"),
+        ("escape", "cancel_operation", "Cancel"),
+        # ("ctrl+c", "smart_quit", "Quit"),  # Handled in on_key to allow terminal capture
+        ("ctrl+l", "clear_history", "Clear History"),
         ("ctrl+l", "clear_history", "Clear History"),
         ("ctrl+s", "quick_export", "Export"),
         ("ctrl+r", "search_history", "Search History"),
@@ -138,8 +140,28 @@ class NullApp(App):
         # Auto-detect model for local providers
         self.run_worker(self._detect_local_model())
 
+        # Register process manager callback
+        self.process_manager.on_change(self._update_process_count)
+
+        # Register process manager callback
+        self.process_manager.on_change(self._update_process_count)
+
         # Auto-focus the input prompt
         self.query_one("#input", InputController).focus()
+
+    async def on_key(self, event) -> None:
+        """Handle global key events."""
+        if event.key == "ctrl+c":
+            self.action_smart_quit()
+
+    def _update_process_count(self):
+        """Update process count in status bar."""
+        try:
+            status_bar = self.query_one("#status-bar", StatusBar)
+            count = self.process_manager.get_count()
+            status_bar.set_process_count(count)
+        except Exception:
+            pass
 
     async def _init_mcp(self):
         """Initialize MCP server connections."""
@@ -709,6 +731,9 @@ class NullApp(App):
                 active_mcp = sum(1 for s in status.values() if s.get("connected"))
             
             status_bar.set_mcp_status(active_mcp)
+            
+            # Update process count
+            status_bar.set_process_count(self.process_manager.get_count())
 
         except Exception:
             try:

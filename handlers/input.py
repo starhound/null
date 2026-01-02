@@ -94,6 +94,13 @@ class InputHandler:
              if info and info.is_tui:
                  is_tui = True
 
+        # Heuristic: Known TUI commands should always start a new block
+        # to ensure a clean window and proper mouse handling
+        tui_heuristic = ["top", "htop", "vim", "vi", "nano", "less", "more", "man", "mc", "tmux"]
+        cmd_base = cmd.split(" ")[0]
+        if cmd_base in tui_heuristic:
+            is_tui = True  # Force new block
+
         if self.app.current_cli_block and self.app.current_cli_widget and not is_tui:
             await self._append_to_cli_block(cmd)
         else:
