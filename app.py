@@ -442,31 +442,38 @@ class NullApp(App):
         ai_widget.update_output(ai_block.content_output)
         
         async def run_inline():
-            output_buffer = []
-            def callback(line):
-                output_buffer.append(line)
-            
-            # Execute
-            rc = await self.executor.run_command_and_get_rc(command, callback)
-            output_text = "".join(output_buffer)
-            
-            # Append Output
-            # Sanitize?
-            result_md = f"\n```text\n{output_text}\n```\n"
-            if rc != 0:
-                result_md += f"\n*Exit Code: {rc}*\n"
-            
-            # Store in dedicated execution field
-            ai_block.content_exec_output = result_md
-            
-            # Trigger widget update
-            # We need to manually call update_output (or a specific method)
-            # Our widget.update_output implementation now looks at block state.
-            ai_widget.update_output("") # Argument ignored for AI_RESPONSE in new logic
-            
-            # Stop loading
-            ai_widget.set_loading(False)
-            ai_block.is_running = False
+            try:
+                output_buffer = []
+                def callback(line):
+                    output_buffer.append(line)
+                
+                # Execute
+                rc = await self.executor.run_command_and_get_rc(command, callback)
+                output_text = "".join(output_buffer)
+                
+                # Append Output
+                # Sanitize?
+                result_md = f"\n```text\n{output_text}\n```\n"
+                if rc != 0:
+                    result_md += f"\n*Exit Code: {rc}*\n"
+                
+                # Store in dedicated execution field
+                ai_block.content_exec_output = result_md
+                
+                # Trigger widget update
+                # We need to manually call update_output (or a specific method)
+                # Our widget.update_output implementation now looks at block state.
+                ai_widget.update_output("") # Argument ignored for AI_RESPONSE in new logic
+                
+            except Exception as e:
+                err_msg = f"\n**Error Running Command:** {str(e)}\n"
+                ai_block.content_exec_output = err_msg
+                ai_widget.update_output("")
+                self.notify(f"Agent Execution Error: {e}", severity="error")
+            finally:
+                # Stop loading
+                ai_widget.set_loading(False)
+                ai_block.is_running = False
             
         self.run_worker(run_inline())
 

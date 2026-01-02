@@ -400,7 +400,7 @@ class ThinkingWidget(Static):
         display: none;
         color: $text-muted;
         padding-left: 2;
-        border-left: solid $text-muted;
+        border-left: heavy $primary;
     }
     .thinking-content.visible {
         display: block;
@@ -425,7 +425,15 @@ class ThinkingWidget(Static):
     @on(Button.Pressed)
     def toggle_thinking(self):
         content = self.query_one("#thinking-content")
+        # specific check for class based toggling might be flaky if styles conflict
+        # Let's simple toggle the class but ALSO force update the content just in case
         content.toggle_class("visible")
+        
+        # Force re-render of markdown if it was lost?
+        if content.has_class("visible"):
+            from rich.markdown import Markdown
+            content.update(Markdown(self.thinking_text))
+
         btn = self.query_one(Button)
         if content.has_class("visible"):
             btn.label = "▼ Thinking..."
