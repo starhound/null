@@ -3,21 +3,26 @@ from textual.widgets import Static, Label, Input
 from textual.containers import Vertical
 from textual.reactive import reactive
 from textual.message import Message
+from textual.binding import Binding
 
 
-class HistorySearch(Static):
+class HistorySearch(Static, can_focus=True):
     """Overlay widget for searching command history (Ctrl+R style)."""
+
+    BINDINGS = [
+        Binding("up", "select_prev", "Previous", show=False),
+        Binding("down", "select_next", "Next", show=False),
+        Binding("escape", "cancel", "Cancel", show=False),
+        Binding("enter", "select", "Select", show=False),
+    ]
 
     DEFAULT_CSS = """
     HistorySearch {
-        layer: overlay;
-        dock: bottom;
         height: auto;
-        max-height: 12;
+        max-height: 15;
         background: $surface;
-        border: solid $primary;
+        border-top: solid $primary;
         padding: 0 1;
-        margin-bottom: 4;
         display: none;
     }
 
@@ -37,11 +42,12 @@ class HistorySearch(Static):
         border: none;
         background: $surface-darken-1;
         padding: 0 1;
+        margin: 1 0;
     }
 
     .search-results {
         height: auto;
-        max-height: 8;
+        max-height: 10;
         padding: 0;
     }
 
@@ -84,13 +90,10 @@ class HistorySearch(Static):
         pass
 
     def compose(self) -> ComposeResult:
-        yield Label("Search History (↑↓ navigate, Enter select, Esc cancel)", classes="search-header")
-        yield Input(placeholder="Type to search...", id="search-input", classes="search-input")
+        # Results first (above), then input at bottom
         yield Vertical(id="search-results", classes="search-results")
-
-    def on_mount(self):
-        """Focus the input when mounted."""
-        pass
+        yield Input(placeholder="Type to search...", id="search-input", classes="search-input")
+        yield Label("↑↓ navigate • Enter select • Esc cancel", classes="search-header")
 
     def show(self):
         """Show the search widget and focus input."""
@@ -98,6 +101,14 @@ class HistorySearch(Static):
         self.search_query = ""
         self.results = []
         self.selected_index = 0
+
+        # Hide the main input container
+        try:
+            input_container = self.app.query_one("#input-container")
+            input_container.display = False
+        except Exception:
+            pass
+
         try:
             input_widget = self.query_one("#search-input", Input)
             input_widget.value = ""
@@ -108,6 +119,15 @@ class HistorySearch(Static):
     def hide(self):
         """Hide the search widget."""
         self.remove_class("visible")
+
+        # Show the main input container and focus it
+        try:
+            input_container = self.app.query_one("#input-container")
+            input_container.display = True
+            self.app.query_one("#input").focus()
+        except Exception:
+            pass
+
         self.post_message(self.Cancelled())
 
     def on_input_changed(self, event: Input.Changed):
@@ -120,20 +140,25 @@ class HistorySearch(Static):
         event.stop()
         self._select_current()
 
-    async def on_key(self, event):
-        """Handle navigation keys."""
-        if event.key == "escape":
-            self.hide()
-            event.stop()
-        elif event.key == "up":
-            self.select_prev()
-            event.stop()
-        elif event.key == "down":
-            self.select_next()
-            event.stop()
-        elif event.key == "enter":
-            self._select_current()
-            event.stop()
+    def action_select_prev(self):
+        """Move selection up."""
+        if self.results and self.selected_index > 0:
+            self.selected_index -= 1
+            self._render_results()
+
+    def action_select_next(self):
+        """Move selection down."""
+        if self.results and self.selected_index < len(self.results) - 1:
+            self.selected_index += 1
+            self._render_results()
+
+    def action_cancel(self):
+        """Cancel search."""
+        self.hide()
+
+    def action_select(self):
+        """Select current result."""
+        self._select_current()
 
     def _update_results(self):
         """Fetch and display search results."""
@@ -168,23 +193,19 @@ class HistorySearch(Static):
         except Exception:
             pass
 
-    def select_next(self):
-        """Move selection down."""
-        if self.results and self.selected_index < len(self.results) - 1:
-            self.selected_index += 1
-            self._render_results()
-
-    def select_prev(self):
-        """Move selection up."""
-        if self.results and self.selected_index > 0:
-            self.selected_index -= 1
-            self._render_results()
-
     def _select_current(self):
         """Select the currently highlighted result."""
         if self.results and 0 <= self.selected_index < len(self.results):
             selected = self.results[self.selected_index]
             self.remove_class("visible")
+
+            # Show the main input container
+            try:
+                input_container = self.app.query_one("#input-container")
+                input_container.display = True
+            except Exception:
+                pass
+
             self.post_message(self.Selected(selected))
         else:
             self.hide()
