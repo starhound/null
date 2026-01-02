@@ -209,21 +209,21 @@ class ConfigScreen(ModalScreen):
 
     def _ai_settings(self) -> ComposeResult:
         """AI tab settings."""
+        from ai.factory import AIFactory
+
         s = self.settings.ai
 
-        providers = [
-            ("ollama", "Ollama"),
-            ("openai", "OpenAI"),
-            ("lm_studio", "LM Studio"),
-            ("azure", "Azure OpenAI"),
-            ("bedrock", "AWS Bedrock"),
-            ("xai", "xAI (Grok)"),
-        ]
+        # Build provider list from factory metadata
+        providers = []
+        for key in AIFactory.list_providers():
+            info = AIFactory.get_provider_info(key)
+            providers.append((info.get("name", key), key))
+
         yield from self._setting_row(
             "ai.provider",
             "Default Provider",
             "Default AI provider to use",
-            Select([(name, value) for value, name in providers], value=s.provider, id="ai_provider")
+            Select(providers, value=s.provider, id="ai_provider")
         )
 
         yield from self._setting_row(

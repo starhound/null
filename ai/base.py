@@ -44,21 +44,58 @@ KNOWN_MODEL_CONTEXTS = {
     "gpt-4o": 128000,
     "gpt-4o-mini": 128000,
     "gpt-3.5-turbo": 16385,
+    "o1": 200000,
+    "o1-mini": 128000,
+    "o1-preview": 128000,
     # Anthropic
     "claude-3-opus": 200000,
     "claude-3-sonnet": 200000,
     "claude-3-haiku": 200000,
-    # Ollama common models
+    "claude-3-5-sonnet": 200000,
+    "claude-3-5-haiku": 200000,
+    # Google Gemini
+    "gemini-1.5-pro": 2000000,
+    "gemini-1.5-flash": 1000000,
+    "gemini-1.5-flash-8b": 1000000,
+    "gemini-1.0-pro": 32768,
+    "gemini-2.0-flash": 1000000,
+    # Mistral
+    "mistral-large": 128000,
+    "mistral-medium": 32768,
+    "mistral-small": 32768,
+    "codestral": 32768,
+    "mixtral-8x7b": 32768,
+    "mixtral-8x22b": 65536,
+    # Cohere
+    "command-r-plus": 128000,
+    "command-r": 128000,
+    "command": 4096,
+    # Groq (hosted models)
+    "llama-3.3-70b-versatile": 128000,
+    "llama-3.1-70b-versatile": 128000,
+    "llama-3.1-8b-instant": 128000,
+    "gemma2-9b-it": 8192,
+    # xAI Grok
+    "grok-beta": 131072,
+    "grok-2": 131072,
+    # DeepSeek
+    "deepseek-chat": 64000,
+    "deepseek-coder": 64000,
+    "deepseek-reasoner": 64000,
+    # Ollama / Local common models
     "llama2": 4096,
     "llama3": 8192,
     "llama3.1": 128000,
     "llama3.2": 128000,
+    "llama3.3": 128000,
     "mistral": 8192,
     "mixtral": 32768,
     "codellama": 16384,
     "deepseek-coder": 16384,
     "qwen2.5-coder": 32768,
+    "qwen2.5": 32768,
     "phi3": 128000,
+    "phi4": 16384,
     "gemma2": 8192,
 }
 

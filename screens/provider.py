@@ -8,6 +8,63 @@ class ProviderConfigScreen(ModalScreen):
 
     BINDINGS = [Binding("escape", "dismiss", "Close")]
 
+    # Provider-specific field configurations
+    PROVIDER_FIELDS = {
+        # Local providers
+        "ollama": {
+            "endpoint": ("Endpoint URL", "http://localhost:11434", False),
+        },
+        "lm_studio": {
+            "endpoint": ("Endpoint URL", "http://localhost:1234/v1", False),
+        },
+        # Cloud providers requiring API key
+        "openai": {
+            "api_key": ("API Key", "sk-...", True),
+        },
+        "anthropic": {
+            "api_key": ("API Key", "sk-ant-...", True),
+        },
+        "google": {
+            "api_key": ("API Key (Gemini)", "AI...", True),
+            "project_id": ("Project ID (optional)", "my-project", False),
+        },
+        "azure": {
+            "api_key": ("API Key", "", True),
+            "endpoint": ("Endpoint URL", "https://xxx.openai.azure.com", False),
+            "api_version": ("API Version", "2024-02-01", False),
+        },
+        "bedrock": {
+            "region": ("AWS Region", "us-east-1", False),
+        },
+        "groq": {
+            "api_key": ("API Key", "gsk_...", True),
+        },
+        "mistral": {
+            "api_key": ("API Key", "", True),
+        },
+        "together": {
+            "api_key": ("API Key", "", True),
+        },
+        "nvidia": {
+            "api_key": ("API Key", "nvapi-...", True),
+        },
+        "cohere": {
+            "api_key": ("API Key", "", True),
+        },
+        "xai": {
+            "api_key": ("API Key", "xai-...", True),
+        },
+        "openrouter": {
+            "api_key": ("API Key", "sk-or-...", True),
+        },
+        "fireworks": {
+            "api_key": ("API Key", "fw_...", True),
+        },
+        "deepseek": {
+            "api_key": ("API Key", "sk-...", True),
+        },
+    }
+
     def __init__(self, provider: str, current_config: dict):
         super().__init__()
         self.provider = provider
@@ -15,44 +72,29 @@ class ProviderConfigScreen(ModalScreen):
         self.inputs = {}
 
     def compose(self) -> ComposeResult:
+        from ai.factory import AIFactory
+
+        provider_info = AIFactory.get_provider_info(self.provider)
+        title = provider_info.get("name", self.provider.title())
+        description = provider_info.get("description", "")
+
         with Container(id="config-container"):
-            yield Label(f"Configure {self.provider.title()}")
+            yield Label(f"Configure {title}")
+            if description:
+                yield Label(description, classes="input-hint")
 
-            # Dynamic fields based on provider
-            if self.provider in ["openai", "xai", "azure", "lm_studio", "bedrock"]:
-                yield Label("API Key", classes="input-label")
+            # Get fields for this provider
+            fields = self.PROVIDER_FIELDS.get(self.provider, {})
+
+            for field_key, (label, placeholder, is_password) in fields.items():
+                yield Label(label, classes="input-label")
                 inp = Input(
-                    placeholder="sk-...",
-                    password=True,
-                    id="api_key",
-                    value=self.current_config.get("api_key", "")
+                    placeholder=placeholder,
+                    password=is_password,
+                    id=field_key,
+                    value=self.current_config.get(field_key, "")
                 )
-                self.inputs["api_key"] = inp
-                yield inp
-
-            # Custom Endpoint providers
-            if self.provider in ["ollama", "lm_studio", "azure"]:
-                yield Label("Endpoint URL", classes="input-label")
-                default_url = "http://localhost:11434" if self.provider == "ollama" else ""
-                if self.provider == "lm_studio":
-                    default_url = "http://localhost:1234/v1"
-
-                inp = Input(
-                    placeholder=default_url if default_url else "https://...",
-                    id="endpoint",
-                    value=self.current_config.get("endpoint", default_url)
-                )
-                self.inputs["endpoint"] = inp
-                yield inp
-
-            if self.provider == "bedrock":
-                yield Label("AWS Region", classes="input-label")
-                inp = Input(
-                    placeholder="us-east-1",
-                    id="region",
-                    value=self.current_config.get("region", "us-east-1")
-                )
-                self.inputs["region"] = inp
+                self.inputs[field_key] = inp
                 yield inp
 
             with Container(id="buttons"):

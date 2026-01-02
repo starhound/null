@@ -199,7 +199,8 @@ class NullApp(App):
 
     def action_select_provider(self):
         """Switch and configure AI Provider."""
-        providers = ["ollama", "openai", "lm_studio", "azure", "bedrock", "xai"]
+        from ai.factory import AIFactory
+        providers = AIFactory.list_providers()
 
         def on_provider_selected(provider_name):
             if not provider_name:
