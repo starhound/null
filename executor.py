@@ -1,142 +1,185 @@
 import asyncio
 import os
-import re
+import pty
 import signal
+import fcntl
+import struct
+import termios
 from typing import Callable, Optional
 
 
-# Commands that support --color=always flag
-COLOR_COMMANDS = {
-    'ls', 'grep', 'egrep', 'fgrep', 'diff', 'ip', 'pacman', 'tree',
-}
-
-# Commands that support color via different flags
-COLOR_FLAGS = {
-    'git': ['config', 'color.ui=always'],  # Handled via env var instead
-}
-
-
-def _add_color_to_command(command: str) -> str:
-    """Add color flags to commands that support them."""
-    # Split on pipes and process each part
-    parts = command.split('|')
-    result_parts = []
-
-    for part in parts:
-        part = part.strip()
-        if not part:
-            result_parts.append(part)
-            continue
-
-        # Get the base command (first word)
-        tokens = part.split()
-        if not tokens:
-            result_parts.append(part)
-            continue
-
-        base_cmd = os.path.basename(tokens[0])
-
-        # Check if it's a color-supporting command without color flag already
-        if base_cmd in COLOR_COMMANDS:
-            if '--color' not in part and '-G' not in part:
-                # Insert --color=always after the command name
-                tokens.insert(1, '--color=always')
-                part = ' '.join(tokens)
-
-        result_parts.append(part)
-
-    return ' | '.join(result_parts)
-
-
 class ExecutionEngine:
-    """Engine for executing shell commands with cancellation support."""
+    """Engine for executing shell commands with PTY support for proper colors."""
 
     def __init__(self):
-        self.active_process: Optional[asyncio.subprocess.Process] = None
+        self._pid: Optional[int] = None
+        self._master_fd: Optional[int] = None
         self._cancelled = False
 
     async def run_command_and_get_rc(self, command: str, callback: Callable[[str], None]) -> int:
         """
-        Runs command, calls callback with stdout lines, returns exit code.
+        Runs command in a PTY, calls callback with output, returns exit code.
         Returns -1 if cancelled.
         """
-        # Respect SHELL env var, default to /bin/bash on Linux
         shell = os.environ.get("SHELL", "/bin/bash")
         self._cancelled = False
 
-        # Build environment with color output enabled by default
+        # Build environment with color support
         env = os.environ.copy()
+        env.setdefault("TERM", "xterm-256color")
+        env.setdefault("COLORTERM", "truecolor")
         env.setdefault("CLICOLOR", "1")
         env.setdefault("CLICOLOR_FORCE", "1")
         env.setdefault("FORCE_COLOR", "1")
-        # Git color support
-        env.setdefault("GIT_CONFIG_PARAMETERS", "'color.ui=always'")
-        # Ensure TERM supports colors
-        if env.get("TERM", "").startswith("dumb"):
-            env["TERM"] = "xterm-256color"
-
-        # Add color flags to supported commands
-        command = _add_color_to_command(command)
 
         try:
-            process = await asyncio.create_subprocess_shell(
-                command,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.STDOUT,
-                shell=True,
-                executable=shell,
-                env=env
-            )
-            self.active_process = process
+            # Create PTY
+            master_fd, slave_fd = pty.openpty()
+            self._master_fd = master_fd
 
-            if process.stdout:
-                while True:
-                    if self._cancelled:
-                        break
-                    try:
-                        line = await asyncio.wait_for(process.stdout.readline(), timeout=0.1)
-                        if not line:
+            # Set terminal size (80x24 default, could be dynamic)
+            try:
+                winsize = struct.pack('HHHH', 24, 120, 0, 0)
+                fcntl.ioctl(slave_fd, termios.TIOCSWINSZ, winsize)
+            except Exception:
+                pass
+
+            # Fork the process
+            pid = os.fork()
+
+            if pid == 0:
+                # Child process
+                os.close(master_fd)
+                os.setsid()
+
+                # Set up slave as controlling terminal
+                fcntl.ioctl(slave_fd, termios.TIOCSCTTY, 0)
+
+                # Redirect stdio to slave
+                os.dup2(slave_fd, 0)
+                os.dup2(slave_fd, 1)
+                os.dup2(slave_fd, 2)
+
+                if slave_fd > 2:
+                    os.close(slave_fd)
+
+                # Execute the command with interactive shell to load aliases
+                os.execvpe(shell, [shell, "-i", "-c", command], env)
+
+            # Parent process
+            os.close(slave_fd)
+            self._pid = pid
+
+            # Make master non-blocking for async reading
+            flags = fcntl.fcntl(master_fd, fcntl.F_GETFL)
+            fcntl.fcntl(master_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+            # Read output asynchronously
+            loop = asyncio.get_event_loop()
+            buffer = b""
+
+            while True:
+                if self._cancelled:
+                    break
+
+                try:
+                    # Use asyncio to read without blocking
+                    data = await loop.run_in_executor(
+                        None, self._read_master, master_fd
+                    )
+
+                    if data is None:
+                        # Check if process exited
+                        result = os.waitpid(pid, os.WNOHANG)
+                        if result[0] != 0:
                             break
-                        decoded_line = line.decode("utf-8", errors="replace")
-                        callback(decoded_line)
-                    except asyncio.TimeoutError:
+                        await asyncio.sleep(0.01)
                         continue
 
-            # Wait for the process to exit
-            try:
-                if self._cancelled:
-                    callback("\n[Cancelled]\n")
-                    return -1
-                return await process.wait()
-            except ChildProcessError:
-                return process.returncode if process.returncode is not None else 255
+                    if data:
+                        buffer += data
+                        # Process complete lines
+                        while b'\n' in buffer:
+                            line, buffer = buffer.split(b'\n', 1)
+                            # Strip carriage returns from line endings
+                            decoded = line.rstrip(b'\r').decode('utf-8', errors='replace') + '\n'
+                            callback(decoded)
+                        # Also output partial lines (for progress indicators etc)
+                        if buffer and b'\r' in buffer:
+                            decoded = buffer.decode('utf-8', errors='replace')
+                            callback(decoded)
+                            buffer = b""
 
-        except asyncio.CancelledError:
-            callback("\n[Cancelled]\n")
-            return -1
+                except (IOError, OSError) as e:
+                    if e.errno == 5:  # EIO - PTY closed
+                        break
+                    await asyncio.sleep(0.01)
+
+            # Output any remaining buffer
+            if buffer:
+                callback(buffer.decode('utf-8', errors='replace'))
+
+            # Wait for process to finish and get exit code
+            if self._cancelled:
+                try:
+                    os.kill(pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+                callback("\n[Cancelled]\n")
+                try:
+                    os.waitpid(pid, 0)
+                except ChildProcessError:
+                    pass
+                return -1
+
+            try:
+                _, status = os.waitpid(pid, 0)
+                if os.WIFEXITED(status):
+                    return os.WEXITSTATUS(status)
+                elif os.WIFSIGNALED(status):
+                    return 128 + os.WTERMSIG(status)
+                return 255
+            except ChildProcessError:
+                return 0
+
         except Exception as e:
             callback(f"Error executing command: {e}\n")
             return 127
         finally:
-            self.active_process = None
+            self._pid = None
+            if self._master_fd is not None:
+                try:
+                    os.close(self._master_fd)
+                except Exception:
+                    pass
+                self._master_fd = None
+
+    def _read_master(self, fd: int) -> Optional[bytes]:
+        """Read from master fd, returns None if would block."""
+        try:
+            return os.read(fd, 4096)
+        except BlockingIOError:
+            return None
+        except OSError as e:
+            if e.errno == 5:  # EIO
+                raise
+            return None
 
     def cancel(self):
         """Cancel the currently running process."""
         self._cancelled = True
-        if self.active_process:
+        if self._pid:
             try:
-                # Try graceful termination first
-                self.active_process.terminate()
+                os.kill(self._pid, signal.SIGTERM)
             except ProcessLookupError:
-                pass  # Process already exited
+                pass
             except Exception:
                 try:
-                    # Force kill if terminate fails
-                    self.active_process.kill()
+                    os.kill(self._pid, signal.SIGKILL)
                 except Exception:
                     pass
 
     @property
     def is_running(self) -> bool:
         """Check if a process is currently running."""
-        return self.active_process is not None
+        return self._pid is not None

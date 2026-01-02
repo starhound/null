@@ -13,8 +13,8 @@ URL_PATTERN = re.compile(
     re.IGNORECASE
 )
 
-# ANSI escape sequence pattern
-ANSI_PATTERN = re.compile(r'\x1b\[[0-9;]*m')
+# ANSI escape sequence pattern - matches color codes, cursor movement, etc.
+ANSI_PATTERN = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?\x07')
 
 
 class BlockHeader(Static):
