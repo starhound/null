@@ -13,6 +13,9 @@ URL_PATTERN = re.compile(
     re.IGNORECASE
 )
 
+# ANSI escape sequence pattern
+ANSI_PATTERN = re.compile(r'\x1b\[[0-9;]*m')
+
 
 class BlockHeader(Static):
     """Header for a block showing prompt, timestamp, etc."""
@@ -136,15 +139,19 @@ class BlockBody(Static):
     def _make_links_clickable(self, text: str) -> Text:
         """Convert plain text with URLs to Rich Text with clickable links.
 
-        Also handles command separators and prompts with styling.
+        Also handles ANSI escape codes, command separators, and prompts with styling.
         """
         if not text:
             return Text("")
 
+        # Check for ANSI escape codes - if present, parse them for color support
+        if ANSI_PATTERN.search(text):
+            return self._parse_ansi_with_urls(text)
+
         result = Text()
         last_end = 0
 
-        # First, handle URLs
+        # Handle URLs in plain text
         for match in URL_PATTERN.finditer(text):
             # Add text before the URL (with separator styling)
             if match.start() > last_end:
@@ -160,6 +167,23 @@ class BlockBody(Static):
         if last_end < len(text):
             segment = text[last_end:]
             self._append_styled_segment(result, segment)
+
+        return result
+
+    def _parse_ansi_with_urls(self, text: str) -> Text:
+        """Parse ANSI escape codes and also make URLs clickable."""
+        # First convert ANSI to Rich Text to preserve colors
+        result = Text.from_ansi(text)
+
+        # Now find URLs in the plain text version and apply link styling
+        plain_text = result.plain
+
+        # Find all URLs in the plain text
+        for match in URL_PATTERN.finditer(plain_text):
+            url = match.group(0)
+            start, end = match.start(), match.end()
+            # Apply link style to this range (preserves existing colors as base)
+            result.stylize(f"link {url} underline", start, end)
 
         return result
 

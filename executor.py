@@ -1,7 +1,52 @@
 import asyncio
 import os
+import re
 import signal
 from typing import Callable, Optional
+
+
+# Commands that support --color=always flag
+COLOR_COMMANDS = {
+    'ls', 'grep', 'egrep', 'fgrep', 'diff', 'ip', 'pacman', 'tree',
+}
+
+# Commands that support color via different flags
+COLOR_FLAGS = {
+    'git': ['config', 'color.ui=always'],  # Handled via env var instead
+}
+
+
+def _add_color_to_command(command: str) -> str:
+    """Add color flags to commands that support them."""
+    # Split on pipes and process each part
+    parts = command.split('|')
+    result_parts = []
+
+    for part in parts:
+        part = part.strip()
+        if not part:
+            result_parts.append(part)
+            continue
+
+        # Get the base command (first word)
+        tokens = part.split()
+        if not tokens:
+            result_parts.append(part)
+            continue
+
+        base_cmd = os.path.basename(tokens[0])
+
+        # Check if it's a color-supporting command without color flag already
+        if base_cmd in COLOR_COMMANDS:
+            if '--color' not in part and '-G' not in part:
+                # Insert --color=always after the command name
+                tokens.insert(1, '--color=always')
+                part = ' '.join(tokens)
+
+        result_parts.append(part)
+
+    return ' | '.join(result_parts)
+
 
 class ExecutionEngine:
     """Engine for executing shell commands with cancellation support."""
@@ -19,13 +64,28 @@ class ExecutionEngine:
         shell = os.environ.get("SHELL", "/bin/bash")
         self._cancelled = False
 
+        # Build environment with color output enabled by default
+        env = os.environ.copy()
+        env.setdefault("CLICOLOR", "1")
+        env.setdefault("CLICOLOR_FORCE", "1")
+        env.setdefault("FORCE_COLOR", "1")
+        # Git color support
+        env.setdefault("GIT_CONFIG_PARAMETERS", "'color.ui=always'")
+        # Ensure TERM supports colors
+        if env.get("TERM", "").startswith("dumb"):
+            env["TERM"] = "xterm-256color"
+
+        # Add color flags to supported commands
+        command = _add_color_to_command(command)
+
         try:
             process = await asyncio.create_subprocess_shell(
                 command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
                 shell=True,
-                executable=shell
+                executable=shell,
+                env=env
             )
             self.active_process = process
 

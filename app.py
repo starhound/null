@@ -132,9 +132,12 @@ class NullApp(App):
         self.set_interval(30, self._check_provider_health)
         self.call_later(self._check_provider_health)
         self.run_worker(self._init_mcp())
-        
+
         # Auto-detect model for local providers
         self.run_worker(self._detect_local_model())
+
+        # Auto-focus the input prompt
+        self.query_one("#input", InputController).focus()
 
     async def _init_mcp(self):
         """Initialize MCP server connections."""

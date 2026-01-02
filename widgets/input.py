@@ -4,6 +4,12 @@ from pathlib import Path
 from textual.widgets import TextArea
 from textual.message import Message
 from textual.binding import Binding
+from textual.events import Click
+
+try:
+    import pyperclip
+except ImportError:
+    pyperclip = None
 
 
 class InputController(TextArea):
@@ -15,6 +21,7 @@ class InputController(TextArea):
     BINDINGS = [
         Binding("enter", "submit", "Submit", priority=True),
         Binding("shift+enter", "newline", "New Line", priority=True),
+        Binding("ctrl+shift+c", "copy_selection", "Copy", priority=True),
     ]
 
     class Submitted(Message):
@@ -296,3 +303,74 @@ class InputController(TextArea):
             if suggester.display:
                 suggester.display = False
                 event.stop()
+
+    def on_click(self, event: Click) -> None:
+        """Handle mouse clicks - right-click to paste."""
+        # Right-click (button 3) to paste from clipboard
+        if event.button == 3:
+            event.stop()
+            self._paste_from_clipboard()
+            return
+        # Let parent handle other clicks (left-click for positioning, etc.)
+
+    def _paste_from_clipboard(self) -> None:
+        """Paste content from clipboard at cursor position."""
+        try:
+            if pyperclip:
+                content = pyperclip.paste()
+                if content:
+                    self.insert(content)
+            else:
+                # Fallback to xclip on Linux
+                import subprocess
+                try:
+                    result = subprocess.run(
+                        ['xclip', '-selection', 'clipboard', '-o'],
+                        capture_output=True, text=True, timeout=1
+                    )
+                    if result.returncode == 0 and result.stdout:
+                        self.insert(result.stdout)
+                except FileNotFoundError:
+                    self.notify("Install pyperclip for clipboard support", severity="warning")
+        except Exception:
+            pass
+
+    def action_copy_selection(self) -> None:
+        """Copy selected text to clipboard (Ctrl+Shift+C)."""
+        selected = self.selected_text
+        if selected:
+            self._copy_to_clipboard(selected)
+
+    def _copy_to_clipboard(self, text: str) -> None:
+        """Copy text to system clipboard."""
+        try:
+            # Try OSC 52 first (works over SSH, in supporting terminals)
+            self.app.copy_to_clipboard(text)
+        except Exception:
+            pass
+
+        # Also use pyperclip for broader compatibility
+        try:
+            if pyperclip:
+                pyperclip.copy(text)
+            else:
+                # Fallback to xclip on Linux
+                import subprocess
+                try:
+                    process = subprocess.Popen(
+                        ['xclip', '-selection', 'clipboard'],
+                        stdin=subprocess.PIPE
+                    )
+                    process.communicate(text.encode('utf-8'), timeout=1)
+                except FileNotFoundError:
+                    pass
+        except Exception:
+            pass
+
+    def on_text_area_selection_changed(self, event: TextArea.SelectionChanged) -> None:
+        """Auto-copy text when selection is made (copy-on-highlight)."""
+        # Only copy if there's an actual selection (not just cursor movement)
+        if event.selection.start != event.selection.end:
+            selected = self.selected_text
+            if selected:
+                self._copy_to_clipboard(selected)
