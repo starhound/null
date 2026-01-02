@@ -22,11 +22,13 @@ class ExecutionHandler:
         """Execute AI generation with streaming response."""
         try:
             from context import ContextManager
+            from prompts import get_prompt_manager
 
-            # Get system prompt
-            prompts = self.app.config.get("ai", {}).get("prompts", {})
+            # Get system prompt from prompt manager
             active_key = self.app.config.get("ai", {}).get("active_prompt", "default")
-            system_prompt = prompts.get(active_key, prompts.get("default", ""))
+            provider = self.app.config.get("ai", {}).get("provider", "")
+            prompt_manager = get_prompt_manager()
+            system_prompt = prompt_manager.get_prompt_content(active_key, provider)
 
             # Gather context (exclude current block)
             context_str = ContextManager.get_context(self.app.blocks[:-1])

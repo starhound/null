@@ -315,20 +315,29 @@ class NullApp(App):
 
     def action_select_prompt(self):
         """Select a system prompt (persona)."""
-        prompts_dict = self.config.get("ai", {}).get("prompts", {})
-        if not prompts_dict:
-            prompts_dict = Config.DEFAULT_CONFIG["ai"]["prompts"]
+        from prompts import get_prompt_manager
 
-        prompt_names = list(prompts_dict.keys())
+        prompt_manager = get_prompt_manager()
+        prompts_list = prompt_manager.list_prompts()
+
+        # Format: "key - description" for display
+        display_items = []
+        key_map = {}
+        for key, name, desc, is_user in prompts_list:
+            prefix = "[user] " if is_user else ""
+            display = f"{prefix}{name}"
+            display_items.append(display)
+            key_map[display] = key
 
         def on_prompt_select(selected):
-            if selected:
-                Config.update_key(["ai", "active_prompt"], selected)
+            if selected and selected in key_map:
+                key = key_map[selected]
+                Config.update_key(["ai", "active_prompt"], key)
                 self.notify(f"System Persona set to: {selected}")
-                self.config["ai"]["active_prompt"] = selected
+                self.config["ai"]["active_prompt"] = key
 
         from screens import SelectionListScreen
-        self.push_screen(SelectionListScreen("Select Persona", prompt_names), on_prompt_select)
+        self.push_screen(SelectionListScreen("Select Persona", display_items), on_prompt_select)
 
     def action_clear_history(self):
         """Clear history (stub)."""

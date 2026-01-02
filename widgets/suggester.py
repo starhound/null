@@ -95,7 +95,7 @@ class CommandSuggester(Static):
         "/theme": {"desc": "Change UI theme", "args": ["null-dark", "null-warm", "null-mono", "null-light", "dracula", "nord", "monokai"]},
         "/ai": {"desc": "Toggle AI Mode", "args": []},
         "/chat": {"desc": "Toggle AI Mode", "args": []},
-        "/prompts": {"desc": "Select System Persona", "args": ["default", "pirate", "concise", "agent"]},
+        "/prompts": {"desc": "Manage system prompts", "args": ["list", "reload", "show", "dir"]},
         "/export": {"desc": "Export conversation", "args": ["md", "json"]},
         "/session": {"desc": "Manage sessions", "args": ["save", "load", "list", "new"]},
         "/mcp": {"desc": "Manage MCP servers", "args": ["list", "tools", "add", "edit", "remove", "enable", "disable", "reconnect"]},
