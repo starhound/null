@@ -16,79 +16,6 @@ from models import BlockState
 class ExecutionWidget(Static):
     """Widget for command execution output with copy button."""
 
-    DEFAULT_CSS = """
-    ExecutionWidget {
-        height: auto;
-        min-height: 0;
-        padding: 0;
-        margin: 0;
-        background: transparent;
-    }
-
-    ExecutionWidget.has-content {
-        padding: 0 1;
-        margin-top: 1;
-    }
-
-    .hidden {
-        display: none;
-    }
-
-    #exec-container {
-        padding: 0;
-    }
-
-    /* Header with title and copy button */
-    .exec-header {
-        layout: horizontal;
-        height: 1;
-        width: 100%;
-        padding: 0 1;
-        margin-bottom: 1;
-        background: $panel;
-    }
-
-    .exec-title {
-        color: $success;
-        width: 1fr;
-        text-style: bold;
-    }
-
-    .exec-icon {
-        color: $success;
-        min-width: 2;
-        margin-right: 1;
-    }
-
-    .copy-btn {
-        width: auto;
-        height: 1;
-        background: transparent;
-        color: #888888;
-    }
-
-    .copy-btn:hover {
-        color: #61afef;
-    }
-
-    /* Output content area */
-    .exec-scroll {
-        height: auto;
-        max-height: 15;
-        margin: 0 1;
-        padding: 1;
-        background: $surface;
-        color: $text;
-        border-left: wide $success 50%;
-        scrollbar-size: 1 1;
-    }
-
-    #exec-content {
-        width: 100%;
-        padding: 0;
-    }
-    """
-
     exec_output = reactive("")
 
     def __init__(self, block: BlockState):
@@ -102,9 +29,8 @@ class ExecutionWidget(Static):
         with Container(id="exec-container", classes="hidden"):
             with Static(classes="exec-header"):
                 yield Label("⚡", classes="exec-icon")
-                yield Label("Command Output", classes="exec-title")
-                from rich.text import Text
-                yield Static(Text("[copy]", style="dim"), classes="copy-btn", id="copy-btn")
+                yield Label("Execution", classes="exec-title")
+                yield Static("copy", classes="copy-btn", id="copy-btn")
             with VerticalScroll(classes="exec-scroll"):
                 yield Static(id="exec-content")
 

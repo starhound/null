@@ -16,65 +16,6 @@ class HistorySearch(Static, can_focus=True):
         Binding("enter", "select", "Select", show=False),
     ]
 
-    DEFAULT_CSS = """
-    HistorySearch {
-        height: auto;
-        max-height: 15;
-        background: $surface;
-        border-top: solid $primary;
-        padding: 0 1;
-        display: none;
-    }
-
-    HistorySearch.visible {
-        display: block;
-    }
-
-    .search-header {
-        height: 1;
-        background: $primary;
-        color: $text;
-        padding: 0 1;
-    }
-
-    .search-input {
-        height: 1;
-        border: none;
-        background: $surface-darken-1;
-        padding: 0 1;
-        margin: 1 0;
-    }
-
-    .search-results {
-        height: auto;
-        max-height: 10;
-        padding: 0;
-    }
-
-    .search-result {
-        height: 1;
-        padding: 0 1;
-        color: $text;
-    }
-
-    .search-result.selected {
-        background: $primary;
-        color: $text;
-        text-style: bold;
-    }
-
-    .search-result:hover {
-        background: $surface-lighten-1;
-    }
-
-    .no-results {
-        height: 1;
-        padding: 0 1;
-        color: $text-muted;
-        text-style: italic;
-    }
-    """
-
     search_query = reactive("")
     results = reactive([])
     selected_index = reactive(0)

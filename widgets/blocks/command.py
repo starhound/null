@@ -8,19 +8,6 @@ from .parts import BlockHeader, BlockBody, BlockFooter
 class CommandBlock(BaseBlockWidget):
     """Block widget for CLI commands."""
 
-    DEFAULT_CSS = """
-    CommandBlock {
-        layout: vertical;
-        height: auto;
-        min-height: 0;
-        background: $surface;
-        color: $text;
-        margin-bottom: 1;
-        padding: 0;
-        border-left: thick $success;
-    }
-    """
-
     def __init__(self, block: BlockState):
         super().__init__(block)
         self.header = BlockHeader(block)

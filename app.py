@@ -24,38 +24,7 @@ from themes import get_all_themes
 class NullApp(App):
     """Main Null terminal application."""
 
-    CSS = """
-    Screen {
-        layout: vertical;
-    }
-
-    HistoryViewport {
-        height: 1fr;
-    }
-
-    #input-container {
-        height: auto;
-        min-height: 4;
-        padding: 0 1;
-        background: $panel;
-        border-top: solid $surface-lighten-1;
-    }
-
-    #prompt-line {
-        height: 1;
-        padding: 0;
-        color: $success;
-        text-style: bold;
-    }
-
-    #prompt-line.ai-mode {
-        color: $warning;
-    }
-
-    InputController {
-        width: 100%;
-    }
-    """
+    CSS_PATH = "styles/app.tcss"
 
     BINDINGS = [
         ("escape", "cancel_operation", "Cancel"),
@@ -402,6 +371,15 @@ class NullApp(App):
         """Handle mode toggle."""
         self._update_status_bar()
         self._update_prompt()
+        # Update container class for focus styling
+        try:
+            container = self.query_one("#input-container", Container)
+            if message.mode == "AI":
+                container.add_class("ai-mode")
+            else:
+                container.remove_class("ai-mode")
+        except Exception:
+            pass
 
     def on_history_search_selected(self, message: HistorySearch.Selected):
         """Handle history search selection."""

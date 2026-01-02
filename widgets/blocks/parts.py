@@ -8,160 +8,46 @@ from models import BlockState, BlockType
 class BlockHeader(Static):
     """Header for a block showing prompt, timestamp, etc."""
 
-    DEFAULT_CSS = """
-    BlockHeader {
-        layout: horizontal;
-        height: 1;
-        dock: top;
-        background: $surface;
-        color: $text;
-        padding: 0 1;
-        margin-bottom: 1;
-    }
-
-    /* CLI command symbol - green */
-    .prompt-symbol-cli {
-        color: $success;
-        margin-right: 1;
-        text-style: bold;
-    }
-
-    /* AI query symbol - amber */
-    .prompt-symbol-query {
-        color: $warning;
-        margin-right: 1;
-    }
-
-    /* AI response symbol - blue/primary */
-    .prompt-symbol-response {
-        color: $primary;
-        margin-right: 1;
-    }
-
-    /* System message symbol - cyan/secondary */
-    .prompt-symbol-system {
-        color: $secondary;
-        margin-right: 1;
-        text-style: bold;
-    }
-
-    .header-text {
-        color: $text;
-        width: 1fr;
-    }
-
-    .header-text-cli {
-        color: $success-lighten-2;
-        text-style: bold;
-        width: 1fr;
-    }
-
-    .header-text-ai {
-        color: $text;
-        width: 1fr;
-    }
-
-    .header-text-system {
-        color: $secondary;
-        width: 1fr;
-    }
-
-    .timestamp {
-        color: $text-muted;
-        text-style: dim;
-    }
-    """
-
     def __init__(self, block: BlockState):
         super().__init__()
         self.block = block
 
     def compose(self) -> ComposeResult:
         if self.block.type == BlockType.COMMAND:
-            icon = "$"
-            icon_class = "prompt-symbol-cli"
+            icon = "❯"
+            icon_class = "prompt-symbol prompt-symbol-cli"
             text_class = "header-text-cli"
             display_text = self.block.content_input
         elif self.block.type == BlockType.AI_QUERY:
-            icon = "?"
-            icon_class = "prompt-symbol-query"
+            icon = "◇"
+            icon_class = "prompt-symbol prompt-symbol-query"
             text_class = "header-text-ai"
             display_text = self.block.content_input
         elif self.block.type == BlockType.AI_RESPONSE:
             icon = "◆"
-            icon_class = "prompt-symbol-response"
+            icon_class = "prompt-symbol prompt-symbol-response"
             text_class = "header-text-ai"
-            display_text = self.block.content_input if self.block.content_input else "AI Response"
+            display_text = self.block.content_input if self.block.content_input else ""
         elif self.block.type == BlockType.SYSTEM_MSG:
-            icon = "●"
-            icon_class = "prompt-symbol-system"
+            icon = "◈"
+            icon_class = "prompt-symbol prompt-symbol-system"
             text_class = "header-text-system"
             display_text = self.block.content_input if self.block.content_input else "System"
         else:
-            icon = ">"
-            icon_class = "prompt-symbol-cli"
+            icon = "▸"
+            icon_class = "prompt-symbol prompt-symbol-cli"
             text_class = "header-text"
-            display_text = self.block.content_input or "..."
+            display_text = self.block.content_input or ""
 
         yield Label(icon, classes=icon_class)
         yield Label(display_text, classes=text_class)
 
-        ts_str = self.block.timestamp.strftime("%H:%M:%S")
+        ts_str = self.block.timestamp.strftime("%H:%M")
         yield Label(ts_str, classes="timestamp")
 
 
 class BlockMeta(Static):
     """Metadata bar for AI responses showing model, tokens, context."""
-
-    DEFAULT_CSS = """
-    BlockMeta {
-        layout: horizontal;
-        height: 1;
-        padding: 0 2;
-        margin-bottom: 1;
-        background: $panel;
-        color: $text-muted;
-    }
-
-    .meta-item {
-        margin-right: 2;
-        text-style: dim;
-    }
-
-    .meta-label {
-        color: $text-muted;
-    }
-
-    .meta-value {
-        color: $primary;
-        text-style: italic;
-    }
-
-    .meta-value-success {
-        color: $success;
-        text-style: italic;
-    }
-
-    .meta-value-warning {
-        color: $warning;
-        text-style: italic;
-    }
-
-    .meta-spacer {
-        width: 1fr;
-    }
-
-    .meta-action {
-        width: auto;
-        height: 1;
-        margin-left: 1;
-        color: #888888;
-    }
-
-    .meta-action:hover {
-        color: #61afef;
-    }
-    """
 
     def __init__(self, block: BlockState):
         super().__init__()
@@ -169,61 +55,47 @@ class BlockMeta(Static):
 
     def compose(self) -> ComposeResult:
         meta = self.block.metadata or {}
+        parts = []
 
         # Model
         model = meta.get("model", "")
         if model:
             if "/" in model:
                 model = model.split("/")[-1]
-            yield Label(f"model: ", classes="meta-label")
-            yield Label(f"{model}", classes="meta-value")
-            yield Label("  ", classes="meta-item")
+            parts.append(model)
+
+        # Tokens
+        tokens = meta.get("tokens", "")
+        if tokens:
+            parts.append(tokens)
 
         # Context
         ctx = meta.get("context", "")
         if ctx and ctx != "0 chars":
-            yield Label(f"context: ", classes="meta-label")
-            yield Label(f"{ctx}", classes="meta-value-warning")
-            yield Label("  ", classes="meta-item")
-
-        # Tokens (if available)
-        tokens = meta.get("tokens", "")
-        if tokens:
-            yield Label(f"tokens: ", classes="meta-label")
-            yield Label(f"{tokens}", classes="meta-value-success")
-            yield Label("  ", classes="meta-item")
+            parts.append(ctx)
 
         # Persona
         persona = meta.get("persona", "")
         if persona and persona != "default":
-            yield Label(f"persona: ", classes="meta-label")
-            yield Label(f"{persona}", classes="meta-value")
+            parts.append(f"@{persona}")
+
+        # Render parts with separators
+        for i, part in enumerate(parts):
+            if i > 0:
+                yield Label("·", classes="meta-sep")
+            yield Label(part, classes="meta-value")
 
         # Spacer to push actions to right
         yield Label("", classes="meta-spacer")
 
         # Action labels for AI responses
         if self.block.type == BlockType.AI_RESPONSE and not self.block.is_running:
-            from rich.text import Text
-            yield Static(Text("[edit]", style="dim italic"), id="edit-btn", classes="meta-action")
-            yield Static(Text("[retry]", style="dim italic"), id="retry-btn", classes="meta-action")
+            yield Static("edit", id="edit-btn", classes="meta-action")
+            yield Static("retry", id="retry-btn", classes="meta-action")
 
 
 class BlockBody(Static):
     """Body containing simple text content (e.g. command output)."""
-
-    DEFAULT_CSS = """
-    BlockBody {
-        height: auto;
-        min-height: 0;
-        padding: 0 2;
-        color: $text;
-    }
-
-    #body-content {
-        width: 100%;
-    }
-    """
 
     content_text = reactive("")
 
@@ -245,29 +117,6 @@ class BlockBody(Static):
 
 class BlockFooter(Static):
     """Footer showing exit code/status."""
-
-    DEFAULT_CSS = """
-    BlockFooter {
-        height: auto;
-        min-height: 0;
-        padding: 0 2;
-        color: $text-muted;
-    }
-
-    BlockFooter.empty-footer {
-        display: none;
-    }
-
-    .exit-error {
-        color: $error;
-        text-style: bold;
-    }
-
-    .running-spinner {
-        color: $warning;
-        text-style: italic;
-    }
-    """
 
     def __init__(self, block: BlockState):
         super().__init__()

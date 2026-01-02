@@ -1,0 +1,592 @@
+/* ==========================================================================
+   Null Terminal - Centralized Styles
+   ========================================================================== */
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+
+Screen {
+    layout: vertical;
+}
+
+HistoryViewport {
+    height: 1fr;
+    padding: 1;
+    background: $background;
+    scrollbar-gutter: stable;
+    min-height: 10;
+    overflow-y: auto;
+}
+
+/* ==========================================================================
+   Input Area
+   ========================================================================== */
+
+#input-container {
+    height: auto;
+    min-height: 4;
+    padding: 0 1;
+    background: $panel;
+    border-top: solid $surface;
+}
+
+#input-container:focus-within {
+    border-top: solid $primary;
+}
+
+#input-container.ai-mode:focus-within {
+    border-top: solid $warning;
+}
+
+#prompt-line {
+    height: 1;
+    padding: 0;
+    color: $success;
+    text-style: bold;
+}
+
+#prompt-line.ai-mode {
+    color: $warning;
+}
+
+InputController {
+    width: 100%;
+    height: auto;
+    min-height: 3;
+    max-height: 8;
+    border: none;
+    padding: 0 1;
+    background: transparent;
+    color: $text;
+}
+
+InputController > .text-area--cursor-line {
+    background: transparent;
+}
+
+InputController > .text-area--selection {
+    background: $primary 30%;
+}
+
+/* ==========================================================================
+   Command Suggester
+   ========================================================================== */
+
+CommandSuggester {
+    layer: overlay;
+    dock: bottom;
+    margin-bottom: 4;
+    margin-left: 2;
+    margin-right: 2;
+    width: auto;
+    max-width: 60;
+    height: auto;
+    max-height: 10;
+    background: $panel;
+    border: solid $surface;
+    display: none;
+    padding: 0 1;
+}
+
+CommandSuggester ListView {
+    height: auto;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+}
+
+CommandSuggester ListItem {
+    padding: 0 1;
+    height: 1;
+    color: $text-muted;
+}
+
+CommandSuggester ListItem:hover {
+    background: $surface;
+    color: $text;
+}
+
+CommandSuggester ListView > ListItem.-highlight {
+    background: $surface;
+    color: $primary;
+}
+
+/* ==========================================================================
+   Status Bar
+   ========================================================================== */
+
+StatusBar {
+    dock: bottom;
+    height: 1;
+    background: $surface;
+    layout: horizontal;
+    padding: 0 2;
+    color: $text-muted;
+}
+
+StatusBar .status-sep {
+    color: $text-muted;
+    text-style: dim;
+    margin: 0 1;
+}
+
+StatusBar .status-section {
+    text-style: dim;
+}
+
+StatusBar .mode-cli {
+    color: $success;
+}
+
+StatusBar .mode-ai {
+    color: $warning;
+}
+
+StatusBar .context-low {
+    color: $text-muted;
+}
+
+StatusBar .context-medium {
+    color: $warning;
+}
+
+StatusBar .context-high {
+    color: $error;
+}
+
+StatusBar .provider-connected {
+    color: $text-muted;
+}
+
+StatusBar .provider-disconnected {
+    color: $error;
+}
+
+StatusBar .provider-checking {
+    color: $text-muted;
+    text-style: dim italic;
+}
+
+StatusBar .spacer {
+    width: 1fr;
+}
+
+/* ==========================================================================
+   Block Widgets - Base
+   ========================================================================== */
+
+BaseBlockWidget {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: transparent;
+    color: $text;
+    margin: 0 0 1 0;
+    padding: 0 1;
+}
+
+/* ==========================================================================
+   Block Widgets - Command
+   ========================================================================== */
+
+CommandBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: transparent;
+    color: $text;
+    margin: 0 0 1 0;
+    padding: 0 1 1 1;
+    border-left: solid $success;
+}
+
+/* ==========================================================================
+   Block Widgets - AI Response
+   ========================================================================== */
+
+AIResponseBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: transparent;
+    color: $text;
+    margin: 0 0 2 0;
+    padding: 0 1 1 1;
+    border-left: solid $primary;
+}
+
+/* ==========================================================================
+   Block Widgets - System Message
+   ========================================================================== */
+
+SystemBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: transparent;
+    color: $text;
+    margin: 0 0 1 0;
+    padding: 0 1 1 1;
+    border-left: solid $secondary;
+}
+
+/* ==========================================================================
+   Block Parts - Header
+   ========================================================================== */
+
+BlockHeader {
+    layout: horizontal;
+    height: auto;
+    min-height: 1;
+    dock: top;
+    background: transparent;
+    color: $text;
+    padding: 0;
+    margin-bottom: 0;
+}
+
+BlockHeader .prompt-symbol {
+    width: 3;
+    text-style: bold;
+}
+
+BlockHeader .prompt-symbol-cli {
+    color: $success;
+}
+
+BlockHeader .prompt-symbol-query {
+    color: $warning;
+}
+
+BlockHeader .prompt-symbol-response {
+    color: $primary;
+}
+
+BlockHeader .prompt-symbol-system {
+    color: $secondary;
+}
+
+BlockHeader .header-text {
+    color: $text-muted;
+    width: 1fr;
+}
+
+BlockHeader .header-text-cli {
+    color: $text;
+    width: 1fr;
+}
+
+BlockHeader .header-text-ai {
+    color: $text-muted;
+    text-style: italic;
+    width: 1fr;
+}
+
+BlockHeader .header-text-system {
+    color: $secondary;
+    width: 1fr;
+}
+
+BlockHeader .timestamp {
+    color: $text-muted;
+    text-style: dim;
+}
+
+/* ==========================================================================
+   Block Parts - Meta
+   ========================================================================== */
+
+BlockMeta {
+    layout: horizontal;
+    height: 1;
+    padding: 0 0 0 3;
+    margin: 0 0 1 0;
+    background: transparent;
+    color: $text-muted;
+}
+
+BlockMeta .meta-sep {
+    color: $text-muted;
+    text-style: dim;
+    margin: 0 1;
+}
+
+BlockMeta .meta-value {
+    color: $text-muted;
+    text-style: dim;
+}
+
+BlockMeta .meta-spacer {
+    width: 1fr;
+}
+
+BlockMeta .meta-action {
+    width: auto;
+    height: 1;
+    margin-left: 2;
+    color: $text-muted;
+    text-style: dim;
+}
+
+BlockMeta .meta-action:hover {
+    color: $primary;
+    text-style: none;
+}
+
+/* ==========================================================================
+   Block Parts - Body
+   ========================================================================== */
+
+BlockBody {
+    height: auto;
+    min-height: 0;
+    padding: 0 2;
+    color: $text;
+}
+
+BlockBody #body-content {
+    width: 100%;
+}
+
+/* ==========================================================================
+   Block Parts - Footer
+   ========================================================================== */
+
+BlockFooter {
+    height: auto;
+    min-height: 0;
+    padding: 0 2;
+    color: $text-muted;
+}
+
+BlockFooter.empty-footer {
+    display: none;
+}
+
+BlockFooter .exit-error {
+    color: $error;
+    text-style: bold;
+}
+
+BlockFooter .running-spinner {
+    color: $warning;
+    text-style: italic;
+}
+
+/* ==========================================================================
+   Thinking Widget
+   ========================================================================== */
+
+ThinkingWidget {
+    height: auto;
+    min-height: 0;
+    padding: 0 0 0 3;
+    margin: 0;
+}
+
+ThinkingWidget .thinking-header {
+    layout: horizontal;
+    height: 1;
+    width: 100%;
+    padding: 0;
+    margin-bottom: 0;
+    background: transparent;
+    display: none;
+}
+
+ThinkingWidget .thinking-header.loading {
+    display: block;
+}
+
+ThinkingWidget .spinner {
+    color: $primary;
+    min-width: 2;
+}
+
+ThinkingWidget .spinner.complete {
+    color: $success;
+}
+
+ThinkingWidget .thinking-label {
+    color: $text-muted;
+    text-style: dim italic;
+    padding-left: 1;
+    width: 1fr;
+}
+
+ThinkingWidget .toggle-hint {
+    color: $text-muted;
+    text-style: dim;
+}
+
+ThinkingWidget .toggle-hint:hover {
+    color: $primary;
+    text-style: none;
+}
+
+ThinkingWidget .peek-window {
+    height: 8;
+    max-height: 8;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    color: $text;
+    scrollbar-size: 1 1;
+}
+
+ThinkingWidget .peek-window.expanded {
+    height: auto;
+    min-height: 4;
+    max-height: 40;
+}
+
+ThinkingWidget .peek-content {
+    width: 100%;
+    padding: 0;
+}
+
+ThinkingWidget .peek-window.empty {
+    height: 1;
+    max-height: 1;
+}
+
+ThinkingWidget .empty-hint {
+    color: $text-muted;
+    text-style: dim italic;
+    padding: 0;
+}
+
+/* ==========================================================================
+   Execution Widget
+   ========================================================================== */
+
+ExecutionWidget {
+    height: auto;
+    min-height: 0;
+    padding: 0 0 0 3;
+    margin: 0;
+    background: transparent;
+}
+
+ExecutionWidget.has-content {
+    margin-top: 1;
+}
+
+ExecutionWidget .hidden {
+    display: none;
+}
+
+ExecutionWidget #exec-container {
+    padding: 0;
+}
+
+ExecutionWidget .exec-header {
+    layout: horizontal;
+    height: 1;
+    width: 100%;
+    padding: 0;
+    margin-bottom: 0;
+    background: transparent;
+}
+
+ExecutionWidget .exec-title {
+    color: $text-muted;
+    width: 1fr;
+    text-style: dim;
+}
+
+ExecutionWidget .exec-icon {
+    color: $success;
+    min-width: 2;
+}
+
+ExecutionWidget .copy-btn {
+    width: auto;
+    height: 1;
+    background: transparent;
+    color: $text-muted;
+    text-style: dim;
+}
+
+ExecutionWidget .copy-btn:hover {
+    color: $primary;
+    text-style: none;
+}
+
+ExecutionWidget .exec-scroll {
+    height: auto;
+    max-height: 15;
+    margin: 0;
+    padding: 1;
+    background: $surface;
+    color: $text;
+    scrollbar-size: 1 1;
+}
+
+ExecutionWidget #exec-content {
+    width: 100%;
+    padding: 0;
+}
+
+/* ==========================================================================
+   History Search
+   ========================================================================== */
+
+HistorySearch {
+    height: auto;
+    max-height: 15;
+    background: $surface;
+    border-top: solid $primary;
+    padding: 0 1;
+    display: none;
+}
+
+HistorySearch.visible {
+    display: block;
+}
+
+HistorySearch .search-header {
+    height: 1;
+    background: $primary;
+    color: $text;
+    padding: 0 1;
+}
+
+HistorySearch .search-input {
+    height: 1;
+    border: none;
+    background: $panel;
+    padding: 0 1;
+    margin: 1 0;
+}
+
+HistorySearch .search-results {
+    height: auto;
+    max-height: 10;
+    padding: 0;
+}
+
+HistorySearch .search-result {
+    height: 1;
+    padding: 0 1;
+    color: $text;
+}
+
+HistorySearch .search-result.selected {
+    background: $primary;
+    color: $text;
+    text-style: bold;
+}
+
+HistorySearch .search-result:hover {
+    background: $surface;
+}
+
+HistorySearch .no-results {
+    height: 1;
+    padding: 0 1;
+    color: $text-muted;
+    text-style: italic;
+}

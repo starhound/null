@@ -10,91 +10,6 @@ from models import BlockState
 class ThinkingWidget(Static):
     """Animated widget for AI response with peek preview and expand toggle."""
 
-    DEFAULT_CSS = """
-    ThinkingWidget {
-        height: auto;
-        min-height: 0;
-        padding: 0 1;
-        margin: 0;
-    }
-
-    /* Header row with spinner and status */
-    .thinking-header {
-        layout: horizontal;
-        height: 1;
-        width: 100%;
-        padding: 0 1;
-        margin-bottom: 1;
-        background: $panel;
-    }
-
-    .spinner {
-        color: $primary;
-        min-width: 2;
-        text-style: bold;
-    }
-
-    .spinner.complete {
-        color: $success;
-    }
-
-    .thinking-label {
-        color: $text-muted;
-        text-style: italic;
-        padding-left: 1;
-        width: 1fr;
-    }
-
-    .toggle-hint {
-        color: $text-muted;
-        text-style: dim;
-    }
-
-    .toggle-hint:hover {
-        color: $primary;
-        text-style: bold;
-    }
-
-    /* Peek window - scrolling preview */
-    .peek-window {
-        height: 4;
-        max-height: 4;
-        margin: 0 1 1 1;
-        padding: 1;
-        border-left: wide $primary 50%;
-        background: $surface;
-        color: $text;
-        scrollbar-size: 1 1;
-    }
-
-    .peek-window:focus {
-        border-left: wide $primary;
-    }
-
-    .peek-window.expanded {
-        height: auto;
-        min-height: 4;
-        max-height: 25;
-    }
-
-    .peek-content {
-        width: 100%;
-        padding: 0;
-    }
-
-    /* Empty state */
-    .peek-window.empty {
-        height: 2;
-        max-height: 2;
-    }
-
-    .empty-hint {
-        color: $text-muted;
-        text-style: italic dim;
-        padding: 0 1;
-    }
-    """
-
     SPINNER_FRAMES = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
     thinking_text = reactive("")
@@ -115,22 +30,36 @@ class ThinkingWidget(Static):
             self.thinking_text = block.content_output
 
     def compose(self) -> ComposeResult:
-        with Static(classes="thinking-header"):
+        header_classes = "thinking-header loading" if self.is_loading else "thinking-header"
+        with Static(classes=header_classes, id="thinking-header"):
             yield Label(self.SPINNER_FRAMES[0], classes="spinner", id="spinner")
-            yield Label("Generating response...", classes="thinking-label", id="status-label")
-            yield Label("click to expand", classes="toggle-hint", id="toggle-hint")
+            yield Label("Generating...", classes="thinking-label", id="status-label")
+            yield Label("expand", classes="toggle-hint", id="toggle-hint")
 
         with VerticalScroll(classes="peek-window empty", id="peek-window"):
-            yield Label("Waiting for response...", classes="empty-hint", id="empty-hint")
+            yield Label("", classes="empty-hint", id="empty-hint")
             yield Static("", classes="peek-content", id="peek-content")
 
     def on_mount(self):
         """Start the spinner animation if loading."""
         if self.is_loading:
             self._spinner_timer = self.set_interval(0.08, self._animate_spinner)
+            self._show_header(True)
         else:
-            # Already complete, update UI
-            self.call_later(self._init_complete_state)
+            self._show_header(False)
+            if self.thinking_text:
+                self.call_later(self._init_complete_state)
+
+    def _show_header(self, show: bool):
+        """Show or hide the thinking header."""
+        try:
+            header = self.query_one("#thinking-header", Static)
+            if show:
+                header.add_class("loading")
+            else:
+                header.remove_class("loading")
+        except Exception:
+            pass
 
     def _init_complete_state(self):
         """Initialize UI for completed state."""

@@ -8,19 +8,6 @@ from .parts import BlockHeader, BlockBody
 class SystemBlock(BaseBlockWidget):
     """Block widget for system messages."""
 
-    DEFAULT_CSS = """
-    SystemBlock {
-        layout: vertical;
-        height: auto;
-        min-height: 0;
-        background: $surface;
-        color: $text;
-        margin-bottom: 1;
-        padding: 0;
-        border-left: thick $secondary;
-    }
-    """
-
     def __init__(self, block: BlockState):
         super().__init__(block)
         self.header = BlockHeader(block)

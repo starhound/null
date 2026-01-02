@@ -14,45 +14,6 @@ class CommandItem(ListItem):
 class CommandSuggester(Static):
     """Popup for command suggestions."""
 
-    DEFAULT_CSS = """
-    CommandSuggester {
-        layer: overlay;
-        dock: bottom;
-        margin-bottom: 4;
-        margin-left: 1;
-        margin-right: 1;
-        width: auto;
-        max-width: 50;
-        height: auto;
-        max-height: 12;
-        background: $surface;
-        border: round $accent;
-        display: none;
-        padding: 0;
-    }
-
-    ListView {
-        height: auto;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-        background: transparent;
-    }
-
-    ListItem {
-        padding: 0 1;
-        height: 1;
-    }
-
-    ListItem:hover {
-        background: $surface-lighten-1;
-    }
-
-    ListView > ListItem.-highlight {
-        background: $primary 30%;
-    }
-    """
-
     can_focus = False
 
     def on_click(self, event: Click) -> None:

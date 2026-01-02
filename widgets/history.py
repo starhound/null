@@ -4,16 +4,6 @@ from textual.containers import VerticalScroll
 class HistoryViewport(VerticalScroll):
     """Scrollable container for blocks."""
 
-    DEFAULT_CSS = """
-    HistoryViewport {
-        padding: 1;
-        background: $background;
-        scrollbar-gutter: stable;
-        min-height: 10;
-        overflow-y: auto;
-    }
-    """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._auto_scroll = True

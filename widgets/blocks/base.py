@@ -23,18 +23,6 @@ class BaseBlockWidget(Static):
             self.content = content
             super().__init__()
 
-    DEFAULT_CSS = """
-    BaseBlockWidget {
-        layout: vertical;
-        height: auto;
-        min-height: 0;
-        background: $surface;
-        margin-bottom: 1;
-        padding: 0;
-        border-left: thick $panel;
-    }
-    """
-
     def __init__(self, block: BlockState):
         super().__init__()
         self.block = block

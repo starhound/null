@@ -12,19 +12,6 @@ from .execution import ExecutionWidget
 class AIResponseBlock(BaseBlockWidget):
     """Block widget for AI responses with thinking and execution sections."""
 
-    DEFAULT_CSS = """
-    AIResponseBlock {
-        layout: vertical;
-        height: auto;
-        min-height: 0;
-        background: $surface;
-        color: $text;
-        margin-bottom: 1;
-        padding: 0;
-        border-left: thick $primary;
-    }
-    """
-
     def __init__(self, block: BlockState):
         super().__init__(block)
         self.header = BlockHeader(block)

@@ -12,36 +12,6 @@ class InputController(TextArea):
     Supports Shift+Enter for newlines, Enter to submit.
     """
 
-    DEFAULT_CSS = """
-    InputController {
-        height: auto;
-        min-height: 1;
-        max-height: 5;
-        border: solid $accent;
-        padding: 0 1;
-        background: $panel;
-        color: $text;
-        & > .text-area--cursor-line {
-            background: transparent;
-        }
-        & > .text-area--selection {
-            background: $primary 30%;
-        }
-    }
-
-    InputController:focus {
-        border: solid $primary;
-    }
-
-    InputController.ai-mode {
-        border: solid $warning;
-    }
-
-    InputController.ai-mode:focus {
-        border: solid $warning-lighten-1;
-    }
-    """
-
     BINDINGS = [
         Binding("enter", "submit", "Submit", priority=True),
         Binding("shift+enter", "newline", "New Line", priority=True),
