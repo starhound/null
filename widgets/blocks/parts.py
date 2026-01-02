@@ -2,9 +2,47 @@ import re
 from textual.app import ComposeResult
 from textual.widgets import Static, Label
 from textual.reactive import reactive
+from textual.message import Message
 from rich.text import Text
 
 from models import BlockState, BlockType
+
+
+class StopButton(Label):
+    """Clickable stop button."""
+
+    class Pressed(Message, bubble=True):
+        """Message sent when stop button is pressed."""
+        def __init__(self, block_id: str):
+            super().__init__()
+            self.block_id = block_id
+
+    DEFAULT_CSS = """
+    StopButton {
+        width: auto;
+        height: 1;
+        padding: 0 1;
+        color: $error;
+        text-style: bold;
+    }
+    StopButton:hover {
+        background: $error 15%;
+        text-style: bold underline;
+    }
+    """
+
+    def __init__(self, block_id: str):
+        super().__init__("Stop", id="stop-btn", classes="stop-action")
+        self._block_id = block_id
+
+    def on_mount(self) -> None:
+        """Set up click handling."""
+        self.styles.cursor = "pointer"
+
+    def on_click(self, event) -> None:
+        """Handle click on stop button."""
+        event.stop()
+        self.post_message(self.Pressed(self._block_id))
 
 
 # URL pattern for making links clickable in plain text output
@@ -15,6 +53,9 @@ URL_PATTERN = re.compile(
 
 # ANSI escape sequence pattern - matches color codes, cursor movement, etc.
 ANSI_PATTERN = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?\x07')
+
+# Maximum lines to display in a block (prevents unbounded growth)
+MAX_OUTPUT_LINES = 1000
 
 
 class BlockHeader(Static):
@@ -121,9 +162,12 @@ class BlockBody(Static):
 
     content_text = reactive("")
 
-    def __init__(self, text: str = ""):
+    def __init__(self, text: str = "", max_lines: int = MAX_OUTPUT_LINES):
         super().__init__()
         self._initial_text = text or ""
+        self._max_lines = max_lines
+        self._truncated = False
+        self._total_lines = 0
         self.content_text = self._initial_text
 
     def compose(self) -> ComposeResult:
@@ -132,9 +176,34 @@ class BlockBody(Static):
     def watch_content_text(self, new_text: str):
         try:
             content = self.query_one("#body-content", Static)
-            content.update(self._make_links_clickable(new_text))
+            # Apply truncation if needed
+            display_text, was_truncated, total = self._truncate_output(new_text)
+            self._truncated = was_truncated
+            self._total_lines = total
+            content.update(self._make_links_clickable(display_text))
         except Exception:
             pass
+
+    def _truncate_output(self, text: str) -> tuple[str, bool, int]:
+        """Truncate output to max lines, keeping the most recent lines.
+
+        Returns: (truncated_text, was_truncated, total_line_count)
+        """
+        if not text:
+            return text, False, 0
+
+        lines = text.split('\n')
+        total_lines = len(lines)
+
+        if total_lines <= self._max_lines:
+            return text, False, total_lines
+
+        # Keep the last max_lines, add truncation indicator at top
+        kept_lines = lines[-self._max_lines:]
+        truncated_count = total_lines - self._max_lines
+        indicator = f"... ({truncated_count:,} lines truncated, showing last {self._max_lines:,}) ...\n"
+
+        return indicator + '\n'.join(kept_lines), True, total_lines
 
     def _make_links_clickable(self, text: str) -> Text:
         """Convert plain text with URLs to Rich Text with clickable links.
@@ -231,3 +300,4 @@ class BlockFooter(Static):
             yield Label(f"Exit Code: {self.block.exit_code}", classes="exit-error")
         elif self.block.is_running:
             yield Label("Running...", classes="running-spinner")
+            yield StopButton(self.block.id)

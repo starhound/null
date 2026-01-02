@@ -609,27 +609,126 @@ class ExecutionHandler:
 
     async def execute_cli(self, block: BlockState, widget: BaseBlockWidget):
         """Execute a CLI command and stream output."""
+        import asyncio
+        from widgets.blocks import CommandBlock
 
         def update_callback(line: str):
             block.content_output += line
             widget.update_output()
 
-        exit_code = await self.app.executor.run_command_and_get_rc(
-            block.content_input,
-            update_callback
+        def mode_callback(mode: str, data: bytes):
+            """Handle TUI mode changes."""
+            self.app.notify(f"TUI mode: {mode}", severity="information")
+
+            if not isinstance(widget, CommandBlock):
+                return
+
+            if mode == 'enter':
+                # Switch to TUI mode
+                widget.switch_to_tui()
+                widget.feed_terminal(data)
+                # Mark as TUI in process manager
+                self.app.process_manager.set_tui_mode(block.id, True)
+            elif mode == 'exit':
+                # Switch back to line mode
+                widget.switch_to_line()
+                self.app.process_manager.set_tui_mode(block.id, False)
+
+        def raw_callback(data: bytes):
+            """Feed raw data to terminal widget in TUI mode."""
+            if isinstance(widget, CommandBlock):
+                widget.feed_terminal(data)
+
+        from executor import ExecutionEngine
+        executor = ExecutionEngine()
+
+        # Start command execution
+        exec_task = asyncio.create_task(
+            executor.run_command_and_get_rc(
+                block.content_input,
+                update_callback,
+                mode_callback=mode_callback,
+                raw_callback=raw_callback
+            )
         )
+
+        # Wait briefly for process to start, then register it
+        await asyncio.sleep(0.01)
+        if executor.pid:
+            self.app.process_manager.register(
+                block_id=block.id,
+                pid=executor.pid,
+                command=block.content_input,
+                master_fd=executor.master_fd,
+                executor=executor
+            )
+
+        try:
+            exit_code = await exec_task
+        finally:
+            # Unregister process when done
+            self.app.process_manager.unregister(block.id)
 
         widget.set_exit_code(exit_code)
         self.app._auto_save()
 
     async def execute_cli_append(self, cmd: str, block: BlockState, widget: BaseBlockWidget):
         """Execute a command and append output to existing CLI block."""
+        import asyncio
+        from widgets.blocks import CommandBlock
 
         def update_callback(line: str):
             block.content_output += line
             widget.update_output()
 
-        exit_code = await self.app.executor.run_command_and_get_rc(cmd, update_callback)
+        def mode_callback(mode: str, data: bytes):
+            """Handle TUI mode changes for appended commands."""
+            if not isinstance(widget, CommandBlock):
+                return
+
+            if mode == 'enter':
+                # Switch to TUI mode
+                widget.switch_to_tui()
+                widget.feed_terminal(data)
+                self.app.process_manager.set_tui_mode(block.id, True)
+            elif mode == 'exit':
+                # Switch back to line mode
+                widget.switch_to_line()
+                self.app.process_manager.set_tui_mode(block.id, False)
+
+        def raw_callback(data: bytes):
+            """Feed raw data to terminal widget in TUI mode."""
+            if isinstance(widget, CommandBlock):
+                widget.feed_terminal(data)
+
+        from executor import ExecutionEngine
+        executor = ExecutionEngine()
+
+        # Start execution with full TUI support
+        exec_task = asyncio.create_task(
+            executor.run_command_and_get_rc(
+                cmd,
+                update_callback,
+                mode_callback=mode_callback,
+                raw_callback=raw_callback
+            )
+        )
+
+        # Wait briefly for process to start to register it
+        await asyncio.sleep(0.01)
+        if executor.pid:
+            self.app.process_manager.register(
+                block_id=block.id,
+                pid=executor.pid,
+                command=cmd,
+                master_fd=executor.master_fd,
+                executor=executor
+            )
+
+        try:
+            exit_code = await exec_task
+        finally:
+            self.app.process_manager.unregister(block.id)
 
         if exit_code != 0:
             block.content_output += f"[exit: {exit_code}]\n"

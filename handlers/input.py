@@ -78,15 +78,45 @@ class InputHandler:
         """Handle CLI mode input."""
         input_ctrl.value = ""
 
+        # Check if there's a running process that needs input (like sudo)
+        if self._send_to_running_process(cmd):
+            return
+
         # Handle built-in commands (cd, pwd)
         if await self.handle_builtin(cmd):
             return
 
         # Check for existing CLI block to append to
-        if self.app.current_cli_block and self.app.current_cli_widget:
+        # Only append if the current block is NOT a TUI block
+        is_tui = False
+        if self.app.current_cli_block:
+             info = self.app.process_manager.get(self.app.current_cli_block.id)
+             if info and info.is_tui:
+                 is_tui = True
+
+        if self.app.current_cli_block and self.app.current_cli_widget and not is_tui:
             await self._append_to_cli_block(cmd)
         else:
             await self._create_cli_block(cmd)
+
+    def _send_to_running_process(self, text: str) -> bool:
+        """Send input to a running process if one exists.
+
+        Returns True if input was sent, False otherwise.
+        """
+        # If we have a current CLI block, check if it's running
+        if self.app.current_cli_block and self.app.current_cli_block.id:
+            block_id = self.app.current_cli_block.id
+            if self.app.process_manager.is_running(block_id):
+                 info = self.app.process_manager.get(block_id)
+                 # Don't send input if it's a TUI (handled via raw keys)
+                 if info and info.is_tui:
+                     return False
+                 
+                 # Send input to this process
+                 return self.app.process_manager.send_input(block_id, (text + "\n").encode('utf-8'))
+
+        return False
 
     # Unicode box-drawing rule for separating command chains
     COMMAND_SEPARATOR = "┄" * 40

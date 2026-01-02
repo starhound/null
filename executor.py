@@ -5,7 +5,31 @@ import signal
 import fcntl
 import struct
 import termios
-from typing import Callable, Optional
+import select
+from typing import Callable, Optional, Union
+
+# Alternate screen buffer sequences (apps like vim)
+ALTERNATE_SCREEN_ENTER = [
+    b'\x1b[?1049h',  # Most common (xterm) - vim, nano, less
+    b'\x1b[?1047h',  # Alternate buffer
+    b'\x1b[?47h',    # Legacy xterm
+]
+ALTERNATE_SCREEN_EXIT = [
+    b'\x1b[?1049l',
+    b'\x1b[?1047l',
+    b'\x1b[?47l',
+]
+
+# Full-screen TUI indicators (apps like top that don't use alternate screen)
+# These apps clear screen and hide cursor
+TUI_ENTER_INDICATORS = [
+    b'\x1b[?25l\x1b[H',     # Hide cursor + home (top)
+    b'\x1b[H\x1b[2J\x1b[?25l',  # Home + clear + hide cursor
+    b'\x1b[2J\x1b[H\x1b[?25l',  # Clear + home + hide cursor
+]
+TUI_EXIT_INDICATORS = [
+    b'\x1b[?25h',  # Show cursor
+]
 
 
 class ExecutionEngine:
@@ -15,14 +39,83 @@ class ExecutionEngine:
         self._pid: Optional[int] = None
         self._master_fd: Optional[int] = None
         self._cancelled = False
+        self._in_tui_mode = False
+        self._detection_buffer = b""
 
-    async def run_command_and_get_rc(self, command: str, callback: Callable[[str], None]) -> int:
+    @property
+    def pid(self) -> Optional[int]:
+        """Get the current process ID."""
+        return self._pid
+
+    @property
+    def master_fd(self) -> Optional[int]:
+        """Get the PTY master file descriptor."""
+        return self._master_fd
+
+    @property
+    def in_tui_mode(self) -> bool:
+        """Check if currently in TUI (alternate screen) mode."""
+        return self._in_tui_mode
+
+    def _detect_screen_mode(self, data: bytes) -> Optional[str]:
+        """Detect if data contains TUI mode switch sequences.
+
+        Detects both:
+        1. Alternate screen buffer (vim, nano, less)
+        2. Full-screen clear (top, htop)
+
+        Returns:
+            'enter' if entering TUI mode, 'exit' if exiting, None otherwise
+        """
+        # Check for alternate screen buffer (highest priority)
+        for seq in ALTERNATE_SCREEN_ENTER:
+            if seq in data:
+                return 'enter'
+        for seq in ALTERNATE_SCREEN_EXIT:
+            if seq in data:
+                return 'exit'
+
+        # Check for TUI-style apps that don't use alternate screen
+        # Only trigger if we see clear screen AND hide cursor together
+        has_clear = b'\x1b[2J' in data or b'\x1b[H\x1b[J' in data
+        has_hide_cursor = b'\x1b[?25l' in data
+
+        if has_clear and has_hide_cursor and not self._in_tui_mode:
+            return 'enter'
+
+        # Check for cursor show (might indicate TUI exit)
+        if self._in_tui_mode and b'\x1b[?25h' in data:
+            # Only exit if we also see some indication of normal mode
+            # This prevents false exits from apps that briefly show cursor
+            has_show_cursor = b'\x1b[?25h' in data
+            if has_show_cursor and not has_hide_cursor:
+                return 'exit'
+
+        return None
+
+    async def run_command_and_get_rc(
+        self,
+        command: str,
+        callback: Callable[[str], None],
+        mode_callback: Optional[Callable[[str, bytes], None]] = None,
+        raw_callback: Optional[Callable[[bytes], None]] = None
+    ) -> int:
         """
         Runs command in a PTY, calls callback with output, returns exit code.
-        Returns -1 if cancelled.
+
+        Args:
+            command: The shell command to run
+            callback: Called with decoded line output (for normal display)
+            mode_callback: Called when TUI mode changes ('enter'/'exit', raw_data)
+            raw_callback: Called with raw bytes when in TUI mode (for pyte)
+
+        Returns:
+            Exit code, or -1 if cancelled.
         """
         shell = os.environ.get("SHELL", "/bin/bash")
         self._cancelled = False
+        self._in_tui_mode = False
+        self._detection_buffer = b""
 
         # Build environment with color support
         env = os.environ.copy()
@@ -83,32 +176,80 @@ class ExecutionEngine:
                     break
 
                 try:
-                    # Use asyncio to read without blocking
-                    data = await loop.run_in_executor(
-                        None, self._read_master, master_fd
+                    # Run select in executor to avoid blocking the event loop
+                    readable = await loop.run_in_executor(
+                        None, lambda: select.select([master_fd], [], [], 0.05)[0]
                     )
 
-                    if data is None:
-                        # Check if process exited
-                        result = os.waitpid(pid, os.WNOHANG)
-                        if result[0] != 0:
+                    if not readable:
+                        # No data available, check if process exited
+                        try:
+                            result = os.waitpid(pid, os.WNOHANG)
+                            if result[0] != 0:
+                                break
+                        except ChildProcessError:
+                            break
+                        continue
+
+                    # Read available data
+                    try:
+                        data = os.read(master_fd, 4096)
+                    except BlockingIOError:
+                        await asyncio.sleep(0.01)
+                        continue
+                    except OSError as e:
+                        if e.errno == 5:  # EIO - PTY closed
                             break
                         await asyncio.sleep(0.01)
                         continue
 
-                    if data:
-                        buffer += data
-                        # Process complete lines
-                        while b'\n' in buffer:
-                            line, buffer = buffer.split(b'\n', 1)
-                            # Strip carriage returns from line endings
-                            decoded = line.rstrip(b'\r').decode('utf-8', errors='replace') + '\n'
-                            callback(decoded)
-                        # Also output partial lines (for progress indicators etc)
-                        if buffer and b'\r' in buffer:
-                            decoded = buffer.decode('utf-8', errors='replace')
-                            callback(decoded)
-                            buffer = b""
+                    if not data:
+                        # EOF
+                        break
+
+                    # Check for TUI mode changes using rolling buffer
+                    # Combine buffer with new data
+                    check_data = self._detection_buffer + data
+                    mode_change = self._detect_screen_mode(check_data)
+
+                    # Keep last 50 bytes for next check (enough for ANSI sequences)
+                    if len(check_data) > 50:
+                        self._detection_buffer = check_data[-50:]
+                    else:
+                        self._detection_buffer = check_data
+
+                    if mode_change == 'enter' and not self._in_tui_mode:
+                        self._in_tui_mode = True
+                        if mode_callback:
+                            mode_callback('enter', data)
+                        if raw_callback:
+                            raw_callback(data)
+                        buffer = b""
+                        continue
+                    elif mode_change == 'exit' and self._in_tui_mode:
+                        self._in_tui_mode = False
+                        if mode_callback:
+                            mode_callback('exit', data)
+                        buffer = b""
+                        continue
+
+                    # In TUI mode, send raw bytes to raw_callback
+                    if self._in_tui_mode:
+                        if raw_callback:
+                            raw_callback(data)
+                        continue
+
+                    # Normal line-by-line processing
+                    buffer += data
+                    while b'\n' in buffer:
+                        line, buffer = buffer.split(b'\n', 1)
+                        decoded = line.rstrip(b'\r').decode('utf-8', errors='replace') + '\n'
+                        callback(decoded)
+                    # Also output partial lines (for progress indicators etc)
+                    if buffer and b'\r' in buffer:
+                        decoded = buffer.decode('utf-8', errors='replace')
+                        callback(decoded)
+                        buffer = b""
 
                 except (IOError, OSError) as e:
                     if e.errno == 5:  # EIO - PTY closed
@@ -123,6 +264,14 @@ class ExecutionEngine:
             if self._cancelled:
                 try:
                     os.kill(pid, signal.SIGTERM)
+                    # Give it a moment to terminate gracefully
+                    await asyncio.sleep(0.1)
+                    # Force kill if still running
+                    try:
+                        os.kill(pid, 0)  # Check if still alive
+                        os.kill(pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
                 except ProcessLookupError:
                     pass
                 callback("\n[Cancelled]\n")
@@ -147,23 +296,13 @@ class ExecutionEngine:
             return 127
         finally:
             self._pid = None
+            self._in_tui_mode = False
             if self._master_fd is not None:
                 try:
                     os.close(self._master_fd)
                 except Exception:
                     pass
                 self._master_fd = None
-
-    def _read_master(self, fd: int) -> Optional[bytes]:
-        """Read from master fd, returns None if would block."""
-        try:
-            return os.read(fd, 4096)
-        except BlockingIOError:
-            return None
-        except OSError as e:
-            if e.errno == 5:  # EIO
-                raise
-            return None
 
     def cancel(self):
         """Cancel the currently running process."""

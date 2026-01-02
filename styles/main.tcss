@@ -854,6 +854,7 @@ BlockBody #body-content {
 /* --- Block Parts: Footer --- */
 
 BlockFooter {
+    layout: horizontal;
     height: auto;
     min-height: 0;
     padding: 0 2;
@@ -874,6 +875,18 @@ BlockFooter .running-spinner {
     color: $warning;
     text-style: italic;
 }
+
+BlockFooter .stop-action {
+    color: $error;
+    text-style: bold;
+    margin-left: 2;
+}
+
+BlockFooter .stop-action:hover {
+    color: $error;
+    text-style: bold underline;
+}
+
 /* ==========================================================================
    Modal Screens
    ========================================================================== */

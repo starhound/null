@@ -13,7 +13,7 @@ from widgets import (
     CommandSuggester, StatusBar, HistorySearch, BlockSearch,
     CommandPalette
 )
-from executor import ExecutionEngine
+# from executor import ExecutionEngine  # Removed global import
 from mcp import MCPManager
 from handlers import SlashCommandHandler, ExecutionHandler, InputHandler
 
@@ -21,6 +21,7 @@ from ai.factory import AIFactory
 from ai.manager import AIManager
 from screens import HelpScreen, ModelListScreen
 from themes import get_all_themes
+from managers import ProcessManager
 
 
 class NullApp(App):
@@ -67,7 +68,8 @@ class NullApp(App):
         from storage import StorageManager
         self.storage = StorageManager()
         
-        self.executor = ExecutionEngine()
+        # self.executor removed - executor is now per-process
+        self.process_manager = ProcessManager()
 
         # CLI session tracking
         self.current_cli_block = None
@@ -190,9 +192,18 @@ class NullApp(App):
         """Cancel any running operation."""
         cancelled = False
 
-        if self.executor.is_running:
-            self.executor.cancel()
+        # Stop all running CLI processes
+        stopped_count = self.process_manager.stop_all()
+        if stopped_count > 0:
             cancelled = True
+            
+        # Reset CLI session
+        if self.current_cli_widget:
+            self.current_cli_widget.set_loading(False)
+        if self.current_cli_block:
+            self.current_cli_block.is_running = False
+        self.current_cli_block = None
+        self.current_cli_widget = None
 
         if self._active_worker and not self._active_worker.is_finished:
             self._ai_cancelled = True
@@ -209,10 +220,9 @@ class NullApp(App):
         else:
             self.exit()
 
-    @property
     def is_busy(self) -> bool:
         """Check if any operation is currently running."""
-        return self.executor.is_running or (
+        return self.process_manager.get_count() > 0 or (
             self._active_worker and not self._active_worker.is_finished
         )
 
@@ -582,6 +592,42 @@ class NullApp(App):
                 self.notify(f"Code saved to {filepath}")
 
         self.push_screen(SaveFileDialog(suggested_name, code), on_saved)
+
+    async def on_stop_button_pressed(self, message):
+        """Handle stop button press from BlockFooter."""
+        await self._stop_process(message.block_id)
+
+    async def _stop_process(self, block_id: str):
+        """Stop a running process by block ID."""
+        stopped = False
+
+        # Try to stop via process manager (executor cancellation happens inside stop if mapped)
+        if self.process_manager.stop(block_id):
+            stopped = True
+
+        if stopped:
+            self.notify("Process stopped", severity="warning")
+
+            # Reset CLI session so new commands create new blocks
+            if self.current_cli_block and self.current_cli_block.id == block_id:
+                # Update the widget state
+                if self.current_cli_widget:
+                    self.current_cli_widget.set_loading(False)
+                    self.current_cli_block.is_running = False
+                self.current_cli_block = None
+                self.current_cli_widget = None
+        else:
+            self.notify("No process to stop", severity="warning")
+
+    async def on_terminal_block_input_requested(self, message):
+        """Handle keyboard input from TUI terminal blocks."""
+        from widgets.blocks import TerminalBlock
+
+        block_id = message.block_id
+        data = message.data
+
+        # Send input to the process via process manager
+        self.process_manager.send_input(block_id, data)
 
     # -------------------------------------------------------------------------
     # Utilities

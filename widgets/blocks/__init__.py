@@ -7,10 +7,11 @@ from .command import CommandBlock
 from .ai_response import AIResponseBlock
 from .system import SystemBlock
 from .tool_call import ToolCallBlock
-from .parts import BlockHeader, BlockMeta, BlockBody, BlockFooter
+from .parts import BlockHeader, BlockMeta, BlockBody, BlockFooter, StopButton
 from .thinking import ThinkingWidget
 from .execution import ExecutionWidget
 from .code_block import CodeBlockWidget, extract_code_blocks, execute_code, get_file_extension
+from .terminal import TerminalBlock
 
 
 def create_block(block: BlockState) -> BaseBlockWidget:
@@ -47,6 +48,7 @@ __all__ = [
     'AIResponseBlock',
     'SystemBlock',
     'ToolCallBlock',
+    'TerminalBlock',
     'BlockHeader',
     'BlockMeta',
     'BlockBody',
