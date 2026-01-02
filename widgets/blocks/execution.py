@@ -45,7 +45,7 @@ class ExecutionWidget(Static):
         width: 100%;
         padding: 0 1;
         margin-bottom: 1;
-        background: $surface-darken-1;
+        background: $panel;
     }
 
     .exec-title {
@@ -77,7 +77,8 @@ class ExecutionWidget(Static):
         max-height: 15;
         margin: 0 1;
         padding: 1;
-        background: $surface-darken-2;
+        background: $surface;
+        color: $text;
         border-left: wide $success 50%;
         scrollbar-size: 1 1;
     }

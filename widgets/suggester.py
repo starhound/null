@@ -1,5 +1,6 @@
 from textual.app import ComposeResult
 from textual.widgets import Static, Label, ListView, ListItem
+from textual.events import Click
 
 
 class CommandItem(ListItem):
@@ -54,11 +55,44 @@ class CommandSuggester(Static):
 
     can_focus = False
 
+    def on_click(self, event: Click) -> None:
+        """Handle clicks on suggester items."""
+        # Find if we clicked on a CommandItem
+        for widget in self.query(CommandItem):
+            if widget.region.contains(event.x, event.y):
+                # Select this item
+                lv = self.query_one(ListView)
+                try:
+                    idx = list(lv.children).index(widget)
+                    lv.index = idx
+                    # Trigger selection in input
+                    self._apply_selection()
+                except (ValueError, IndexError):
+                    pass
+                event.stop()
+                return
+
+    def _apply_selection(self):
+        """Apply the current selection to the input."""
+        try:
+            input_ctrl = self.app.query_one("#input")
+            complete = self.get_selected()
+            if complete:
+                parts = input_ctrl.text.split(" ")
+                if len(parts) == 1:
+                    input_ctrl.text = complete + " "
+                else:
+                    input_ctrl.text = parts[0] + " " + complete + " "
+                self.display = False
+                input_ctrl.move_cursor((len(input_ctrl.text), 0))
+        except Exception:
+            pass
+
     commands_data = {
         "/help": {"desc": "Show help screen", "args": []},
         "/provider": {"desc": "Select AI provider", "args": ["ollama", "openai", "lm_studio", "azure", "bedrock", "xai"]},
         "/model": {"desc": "Select AI model", "args": []},
-        "/theme": {"desc": "Change UI theme", "args": ["monokai", "dracula", "nord", "solarized-light", "solarized-dark"]},
+        "/theme": {"desc": "Change UI theme", "args": ["null-dark", "null-warm", "null-mono", "null-light", "dracula", "nord", "monokai"]},
         "/ai": {"desc": "Toggle AI Mode", "args": []},
         "/chat": {"desc": "Toggle AI Mode", "args": []},
         "/prompts": {"desc": "Select System Persona", "args": ["default", "pirate", "concise", "agent"]},

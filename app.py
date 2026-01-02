@@ -18,7 +18,7 @@ from handlers import SlashCommandHandler, ExecutionHandler, InputHandler
 
 from ai.factory import AIFactory
 from screens import HelpScreen, ModelListScreen
-from themes import THEMES, NULL_DARK
+from themes import get_all_themes
 
 
 class NullApp(App):
@@ -37,8 +37,8 @@ class NullApp(App):
         height: auto;
         min-height: 4;
         padding: 0 1;
-        background: $surface;
-        border-top: solid $surface-lighten-2;
+        background: $panel;
+        border-top: solid $surface-lighten-1;
     }
 
     #prompt-line {
@@ -75,15 +75,15 @@ class NullApp(App):
     def __init__(self):
         super().__init__()
 
-        # Register custom themes
-        for theme in THEMES.values():
+        # Register custom themes (built-in + user themes from ~/.null/themes/)
+        for theme in get_all_themes().values():
             self.register_theme(theme)
 
         self.config = Config.load_all()
 
         # Apply saved theme or default to null-dark
         saved_theme = self.config.get("theme", "null-dark")
-        if saved_theme in THEMES or saved_theme in self.available_themes:
+        if saved_theme in self.available_themes:
             self.theme = saved_theme
         else:
             self.theme = "null-dark"
@@ -298,18 +298,11 @@ class NullApp(App):
 
     def action_select_theme(self):
         """Change the application theme."""
-        # Custom themes first, then built-in
-        themes = [
-            "null-dark",
-            "null-warm",
-            "null-mono",
-            "null-light",
-            "dracula",
-            "monokai",
-            "nord",
-            "textual-dark",
-            "textual-light",
-        ]
+        # Get all available themes, with custom null-* themes first
+        all_themes = list(self.available_themes)
+        null_themes = sorted([t for t in all_themes if t.startswith("null-")])
+        other_themes = sorted([t for t in all_themes if not t.startswith("null-")])
+        themes = null_themes + other_themes
 
         def on_theme_select(selected_theme):
             if selected_theme:
@@ -344,6 +337,48 @@ class NullApp(App):
     # -------------------------------------------------------------------------
     # Event Handlers
     # -------------------------------------------------------------------------
+
+    def on_click(self, event) -> None:
+        """Handle clicks - dismiss popups and focus input on background clicks."""
+        # Dismiss command suggester
+        try:
+            suggester = self.query_one("#suggester", CommandSuggester)
+            if suggester.display:
+                if not suggester.region.contains(event.x, event.y):
+                    suggester.display = False
+        except Exception:
+            pass
+
+        # Dismiss history search
+        try:
+            history_search = self.query_one("#history-search", HistorySearch)
+            if history_search.has_class("visible"):
+                if not history_search.region.contains(event.x, event.y):
+                    history_search.hide()
+                return  # Don't focus input if we just closed search
+        except Exception:
+            pass
+
+        # Focus input when clicking on empty areas (history viewport background)
+        try:
+            history_vp = self.query_one("#history", HistoryViewport)
+            input_ctrl = self.query_one("#input", InputController)
+
+            # Check if click is in history viewport area
+            if history_vp.region.contains(event.x, event.y):
+                # Check if we clicked on actual content or empty space
+                # by seeing if any block contains the click point
+                clicked_on_block = False
+                for block in history_vp.query(BaseBlockWidget):
+                    if block.region.contains(event.x, event.y):
+                        clicked_on_block = True
+                        break
+
+                # If clicked on empty space, focus input
+                if not clicked_on_block:
+                    input_ctrl.focus()
+        except Exception:
+            pass
 
     async def on_input_controller_submitted(self, message: InputController.Submitted):
         """Handle input submission."""

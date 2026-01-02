@@ -13,7 +13,8 @@ class CommandBlock(BaseBlockWidget):
         layout: vertical;
         height: auto;
         min-height: 0;
-        background: $surface-darken-2;
+        background: $surface;
+        color: $text;
         margin-bottom: 1;
         padding: 0;
         border-left: thick $success;

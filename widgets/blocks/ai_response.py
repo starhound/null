@@ -18,6 +18,7 @@ class AIResponseBlock(BaseBlockWidget):
         height: auto;
         min-height: 0;
         background: $surface;
+        color: $text;
         margin-bottom: 1;
         padding: 0;
         border-left: thick $primary;

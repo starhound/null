@@ -19,6 +19,14 @@ class InputController(TextArea):
         max-height: 5;
         border: solid $accent;
         padding: 0 1;
+        background: $panel;
+        color: $text;
+        & > .text-area--cursor-line {
+            background: transparent;
+        }
+        & > .text-area--selection {
+            background: $primary 30%;
+        }
     }
 
     InputController:focus {
@@ -61,6 +69,8 @@ class InputController(TextArea):
         self.mode: str = "CLI"  # "CLI" or "AI"
         self.show_line_numbers = False
         self.tab_behavior = "indent"
+        # Use a dark syntax theme that matches our UI
+        self.theme = "vscode_dark"
 
     @property
     def value(self) -> str:
@@ -85,7 +95,26 @@ class InputController(TextArea):
         return self.mode == "AI"
 
     def action_submit(self):
-        """Handle Enter key - submit input."""
+        """Handle Enter key - submit input or select from suggester."""
+        # Check if suggester is visible and has selection
+        try:
+            suggester = self.app.query_one("CommandSuggester")
+            if suggester.display and self.text.startswith("/"):
+                complete = suggester.get_selected()
+                if complete:
+                    parts = self.text.split(" ")
+                    if len(parts) == 1:
+                        # Complete command and add space for args
+                        self.text = complete + " "
+                    else:
+                        # Complete argument
+                        self.text = parts[0] + " " + complete + " "
+                    suggester.display = False
+                    self.move_cursor((len(self.text), 0))
+                    return
+        except Exception:
+            pass
+
         text = self.text.strip()
         if text:
             self.post_message(self.Submitted(text))

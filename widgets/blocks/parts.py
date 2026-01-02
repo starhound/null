@@ -119,7 +119,7 @@ class BlockMeta(Static):
         height: 1;
         padding: 0 2;
         margin-bottom: 1;
-        background: $surface-darken-1;
+        background: $panel;
         color: $text-muted;
     }
 

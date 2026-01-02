@@ -25,7 +25,7 @@ class ThinkingWidget(Static):
         width: 100%;
         padding: 0 1;
         margin-bottom: 1;
-        background: $surface-darken-1;
+        background: $panel;
     }
 
     .spinner {
@@ -62,7 +62,8 @@ class ThinkingWidget(Static):
         margin: 0 1 1 1;
         padding: 1;
         border-left: wide $primary 50%;
-        background: $surface-darken-2;
+        background: $surface;
+        color: $text;
         scrollbar-size: 1 1;
     }
 

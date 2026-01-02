@@ -28,10 +28,10 @@ class BaseBlockWidget(Static):
         layout: vertical;
         height: auto;
         min-height: 0;
-        background: $surface-darken-1;
+        background: $surface;
         margin-bottom: 1;
         padding: 0;
-        border-left: thick $surface-lighten-2;
+        border-left: thick $panel;
     }
     """
 
