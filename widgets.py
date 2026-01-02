@@ -15,10 +15,50 @@ class InputController(Input):
     State management (history cycling) will be handled by the main App or a controller class
     wrapping this, for simplicity we just emit events on submit.
     """
-    BINDINGS = [
-        ("up", "history_up", "Previous Command"),
-        ("down", "history_down", "Next Command"),
-    ]
+    # Removed BINDINGS for up/down to handle manually in on_key
+    
+    async def on_key(self, event):
+        # Handle navigation keys manually to support both Suggester and History
+        if event.key == "up":
+            if self.value.startswith("/"):
+                # Delegate to Suggester logic
+                suggester = self.app.query_one("CommandSuggester")
+                if suggester.display:
+                    suggester.select_prev()
+                    event.stop()
+                    return
+            # Fallback to History
+            self.action_history_up()
+            event.stop()
+            
+        elif event.key == "down":
+            if self.value.startswith("/"):
+                suggester = self.app.query_one("CommandSuggester")
+                if suggester.display:
+                    suggester.select_next()
+                    event.stop()
+                    return
+            self.action_history_down()
+            event.stop()
+
+        elif event.key == "tab":
+            if self.value.startswith("/"):
+                suggester = self.app.query_one("CommandSuggester")
+                if suggester.display:
+                    complete = suggester.get_selected()
+                    if complete:
+                        self.value = complete + " "
+                        self.cursor_position = len(self.value)
+                        suggester.display = False
+                    event.stop()
+                    
+        elif event.key == "escape":
+             # Close suggester
+             suggester = self.app.query_one("CommandSuggester")
+             if suggester.display:
+                 suggester.display = False
+                 event.stop()
+
 
     class Toggled(Message):
         """Sent when input mode is toggled."""
@@ -36,6 +76,125 @@ class InputController(Input):
     @property
     def is_ai_mode(self) -> bool:
         return self.mode == "AI"
+
+    def add_to_history(self, command: str):
+        if command and (not self.history or self.history[-1] != command):
+            self.history.append(command)
+        self.history_index = -1
+
+    def action_history_up(self):
+        if not self.history:
+            return
+            
+        if self.history_index == -1:
+            self.current_input = self.value
+            self.history_index = len(self.history) - 1
+        elif self.history_index > 0:
+            self.history_index -= 1
+        
+        self.value = self.history[self.history_index]
+        self.cursor_position = len(self.value)
+
+    def action_history_down(self):
+        if self.history_index == -1:
+            return
+
+        if self.history_index < len(self.history) - 1:
+            self.history_index += 1
+            self.value = self.history[self.history_index]
+            self.cursor_position = len(self.value)
+        else:
+            self.history_index = -1
+            self.value = self.current_input
+            self.cursor_position = len(self.value)
+
+    def toggle_mode(self):
+        if self.mode == "CLI":
+            self.mode = "AI"
+            self.add_class("ai-mode")
+            self.placeholder = "Ask AI..."
+        else:
+            self.mode = "CLI"
+            self.remove_class("ai-mode")
+            self.placeholder = "Type a command..."
+        self.post_message(self.Toggled(self.mode))
+
+from textual.widgets import ListView, ListItem
+class CommandSuggester(Static):
+    """Popup for command suggestions."""
+    DEFAULT_CSS = """
+    CommandSuggester {
+        layer: overlay;
+        dock: bottom;
+        margin-bottom: 4; /* Input(3) + Footer(1) space */
+        width: 100%;
+        height: auto;
+        max-height: 10;
+        background: $surface;
+        border: solid $accent;
+        display: none;
+    }
+    ListView {
+        height: auto;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    """
+    
+    can_focus = False 
+
+    commands = [
+        "/help",
+        "/provider", 
+        "/model", 
+        "/theme", 
+        "/ai",
+        "/chat",
+        "/clear",
+        "/quit"
+    ]
+
+    def compose(self) -> ComposeResult:
+        # yield ListView(id="suggestions")
+        # We need to set can_focus on the ListView too
+        lv = ListView(id="suggestions")
+        lv.can_focus = False
+        yield lv
+
+    def update_filter(self, text: str):
+        if not text.startswith("/"):
+            self.display = False
+            return
+            
+        filtered = [cmd for cmd in self.commands if cmd.startswith(text)]
+        if not filtered:
+            self.display = False
+            return
+            
+        self.display = True
+        lv = self.query_one(ListView)
+        lv.clear()
+        for cmd in filtered:
+            lv.append(ListItem(Label(cmd)))
+        
+        # Select first by default
+        if len(lv.children) > 0:
+            lv.index = 0
+
+    def select_next(self):
+        self.query_one(ListView).action_cursor_down()
+        
+    def select_prev(self):
+        self.query_one(ListView).action_cursor_up()
+        
+    def get_selected(self) -> str:
+        lv = self.query_one(ListView)
+        if lv.index is not None and 0 <= lv.index < len(lv.children):
+            # Hacky way to get text from ListItem > Label
+            # item.children[0] is Label
+            return str(lv.children[lv.index].children[0].renderable)
+        return ""
 
     def toggle_mode(self):
         if self.mode == "CLI":

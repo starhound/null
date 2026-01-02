@@ -1,11 +1,11 @@
 from textual.app import App, ComposeResult
 from textual.containers import Container
-from textual.widgets import Footer
+from textual.widgets import Footer, Input
 import asyncio
 
 from config import Config
 from models import BlockState, BlockType
-from widgets import InputController, HistoryViewport, BlockWidget
+from widgets import InputController, HistoryViewport, BlockWidget, CommandSuggester
 from executor import ExecutionEngine
 
 from ai.factory import AIFactory
@@ -165,6 +165,10 @@ class NullApp(App):
             self.ai_provider = None
 
     def compose(self) -> ComposeResult:
+        # Suggester layer at Screen level to avoid clipping (overlay)
+        from widgets import CommandSuggester
+        yield CommandSuggester(id="suggester")
+        
         yield HistoryViewport(id="history")
         with Container(id="input-container"):
             input_widget = InputController(placeholder="Type a command...", id="input")
@@ -174,7 +178,17 @@ class NullApp(App):
             yield input_widget
         yield Footer()
 
+    async def on_input_changed(self, message: Input.Changed):
+        # We check filter here or let InputController drive?
+        # Let's keep filter update here as it's clean, but key handling moves.
+        suggester = self.query_one("#suggester", CommandSuggester)
+        suggester.update_filter(message.value)
+
+
     async def on_input_submitted(self, message: InputController.Submitted):
+        # Hide suggester
+        self.query_one("#suggester", CommandSuggester).display = False
+        
         if not message.value.strip():
             return
             
