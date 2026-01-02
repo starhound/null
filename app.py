@@ -18,6 +18,7 @@ from mcp import MCPManager
 from handlers import SlashCommandHandler, ExecutionHandler, InputHandler
 
 from ai.factory import AIFactory
+from ai.manager import AIManager
 from screens import HelpScreen, ModelListScreen
 from themes import get_all_themes
 
@@ -25,7 +26,7 @@ from themes import get_all_themes
 class NullApp(App):
     """Main Null terminal application."""
 
-    CSS_PATH = "styles/app.tcss"
+    CSS_PATH = "styles/main.tcss"
 
     BINDINGS = [
         ("escape", "cancel_operation", "Cancel"),
@@ -71,11 +72,11 @@ class NullApp(App):
         self._ai_cancelled = False
         self._active_worker = None
 
-        # AI Provider
-        try:
-            self.ai_provider = AIFactory.get_provider(self.config["ai"])
-        except Exception:
-            self.ai_provider = None
+        # AI Manager
+        self.ai_manager = AIManager()
+        
+        # Legacy/Convenience pointer to active provider for existing checks
+        self.ai_provider = self.ai_manager.get_active_provider()
 
         # MCP Manager
         self.mcp_manager = MCPManager()
@@ -253,8 +254,15 @@ class NullApp(App):
                     }
 
                     try:
-                        self.ai_provider = AIFactory.get_provider(provider_config)
+                        # Refresh config loading
                         self.config = Config.load_all()
+                        
+                        # Re-initialize the specific provider through the manager
+                        # This ensures the manager has the latest instance
+                        self.ai_manager.get_provider(provider_name)
+                        
+                        # Update raw pointer for legacy support
+                        self.ai_provider = self.ai_manager.get_provider(provider_name)
                     except Exception as e:
                         self.notify(f"Error initializing provider: {e}", severity="error")
 
@@ -264,27 +272,35 @@ class NullApp(App):
         self.push_screen(SelectionListScreen("Select Provider", providers), on_provider_selected)
 
     def action_select_model(self):
-        """Select an AI model."""
-        if not self.ai_provider:
-            self.notify("AI Provider not initialized. Selecting provider...", severity="warning")
-            self.action_select_provider()
-            return
-
-        # Get current provider to save model under correct key
-        current_provider = Config.get("ai.provider") or "ollama"
-
-        def on_model_select(selected_model):
-            if selected_model:
-                # Save model under provider-specific key (e.g., ai.nvidia.model)
-                Config.set(f"ai.{current_provider}.model", str(selected_model))
-                self.notify(f"Model set to {selected_model}")
+        """Select an AI model from ALL providers."""
+        
+        def on_model_select(selection):
+            if selection:
+                provider_name, model_name = selection
+                
+                # If the selected model belongs to a DIFFERENT provider than active,
+                # we should switch the active provider to match!
+                current_provider_name = Config.get("ai.provider")
+                
+                if provider_name != current_provider_name:
+                     Config.set("ai.provider", provider_name)
+                     self.notify(f"Switched provider to {provider_name}")
+                
+                # Update the model for that provider
+                Config.set(f"ai.{provider_name}.model", str(model_name))
+                self.notify(f"Model set to {model_name}")
+                
+                # Refresh everything
+                self.ai_provider = self.ai_manager.get_provider(provider_name)
+                # Ensure the provider instance knows its model (some store it internally)
                 if self.ai_provider:
-                    self.ai_provider.model = str(selected_model)
+                    self.ai_provider.model = str(model_name)
+                    
                 self._update_status_bar()
 
-        # Show screen immediately with async fetch - no freezing!
+        # Show screen immediately with async fetch
         self.push_screen(
-            ModelListScreen(fetch_func=self.ai_provider.list_models),
+            ModelListScreen(fetch_func=self.ai_manager.list_all_models),
             on_model_select
         )
 
@@ -606,13 +622,20 @@ class NullApp(App):
         try:
             status_bar = self.query_one("#status-bar", StatusBar)
 
-            if not self.ai_provider:
-                status_bar.provider_status = "disconnected"
-                return
+            # Update provider status
+            if self.ai_provider:
+                status_bar.set_provider(self.ai_provider.name, "connected")
+            else:
+                status_bar.set_provider("No Provider", "disconnected")
 
-            status_bar.provider_status = "checking"
-            connected = await self.ai_provider.validate_connection()
-            status_bar.provider_status = "connected" if connected else "disconnected"
+            # Update MCP status
+            active_mcp = 0
+            if self.mcp_manager:
+                status = self.mcp_manager.get_status()
+                active_mcp = sum(1 for s in status.values() if s.get("connected"))
+            
+            status_bar.set_mcp_status(active_mcp)
+
         except Exception:
             try:
                 self.query_one("#status-bar", StatusBar).provider_status = "disconnected"

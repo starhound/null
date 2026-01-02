@@ -90,6 +90,8 @@ class SlashCommandHandler:
                 ]
             )),
 
+            "tools": (self._mcp.cmd_tools_ui, CommandInfo("tools", "Browse available MCP tools")),
+
             # Config commands
             "config": (self._config.cmd_config, CommandInfo("config", "Open settings")),
             "settings": (self._config.cmd_settings, CommandInfo("settings", "Open settings")),

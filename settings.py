@@ -45,6 +45,9 @@ class AISettings:
     max_tokens: int = 2048
     temperature: float = 0.7
     stream_responses: bool = True
+    autocomplete_enabled: bool = False
+    autocomplete_provider: str = ""
+    autocomplete_model: str = ""
 
 @dataclass
 class Settings:

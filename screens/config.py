@@ -254,6 +254,32 @@ class ConfigScreen(ModalScreen):
             Switch(value=s.stream_responses, id="stream_responses")
         )
 
+        yield Static("Autocomplete Settings", classes="settings-header")
+
+        yield from self._setting_row(
+            "ai.autocomplete_enabled",
+            "Enable Autocomplete",
+            "AI-powered command suggestions",
+            Switch(value=s.autocomplete_enabled, id="autocomplete_enabled")
+        )
+
+        # Autocomplete Provider override (optional)
+        # Re-use providers list
+        ac_providers = [("Default (Same as Chat)", "")] + providers
+        yield from self._setting_row(
+            "ai.autocomplete_provider",
+            "Autocomplete Provider",
+            "Provider for suggestions (empty = default)",
+            Select(ac_providers, value=s.autocomplete_provider or "", id="autocomplete_provider")
+        )
+
+        yield from self._setting_row(
+            "ai.autocomplete_model",
+            "Autocomplete Model",
+            "Model override (empty = default)",
+            Input(value=s.autocomplete_model, id="autocomplete_model")
+        )
+
     def _collect_values(self):
         """Collect all control values into settings structure."""
         from settings import Settings, AppearanceSettings, EditorSettings, TerminalSettings, AISettings
@@ -311,6 +337,9 @@ class ConfigScreen(ModalScreen):
             max_tokens=get_val(self.controls.get("ai.max_tokens")) or 2048,
             temperature=get_val(self.controls.get("ai.temperature")) or 0.7,
             stream_responses=get_val(self.controls.get("ai.stream_responses")) or False,
+            autocomplete_enabled=get_val(self.controls.get("ai.autocomplete_enabled")) or False,
+            autocomplete_provider=get_val(self.controls.get("ai.autocomplete_provider")) or "",
+            autocomplete_model=get_val(self.controls.get("ai.autocomplete_model")) or "",
         )
 
         return Settings(
@@ -331,9 +360,18 @@ class ConfigScreen(ModalScreen):
     def action_save(self):
         """Save settings and close."""
         from settings import save_settings
+        from config import Config
 
         new_settings = self._collect_values()
         save_settings(new_settings)
+        
+        # SYNC TO SQLITE (Config)
+        # Ensure critical keys used by app logic are synced
+        Config.set("ai.provider", new_settings.ai.provider)
+        Config.set("ai.autocomplete.enabled", str(new_settings.ai.autocomplete_enabled))
+        Config.set("ai.autocomplete.provider", new_settings.ai.autocomplete_provider)
+        Config.set("ai.autocomplete.model", new_settings.ai.autocomplete_model)
+        
         self.dismiss(new_settings)
 
     def action_cancel(self):

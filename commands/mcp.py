@@ -153,3 +153,8 @@ class MCPCommands(CommandMixin):
             await self.app.mcp_manager.initialize()
             tools = self.app.mcp_manager.get_all_tools()
             self.notify(f"Reconnected all servers ({len(tools)} tools)")
+
+    async def cmd_tools_ui(self, args: list[str]):
+        """Open MCP Tools UI."""
+        from screens import ToolsScreen
+        self.app.push_screen(ToolsScreen())

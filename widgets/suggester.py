@@ -1,14 +1,18 @@
 from textual.app import ComposeResult
+from textual.timer import Timer
 from textual.widgets import Static, Label, ListView, ListItem
 from textual.events import Click
-
+from config import Config
+from models import BlockType
 
 class CommandItem(ListItem):
     """List item for command suggestions."""
 
-    def __init__(self, label_text: str, value: str):
+    def __init__(self, label_text: str, value: str, is_ai: bool = False):
         super().__init__(Label(label_text))
         self.value = value
+        if is_ai:
+            self.add_class("ai-suggestion")
 
 
 class CommandSuggester(Static):
@@ -19,6 +23,9 @@ class CommandSuggester(Static):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._selected_index = 0
+        self._debounce_timer: Timer | None = None
+        self._current_task = None
+        self.last_input = ""
 
     def on_click(self, event: Click) -> None:
         """Handle clicks on suggester items."""
@@ -75,6 +82,7 @@ class CommandSuggester(Static):
             "/export": {"desc": "Export conversation", "args": ["md", "json"]},
             "/session": {"desc": "Manage sessions", "args": ["save", "load", "list", "new"]},
             "/mcp": {"desc": "Manage MCP servers", "args": ["list", "tools", "add", "edit", "remove", "enable", "disable", "reconnect"]},
+            "/tools": {"desc": "Browse available MCP tools", "args": []},
             "/status": {"desc": "Show current status", "args": []},
             "/clear": {"desc": "Clear history", "args": []},
             "/compact": {"desc": "Summarize context", "args": []},
@@ -87,10 +95,24 @@ class CommandSuggester(Static):
         yield lv
 
     def update_filter(self, text: str):
-        if not text.startswith("/"):
-            self.display = False
+        self.last_input = text
+        
+        # Handle slash commands (synchronous, instant)
+        if text.startswith("/"):
+            self._update_slash_commands(text)
             return
 
+        # Handle AI Autocomplete
+        # SQLite stores "True"/"False" strings sometimes, handle permissive parsing
+        enabled_val = Config.get("ai.autocomplete.enabled", "False")
+        is_enabled = str(enabled_val).lower() in ("true", "1", "yes", "on")
+        
+        if is_enabled:
+             self._debounce_ai_fetch(text)
+        else:
+             self.display = False
+
+    def _update_slash_commands(self, text: str):
         lv = self.query_one(ListView)
         lv.clear()
 
@@ -125,6 +147,81 @@ class CommandSuggester(Static):
 
         self._update_highlight()
 
+    def _debounce_ai_fetch(self, text: str):
+        """Debounce AI fetch requests."""
+        if not text.strip():
+            self.display = False
+            return
+            
+        if self._debounce_timer:
+            self._debounce_timer.stop()
+            
+        if self._current_task:
+            self._current_task.cancel()
+            
+        # 600ms debounce
+        self._debounce_timer = self.set_timer(0.6, lambda: self.run_worker(self._fetch_ai_suggestion(text)))
+
+    async def _fetch_ai_suggestion(self, text: str):
+        """Fetch suggestion from AI provider."""
+        try:
+            if not self.app.ai_manager:
+                return
+
+            provider = self.app.ai_manager.get_autocomplete_provider()
+            if not provider:
+                return
+
+            # Build minimal context from last few blocks
+            history_blocks = self.app.blocks[-5:]
+            context_str = ""
+            for b in history_blocks:
+                if b.type == BlockType.COMMAND:
+                    context_str += f"$ {b.content_input}\n{b.content_output[:200]}\n"
+                elif b.type == BlockType.AI_RESPONSE:
+                     context_str += f"AI: {b.content_output[:200]}\n"
+
+            prompt = f"""Given the terminal history and current partial input '{text}', suggest the complete single line command the user intends to type.
+            History:
+            {context_str}
+            
+            Current Input: {text}
+            
+            Reply ONLY with the suggested command itself, no reasoning.
+            """
+            
+            # Use generation (we want a single completion)
+            # Some providers might not support streaming well for single line, 
+            # or we just take the first line.
+            suggestion = ""
+            async for chunk in provider.generate(prompt, []):
+                suggestion += chunk
+                
+            suggestion = suggestion.strip().strip('`')
+            if suggestion.startswith("$ "):
+                suggestion = suggestion[2:]
+                
+            # If suggestion is valid and different from input
+            if suggestion and suggestion != text:
+                self._show_ai_suggestion(suggestion)
+                
+        except Exception:
+            pass
+
+    def _show_ai_suggestion(self, suggestion: str):
+        """Display the AI suggestion."""
+        # Only show if the input hasn't changed significantly (simple check)
+        #Ideally we check self.last_input but debounce handles mostly.
+        
+        lv = self.query_one(ListView)
+        lv.clear()
+        
+        lv.append(CommandItem(f"✨ {suggestion}", suggestion, is_ai=True))
+        
+        self.display = True
+        self._selected_index = 0
+        self._update_highlight()
+        
     def select_next(self):
         """Move selection down."""
         items = list(self.query(CommandItem))

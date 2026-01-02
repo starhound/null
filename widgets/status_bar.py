@@ -12,6 +12,7 @@ class StatusBar(Static):
     context_limit = reactive(4000)
     provider_name = reactive("")
     provider_status = reactive("unknown")
+    mcp_count = reactive(0)
     # Token usage tracking
     session_input_tokens = reactive(0)
     session_output_tokens = reactive(0)
@@ -21,6 +22,8 @@ class StatusBar(Static):
         yield Label("", id="mode-indicator", classes="status-section")
         yield Label("|", classes="status-sep")
         yield Label("", id="provider-indicator", classes="status-section")
+        yield Label("|", classes="status-sep")
+        yield Label("", id="mcp-indicator", classes="status-section")
         yield Label("", classes="spacer")
         # Token usage indicator
         yield Label("", id="token-indicator", classes="status-section")
@@ -53,6 +56,9 @@ class StatusBar(Static):
     def watch_provider_name(self, name: str):
         self._update_provider_display()
 
+    def watch_mcp_count(self, count: int):
+        self._update_mcp_display()
+
     def watch_session_input_tokens(self, tokens: int):
         self._update_token_display()
 
@@ -61,6 +67,20 @@ class StatusBar(Static):
 
     def watch_session_cost(self, cost: float):
         self._update_token_display()
+
+    def _update_mcp_display(self):
+        try:
+            indicator = self.query_one("#mcp-indicator", Label)
+            indicator.remove_class("mcp-active", "mcp-inactive")
+            
+            if self.mcp_count > 0:
+                indicator.update(f"MCP: {self.mcp_count}")
+                indicator.add_class("mcp-active")
+            else:
+                indicator.update("MCP: 0")
+                indicator.add_class("mcp-inactive")
+        except Exception:
+            pass
 
     def _update_mode_display(self):
         try:
@@ -187,6 +207,10 @@ class StatusBar(Static):
         """Set provider name and status."""
         self.provider_name = name
         self.provider_status = status
+
+    def set_mcp_status(self, count: int):
+        """Set number of active MCP servers."""
+        self.mcp_count = count
 
     def add_token_usage(self, input_tokens: int, output_tokens: int, cost: float):
         """Add token usage from a completed request."""

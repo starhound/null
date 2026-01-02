@@ -176,8 +176,29 @@ class OpenAICompatibleProvider(LLMProvider):
 
     async def list_models(self) -> List[str]:
         try:
-            models_page = await self.client.models.list()
-            return [m.id for m in models_page.data]
+            models_response = await self.client.models.list()
+
+            # Handle different response formats
+            models = []
+
+            # Standard OpenAI format: response.data is a list of Model objects
+            if hasattr(models_response, 'data'):
+                for m in models_response.data:
+                    if hasattr(m, 'id'):
+                        models.append(m.id)
+                    elif isinstance(m, dict) and 'id' in m:
+                        models.append(m['id'])
+            # Some servers return list directly
+            elif isinstance(models_response, list):
+                for m in models_response:
+                    if hasattr(m, 'id'):
+                        models.append(m.id)
+                    elif isinstance(m, dict) and 'id' in m:
+                        models.append(m['id'])
+                    elif isinstance(m, str):
+                        models.append(m)
+
+            return models
         except Exception:
             return []
 

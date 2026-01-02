@@ -6,6 +6,7 @@ from .provider import ProviderConfigScreen
 from .mcp import MCPServerConfigScreen
 from .config import ConfigScreen
 from .save_dialog import SaveFileDialog
+from .tools import ToolsScreen
 
 __all__ = [
     "HelpScreen",
@@ -15,4 +16,5 @@ __all__ = [
     "MCPServerConfigScreen",
     "ConfigScreen",
     "SaveFileDialog",
+    "ToolsScreen",
 ]
