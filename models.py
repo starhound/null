@@ -20,3 +20,5 @@ class BlockState:
     exit_code: Optional[int] = None
     is_running: bool = True
     metadata: Dict = field(default_factory=dict)
+    content_thinking: str = ""
+    content_exec_output: str = ""

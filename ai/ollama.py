@@ -9,13 +9,24 @@ class OllamaProvider(LLMProvider):
         self.model = model
         self.client = httpx.AsyncClient(timeout=30.0)
 
-    async def generate(self, prompt: str, context: str) -> AsyncGenerator[str, None]:
+    async def generate(self, prompt: str, context: str, system_prompt: Optional[str] = None) -> AsyncGenerator[str, None]:
         url = f"{self.endpoint}/api/generate"
-        payload = {
-            "model": self.model,
-            "prompt": f"{context}\n\nUser: {prompt}\n\nAssistant:",
-            "stream": True
-        }
+        
+        final_prompt = f"{context}\n\nUser: {prompt}\n\nAssistant:"
+        if system_prompt:
+             # Ollama supports 'system' in payload
+             payload = {
+                "model": self.model,
+                "prompt": final_prompt,
+                "system": system_prompt,
+                "stream": True
+             }
+        else:
+             payload = {
+                "model": self.model,
+                "prompt": final_prompt,
+                "stream": True
+             }
         
         try:
             async with self.client.stream("POST", url, json=payload) as response:

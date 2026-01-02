@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, List
+from typing import AsyncGenerator, List, Optional
 import openai
 from .base import LLMProvider
 
@@ -10,12 +10,15 @@ class OpenAICompatibleProvider(LLMProvider):
         )
         self.model = model
 
-    async def generate(self, prompt: str, context: str) -> AsyncGenerator[str, None]:
+    async def generate(self, prompt: str, context: str, system_prompt: Optional[str] = None) -> AsyncGenerator[str, None]:
+        if not system_prompt:
+             system_prompt = "You are a helpful AI assistant integrated into a terminal. You can answer questions or provide commands."
+
         try:
             stream = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a helpful AI assistant integrated into a terminal. You can answer questions about the terminal history or provide commands/explanations as requested."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"{context}\n\nUser: {prompt}"}
                 ],
                 stream=True

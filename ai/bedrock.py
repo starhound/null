@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, List
+from typing import AsyncGenerator, List, Optional
 import boto3
 import json
 import asyncio
@@ -15,16 +15,20 @@ class BedrockProvider(LLMProvider):
         self.bedrock = boto3.client("bedrock", region_name=region_name)
         self.model = model
 
-    async def generate(self, prompt: str, context: str) -> AsyncGenerator[str, None]:
+    async def generate(self, prompt: str, context: str, system_prompt: Optional[str] = None) -> AsyncGenerator[str, None]:
         # Construct payload based on model family (Claude vs generic)
         # MVP: Support Claude (Messages API) and Llama
         
+        if not system_prompt:
+            system_prompt = "You are a helpful AI assistant."
+
         body = {}
         if "claude" in self.model:
             # Anthropic Claude 3 / Messages format
              body = json.dumps({
                 "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 200,
+                "max_tokens": 1024,
+                "system": system_prompt,
                 "messages": [
                     {
                         "role": "user",

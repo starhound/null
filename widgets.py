@@ -1,8 +1,11 @@
 from datetime import datetime
 from textual.app import ComposeResult
-from textual.containers import VerticalScroll, Vertical
-from textual.widgets import Input, Static, Label
+from textual.containers import VerticalScroll, Vertical, Container
+from textual.widgets import Input, Static, Label, Button
 from textual.reactive import reactive
+from textual.message import Message
+from textual import on
+import pyperclip
 from textual.message import Message
 from rich.syntax import Syntax
 from rich.text import Text
@@ -41,16 +44,39 @@ class InputController(Input):
             self.action_history_down()
             event.stop()
 
-        elif event.key == "tab":
+        elif event.key == "tab" or event.key == "enter":
             if self.value.startswith("/"):
                 suggester = self.app.query_one("CommandSuggester")
                 if suggester.display:
                     complete = suggester.get_selected()
                     if complete:
-                        self.value = complete + " "
+                        # Logic to determine if we are completing a command or an arg
+                        parts = self.value.split(" ")
+                        if len(parts) == 1:
+                            # Completing command
+                            self.value = complete + " "
+                            # Is there a submenu? The updated filters will run on change.
+                            # We stop event to prevent submit
+                            event.stop()
+                        else:
+                            # Completing arg
+                            # Replace last part
+                            new_val = " ".join(parts[:-1]) + " " + complete
+                            self.value = new_val
+                            suggester.display = False
+                            # We might want to submit here if user hit enter?
+                            # User said "drill into sub menu", so maybe enter on arg submits?
+                            # If it was Tab, we don't submit. If Enter, we might.
+                            if event.key == "enter":
+                                # Let it bubble to submit?
+                                # But we just autocompleted. Usually you hit enter again.
+                                suggester.display = False
+                                event.stop()
+                            else:
+                                event.stop()
+                        
                         self.cursor_position = len(self.value)
-                        suggester.display = False
-                    event.stop()
+                        return
                     
         elif event.key == "escape":
              # Close suggester
@@ -120,6 +146,11 @@ class InputController(Input):
         self.post_message(self.Toggled(self.mode))
 
 from textual.widgets import ListView, ListItem
+class CommandItem(ListItem):
+    def __init__(self, label_text: str, value: str):
+        super().__init__(Label(label_text))
+        self.value = value
+
 class CommandSuggester(Static):
     """Popup for command suggestions."""
     DEFAULT_CSS = """
@@ -144,16 +175,17 @@ class CommandSuggester(Static):
     
     can_focus = False 
 
-    commands = [
-        "/help",
-        "/provider", 
-        "/model", 
-        "/theme", 
-        "/ai",
-        "/chat",
-        "/clear",
-        "/quit"
-    ]
+    commands_data = {
+        "/help": {"desc": "Show help screen", "args": []},
+        "/provider": {"desc": "Select AI provider", "args": ["ollama", "openai", "lm_studio", "azure", "bedrock", "xai"]},
+        "/model": {"desc": "Select AI model", "args": []}, # Dynamic?
+        "/theme": {"desc": "Change UI theme", "args": ["monokai", "dracula", "nord", "solarized-light", "solarized-dark"]},
+        "/ai": {"desc": "Toggle AI Mode", "args": []},
+        "/chat": {"desc": "Toggle AI Mode", "args": []},
+        "/prompts": {"desc": "Select System Persona", "args": ["default", "pirate", "concise", "agent"]},
+        "/clear": {"desc": "Clear history", "args": []},
+        "/quit": {"desc": "Exit application", "args": []}
+    }
 
     def compose(self) -> ComposeResult:
         # yield ListView(id="suggestions")
@@ -166,17 +198,45 @@ class CommandSuggester(Static):
         if not text.startswith("/"):
             self.display = False
             return
-            
-        filtered = [cmd for cmd in self.commands if cmd.startswith(text)]
-        if not filtered:
+        
+        lv = self.query_one(ListView)
+        lv.clear()
+        
+        # Check for subcommand context
+        # e.g. "/theme " -> show args
+        parts = text.split(" ")
+        base_cmd = parts[0]
+        
+        is_submenu = False
+        candidates = []
+        
+        if len(parts) > 1 and base_cmd in self.commands_data:
+             # We are in args mode
+             is_submenu = True
+             prefix = " ".join(parts[1:])
+             args = self.commands_data[base_cmd]["args"]
+             # Filter args
+             for arg in args:
+                 if arg.startswith(prefix):
+                     candidates.append((arg, ""))
+        else:
+            # We are in command mode
+            # Filter commands
+            for cmd, data in self.commands_data.items():
+                if cmd.startswith(base_cmd):
+                    candidates.append((cmd, data["desc"]))
+
+        if not candidates:
             self.display = False
             return
             
         self.display = True
-        lv = self.query_one(ListView)
-        lv.clear()
-        for cmd in filtered:
-            lv.append(ListItem(Label(cmd)))
+        
+        for text_val, desc in candidates:
+            # Render: Command (bold) -- Description (dim)
+            label_str = f"{text_val:<15} {desc}" if desc else text_val
+            # Store just the text_val as the value to autocomplete
+            lv.append(CommandItem(label_str, text_val))
         
         # Select first by default
         if len(lv.children) > 0:
@@ -191,9 +251,10 @@ class CommandSuggester(Static):
     def get_selected(self) -> str:
         lv = self.query_one(ListView)
         if lv.index is not None and 0 <= lv.index < len(lv.children):
-            # Hacky way to get text from ListItem > Label
-            # item.children[0] is Label
-            return str(lv.children[lv.index].children[0].renderable)
+             # Access value from CommandItem
+             item = lv.children[lv.index]
+             if isinstance(item, CommandItem):
+                 return item.value
         return ""
 
     def toggle_mode(self):
@@ -269,6 +330,12 @@ class BlockHeader(Static):
         color: $success-lighten-2;
         text-style: bold;
     }
+    .metadata-label {
+        color: $text-muted;
+        text-style: italic;
+        margin-right: 1;
+    }
+    
     .timestamp {
         color: $text-muted;
         min-width: 20;
@@ -295,32 +362,149 @@ class BlockHeader(Static):
         yield Label(icon, classes=header_class)
         yield Label(self.block.content_input or "AI Generating...", classes="command-text")
         
+        if self.block.type == BlockType.AI_RESPONSE:
+            # Metadata
+            meta = self.block.metadata
+            if meta:
+                model = meta.get("model", "")
+                ctx = meta.get("context", "")
+                if model:
+                    # Clean model name (e.g. ollama/llama3 -> llama3)
+                    if "/" in model:
+                        model = model.split("/")[-1]
+                    yield Label(f" [{model}]", classes="metadata-label")
+                if ctx and ctx != "0 chars":
+                    yield Label(f" ({ctx})", classes="metadata-label")
+
         # Format timestamp
         ts_str = self.block.timestamp.strftime("%H:%M:%S")
         yield Label(ts_str, classes="timestamp")
 
-class BlockBody(Static):
-    """Body containing the command output."""
+
+
+class ThinkingWidget(Static):
+    """Collapsible widget for AI thinking process."""
     DEFAULT_CSS = """
-    BlockBody {
-        padding: 0 1; 
-        color: $text;
+    ThinkingWidget {
+        height: auto;
+        padding: 0 1;
+    }
+    .thinking-header {
+        color: $text-muted;
+        text-style: italic;
+    }
+    .thinking-content {
+        display: none;
+        color: $text-muted;
+        padding-left: 2;
+        border-left: solid $text-muted;
+    }
+    .thinking-content.visible {
+        display: block;
     }
     """
     
-    content_text = reactive("")
+    thinking_text = reactive("")
 
     def __init__(self, block: BlockState):
         super().__init__()
         self.block = block
-        self.content_text = block.content_output
 
-    def watch_content_text(self, new_text: str):
-        if self.block.type == BlockType.AI_RESPONSE:
-            from rich.markdown import Markdown
-            self.update(Markdown(new_text))
+    def compose(self) -> ComposeResult:
+        yield Button("▶ Thinking...", variant="default", classes="thinking-header")
+        yield Static("", classes="thinking-content", id="thinking-content")
+
+    def watch_thinking_text(self, new_text: str):
+        content = self.query_one("#thinking-content", Static)
+        from rich.markdown import Markdown
+        content.update(Markdown(new_text))
+        
+    @on(Button.Pressed)
+    def toggle_thinking(self):
+        content = self.query_one("#thinking-content")
+        content.toggle_class("visible")
+        btn = self.query_one(Button)
+        if content.has_class("visible"):
+            btn.label = "▼ Thinking..."
         else:
-            self.update(new_text)
+            btn.label = "▶ Thinking..."
+
+
+class ExecutionWidget(Static):
+    """Widget for Command execution output with Copy button."""
+    DEFAULT_CSS = """
+    ExecutionWidget {
+        height: auto;
+        padding: 0 1;
+        margin-top: 1;
+    }
+    .exec-header {
+        layout: horizontal;
+        height: 1;
+        background: $surface-lighten-1;
+    }
+    .exec-title {
+        color: $accent;
+        width: 1fr;
+    }
+    .copy-btn {
+        min-width: 1;
+        width: 8;
+        height: 1;
+        border: none;
+        background: $primary;
+        color: $text;
+    }
+    """
+    
+    exec_output = reactive("")
+
+    def __init__(self, block: BlockState):
+        super().__init__()
+        self.block = block
+
+    def compose(self) -> ComposeResult:
+        # If there is output, show header + content
+        yield Static(id="exec-area")
+
+    def watch_exec_output(self, new_text: str):
+        # We only rebuild if there is content
+        area = self.query_one("#exec-area")
+        area.remove_children()
+        
+        if new_text:
+            # Header with Copy
+            with Container(classes="exec-header"):
+                 yield Label("Command Output", classes="exec-title")
+                 yield Button("Copy", classes="copy-btn", id="copy-btn")
+            
+            # Content
+            # We assume it's text, or markdown code block? 
+            # App handles formatting in previous implementation. 
+            # Let's just render the raw text in a rich Syntax or Markdown block? 
+            # The app was appending ```text ... ```. 
+            # Let's stick to Markdown update for now.
+            from rich.markdown import Markdown
+            area.mount(Static(Markdown(new_text)))
+
+    @on(Button.Pressed, "#copy-btn")
+    def copy_output(self):
+        # Strip markdown fences if simple
+        text = self.block.content_exec_output
+        try:
+            # Simple heuristic to strip markdown code blocks if present
+            if text.startswith("\n```text\n") and text.endswith("\n```\n"):
+                text = text[7:-5]
+            pyperclip.copy(text)
+            self.notify("Copied to clipboard!")
+        except Exception as e:
+            self.notify(f"Clipboard error: {e}", severity="error")
+
+class BlockBody(Static):
+    """Main Body - Renders generic text if not special widgets."""
+    # ... logic to dispatch? 
+    # Actually, BlockWidget should compose ThinkingWidget AND ExecutionWidget.
+    pass
 
 class BlockFooter(Static):
     """Footer showing exit code/status."""
@@ -368,6 +552,16 @@ class BlockWidget(Static):
         yield self.footer_widget
 
     def update_output(self, new_chunk: str):
+        self.body_widget.content_text = new_chunk
+        # Force scroll if needed
+        # self.scroll_visible() 
+
+    def update_metadata(self):
+        header = self.query_one(BlockHeader)
+        header.remove()
+        self.mount(BlockHeader(self.block), before=self.body_widget)
+
+    def set_loading(self, loading: bool):
         self.block.content_output += new_chunk
         self.body_widget.content_text = self.block.content_output
 

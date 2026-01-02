@@ -3,7 +3,7 @@ from typing import AsyncGenerator, List, Optional
 
 class LLMProvider(ABC):
     @abstractmethod
-    async def generate(self, prompt: str, context: str) -> AsyncGenerator[str, None]:
+    async def generate(self, prompt: str, context: str, system_prompt: Optional[str] = None) -> AsyncGenerator[str, None]:
         """Stream response from the LLM."""
         pass
 

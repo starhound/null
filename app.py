@@ -152,6 +152,38 @@ class NullApp(App):
         from screens import SelectionListScreen
         self.push_screen(SelectionListScreen("Select Theme", themes), on_theme_select)
 
+    def action_select_prompt(self):
+        """Select a system prompt (persona)."""
+        # Load latest pointers (in case edited)
+        store = Config._get_storage()
+        # Need to handle retrieving dictionary from simpler storage if valid
+        # Our simple storage handles flattened keys well, but for a dict of prompts it might be tricky
+        # if using key-value. 
+        # Actually our Config.load_all loads everything.
+        # But we added defaults in code, which might not be in DB yet if not saved.
+        # Let's rely on self.config["ai"]["prompts"] merging with defaults.
+        
+        prompts_dict = self.config.get("ai", {}).get("prompts", {})
+        # If empty (first run with new code), use defaults from Config class manually? 
+        # Config.load_all should have merged it if we used standard merge logic, 
+        # but our Config implementation might be simple.
+        # Let's import defaults if missing.
+        if not prompts_dict:
+             prompts_dict = Config.DEFAULT_CONFIG["ai"]["prompts"]
+        
+        prompt_names = list(prompts_dict.keys())
+        
+        def on_prompt_select(selected):
+            if selected:
+                Config.update_key(["ai", "active_prompt"], selected)
+                self.notify(f"System Persona set to: {selected}")
+                # We need to make sure execute_ai uses this.
+                # It will read from self.config (reloaded) or we just update current state logic.
+                self.config["ai"]["active_prompt"] = selected
+
+        from screens import SelectionListScreen
+        self.push_screen(SelectionListScreen("Select Persona", prompt_names), on_prompt_select)
+
     def __init__(self):
         super().__init__()
         self.config = Config.load_all()
@@ -218,8 +250,14 @@ class NullApp(App):
                  self.action_select_provider()
                  return
                  
-             # Create AI Query Block
-             block = BlockState(type=BlockType.AI_QUERY, content_input=cmd_text)
+             # Create Combined AI Block (Input + Placeholder Output)
+             # We want a single block for the whole interaction.
+             # BlockType.AI_RESPONSE is fine, we just set content_input to the query.
+             block = BlockState(
+                 type=BlockType.AI_RESPONSE, 
+                 content_input=cmd_text,
+                 content_output=""
+             )
              self.blocks.append(block)
              input_ctrl.value = ""
              
@@ -228,14 +266,9 @@ class NullApp(App):
              await history_vp.mount(block_widget)
              block_widget.scroll_visible()
              
-             # Create Placeholder Response Block
-             resp_block = BlockState(type=BlockType.AI_RESPONSE, content_input="")
-             self.blocks.append(resp_block)
-             resp_widget = BlockWidget(resp_block)
-             await history_vp.mount(resp_widget)
-             
              # Run AI worker
-             self.run_worker(self.execute_ai(cmd_text, resp_block, resp_widget))
+             # We pass the same block/widget for both purposes
+             self.run_worker(self.execute_ai(cmd_text, block, block_widget))
              
         else:
             # CLI Mode Logic
@@ -308,6 +341,9 @@ class NullApp(App):
                 self.ai_provider = AIFactory.get_provider(self.config["ai"])
             else:
                 self.notify("Usage: /model OR /model <provider> <model_name>", severity="error")
+
+        elif command == "prompts":
+            self.action_select_prompt()
             
         elif command == "clear":
              # Implementation for clear history widget visual only
@@ -325,16 +361,42 @@ class NullApp(App):
         try:
             from context import ContextManager # Lazy import
             
+            # Helper to get system prompt
+            prompts = self.config.get("ai", {}).get("prompts", {})
+            active_key = self.config.get("ai", {}).get("active_prompt", "default")
+            system_prompt = prompts.get(active_key, prompts.get("default", ""))
+
             # Gather context
-            context_str = ContextManager.get_context(self.blocks[:-2]) # Exclude current query and response
+            # We used to slice [:-2] when we added 2 blocks (Query + ResponsePlaceholder).
+            # Now we only add 1 block (Combined).
+            # So we should exclude the *current* block, which is the last one [:-1].
+            context_str = ContextManager.get_context(self.blocks[:-1])
             
-            # DEBUG: Notify context size
-            self.notify(f"Context gathered: {len(context_str)} chars from {len(self.blocks[:-2])} blocks")
+            # Store metadata
+            block_state.metadata = {
+                "model": f"{self.config['ai']['provider']}/{self.config['ai']['model']}",
+                "context": f"{len(context_str)} chars",
+                "persona": active_key
+            }
+            # Update widget header if possible? Widget reads block. 
+            # If we update block metadata, we might need to tell widget to refresh header.
+            # But widget is created with block. 
+            # We can expose a refresh method on widget or just access header.
+            if widget:
+                widget.update_metadata()
             
             full_response = ""
             
             # Streaming generation
-            async for chunk in self.ai_provider.generate(prompt, context_str):
+            # Provider needs to handle system_prompt.
+            # We can prepend it to context OR update provider interface.
+            # Modifying interface is cleaner but requires touching all files.
+            # Prepending to context is easier for now:
+            # effective_context = f" System Instruction: {system_prompt}\n\n{context_str}"
+            # Actually, most providers (Ollama, OpenAI) take system prompts in messages.
+            # Let's pass it as a kwargs or separate arg if generate supports it.
+            # I will update generate signature in base and all providers.
+            async for chunk in self.ai_provider.generate(prompt, context_str, system_prompt=system_prompt):
                 full_response += chunk
                 block_state.content_output = full_response
                 # Update widget with just the chunk as it appends
@@ -343,10 +405,63 @@ class NullApp(App):
             block_state.is_running = False
             widget.set_loading(False) # Stop spinner if any
             
+            # Post-generation: Check for Agentic Command
+            # Parser for Markdown Code Blocks
+            # We look for ```bash ... ``` or ```sh ... ```
+            import re
+            # Matches ```bash\n(content)\n```
+            code_block_match = re.search(r"```(bash|sh)\n(.*?)```", full_response, re.DOTALL)
+            
+            command_to_run = None
+            if code_block_match:
+                command_to_run = code_block_match.group(2).strip()
+            else:
+                 # Fallback to [COMMAND] tag just in case
+                 tag_match = re.search(r"\[COMMAND\](.*?)\[/COMMAND\]", full_response, re.DOTALL)
+                 if tag_match:
+                     command_to_run = tag_match.group(1).strip()
+
+            if command_to_run:
+                self.notify(f"🤖 Agent requested execution: {command_to_run}")
+                # We are already on the main thread (async worker), so call_later is sufficient/correct
+                self.call_later(self.run_agent_command, command_to_run, block_state, widget)
+            
         except Exception as e:
             block_state.content_output = f"AI Error: {str(e)}"
             block_state.is_running = False
             widget.update_output(f"Error: {str(e)}")
+
+    def run_agent_command(self, command: str, ai_block: BlockState, ai_widget: BlockWidget):
+        """Execute a command requested by the Agent, executing INLINE."""
+        
+        # Append status
+        status_msg = f"\n\n> 🤖 **Executing:** `{command}`...\n"
+        ai_block.content_output += status_msg
+        ai_widget.update_output(ai_block.content_output)
+        
+        async def run_inline():
+            output_buffer = []
+            def callback(line):
+                output_buffer.append(line)
+            
+            # Execute
+            rc = await self.executor.run_command_and_get_rc(command, callback)
+            output_text = "".join(output_buffer)
+            
+            # Append Output
+            # Sanitize?
+            result_md = f"\n```text\n{output_text}\n```\n"
+            if rc != 0:
+                result_md += f"\n*Exit Code: {rc}*\n"
+            
+            ai_block.content_output += result_md
+            ai_widget.update_output(ai_block.content_output)
+            
+            # Stop loading
+            ai_widget.set_loading(False)
+            ai_block.is_running = False
+            
+        self.run_worker(run_inline())
 
     async def execute_block(self, block: BlockState, widget: BlockWidget):
         """Helper to run the command and update the widget."""
