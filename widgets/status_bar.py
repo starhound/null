@@ -58,11 +58,16 @@ class StatusBar(Static):
 
             pct = (self.context_chars / self.context_limit * 100) if self.context_limit > 0 else 0
             tokens = self.context_chars // 4
+            limit_tokens = self.context_limit // 4
 
-            if tokens > 0:
-                indicator.update(f"~{tokens:,} tokens")
+            # Format limit nicely (e.g., 32000 -> 32k)
+            if limit_tokens >= 1000:
+                limit_str = f"{limit_tokens // 1000}k"
             else:
-                indicator.update("")
+                limit_str = str(limit_tokens)
+
+            # Always show context usage
+            indicator.update(f"ctx: ~{tokens:,} / {limit_str}")
 
             if pct < 50:
                 indicator.add_class("context-low")
@@ -70,7 +75,8 @@ class StatusBar(Static):
                 indicator.add_class("context-medium")
             else:
                 indicator.add_class("context-high")
-        except Exception:
+        except Exception as e:
+            # Debug: show error
             pass
 
     def _update_provider_display(self):

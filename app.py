@@ -309,8 +309,10 @@ class NullApp(App):
         self.push_screen(SelectionListScreen("Select Persona", display_items), on_prompt_select)
 
     def action_clear_history(self):
-        """Clear history (stub)."""
-        pass
+        """Clear history and context."""
+        async def do_clear():
+            await self.command_handler.cmd_clear([])
+        self.run_worker(do_clear())
 
     # -------------------------------------------------------------------------
     # Event Handlers
@@ -458,7 +460,14 @@ class NullApp(App):
 
             from context import ContextManager
             context_str = ContextManager.get_context(self.blocks)
-            status_bar.set_context(len(context_str))
+
+            # Get context limit from model info
+            context_limit = 4000 * 4  # Default fallback (4k tokens * 4 chars)
+            if self.ai_provider:
+                model_info = self.ai_provider.get_model_info()
+                context_limit = model_info.context_window * 4  # tokens to chars
+
+            status_bar.set_context(len(context_str), context_limit)
 
             provider_name = self.config.get("ai", {}).get("provider", "none")
             status_bar.provider_name = provider_name

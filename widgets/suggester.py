@@ -62,6 +62,7 @@ class CommandSuggester(Static):
         "/mcp": {"desc": "Manage MCP servers", "args": ["list", "tools", "add", "edit", "remove", "enable", "disable", "reconnect"]},
         "/status": {"desc": "Show current status", "args": []},
         "/clear": {"desc": "Clear history", "args": []},
+        "/compact": {"desc": "Summarize context", "args": []},
         "/quit": {"desc": "Exit application", "args": []}
     }
 
