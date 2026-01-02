@@ -736,6 +736,10 @@ class NullApp(App):
         """Check if AI provider is connected."""
         try:
             status_bar = self.query_one("#status-bar", StatusBar)
+            
+            # Refresh provider reference from manager
+            if self.ai_manager:
+                self.ai_provider = self.ai_manager.get_active_provider()
 
             # Update provider status
             if self.ai_provider:

@@ -235,7 +235,7 @@ StatusBar .context-high {
 }
 
 StatusBar .provider-connected {
-    color: $text-muted;
+    color: $success;
 }
 
 StatusBar .provider-disconnected {

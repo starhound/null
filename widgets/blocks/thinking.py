@@ -25,7 +25,7 @@ class ThinkingWidget(Static):
         super().__init__()
         self.block = block
         self._last_rendered_len = 0
-        self._render_threshold = 40
+        self._render_threshold = 8  # Lowered for smoother streaming
         self._spinner_index = 0
         self._spinner_timer: Timer | None = None
         self._detected_reasoning = False

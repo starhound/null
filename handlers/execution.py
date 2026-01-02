@@ -389,63 +389,37 @@ class ExecutionHandler:
         block_state: BlockState,
         widget: BaseBlockWidget
     ) -> List:
-        """Execute tools in agent mode - create visual blocks for each execution."""
+        """Execute tools in agent mode - inline visualization in the main block."""
         from tools import ToolCall, ToolResult
-        from models import BlockState, BlockType
-        from widgets import BlockWidget
-
+        
         results = []
 
         for tc in tool_calls:
             tool_call = ToolCall(id=tc.id, name=tc.name, arguments=tc.arguments)
+            
+            # Prepare display for tool call
+            # We append to existing exec output so we don't overwrite previous tool calls in this turn
+            tool_display = f"\n\n**Tool Call: {tc.name}**\n```json\n{json.dumps(tc.arguments, indent=2)}\n```"
+            block_state.content_exec_output += tool_display
+            widget.update_output()  # Triggers update of exec widget
 
-            # Create a tool execution block
-            tool_block = BlockState(
-                type=BlockType.TOOL_CALL,
-                content_input=f"{tc.name}",
-                content_output="",
-                is_running=True,
-                metadata={
-                    "tool_name": tc.name,
-                    "arguments": json.dumps(tc.arguments, indent=2)
-                }
-            )
-
-            # Mount the tool block in the UI
-            from widgets import HistoryViewport
-            history_vp = self.app.query_one("#history", HistoryViewport)
-            tool_widget = BlockWidget(tool_block)
-            await history_vp.mount(tool_widget)
-            tool_widget.scroll_visible()
-
-            # Add to app's block list
-            self.app.blocks.append(tool_block)
-
-            # Show tool call details
-            tool_display = f"Calling: {tc.name}\n```json\n{json.dumps(tc.arguments, indent=2)}\n```"
-            tool_block.content_output = tool_display
-            tool_widget.update_output(tool_display)
-
-            # Execute the tool
             try:
+                # Execute the tool
                 result = await registry.execute_tool(tool_call)
                 results.append(result)
 
-                # Show result
+                # Format result
+                content_preview = result.content
+                if len(result.content) > 2000:
+                    content_preview = result.content[:2000] + f"\n... ({len(result.content)} chars total)"
+
                 if result.is_error:
-                    result_display = f"{tool_display}\n\n**Error:**\n```\n{result.content}\n```"
-                    tool_block.exit_code = 1
+                    result_display = f"\n**Error:**\n```\n{result.content}\n```"
                 else:
-                    # Truncate long results for display
-                    content_preview = result.content[:2000]
-                    if len(result.content) > 2000:
-                        content_preview += f"\n... ({len(result.content)} chars total)"
-
-                    result_display = f"{tool_display}\n\n**Result:**\n```\n{content_preview}\n```"
-                    tool_block.exit_code = 0
-
-                tool_block.content_output = result_display
-                tool_widget.update_output(result_display)
+                    result_display = f"\n**Result:**\n```\n{content_preview}\n```"
+                
+                block_state.content_exec_output += result_display
+                widget.update_output()
 
             except Exception as e:
                 error_result = ToolResult(
@@ -454,14 +428,9 @@ class ExecutionHandler:
                     is_error=True
                 )
                 results.append(error_result)
-
-                tool_block.content_output = f"{tool_display}\n\n**Error:**\n```\n{str(e)}\n```"
-                tool_block.exit_code = 1
-                tool_widget.update_output(tool_block.content_output)
-
-            finally:
-                tool_block.is_running = False
-                tool_widget.set_loading(False)
+                
+                block_state.content_exec_output += f"\n**System Error:**\n```\n{str(e)}\n```"
+                widget.update_output()
 
         return results
 
