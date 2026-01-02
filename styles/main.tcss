@@ -1352,7 +1352,7 @@ ConfigScreen .terminal-info {
     padding: 0 1;
     height: auto;
     margin-bottom: 1;
-    border: left $primary;
+    border-left: solid $primary;
 }
 
 ConfigScreen .setting-info {

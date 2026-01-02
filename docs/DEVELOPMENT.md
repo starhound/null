@@ -88,3 +88,31 @@ Since TUI apps take over the terminal, standard `print()` debugging is difficult
 -   **Use `self.notify("message")`**: Shows a toast notification in the UI.
 -   **Log to file**: Python's `logging` module is configured to write to `null.log` (if enabled).
 -   **Textual Devtools**: Run `textual console` in one terminal, and `uv run textul run --dev main.py` in another to see a live DOM tree and log output.
+
+## Deployment
+
+### Docker
+
+Build and run Null Terminal in a container:
+
+```bash
+# Build image
+docker build -t null-terminal .
+
+# Run container
+docker run -it null-terminal
+```
+
+### PIP Installation
+
+You can install the package locally:
+
+```bash
+pip install .
+```
+
+This creates a `null` (or `null-terminal`) command in your environment:
+
+```bash
+null
+```

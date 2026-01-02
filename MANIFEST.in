@@ -1,0 +1,9 @@
+include README.md
+include LICENSE
+include pyproject.toml
+include uv.lock
+
+recursive-include styles *.tcss
+recursive-include docs *.md *.png
+recursive-include prompts *.yaml *.md
+recursive-include themes *.json *.yaml

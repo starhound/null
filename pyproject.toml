@@ -1,9 +1,24 @@
 [project]
-name = "null"
+name = "null-terminal"
 version = "0.1.0"
-description = "Add your description here"
+description = "A next-generation AI-integrated TUI terminal emulator."
 readme = "README.md"
 requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [
+    { name = "Starhound", email = "starhound@example.com" }
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Environment :: Console :: Curses",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Terminals",
+    "Topic :: Utilities",
+]
 dependencies = [
     "anthropic>=0.75.0",
     "boto3>=1.42.19",
@@ -17,4 +32,39 @@ dependencies = [
     "pyyaml>=6.0.3",
     "rich>=14.2.0",
     "textual>=6.11.0",
+]
+
+[project.scripts]
+null = "main:run"
+null-terminal = "main:run"
+
+[project.urls]
+Homepage = "https://github.com/starhound/null"
+Issues = "https://github.com/starhound/null/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "ai",
+    "commands",
+    "handlers",
+    "mcp",
+    "screens",
+    "styles",
+    "tools",
+    "utils",
+    "widgets",
+    "app.py",
+    "config.py",
+    "context.py",
+    "executor.py",
+    "main.py",
+    "models.py",
+    "nullrc.py",
+    "settings.py",
+    "storage.py",
+    "themes.py",
 ]

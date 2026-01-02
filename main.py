@@ -1,5 +1,10 @@
 from app import NullApp
+import sys
 
-if __name__ == "__main__":
+def run():
+    """Entry point for the application."""
     app = NullApp()
     app.run()
+
+if __name__ == "__main__":
+    run()
