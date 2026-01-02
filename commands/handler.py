@@ -41,6 +41,7 @@ class SlashCommandHandler:
             "prompts": self._ai.cmd_prompts,
             "ai": self._ai.cmd_ai,
             "chat": self._ai.cmd_chat,
+            "agent": self._ai.cmd_agent,
             "compact": self._ai.cmd_compact,
 
             # Session commands

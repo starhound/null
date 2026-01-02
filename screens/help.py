@@ -24,6 +24,7 @@ class HelpScreen(ModalScreen):
             ("/theme <name>", "Change the UI theme"),
             ("/model", "List and select AI models"),
             ("/prompts", "Manage system prompts"),
+            ("/agent", "Toggle autonomous agent mode"),
             ("/mcp", "Manage MCP servers"),
             ("/session", "Manage sessions"),
             ("/export", "Export conversation"),

@@ -1,10 +1,11 @@
 from textual.app import ComposeResult
-from textual.containers import VerticalScroll
+from textual.containers import VerticalScroll, Vertical
 from textual.widgets import Static, Label
 from textual.reactive import reactive
 from textual.timer import Timer
 
 from models import BlockState
+from .code_block import CodeBlockWidget, extract_code_blocks
 
 
 class ThinkingWidget(Static):
@@ -27,6 +28,7 @@ class ThinkingWidget(Static):
         self._spinner_index = 0
         self._spinner_timer: Timer | None = None
         self._detected_reasoning = False
+        self._code_blocks_rendered = False
         # Initialize loading state from block
         self.is_loading = block.is_running
         # Initialize content if block has output
@@ -188,11 +190,90 @@ class ThinkingWidget(Static):
         """Force a full render of current content."""
         try:
             self._last_rendered_len = len(self.thinking_text)
-            content = self.query_one("#peek-content", Static)
-            from rich.markdown import Markdown
-            content.update(Markdown(self.thinking_text, code_theme="monokai"))
+
+            # If loading is complete and we have code blocks, render with action buttons
+            if not self.is_loading and not self._code_blocks_rendered:
+                self._render_with_code_blocks()
+            else:
+                # Standard markdown rendering during streaming
+                content = self.query_one("#peek-content", Static)
+                from rich.markdown import Markdown
+                content.update(Markdown(self.thinking_text, code_theme="monokai"))
         except Exception:
             pass
+
+    def _render_with_code_blocks(self):
+        """Render content with interactive code block widgets."""
+        try:
+            code_blocks = extract_code_blocks(self.thinking_text)
+
+            if not code_blocks:
+                # No code blocks, use standard markdown
+                content = self.query_one("#peek-content", Static)
+                from rich.markdown import Markdown
+                content.update(Markdown(self.thinking_text, code_theme="monokai"))
+                return
+
+            # Clear the peek content and replace with mixed content
+            content = self.query_one("#peek-content", Static)
+
+            # Build segments of text and code blocks
+            segments = []
+            last_end = 0
+            text = self.thinking_text
+
+            for code, lang, start, end in code_blocks:
+                # Text before this code block
+                if start > last_end:
+                    text_segment = text[last_end:start]
+                    if text_segment.strip():
+                        segments.append(("text", text_segment))
+
+                # The code block itself
+                segments.append(("code", code, lang))
+                last_end = end
+
+            # Text after the last code block
+            if last_end < len(text):
+                text_segment = text[last_end:]
+                if text_segment.strip():
+                    segments.append(("text", text_segment))
+
+            # Now mount the widgets
+            # First, remove the static content and mount a container
+            peek_window = self.query_one("#peek-window", VerticalScroll)
+
+            # Remove old content
+            try:
+                old_content = self.query_one("#peek-content", Static)
+                old_content.remove()
+            except Exception:
+                pass
+
+            # Create a new container for mixed content
+            container = Vertical(id="peek-content", classes="peek-content")
+            peek_window.mount(container)
+
+            # Mount segments
+            from rich.markdown import Markdown
+            for segment in segments:
+                if segment[0] == "text":
+                    text_widget = Static(Markdown(segment[1], code_theme="monokai"), classes="markdown-text")
+                    container.mount(text_widget)
+                elif segment[0] == "code":
+                    code_widget = CodeBlockWidget(segment[1], segment[2])
+                    container.mount(code_widget)
+
+            self._code_blocks_rendered = True
+
+        except Exception:
+            # Fallback to standard markdown
+            try:
+                content = self.query_one("#peek-content", Static)
+                from rich.markdown import Markdown
+                content.update(Markdown(self.thinking_text, code_theme="monokai"))
+            except Exception:
+                pass
 
     def on_click(self, event):
         """Handle clicks to toggle expand/collapse."""

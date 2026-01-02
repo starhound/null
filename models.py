@@ -12,6 +12,7 @@ class BlockType(Enum):
     AI_RESPONSE = "ai"
     AI_QUERY = "ai_query"
     SYSTEM_MSG = "system"
+    TOOL_CALL = "tool_call"
 
 
 @dataclass
@@ -123,6 +124,25 @@ def export_to_markdown(blocks: List[BlockState]) -> str:
 
         elif block.type == BlockType.AI_QUERY:
             lines.append(f"**User [{ts}]:** {block.content_input}")
+            lines.append("")
+
+        elif block.type == BlockType.TOOL_CALL:
+            lines.append(f"## Tool Call [{ts}]")
+            lines.append("")
+            if block.metadata and "tool_name" in block.metadata:
+                lines.append(f"**Tool:** {block.metadata['tool_name']}")
+                if "arguments" in block.metadata:
+                    lines.append("")
+                    lines.append("**Arguments:**")
+                    lines.append("```json")
+                    lines.append(block.metadata['arguments'])
+                    lines.append("```")
+            if block.content_output:
+                lines.append("")
+                lines.append(block.content_output.rstrip())
+            if block.exit_code is not None:
+                status = "success" if block.exit_code == 0 else "error"
+                lines.append(f"*Status: {status}*")
             lines.append("")
 
     lines.append("---")

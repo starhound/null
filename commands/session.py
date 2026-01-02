@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 from .base import CommandMixin
 from config import Config
-from widgets import BlockWidget, HistoryViewport
+from widgets import BlockWidget, HistoryViewport, StatusBar
 
 
 class SessionCommands(CommandMixin):
@@ -54,6 +54,9 @@ class SessionCommands(CommandMixin):
             storage.clear_current_session()
             history = self.app.query_one("#history", HistoryViewport)
             await history.remove_children()
+            # Reset token usage for new session
+            status_bar = self.app.query_one("#status-bar", StatusBar)
+            status_bar.reset_token_usage()
             self.notify("Started new session")
 
         else:
@@ -74,6 +77,9 @@ class SessionCommands(CommandMixin):
                     block_widget = BlockWidget(block)
                     await history.mount(block_widget)
                 history.scroll_end(animate=False)
+                # Reset token usage when loading a session (no history of past tokens)
+                status_bar = self.app.query_one("#status-bar", StatusBar)
+                status_bar.reset_token_usage()
                 self.notify(f"Loaded session: {name}")
             else:
                 self.notify(f"Session not found: {name}", severity="error")

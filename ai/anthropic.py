@@ -2,7 +2,7 @@
 
 from typing import AsyncGenerator, List, Optional, Dict, Any
 import json
-from .base import LLMProvider, Message, StreamChunk, ToolCallData
+from .base import LLMProvider, Message, StreamChunk, ToolCallData, TokenUsage
 
 
 class AnthropicProvider(LLMProvider):
@@ -137,6 +137,7 @@ class AnthropicProvider(LLMProvider):
             async with client.messages.stream(**params) as stream:
                 tool_calls = []
                 current_tool_use = None
+                usage_data: Optional[TokenUsage] = None
 
                 async for event in stream:
                     # Handle text delta
@@ -172,11 +173,27 @@ class AnthropicProvider(LLMProvider):
                                 ))
                                 current_tool_use = None
 
+                        elif event.type == 'message_delta':
+                            # Anthropic sends usage in message_delta event
+                            if hasattr(event, 'usage') and event.usage:
+                                output_tokens = getattr(event.usage, 'output_tokens', 0)
+                                if usage_data:
+                                    usage_data.output_tokens = output_tokens
+                                else:
+                                    usage_data = TokenUsage(output_tokens=output_tokens)
+
+                        elif event.type == 'message_start':
+                            # Anthropic sends input tokens in message_start
+                            if hasattr(event, 'message') and hasattr(event.message, 'usage'):
+                                input_tokens = getattr(event.message.usage, 'input_tokens', 0)
+                                usage_data = TokenUsage(input_tokens=input_tokens)
+
                         elif event.type == 'message_stop':
                             yield StreamChunk(
                                 text="",
                                 tool_calls=tool_calls,
-                                is_complete=True
+                                is_complete=True,
+                                usage=usage_data
                             )
 
         except Exception as e:

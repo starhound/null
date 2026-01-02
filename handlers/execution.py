@@ -3,13 +3,14 @@
 from __future__ import annotations
 import asyncio
 import json
-from typing import TYPE_CHECKING, List, Dict, Any
+from typing import TYPE_CHECKING, List, Dict, Any, Optional
 
 if TYPE_CHECKING:
     from app import NullApp
 
 from models import BlockState
 from widgets import BaseBlockWidget
+from ai.base import TokenUsage, calculate_cost
 
 
 class ExecutionHandler:
@@ -77,10 +78,16 @@ class ExecutionHandler:
             if widget:
                 widget.update_metadata()
 
-            # Check if provider supports tools
+            # Check if provider supports tools and if agent mode is enabled
             use_tools = self.app.ai_provider.supports_tools()
+            agent_mode = self.app.config.get("ai", {}).get("agent_mode", False)
 
-            if use_tools:
+            if use_tools and agent_mode:
+                await self._execute_agent_mode(
+                    prompt, block_state, widget,
+                    context_info.messages, system_prompt, max_tokens
+                )
+            elif use_tools:
                 await self._execute_with_tools(
                     prompt, block_state, widget,
                     context_info.messages, system_prompt, max_tokens
@@ -149,6 +156,7 @@ class ExecutionHandler:
         current_messages = list(messages)
         iteration = 0
         max_iterations = 3  # Limit tool loops - most tasks need 1-2
+        total_usage: Optional[TokenUsage] = None
 
         while iteration < max_iterations:
             iteration += 1
@@ -175,6 +183,13 @@ class ExecutionHandler:
                 # Collect tool calls
                 if chunk.tool_calls:
                     pending_tool_calls.extend(chunk.tool_calls)
+
+                # Track token usage from completed chunks
+                if chunk.is_complete and chunk.usage:
+                    if total_usage is None:
+                        total_usage = chunk.usage
+                    else:
+                        total_usage = total_usage + chunk.usage
 
                 if chunk.is_complete:
                     break
@@ -232,7 +247,218 @@ class ExecutionHandler:
             # Clear prompt for next iteration (context is in messages)
             prompt = ""
 
-        self._finalize_response(block_state, widget, full_response, messages, max_tokens)
+        self._finalize_response(block_state, widget, full_response, messages, max_tokens, total_usage)
+
+    async def _execute_agent_mode(
+        self,
+        prompt: str,
+        block_state: BlockState,
+        widget: BaseBlockWidget,
+        messages: List[Dict[str, Any]],
+        system_prompt: str,
+        max_tokens: int
+    ):
+        """Execute AI with full agent loop - automatically execute tools until completion."""
+        from tools import ToolCall
+        from models import BlockType
+        from widgets import BlockWidget
+
+        registry = self._get_tool_registry()
+        tools = registry.get_all_tools_schema()
+
+        full_response = ""
+        current_messages = list(messages)
+        iteration = 0
+        max_iterations = 10  # Agent mode allows more iterations
+        total_usage: Optional[TokenUsage] = None
+
+        while iteration < max_iterations:
+            iteration += 1
+            pending_tool_calls = []
+            iteration_text = ""
+
+            # Stream AI response
+            async for chunk in self.app.ai_provider.generate_with_tools(
+                prompt if iteration == 1 else "",
+                current_messages,
+                tools,
+                system_prompt=system_prompt
+            ):
+                if self.app._ai_cancelled:
+                    full_response += "\n\n[Cancelled]"
+                    block_state.content_output = full_response
+                    widget.update_output(full_response)
+                    break
+
+                # Handle text content
+                if chunk.text:
+                    iteration_text += chunk.text
+                    full_response += chunk.text
+                    block_state.content_output = full_response
+                    widget.update_output(full_response)
+
+                # Collect tool calls
+                if chunk.tool_calls:
+                    pending_tool_calls.extend(chunk.tool_calls)
+
+                # Track token usage from completed chunks
+                if chunk.is_complete and chunk.usage:
+                    if total_usage is None:
+                        total_usage = chunk.usage
+                    else:
+                        total_usage = total_usage + chunk.usage
+
+                if chunk.is_complete:
+                    break
+
+            # Check for cancellation
+            if self.app._ai_cancelled:
+                break
+
+            # If no tool calls, we're done - AI provided final response
+            if not pending_tool_calls:
+                if iteration > 1:
+                    # Add final completion message to output
+                    full_response += f"\n\n*Agent completed after {iteration} iterations*"
+                    block_state.content_output = full_response
+                    widget.update_output(full_response)
+                break
+
+            # Show that we're executing tools
+            if iteration == 1:
+                self.app.notify(f"Agent mode: Executing {len(pending_tool_calls)} tool(s)...", severity="information")
+
+            # Add assistant message with tool calls to conversation
+            assistant_msg = {
+                "role": "assistant",
+                "content": iteration_text,
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.name,
+                            "arguments": json.dumps(tc.arguments)
+                        }
+                    }
+                    for tc in pending_tool_calls
+                ]
+            }
+            current_messages.append(assistant_msg)
+
+            # Execute all tool calls and collect results
+            tool_results = await self._execute_agent_tools(
+                pending_tool_calls, registry, block_state, widget
+            )
+
+            if not tool_results:
+                # Tool execution failed or was cancelled
+                full_response += "\n\n*Tool execution failed or cancelled*"
+                block_state.content_output = full_response
+                widget.update_output(full_response)
+                break
+
+            # Add tool results to conversation
+            for result in tool_results:
+                current_messages.append({
+                    "role": "tool",
+                    "tool_call_id": result.tool_call_id,
+                    "content": result.content
+                })
+
+            # Clear prompt for next iteration
+            prompt = ""
+
+        # Check if we hit max iterations
+        if iteration >= max_iterations:
+            full_response += f"\n\n*Warning: Reached maximum iterations ({max_iterations})*"
+            block_state.content_output = full_response
+            widget.update_output(full_response)
+
+        self._finalize_response(block_state, widget, full_response, messages, max_tokens, total_usage)
+
+    async def _execute_agent_tools(
+        self,
+        tool_calls: List,
+        registry,
+        block_state: BlockState,
+        widget: BaseBlockWidget
+    ) -> List:
+        """Execute tools in agent mode - create visual blocks for each execution."""
+        from tools import ToolCall, ToolResult
+        from models import BlockState, BlockType
+        from widgets import BlockWidget
+
+        results = []
+
+        for tc in tool_calls:
+            tool_call = ToolCall(id=tc.id, name=tc.name, arguments=tc.arguments)
+
+            # Create a tool execution block
+            tool_block = BlockState(
+                type=BlockType.TOOL_CALL,
+                content_input=f"{tc.name}",
+                content_output="",
+                is_running=True,
+                metadata={
+                    "tool_name": tc.name,
+                    "arguments": json.dumps(tc.arguments, indent=2)
+                }
+            )
+
+            # Mount the tool block in the UI
+            from widgets import HistoryViewport
+            history_vp = self.app.query_one("#history", HistoryViewport)
+            tool_widget = BlockWidget(tool_block)
+            await history_vp.mount(tool_widget)
+            tool_widget.scroll_visible()
+
+            # Add to app's block list
+            self.app.blocks.append(tool_block)
+
+            # Show tool call details
+            tool_display = f"Calling: {tc.name}\n```json\n{json.dumps(tc.arguments, indent=2)}\n```"
+            tool_block.content_output = tool_display
+            tool_widget.update_output(tool_display)
+
+            # Execute the tool
+            try:
+                result = await registry.execute_tool(tool_call)
+                results.append(result)
+
+                # Show result
+                if result.is_error:
+                    result_display = f"{tool_display}\n\n**Error:**\n```\n{result.content}\n```"
+                    tool_block.exit_code = 1
+                else:
+                    # Truncate long results for display
+                    content_preview = result.content[:2000]
+                    if len(result.content) > 2000:
+                        content_preview += f"\n... ({len(result.content)} chars total)"
+
+                    result_display = f"{tool_display}\n\n**Result:**\n```\n{content_preview}\n```"
+                    tool_block.exit_code = 0
+
+                tool_block.content_output = result_display
+                tool_widget.update_output(result_display)
+
+            except Exception as e:
+                error_result = ToolResult(
+                    tool_call_id=tc.id,
+                    content=f"Error: {str(e)}",
+                    is_error=True
+                )
+                results.append(error_result)
+
+                tool_block.content_output = f"{tool_display}\n\n**Error:**\n```\n{str(e)}\n```"
+                tool_block.exit_code = 1
+                tool_widget.update_output(tool_block.content_output)
+
+            finally:
+                tool_block.is_running = False
+                tool_widget.set_loading(False)
+
+        return results
 
     async def _process_tool_calls(
         self,
@@ -281,26 +507,56 @@ class ExecutionHandler:
         widget: BaseBlockWidget,
         full_response: str,
         messages: List[Dict[str, Any]],
-        max_tokens: int
+        max_tokens: int,
+        usage: Optional[TokenUsage] = None
     ):
         """Finalize the AI response."""
         block_state.is_running = False
         self.app._active_worker = None
 
-        # Update metadata with token estimate
-        response_tokens = len(full_response) // 4
-        context_chars = sum(len(m.get("content", "")) for m in messages)
-        context_tokens = context_chars // 4
-        block_state.metadata["tokens"] = f"~{response_tokens} out / ~{context_tokens} ctx"
+        # Get model name for cost calculation
+        model_name = self.app.config.get('ai', {}).get('model', '')
+
+        # Update metadata with token info
+        if usage:
+            # Use actual token counts from API
+            input_tokens = usage.input_tokens
+            output_tokens = usage.output_tokens
+            cost = calculate_cost(usage, model_name)
+            block_state.metadata["tokens"] = f"{input_tokens:,} in / {output_tokens:,} out"
+            if cost > 0:
+                block_state.metadata["cost"] = f"${cost:.4f}"
+        else:
+            # Fall back to estimates
+            response_tokens = len(full_response) // 4
+            context_chars = sum(len(m.get("content", "")) for m in messages)
+            context_tokens = context_chars // 4
+            block_state.metadata["tokens"] = f"~{response_tokens} out / ~{context_tokens} ctx"
+            # Create estimated usage for status bar
+            input_tokens = context_tokens
+            output_tokens = response_tokens
+            usage = TokenUsage(input_tokens=input_tokens, output_tokens=output_tokens)
+            cost = calculate_cost(usage, model_name)
+
         widget.update_metadata()
 
-        # Update status bar
+        # Update status bar with context and token usage
         try:
             from widgets import StatusBar
             status_bar = self.app.query_one("#status-bar", StatusBar)
+
+            # Update context display
+            context_chars = sum(len(m.get("content", "")) for m in messages)
             total_context = context_chars + len(full_response)
             limit_chars = max_tokens * 4
             status_bar.set_context(total_context, limit_chars)
+
+            # Update token usage display
+            status_bar.add_token_usage(
+                input_tokens=usage.input_tokens,
+                output_tokens=usage.output_tokens,
+                cost=cost
+            )
         except Exception:
             pass
 

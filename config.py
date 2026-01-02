@@ -17,6 +17,9 @@ class Config:
         # Helper to load common config into a dict for easy access
         sm = Config._get_storage()
         provider = sm.get_config("ai.provider", "ollama")
+        agent_mode_str = sm.get_config("ai.agent_mode", "false")
+        agent_mode = agent_mode_str.lower() in ("true", "1", "yes")
+
         return {
             "theme": sm.get_config("theme", "null-dark"),
             "shell": sm.get_config("shell", os.environ.get("SHELL", "bash")),
@@ -27,6 +30,7 @@ class Config:
                 "endpoint": sm.get_config(f"ai.{provider}.endpoint", "http://localhost:11434"),
                 "api_key": sm.get_config(f"ai.{provider}.api_key", ""),
                 "region": sm.get_config(f"ai.{provider}.region", ""),
+                "agent_mode": agent_mode,
                 "active_prompt": "agent",
                 "prompts": {
                     "default": """You are an autonomous AI agent running in a Linux terminal. 

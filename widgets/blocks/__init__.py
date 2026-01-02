@@ -6,9 +6,11 @@ from .base import BaseBlockWidget
 from .command import CommandBlock
 from .ai_response import AIResponseBlock
 from .system import SystemBlock
+from .tool_call import ToolCallBlock
 from .parts import BlockHeader, BlockMeta, BlockBody, BlockFooter
 from .thinking import ThinkingWidget
 from .execution import ExecutionWidget
+from .code_block import CodeBlockWidget, extract_code_blocks, execute_code, get_file_extension
 
 
 def create_block(block: BlockState) -> BaseBlockWidget:
@@ -19,6 +21,8 @@ def create_block(block: BlockState) -> BaseBlockWidget:
         return AIResponseBlock(block)
     elif block.type == BlockType.SYSTEM_MSG:
         return SystemBlock(block)
+    elif block.type == BlockType.TOOL_CALL:
+        return ToolCallBlock(block)
     elif block.type == BlockType.AI_QUERY:
         # AI queries are typically combined with AI responses now
         # but if standalone, treat like system message
@@ -42,11 +46,16 @@ __all__ = [
     'CommandBlock',
     'AIResponseBlock',
     'SystemBlock',
+    'ToolCallBlock',
     'BlockHeader',
     'BlockMeta',
     'BlockBody',
     'BlockFooter',
     'ThinkingWidget',
     'ExecutionWidget',
+    'CodeBlockWidget',
+    'extract_code_blocks',
+    'execute_code',
+    'get_file_extension',
     'create_block',
 ]

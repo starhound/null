@@ -20,11 +20,106 @@ class ToolCallData:
 
 
 @dataclass
+class TokenUsage:
+    """Token usage information from an API response."""
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+    @property
+    def total_tokens(self) -> int:
+        return self.input_tokens + self.output_tokens
+
+    def __add__(self, other: "TokenUsage") -> "TokenUsage":
+        return TokenUsage(
+            input_tokens=self.input_tokens + other.input_tokens,
+            output_tokens=self.output_tokens + other.output_tokens
+        )
+
+
+@dataclass
 class StreamChunk:
     """A chunk from the streaming response."""
     text: str = ""
     tool_calls: List[ToolCallData] = field(default_factory=list)
     is_complete: bool = False
+    usage: Optional[TokenUsage] = None
+
+
+# Model pricing per 1M tokens (input_cost, output_cost) in USD
+# Updated January 2025
+MODEL_PRICING: Dict[str, tuple] = {
+    # OpenAI
+    "gpt-4o": (2.50, 10.00),
+    "gpt-4o-mini": (0.15, 0.60),
+    "gpt-4-turbo": (10.00, 30.00),
+    "gpt-4": (30.00, 60.00),
+    "gpt-3.5-turbo": (0.50, 1.50),
+    "o1": (15.00, 60.00),
+    "o1-mini": (3.00, 12.00),
+    "o1-preview": (15.00, 60.00),
+    # Anthropic Claude
+    "claude-3-5-sonnet": (3.00, 15.00),
+    "claude-3-5-haiku": (0.80, 4.00),
+    "claude-3-opus": (15.00, 75.00),
+    "claude-3-sonnet": (3.00, 15.00),
+    "claude-3-haiku": (0.25, 1.25),
+    # Google Gemini
+    "gemini-1.5-pro": (1.25, 5.00),
+    "gemini-1.5-flash": (0.075, 0.30),
+    "gemini-1.5-flash-8b": (0.0375, 0.15),
+    "gemini-2.0-flash": (0.10, 0.40),
+    # Mistral
+    "mistral-large": (2.00, 6.00),
+    "mistral-medium": (2.70, 8.10),
+    "mistral-small": (0.20, 0.60),
+    "codestral": (0.20, 0.60),
+    "mixtral-8x7b": (0.70, 0.70),
+    "mixtral-8x22b": (2.00, 6.00),
+    # xAI Grok
+    "grok-2": (2.00, 10.00),
+    "grok-beta": (5.00, 15.00),
+    # DeepSeek
+    "deepseek-chat": (0.14, 0.28),
+    "deepseek-coder": (0.14, 0.28),
+    "deepseek-reasoner": (0.55, 2.19),
+    # Cohere
+    "command-r-plus": (2.50, 10.00),
+    "command-r": (0.50, 1.50),
+    "command": (1.00, 2.00),
+    # Groq (hosted, often free tier or very cheap)
+    "llama-3.3-70b-versatile": (0.59, 0.79),
+    "llama-3.1-70b-versatile": (0.59, 0.79),
+    "llama-3.1-8b-instant": (0.05, 0.08),
+    "gemma2-9b-it": (0.20, 0.20),
+}
+
+
+def get_model_pricing(model_name: str) -> tuple:
+    """Get pricing for a model (input_cost, output_cost) per 1M tokens.
+
+    Returns (0, 0) for unknown/local models.
+    """
+    model_lower = model_name.lower()
+
+    # Check exact match first
+    if model_lower in MODEL_PRICING:
+        return MODEL_PRICING[model_lower]
+
+    # Check partial matches (e.g., "claude-3-5-sonnet-20241022" matches "claude-3-5-sonnet")
+    for known, pricing in MODEL_PRICING.items():
+        if model_lower.startswith(known) or known in model_lower:
+            return pricing
+
+    # Local/unknown models - no cost
+    return (0.0, 0.0)
+
+
+def calculate_cost(usage: TokenUsage, model_name: str) -> float:
+    """Calculate cost in USD for token usage."""
+    input_price, output_price = get_model_pricing(model_name)
+    input_cost = (usage.input_tokens / 1_000_000) * input_price
+    output_cost = (usage.output_tokens / 1_000_000) * output_price
+    return input_cost + output_cost
 
 
 @dataclass

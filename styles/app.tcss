@@ -148,6 +148,11 @@ StatusBar .mode-ai {
     color: $warning;
 }
 
+StatusBar .mode-agent {
+    color: $accent;
+    text-style: bold;
+}
+
 #context-indicator {
     min-width: 18;
 }
@@ -179,6 +184,14 @@ StatusBar .provider-checking {
 
 StatusBar .spacer {
     width: 1fr;
+}
+
+#token-indicator {
+    color: $text-muted;
+}
+
+StatusBar .mode-agent {
+    color: $secondary;
 }
 
 /* ==========================================================================
@@ -259,6 +272,33 @@ SystemBlock {
 SystemBlock BlockHeader {
     background: $secondary 10%;
     padding: 0 1;
+}
+
+/* ==========================================================================
+   Tool Call Block
+   ========================================================================== */
+
+ToolCallBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: transparent;
+    color: $text;
+    margin: 0 0 1 0;
+    padding: 0 1 0 1;
+    border-left: wide $accent;
+}
+
+ToolCallBlock BlockHeader {
+    background: $accent 15%;
+    padding: 0 1;
+    color: $accent;
+}
+
+ToolCallBlock BlockMeta {
+    background: $accent 5%;
+    padding: 0 1;
+    color: $text-muted;
 }
 
 /* ==========================================================================
@@ -615,6 +655,78 @@ HistorySearch .no-results {
     padding: 0 1;
     color: $text-muted;
     text-style: italic;
+}
+
+/* ==========================================================================
+   Block Search (Ctrl+F)
+   ========================================================================== */
+
+BlockSearch {
+    layer: overlay;
+    dock: top;
+    height: auto;
+    max-height: 15;
+    background: $surface;
+    border-bottom: solid $primary;
+    padding: 0 1;
+    display: none;
+}
+
+BlockSearch.visible {
+    display: block;
+}
+
+BlockSearch .search-header {
+    height: 1;
+    background: $primary;
+    color: $text;
+    padding: 0 1;
+}
+
+BlockSearch .search-input {
+    height: 1;
+    border: none;
+    background: $panel;
+    padding: 0 1;
+    margin: 1 0;
+}
+
+BlockSearch .search-results {
+    height: auto;
+    max-height: 8;
+    padding: 0;
+}
+
+BlockSearch .search-result {
+    height: 1;
+    padding: 0 1;
+    color: $text;
+}
+
+BlockSearch .search-result.selected {
+    background: $primary;
+    color: $text;
+    text-style: bold;
+}
+
+BlockSearch .search-result:hover {
+    background: $surface-lighten-1;
+}
+
+BlockSearch .no-results {
+    height: 1;
+    padding: 0 1;
+    color: $text-muted;
+    text-style: italic;
+}
+
+/* Search highlight on matched blocks */
+.search-match {
+    border: wide $warning;
+}
+
+.search-highlight {
+    border: wide $primary;
 }
 
 /* ==========================================================================
@@ -996,4 +1108,277 @@ ConfigScreen #reset-btn {
 
 ConfigScreen .spacer {
     width: 1fr;
+}
+
+/* ==========================================================================
+   Command Palette
+   ========================================================================== */
+
+CommandPalette {
+    layer: overlay;
+    align: center top;
+    width: 60%;
+    min-width: 50;
+    max-width: 80;
+    height: auto;
+    max-height: 50%;
+    margin-top: 3;
+    background: $surface;
+    border: round $primary;
+    padding: 0;
+    display: none;
+}
+
+CommandPalette.visible {
+    display: block;
+}
+
+CommandPalette #palette-title {
+    width: 100%;
+    height: 1;
+    background: $primary;
+    color: $text;
+    text-style: bold;
+    padding: 0 1;
+}
+
+CommandPalette #palette-input {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $panel;
+    padding: 0 1;
+    margin: 1 1;
+}
+
+CommandPalette #palette-results {
+    width: 100%;
+    height: auto;
+    max-height: 15;
+    padding: 0 1;
+    overflow-y: auto;
+}
+
+CommandPalette #palette-hint {
+    width: 100%;
+    height: 1;
+    background: $surface-darken-1;
+    color: $text-muted;
+    text-style: italic dim;
+    padding: 0 1;
+}
+
+CommandPalette .palette-item {
+    layout: horizontal;
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text;
+}
+
+CommandPalette .palette-item:hover {
+    background: $surface-lighten-1;
+}
+
+CommandPalette .palette-item.selected {
+    background: $primary;
+    color: $text;
+}
+
+CommandPalette .palette-item-name {
+    width: auto;
+    min-width: 20;
+    color: $text;
+    text-style: bold;
+}
+
+CommandPalette .palette-item.selected .palette-item-name {
+    color: $text;
+}
+
+CommandPalette .palette-item-desc {
+    width: 1fr;
+    color: $text-muted;
+    padding-left: 2;
+}
+
+CommandPalette .palette-item.selected .palette-item-desc {
+    color: $text;
+}
+
+CommandPalette .palette-item-shortcut {
+    width: auto;
+    color: $primary;
+    text-style: dim;
+}
+
+CommandPalette .palette-item.selected .palette-item-shortcut {
+    color: $text;
+    text-style: bold;
+}
+
+CommandPalette .palette-no-results {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text-muted;
+    text-style: italic;
+}
+
+/* ==========================================================================
+   Code Block Widget - Interactive Code Blocks in AI Responses
+   ========================================================================== */
+
+CodeBlockWidget {
+    height: auto;
+    margin: 1 0;
+    padding: 0;
+}
+
+CodeBlockWidget .code-block-container {
+    height: auto;
+    border: solid $surface-lighten-1;
+    border-left: wide $accent;
+}
+
+CodeBlockWidget .code-block-header {
+    layout: horizontal;
+    width: 100%;
+    height: 1;
+    background: $surface-lighten-1;
+    padding: 0 1;
+}
+
+CodeBlockWidget .code-lang-label {
+    color: $accent;
+    text-style: bold;
+}
+
+CodeBlockWidget .code-header-spacer {
+    width: 1fr;
+}
+
+CodeBlockWidget .code-action {
+    width: auto;
+    height: 1;
+    margin-left: 2;
+    color: $text-muted;
+    background: transparent;
+}
+
+CodeBlockWidget .code-action:hover {
+    text-style: bold;
+}
+
+CodeBlockWidget .code-action-run {
+    color: $success;
+}
+
+CodeBlockWidget .code-action-run:hover {
+    color: $success;
+    text-style: bold underline;
+}
+
+CodeBlockWidget .code-action-copy {
+    color: $primary;
+}
+
+CodeBlockWidget .code-action-copy:hover {
+    color: $primary;
+    text-style: bold underline;
+}
+
+CodeBlockWidget .code-action-save {
+    color: $warning;
+}
+
+CodeBlockWidget .code-action-save:hover {
+    color: $warning;
+    text-style: bold underline;
+}
+
+CodeBlockWidget .code-block-content {
+    padding: 1;
+    background: $surface 50%;
+}
+
+CodeBlockWidget .code-syntax {
+    width: 100%;
+}
+
+/* Markdown text segments in mixed content */
+ThinkingWidget .markdown-text {
+    height: auto;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* ==========================================================================
+   Save File Dialog
+   ========================================================================== */
+
+SaveFileDialog {
+    align: center middle;
+    background: $background 80%;
+}
+
+SaveFileDialog #save-dialog-container {
+    width: 50%;
+    min-width: 40;
+    height: auto;
+    background: $surface;
+    border: round $primary;
+    padding: 1 2;
+    layout: vertical;
+}
+
+SaveFileDialog #save-dialog-container > Label:first-child {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+SaveFileDialog .input-label {
+    margin-top: 1;
+    margin-bottom: 0;
+    color: $text-muted;
+}
+
+SaveFileDialog Input {
+    margin-bottom: 1;
+}
+
+SaveFileDialog #save-dialog-buttons {
+    layout: horizontal;
+    align: center middle;
+    margin-top: 1;
+    height: 1;
+    width: 100%;
+}
+
+SaveFileDialog #save-btn {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $success;
+    color: $text;
+    margin-right: 1;
+}
+
+SaveFileDialog #save-btn:hover {
+    background: $success-lighten-1;
+}
+
+SaveFileDialog #cancel-btn {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $surface-lighten-2;
+    color: $text-muted;
+}
+
+SaveFileDialog #cancel-btn:hover {
+    background: $error;
+    color: $text;
 }

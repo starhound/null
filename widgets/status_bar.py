@@ -4,20 +4,28 @@ from textual.reactive import reactive
 
 
 class StatusBar(Static):
-    """Status bar showing mode, context size, and provider status."""
+    """Status bar showing mode, context size, provider status, and token usage."""
 
     mode = reactive("CLI")
+    agent_mode = reactive(False)
     context_chars = reactive(0)
     context_limit = reactive(4000)
     provider_name = reactive("")
     provider_status = reactive("unknown")
+    # Token usage tracking
+    session_input_tokens = reactive(0)
+    session_output_tokens = reactive(0)
+    session_cost = reactive(0.0)
 
     def compose(self) -> ComposeResult:
         yield Label("", id="mode-indicator", classes="status-section")
-        yield Label("│", classes="status-sep")
+        yield Label("|", classes="status-sep")
         yield Label("", id="provider-indicator", classes="status-section")
         yield Label("", classes="spacer")
-        # Initialize with placeholder content to ensure visibility
+        # Token usage indicator
+        yield Label("", id="token-indicator", classes="status-section")
+        yield Label("|", id="token-sep", classes="status-sep")
+        # Context indicator
         yield Label("ctx: ~0 / 1k", id="context-indicator", classes="status-section context-low")
 
     def on_mount(self):
@@ -25,8 +33,12 @@ class StatusBar(Static):
         self._update_mode_display()
         self._update_context_display()
         self._update_provider_display()
+        self._update_token_display()
 
     def watch_mode(self, mode: str):
+        self._update_mode_display()
+
+    def watch_agent_mode(self, enabled: bool):
         self._update_mode_display()
 
     def watch_context_chars(self, chars: int):
@@ -41,17 +53,30 @@ class StatusBar(Static):
     def watch_provider_name(self, name: str):
         self._update_provider_display()
 
+    def watch_session_input_tokens(self, tokens: int):
+        self._update_token_display()
+
+    def watch_session_output_tokens(self, tokens: int):
+        self._update_token_display()
+
+    def watch_session_cost(self, cost: float):
+        self._update_token_display()
+
     def _update_mode_display(self):
         try:
             indicator = self.query_one("#mode-indicator", Label)
-            indicator.remove_class("mode-cli", "mode-ai")
+            indicator.remove_class("mode-cli", "mode-ai", "mode-agent")
 
             if self.mode == "CLI":
                 indicator.update("❯ CLI")
                 indicator.add_class("mode-cli")
             else:
-                indicator.update("◆ AI")
-                indicator.add_class("mode-ai")
+                if self.agent_mode:
+                    indicator.update("◆ AGENT")
+                    indicator.add_class("mode-agent")
+                else:
+                    indicator.update("◆ AI")
+                    indicator.add_class("mode-ai")
         except Exception:
             pass
 
@@ -105,9 +130,53 @@ class StatusBar(Static):
         except Exception:
             pass
 
+    def _update_token_display(self):
+        """Update the token usage and cost display."""
+        try:
+            indicator = self.query_one("#token-indicator", Label)
+            sep = self.query_one("#token-sep", Label)
+
+            total_tokens = self.session_input_tokens + self.session_output_tokens
+
+            if total_tokens == 0:
+                # Hide token display when no tokens used
+                indicator.update("")
+                sep.display = False
+                return
+
+            sep.display = True
+
+            # Format token count (e.g., 1.2k, 15k, 1.5M)
+            if total_tokens >= 1_000_000:
+                token_str = f"{total_tokens / 1_000_000:.1f}M"
+            elif total_tokens >= 1000:
+                token_str = f"{total_tokens / 1000:.1f}k"
+            else:
+                token_str = str(total_tokens)
+
+            # Format cost
+            if self.session_cost >= 1.0:
+                cost_str = f"${self.session_cost:.2f}"
+            elif self.session_cost >= 0.01:
+                cost_str = f"${self.session_cost:.2f}"
+            elif self.session_cost > 0:
+                cost_str = f"${self.session_cost:.4f}"
+            else:
+                cost_str = "$0"
+
+            # Display format: "Tokens: 1.2k / $0.02"
+            indicator.update(f"tok: {token_str} / {cost_str}")
+
+        except Exception:
+            pass
+
     def set_mode(self, mode: str):
         """Set current mode (CLI or AI)."""
         self.mode = mode
+
+    def set_agent_mode(self, enabled: bool):
+        """Set agent mode status."""
+        self.agent_mode = enabled
 
     def set_context(self, chars: int, limit: int = 4000):
         """Set current context size."""
@@ -118,3 +187,15 @@ class StatusBar(Static):
         """Set provider name and status."""
         self.provider_name = name
         self.provider_status = status
+
+    def add_token_usage(self, input_tokens: int, output_tokens: int, cost: float):
+        """Add token usage from a completed request."""
+        self.session_input_tokens += input_tokens
+        self.session_output_tokens += output_tokens
+        self.session_cost += cost
+
+    def reset_token_usage(self):
+        """Reset session token usage (e.g., on clear)."""
+        self.session_input_tokens = 0
+        self.session_output_tokens = 0
+        self.session_cost = 0.0

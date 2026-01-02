@@ -1,7 +1,7 @@
 from typing import AsyncGenerator, List, Optional, Dict, Any
 import json
 import openai
-from .base import LLMProvider, Message, StreamChunk, ToolCallData
+from .base import LLMProvider, Message, StreamChunk, ToolCallData, TokenUsage
 
 
 class OpenAICompatibleProvider(LLMProvider):
@@ -54,7 +54,8 @@ class OpenAICompatibleProvider(LLMProvider):
             stream = await self.client.chat.completions.create(
                 model=self.model,
                 messages=chat_messages,
-                stream=True
+                stream=True,
+                stream_options={"include_usage": True}
             )
             async for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content:
@@ -77,7 +78,8 @@ class OpenAICompatibleProvider(LLMProvider):
             params = {
                 "model": self.model,
                 "messages": chat_messages,
-                "stream": True
+                "stream": True,
+                "stream_options": {"include_usage": True}
             }
 
             # Only add tools if provided
@@ -90,8 +92,16 @@ class OpenAICompatibleProvider(LLMProvider):
             # Track tool calls being built up across chunks
             current_tool_calls: Dict[int, Dict[str, Any]] = {}
             text_buffer = ""
+            usage_data: Optional[TokenUsage] = None
 
             async for chunk in stream:
+                # Check for usage data (comes in final chunk for OpenAI)
+                if hasattr(chunk, 'usage') and chunk.usage:
+                    usage_data = TokenUsage(
+                        input_tokens=chunk.usage.prompt_tokens or 0,
+                        output_tokens=chunk.usage.completion_tokens or 0
+                    )
+
                 if not chunk.choices:
                     continue
 
@@ -139,7 +149,8 @@ class OpenAICompatibleProvider(LLMProvider):
                     yield StreamChunk(
                         text="",
                         tool_calls=tool_calls,
-                        is_complete=True
+                        is_complete=True,
+                        usage=usage_data
                     )
 
         except Exception as e:

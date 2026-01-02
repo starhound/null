@@ -1,7 +1,7 @@
 import httpx
 import json
 from typing import AsyncGenerator, List, Optional, Dict, Any
-from .base import LLMProvider, Message, StreamChunk, ToolCallData
+from .base import LLMProvider, Message, StreamChunk, ToolCallData, TokenUsage
 
 
 class OllamaProvider(LLMProvider):
@@ -118,10 +118,19 @@ class OllamaProvider(LLMProvider):
 
                         # Check if done
                         if data.get("done", False):
+                            # Ollama includes token counts in the final response
+                            usage_data = None
+                            if "prompt_eval_count" in data or "eval_count" in data:
+                                usage_data = TokenUsage(
+                                    input_tokens=data.get("prompt_eval_count", 0),
+                                    output_tokens=data.get("eval_count", 0)
+                                )
+
                             yield StreamChunk(
                                 text="",
                                 tool_calls=collected_tool_calls,
-                                is_complete=True
+                                is_complete=True,
+                                usage=usage_data
                             )
                             break
 

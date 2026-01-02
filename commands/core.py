@@ -37,12 +37,18 @@ class CoreCommands(CommandMixin):
         status_bar = self.app.query_one("#status-bar", StatusBar)
         provider_status = status_bar.provider_status
 
+        # Token usage info
+        total_tokens = status_bar.session_input_tokens + status_bar.session_output_tokens
+        session_cost = status_bar.session_cost
+
         lines = [
             f"  Provider:      {provider} ({provider_status})",
             f"  Model:         {model}",
             f"  Persona:       {persona}",
             f"  Blocks:        {blocks_count}",
             f"  Context:       ~{context_tokens} tokens ({context_chars} chars)",
+            f"  Session Tokens: {total_tokens:,} ({status_bar.session_input_tokens:,} in / {status_bar.session_output_tokens:,} out)",
+            f"  Session Cost:   ${session_cost:.4f}",
         ]
         await self.show_output("/status", "\n".join(lines))
 
@@ -53,6 +59,11 @@ class CoreCommands(CommandMixin):
         self.app.current_cli_widget = None
         history = self.app.query_one("#history", HistoryViewport)
         await history.remove_children()
+
+        # Reset token usage in status bar
+        status_bar = self.app.query_one("#status-bar", StatusBar)
+        status_bar.reset_token_usage()
+
         self.app._update_status_bar()
         self.notify("History and context cleared")
 

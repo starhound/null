@@ -113,6 +113,28 @@ class AICommands(CommandMixin):
 
         await self.show_output(f"/prompts show {key}", content)
 
+    async def cmd_agent(self, args: list[str]):
+        """Toggle agent mode for autonomous tool execution."""
+        current_mode = self.app.config.get("ai", {}).get("agent_mode", False)
+        new_mode = not current_mode
+
+        Config.update_key(["ai", "agent_mode"], str(new_mode).lower())
+        self.app.config = Config.load_all()
+
+        status = "enabled" if new_mode else "disabled"
+        self.notify(f"Agent mode {status}")
+
+        if new_mode:
+            # Show helpful info about agent mode
+            info = """Agent mode enabled. The AI will now:
+- Automatically execute tool calls without confirmation
+- Loop until task completion (max 10 iterations)
+- Show each tool execution as a separate block
+- Continue reasoning after receiving tool results
+
+Use /agent again to disable."""
+            await self.show_output("Agent Mode", info)
+
     async def cmd_compact(self, args: list[str]):
         """Summarize context to reduce token usage."""
         if not self.app.blocks:

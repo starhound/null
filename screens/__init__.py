@@ -5,6 +5,7 @@ from .selection import SelectionListScreen, ModelListScreen
 from .provider import ProviderConfigScreen
 from .mcp import MCPServerConfigScreen
 from .config import ConfigScreen
+from .save_dialog import SaveFileDialog
 
 __all__ = [
     "HelpScreen",
@@ -13,4 +14,5 @@ __all__ = [
     "ProviderConfigScreen",
     "MCPServerConfigScreen",
     "ConfigScreen",
+    "SaveFileDialog",
 ]
