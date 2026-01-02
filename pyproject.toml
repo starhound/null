@@ -1,0 +1,16 @@
+[project]
+name = "null"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "boto3>=1.42.19",
+    "cryptography>=46.0.3",
+    "httpx>=0.28.1",
+    "keyring>=25.7.0",
+    "openai>=2.14.0",
+    "pyyaml>=6.0.3",
+    "rich>=14.2.0",
+    "textual>=6.11.0",
+]
