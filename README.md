@@ -18,6 +18,7 @@ Null Terminal is a next-generation TUI (Terminal User Interface) designed for th
 ## ✨ Features
 
 -   **AI Integration**: Seamless chat with OpenAI, Ollama, LM Studio, and more.
+-   **Input Modes**: Switch between shell and AI modes with ease.
 -   **Context Awareness**: Smartly manages files and conversation history.
 -   **Local Tool Use**: AI can run commands, read files, and analyze code directly.
 -   **Chain of Thought**: Visualize the reasoning process of advanced models (e.g., DeepSeek R1).
