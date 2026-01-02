@@ -147,8 +147,12 @@ StatusBar .mode-ai {
     color: $warning;
 }
 
+#context-indicator {
+    min-width: 18;
+}
+
 StatusBar .context-low {
-    color: $text-muted;
+    color: $text;
 }
 
 StatusBar .context-medium {
@@ -215,8 +219,8 @@ AIResponseBlock {
     min-height: 0;
     background: transparent;
     color: $text;
-    margin: 0 0 2 0;
-    padding: 0 1 1 1;
+    margin: 0 0 1 0;
+    padding: 0 1 0 1;
     border-left: solid $primary;
 }
 
@@ -468,10 +472,6 @@ ExecutionWidget {
     background: transparent;
 }
 
-ExecutionWidget.has-content {
-    margin-top: 1;
-}
-
 ExecutionWidget .hidden {
     display: none;
 }
@@ -515,12 +515,11 @@ ExecutionWidget .copy-btn:hover {
 
 ExecutionWidget .exec-scroll {
     height: auto;
-    max-height: 15;
     margin: 0;
     padding: 1;
     background: $surface;
     color: $text;
-    scrollbar-size: 1 1;
+    overflow: hidden;
 }
 
 ExecutionWidget #exec-content {

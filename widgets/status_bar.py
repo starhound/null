@@ -17,7 +17,8 @@ class StatusBar(Static):
         yield Label("│", classes="status-sep")
         yield Label("", id="provider-indicator", classes="status-section")
         yield Label("", classes="spacer")
-        yield Label("", id="context-indicator", classes="status-section")
+        # Initialize with placeholder content to ensure visibility
+        yield Label("ctx: ~0 / 1k", id="context-indicator", classes="status-section context-low")
 
     def on_mount(self):
         """Initialize display."""
@@ -29,6 +30,9 @@ class StatusBar(Static):
         self._update_mode_display()
 
     def watch_context_chars(self, chars: int):
+        self._update_context_display()
+
+    def watch_context_limit(self, limit: int):
         self._update_context_display()
 
     def watch_provider_status(self, status: str):

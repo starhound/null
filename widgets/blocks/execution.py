@@ -1,5 +1,5 @@
 from textual.app import ComposeResult
-from textual.containers import Container, VerticalScroll
+from textual.containers import Container
 from textual.widgets import Static, Label
 from textual.reactive import reactive
 from textual.events import Click
@@ -31,7 +31,7 @@ class ExecutionWidget(Static):
                 yield Label("⚡", classes="exec-icon")
                 yield Label("Execution", classes="exec-title")
                 yield Static("copy", classes="copy-btn", id="copy-btn")
-            with VerticalScroll(classes="exec-scroll"):
+            with Container(classes="exec-scroll"):
                 yield Static(id="exec-content")
 
     def watch_exec_output(self, new_text: str):
