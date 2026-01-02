@@ -64,6 +64,7 @@ class CommandSuggester(Static):
         "/prompts": {"desc": "Select System Persona", "args": ["default", "pirate", "concise", "agent"]},
         "/export": {"desc": "Export conversation", "args": ["md", "json"]},
         "/session": {"desc": "Manage sessions", "args": ["save", "load", "list", "new"]},
+        "/mcp": {"desc": "Manage MCP servers", "args": ["list", "tools", "add", "edit", "remove", "enable", "disable", "reconnect"]},
         "/status": {"desc": "Show current status", "args": []},
         "/clear": {"desc": "Clear history", "args": []},
         "/quit": {"desc": "Exit application", "args": []}

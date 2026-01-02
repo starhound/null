@@ -1,7 +1,6 @@
 from textual.app import ComposeResult
-from textual.widgets import Static, Label, Button
+from textual.widgets import Static, Label
 from textual.reactive import reactive
-from textual import on
 
 from models import BlockState, BlockType
 
@@ -152,26 +151,14 @@ class BlockMeta(Static):
     }
 
     .meta-action {
-        min-width: 8;
         width: auto;
         height: 1;
-        border: none;
-        padding: 0 1;
-        margin: 0;
-        background: $surface;
-        color: $text-muted;
-        text-style: none;
+        margin-left: 1;
+        color: #888888;
     }
 
     .meta-action:hover {
-        background: $primary;
-        color: $text;
-        text-style: bold;
-    }
-
-    .meta-action:focus {
-        background: $primary;
-        color: $text;
+        color: #61afef;
     }
     """
 
@@ -214,10 +201,11 @@ class BlockMeta(Static):
         # Spacer to push actions to right
         yield Label("", classes="meta-spacer")
 
-        # Action buttons for AI responses
+        # Action labels for AI responses
         if self.block.type == BlockType.AI_RESPONSE and not self.block.is_running:
-            yield Button("[edit]", id="edit-btn", classes="meta-action")
-            yield Button("[retry]", id="retry-btn", classes="meta-action")
+            from rich.text import Text
+            yield Static(Text("[edit]", style="dim italic"), id="edit-btn", classes="meta-action")
+            yield Static(Text("[retry]", style="dim italic"), id="retry-btn", classes="meta-action")
 
 
 class BlockBody(Static):
@@ -229,16 +217,21 @@ class BlockBody(Static):
         color: $text;
         min-height: 1;
     }
+
+    #body-content {
+        width: 100%;
+    }
     """
 
     content_text = reactive("")
 
     def __init__(self, text: str = ""):
         super().__init__()
-        self.content_text = text
+        self._initial_text = text or ""
+        self.content_text = self._initial_text
 
     def compose(self) -> ComposeResult:
-        yield Static(id="body-content")
+        yield Static(self._initial_text, id="body-content")
 
     def watch_content_text(self, new_text: str):
         try:

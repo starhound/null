@@ -1,7 +1,8 @@
 from textual.app import ComposeResult
 from textual.containers import Container, VerticalScroll
-from textual.widgets import Static, Label, Button
+from textual.widgets import Static, Label
 from textual.reactive import reactive
+from textual.events import Click
 from textual import on
 
 try:
@@ -54,18 +55,14 @@ class ExecutionWidget(Static):
     }
 
     .copy-btn {
-        min-width: 6;
+        width: auto;
         height: 1;
-        border: none;
-        padding: 0;
         background: transparent;
-        color: $text-muted;
-        text-style: dim;
+        color: #888888;
     }
 
     .copy-btn:hover {
-        color: $primary;
-        text-style: bold;
+        color: #61afef;
     }
 
     /* Output content area */
@@ -99,7 +96,8 @@ class ExecutionWidget(Static):
             with Static(classes="exec-header"):
                 yield Label("⚡", classes="exec-icon")
                 yield Label("Command Output", classes="exec-title")
-                yield Button("[copy]", classes="copy-btn", id="copy-btn")
+                from rich.text import Text
+                yield Static(Text("[copy]", style="dim"), classes="copy-btn", id="copy-btn")
             with VerticalScroll(classes="exec-scroll"):
                 yield Static(id="exec-content")
 
@@ -118,8 +116,8 @@ class ExecutionWidget(Static):
         except Exception:
             pass
 
-    @on(Button.Pressed, "#copy-btn")
-    def copy_output(self):
+    @on(Click, "#copy-btn")
+    def copy_output(self, event: Click):
         text = getattr(self.block, 'content_exec_output', '') or ''
         if not text:
             self.notify("Nothing to copy", severity="warning")

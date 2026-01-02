@@ -1,6 +1,7 @@
 from textual.app import ComposeResult
-from textual.widgets import Static, Button
+from textual.widgets import Static, Label
 from textual.message import Message
+from textual.events import Click
 from textual import on
 
 from models import BlockState, BlockType
@@ -88,10 +89,14 @@ class BlockWidget(Static):
             self.thinking_widget = ThinkingWidget(block)
             self.exec_widget = ExecutionWidget(block)
         else:
-            text = block.content_input if block.type == BlockType.AI_QUERY else block.content_output
-            if block.type == BlockType.COMMAND:
+            # Determine body content based on block type
+            if block.type == BlockType.AI_QUERY:
+                text = block.content_input
+            elif block.type in (BlockType.COMMAND, BlockType.SYSTEM_MSG):
                 text = block.content_output
-            self.body_widget = BlockBody(text)
+            else:
+                text = block.content_output or block.content_input
+            self.body_widget = BlockBody(text or "")
 
     def compose(self) -> ComposeResult:
         yield self.header
@@ -157,14 +162,14 @@ class BlockWidget(Static):
         self.block.exit_code = code
         self.set_loading(False)
 
-    @on(Button.Pressed, "#retry-btn")
-    def on_retry_pressed(self, event: Button.Pressed):
-        """Handle retry button click."""
+    @on(Click, "#retry-btn")
+    def on_retry_clicked(self, event: Click):
+        """Handle retry label click."""
         event.stop()
         self.post_message(self.RetryRequested(self.block.id))
 
-    @on(Button.Pressed, "#edit-btn")
-    def on_edit_pressed(self, event: Button.Pressed):
-        """Handle edit button click."""
+    @on(Click, "#edit-btn")
+    def on_edit_clicked(self, event: Click):
+        """Handle edit label click."""
         event.stop()
         self.post_message(self.EditRequested(self.block.id, self.block.content_input))

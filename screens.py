@@ -309,3 +309,172 @@ class ProviderConfigScreen(ModalScreen):
 
     def action_dismiss(self):
         self.dismiss(None)
+
+
+class MCPServerConfigScreen(ModalScreen):
+    """Screen to add/edit an MCP server configuration."""
+
+    DEFAULT_CSS = """
+    MCPServerConfigScreen {
+        align: center middle;
+        background: $background 80%;
+    }
+
+    #mcp-config-container {
+        width: 60%;
+        min-width: 50;
+        height: auto;
+        background: $surface;
+        border: round $primary;
+        padding: 1 2;
+        layout: vertical;
+    }
+
+    #mcp-config-container > Label:first-child {
+        margin-bottom: 1;
+        text-style: bold;
+        color: $primary;
+    }
+
+    .input-label {
+        margin-top: 1;
+        margin-bottom: 0;
+        color: $text-muted;
+    }
+
+    .input-hint {
+        color: $text-muted;
+        text-style: italic dim;
+        margin-bottom: 0;
+    }
+
+    Input {
+        margin-bottom: 0;
+    }
+
+    #buttons {
+        layout: horizontal;
+        align: center middle;
+        margin-top: 2;
+        height: 1;
+        width: 100%;
+    }
+
+    #save {
+        width: 1fr;
+        height: 1;
+        border: none;
+        background: $success;
+        color: $text;
+        margin-right: 1;
+    }
+
+    #save:hover {
+        background: $success-lighten-1;
+    }
+
+    #cancel {
+        width: 1fr;
+        height: 1;
+        border: none;
+        background: $surface-lighten-2;
+        color: $text-muted;
+    }
+
+    #cancel:hover {
+        background: $error;
+        color: $text;
+    }
+    """
+
+    BINDINGS = [Binding("escape", "dismiss", "Close")]
+
+    def __init__(self, name: str = "", current_config: dict = None):
+        super().__init__()
+        self.server_name = name
+        self.current_config = current_config or {}
+        self.is_edit = bool(name)
+
+    def compose(self) -> ComposeResult:
+        with Container(id="mcp-config-container"):
+            title = f"Edit MCP Server: {self.server_name}" if self.is_edit else "Add MCP Server"
+            yield Label(title)
+
+            yield Label("Server Name", classes="input-label")
+            yield Input(
+                placeholder="e.g., filesystem, github, sqlite",
+                id="name",
+                value=self.server_name,
+                disabled=self.is_edit
+            )
+
+            yield Label("Command", classes="input-label")
+            yield Label("The executable to run (e.g., npx, python, node)", classes="input-hint")
+            yield Input(
+                placeholder="npx",
+                id="command",
+                value=self.current_config.get("command", "")
+            )
+
+            yield Label("Arguments", classes="input-label")
+            yield Label("Space-separated arguments for the command", classes="input-hint")
+            args = self.current_config.get("args", [])
+            args_str = " ".join(args) if isinstance(args, list) else str(args)
+            yield Input(
+                placeholder="-y @modelcontextprotocol/server-filesystem /path",
+                id="args",
+                value=args_str
+            )
+
+            yield Label("Environment Variables", classes="input-label")
+            yield Label("KEY=value pairs, space-separated", classes="input-hint")
+            env = self.current_config.get("env", {})
+            env_str = " ".join(f"{k}={v}" for k, v in env.items()) if isinstance(env, dict) else ""
+            yield Input(
+                placeholder="GITHUB_TOKEN=xxx API_KEY=yyy",
+                id="env",
+                value=env_str
+            )
+
+            with Container(id="buttons"):
+                yield Button("Save", variant="default", id="save")
+                yield Button("Cancel", variant="default", id="cancel")
+
+    def on_button_pressed(self, event: Button.Pressed):
+        if event.button.id == "save":
+            # Collect and validate values
+            name = self.query_one("#name", Input).value.strip()
+            command = self.query_one("#command", Input).value.strip()
+            args_str = self.query_one("#args", Input).value.strip()
+            env_str = self.query_one("#env", Input).value.strip()
+
+            if not name:
+                self.notify("Server name is required", severity="error")
+                return
+            if not command:
+                self.notify("Command is required", severity="error")
+                return
+
+            # Parse args
+            args = args_str.split() if args_str else []
+
+            # Parse env
+            env = {}
+            if env_str:
+                for pair in env_str.split():
+                    if "=" in pair:
+                        key, value = pair.split("=", 1)
+                        env[key] = value
+
+            result = {
+                "name": name,
+                "command": command,
+                "args": args,
+                "env": env
+            }
+            self.dismiss(result)
+        else:
+            self.dismiss(None)
+
+    def action_dismiss(self):
+        self.dismiss(None)

@@ -9,6 +9,7 @@ from config import Config
 from models import BlockState, BlockType
 from widgets import InputController, HistoryViewport, BlockWidget, CommandSuggester, StatusBar, HistorySearch
 from executor import ExecutionEngine
+from mcp import MCPManager
 
 from ai.factory import AIFactory
 from screens import HelpScreen, ModelListScreen
@@ -296,6 +297,8 @@ class NullApp(App):
         except Exception as e:
             # Fallback/Log, potentially notify user later
             self.ai_provider = None
+        # MCP Manager
+        self.mcp_manager = MCPManager()
 
     def compose(self) -> ComposeResult:
         # Suggester layer at Screen level to avoid clipping (overlay)
@@ -392,7 +395,8 @@ class NullApp(App):
 
         # Handle pwd command
         if cmd_stripped == "pwd":
-            await self._show_system_output("pwd", str(Path.cwd()))
+            cwd_str = str(Path.cwd())
+            await self._show_system_output("pwd", cwd_str)
             return True
 
         return False
@@ -418,6 +422,32 @@ class NullApp(App):
         self.set_interval(30, self._check_provider_health)
         # Also check immediately
         self.call_later(self._check_provider_health)
+
+        # Initialize MCP servers
+        self.run_worker(self._init_mcp())
+
+    async def _init_mcp(self):
+        """Initialize MCP server connections."""
+        try:
+            await self.mcp_manager.initialize()
+            tools = self.mcp_manager.get_all_tools()
+            if tools:
+                self.notify(f"MCP: Connected with {len(tools)} tools available")
+        except Exception as e:
+            # MCP is optional, don't fail startup
+            pass
+
+    async def _connect_new_mcp_server(self, name: str):
+        """Connect to a newly added MCP server."""
+        try:
+            if await self.mcp_manager.connect_server(name):
+                client = self.mcp_manager.clients.get(name)
+                if client:
+                    self.notify(f"Connected to {name} ({len(client.tools)} tools)")
+            else:
+                self.notify(f"Failed to connect to {name}", severity="warning")
+        except Exception as e:
+            self.notify(f"Error connecting to {name}: {e}", severity="error")
 
     def _auto_save(self):
         """Auto-save current session (debounced)."""
@@ -809,6 +839,130 @@ class NullApp(App):
                 f"  Context:       ~{context_tokens} tokens ({context_chars} chars)",
             ]
             await self._show_system_output("/status", "\n".join(lines))
+
+        elif command == "mcp":
+            # MCP server management: /mcp [list|add|remove|enable|disable|reconnect|tools]
+            if not args:
+                # Show status by default
+                args = ["list"]
+
+            subcommand = args[0]
+
+            if subcommand == "list":
+                status = self.mcp_manager.get_status()
+                if not status:
+                    self.notify("No MCP servers configured. Edit ~/.null/mcp.json", severity="warning")
+                    return
+
+                lines = []
+                for name, info in status.items():
+                    state = "connected" if info["connected"] else ("disabled" if not info["enabled"] else "disconnected")
+                    tools = info["tools"]
+                    lines.append(f"  {name:20} {state:12} {tools} tools")
+                await self._show_system_output("/mcp list", "\n".join(lines))
+
+            elif subcommand == "tools":
+                tools = self.mcp_manager.get_all_tools()
+                if not tools:
+                    self.notify("No MCP tools available", severity="warning")
+                    return
+
+                lines = []
+                for tool in tools:
+                    desc = tool.description[:40] + "..." if len(tool.description) > 40 else tool.description
+                    lines.append(f"  {tool.name:25} {tool.server_name:15} {desc}")
+                await self._show_system_output("/mcp tools", "\n".join(lines))
+
+            elif subcommand == "add":
+                # Show add server form
+                from screens import MCPServerConfigScreen
+
+                def on_server_added(result):
+                    if result:
+                        name = result["name"]
+                        self.mcp_manager.add_server(
+                            name,
+                            result["command"],
+                            result["args"],
+                            result["env"]
+                        )
+                        self.notify(f"Added MCP server: {name}")
+                        # Try to connect
+                        self.run_worker(self._connect_new_mcp_server(name))
+
+                self.push_screen(MCPServerConfigScreen(), on_server_added)
+
+            elif subcommand == "edit" and len(args) >= 2:
+                # Edit existing server
+                name = args[1]
+                if name not in self.mcp_manager.config.servers:
+                    self.notify(f"Server not found: {name}", severity="error")
+                    return
+
+                from screens import MCPServerConfigScreen
+                server = self.mcp_manager.config.servers[name]
+                current = {
+                    "command": server.command,
+                    "args": server.args,
+                    "env": server.env
+                }
+
+                def on_server_edited(result):
+                    if result:
+                        # Update server config
+                        server.command = result["command"]
+                        server.args = result["args"]
+                        server.env = result["env"]
+                        self.mcp_manager.config.save()
+                        self.notify(f"Updated MCP server: {name}")
+                        # Reconnect
+                        self.run_worker(self.mcp_manager.reconnect_server(name))
+
+                self.push_screen(MCPServerConfigScreen(name, current), on_server_edited)
+
+            elif subcommand == "remove" and len(args) >= 2:
+                name = args[1]
+                if self.mcp_manager.remove_server(name):
+                    self.notify(f"Removed MCP server: {name}")
+                else:
+                    self.notify(f"Server not found: {name}", severity="error")
+
+            elif subcommand == "enable" and len(args) >= 2:
+                name = args[1]
+                if name in self.mcp_manager.config.servers:
+                    self.mcp_manager.config.servers[name].enabled = True
+                    self.mcp_manager.config.save()
+                    await self.mcp_manager.connect_server(name)
+                    self.notify(f"Enabled MCP server: {name}")
+                else:
+                    self.notify(f"Server not found: {name}", severity="error")
+
+            elif subcommand == "disable" and len(args) >= 2:
+                name = args[1]
+                if name in self.mcp_manager.config.servers:
+                    self.mcp_manager.config.servers[name].enabled = False
+                    self.mcp_manager.config.save()
+                    await self.mcp_manager.disconnect_server(name)
+                    self.notify(f"Disabled MCP server: {name}")
+                else:
+                    self.notify(f"Server not found: {name}", severity="error")
+
+            elif subcommand == "reconnect":
+                if len(args) >= 2:
+                    name = args[1]
+                    if await self.mcp_manager.reconnect_server(name):
+                        self.notify(f"Reconnected: {name}")
+                    else:
+                        self.notify(f"Failed to reconnect: {name}", severity="error")
+                else:
+                    # Reconnect all
+                    await self.mcp_manager.disconnect_all()
+                    await self.mcp_manager.initialize()
+                    tools = self.mcp_manager.get_all_tools()
+                    self.notify(f"Reconnected all servers ({len(tools)} tools)")
+
+            else:
+                self.notify("Usage: /mcp [list|tools|add|edit|remove|enable|disable|reconnect]", severity="warning")
 
         elif command == "quit" or command == "exit":
             self.exit()
