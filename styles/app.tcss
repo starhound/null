@@ -111,9 +111,10 @@ CommandSuggester ListItem:hover {
     color: $text;
 }
 
-CommandSuggester ListView > ListItem.-highlight {
-    background: $surface;
-    color: $primary;
+CommandSuggester ListView > ListItem.--highlight {
+    background: $primary;
+    color: $text;
+    text-style: bold;
 }
 
 /* ==========================================================================

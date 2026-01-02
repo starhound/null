@@ -16,22 +16,29 @@ class CommandSuggester(Static):
 
     can_focus = False
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._selected_index = 0
+
     def on_click(self, event: Click) -> None:
         """Handle clicks on suggester items."""
         # Find if we clicked on a CommandItem
-        for widget in self.query(CommandItem):
+        for i, widget in enumerate(self.query(CommandItem)):
             if widget.region.contains(event.x, event.y):
-                # Select this item
-                lv = self.query_one(ListView)
-                try:
-                    idx = list(lv.children).index(widget)
-                    lv.index = idx
-                    # Trigger selection in input
-                    self._apply_selection()
-                except (ValueError, IndexError):
-                    pass
+                self._selected_index = i
+                self._update_highlight()
+                self._apply_selection()
                 event.stop()
                 return
+
+    def _update_highlight(self):
+        """Update visual highlight on selected item."""
+        items = list(self.query(CommandItem))
+        for i, item in enumerate(items):
+            if i == self._selected_index:
+                item.add_class("--highlight")
+            else:
+                item.remove_class("--highlight")
 
     def _apply_selection(self):
         """Apply the current selection to the input."""
@@ -49,23 +56,30 @@ class CommandSuggester(Static):
         except Exception:
             pass
 
-    commands_data = {
-        "/help": {"desc": "Show help screen", "args": []},
-        "/config": {"desc": "Open settings", "args": []},
-        "/provider": {"desc": "Select AI provider", "args": ["ollama", "openai", "lm_studio", "azure", "bedrock", "xai"]},
-        "/model": {"desc": "Select AI model", "args": []},
-        "/theme": {"desc": "Change UI theme", "args": ["null-dark", "null-warm", "null-mono", "null-light", "dracula", "nord", "monokai"]},
-        "/ai": {"desc": "Toggle AI Mode", "args": []},
-        "/chat": {"desc": "Toggle AI Mode", "args": []},
-        "/prompts": {"desc": "Manage system prompts", "args": ["list", "reload", "show", "dir"]},
-        "/export": {"desc": "Export conversation", "args": ["md", "json"]},
-        "/session": {"desc": "Manage sessions", "args": ["save", "load", "list", "new"]},
-        "/mcp": {"desc": "Manage MCP servers", "args": ["list", "tools", "add", "edit", "remove", "enable", "disable", "reconnect"]},
-        "/status": {"desc": "Show current status", "args": []},
-        "/clear": {"desc": "Clear history", "args": []},
-        "/compact": {"desc": "Summarize context", "args": []},
-        "/quit": {"desc": "Exit application", "args": []}
-    }
+    @property
+    def commands_data(self):
+        """Command definitions with dynamic provider list."""
+        from ai.factory import AIFactory
+        providers = AIFactory.list_providers()
+
+        return {
+            "/help": {"desc": "Show help screen", "args": []},
+            "/config": {"desc": "Open settings", "args": []},
+            "/settings": {"desc": "Open settings", "args": []},
+            "/provider": {"desc": "Select AI provider", "args": providers},
+            "/model": {"desc": "Select AI model", "args": []},
+            "/theme": {"desc": "Change UI theme", "args": ["null-dark", "null-warm", "null-mono", "null-light", "dracula", "nord", "monokai"]},
+            "/ai": {"desc": "Toggle AI Mode", "args": []},
+            "/chat": {"desc": "Toggle AI Mode", "args": []},
+            "/prompts": {"desc": "Manage system prompts", "args": ["list", "reload", "show", "dir"]},
+            "/export": {"desc": "Export conversation", "args": ["md", "json"]},
+            "/session": {"desc": "Manage sessions", "args": ["save", "load", "list", "new"]},
+            "/mcp": {"desc": "Manage MCP servers", "args": ["list", "tools", "add", "edit", "remove", "enable", "disable", "reconnect"]},
+            "/status": {"desc": "Show current status", "args": []},
+            "/clear": {"desc": "Clear history", "args": []},
+            "/compact": {"desc": "Summarize context", "args": []},
+            "/quit": {"desc": "Exit application", "args": []}
+        }
 
     def compose(self) -> ComposeResult:
         lv = ListView(id="suggestions")
@@ -103,24 +117,30 @@ class CommandSuggester(Static):
             return
 
         self.display = True
+        self._selected_index = 0
 
         for text_val, desc in candidates:
             label_str = f"{text_val:<15} {desc}" if desc else text_val
             lv.append(CommandItem(label_str, text_val))
 
-        if len(lv.children) > 0:
-            lv.index = 0
+        self._update_highlight()
 
     def select_next(self):
-        self.query_one(ListView).action_cursor_down()
+        """Move selection down."""
+        items = list(self.query(CommandItem))
+        if items and self._selected_index < len(items) - 1:
+            self._selected_index += 1
+            self._update_highlight()
 
     def select_prev(self):
-        self.query_one(ListView).action_cursor_up()
+        """Move selection up."""
+        if self._selected_index > 0:
+            self._selected_index -= 1
+            self._update_highlight()
 
     def get_selected(self) -> str:
-        lv = self.query_one(ListView)
-        if lv.index is not None and 0 <= lv.index < len(lv.children):
-            item = lv.children[lv.index]
-            if isinstance(item, CommandItem):
-                return item.value
+        """Get the currently selected command value."""
+        items = list(self.query(CommandItem))
+        if items and 0 <= self._selected_index < len(items):
+            return items[self._selected_index].value
         return ""

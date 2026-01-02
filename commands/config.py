@@ -22,9 +22,15 @@ class ConfigCommands(CommandMixin):
 
         def on_settings_saved(result):
             if result:
+                # Apply theme
                 new_theme = result.appearance.theme
                 if new_theme and new_theme in self.app.available_themes:
                     self.app.theme = new_theme
+                    # Also save to SQLite config for persistence
+                    Config.set("theme", new_theme)
+
+                # Sync AI provider to SQLite config
+                Config.set("ai.provider", result.ai.provider)
 
                 self.notify("Settings saved")
                 self.app._update_status_bar()

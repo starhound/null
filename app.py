@@ -312,7 +312,7 @@ class NullApp(App):
     def action_clear_history(self):
         """Clear history and context."""
         async def do_clear():
-            await self.command_handler.cmd_clear([])
+            await self.command_handler.handle("/clear")
         self.run_worker(do_clear())
 
     # -------------------------------------------------------------------------

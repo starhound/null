@@ -18,7 +18,7 @@ class Config:
         sm = Config._get_storage()
         provider = sm.get_config("ai.provider", "ollama")
         return {
-            "theme": sm.get_config("theme", "monokai"),
+            "theme": sm.get_config("theme", "null-dark"),
             "shell": sm.get_config("shell", os.environ.get("SHELL", "bash")),
             "ai": {
                 "provider": provider,
