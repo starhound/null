@@ -8,13 +8,16 @@
 
 Screen {
     layout: vertical;
+    padding: 0;
+    margin: 0;
 }
 
 HistoryViewport {
     height: 1fr;
-    padding: 1;
+    padding: 0 1;
+    margin: 0;
     background: $background;
-    scrollbar-gutter: stable;
+    scrollbar-size: 1 1;
     min-height: 10;
     overflow-y: auto;
 }
@@ -427,19 +430,19 @@ ThinkingWidget .toggle-hint:hover {
 }
 
 ThinkingWidget .peek-window {
-    height: 8;
-    max-height: 8;
+    height: 4;
+    max-height: 4;
     margin: 0;
     padding: 0;
     background: transparent;
     color: $text;
-    scrollbar-size: 1 1;
+    scrollbar-size: 0 0;
 }
 
 ThinkingWidget .peek-window.expanded {
     height: auto;
-    min-height: 4;
-    max-height: 40;
+    max-height: 100%;
+    scrollbar-size: 0 0;
 }
 
 ThinkingWidget .peek-content {
@@ -448,14 +451,9 @@ ThinkingWidget .peek-content {
 }
 
 ThinkingWidget .peek-window.empty {
-    height: 1;
-    max-height: 1;
-}
-
-ThinkingWidget .empty-hint {
-    color: $text-muted;
-    text-style: dim italic;
-    padding: 0;
+    height: 0;
+    max-height: 0;
+    display: none;
 }
 
 /* ==========================================================================

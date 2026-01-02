@@ -37,7 +37,6 @@ class ThinkingWidget(Static):
             yield Label("expand", classes="toggle-hint", id="toggle-hint")
 
         with VerticalScroll(classes="peek-window empty", id="peek-window"):
-            yield Label("", classes="empty-hint", id="empty-hint")
             yield Static("", classes="peek-content", id="peek-content")
 
     def on_mount(self):
@@ -120,11 +119,10 @@ class ThinkingWidget(Static):
 
             if expanded:
                 peek.add_class("expanded")
-                hint.update("click to collapse")
+                hint.update("collapse")
             else:
                 peek.remove_class("expanded")
-                hint.update("click to expand")
-                # Scroll to bottom when collapsing
+                hint.update("expand")
                 peek.scroll_end(animate=False)
         except Exception:
             pass
@@ -133,13 +131,11 @@ class ThinkingWidget(Static):
         """Update the peek window with new content."""
         try:
             peek = self.query_one("#peek-window", VerticalScroll)
-            empty_hint = self.query_one("#empty-hint", Label)
 
             # Remove empty state when we have content
             if new_text:
                 if "empty" in peek.classes:
                     peek.remove_class("empty")
-                    empty_hint.display = False
 
             # Throttle rendering for performance
             current_len = len(new_text)
@@ -152,7 +148,7 @@ class ThinkingWidget(Static):
             from rich.markdown import Markdown
             content.update(Markdown(new_text, code_theme="monokai"))
 
-            # Auto-scroll to bottom in peek mode
+            # Auto-scroll to bottom to follow content
             if not self.is_expanded:
                 peek.scroll_end(animate=False)
         except Exception:
