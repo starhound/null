@@ -152,18 +152,26 @@ class BlockMeta(Static):
     }
 
     .meta-action {
-        min-width: 3;
+        min-width: 8;
+        width: auto;
         height: 1;
         border: none;
-        padding: 0;
-        margin: 0 1;
-        background: transparent;
+        padding: 0 1;
+        margin: 0;
+        background: $surface;
         color: $text-muted;
+        text-style: none;
     }
 
     .meta-action:hover {
-        color: $primary;
+        background: $primary;
+        color: $text;
         text-style: bold;
+    }
+
+    .meta-action:focus {
+        background: $primary;
+        color: $text;
     }
     """
 
