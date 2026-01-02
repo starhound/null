@@ -213,11 +213,30 @@ class NullApp(App):
     def action_cancel_operation(self):
         """Cancel any running operation."""
         cancelled = False
-
-        # Stop all running CLI processes
-        stopped_count = self.process_manager.stop_all()
-        if stopped_count > 0:
-            cancelled = True
+        
+        # Determine target process to stop
+        target_block_id = None
+        
+        # 1. Check if a specific block is focused
+        focused = self.screen.focused
+        if hasattr(focused, "block_id"): # TerminalBlock
+            target_block_id = focused.block_id
+        elif hasattr(focused, "block") and focused.block: # CommandBlock/BlockWidget
+            target_block_id = focused.block.id
+            
+        # 2. Fallback to current CLI session block
+        if not target_block_id and self.current_cli_block:
+            target_block_id = self.current_cli_block.id
+            
+        # Stop specific process if identified
+        if target_block_id and self.process_manager.is_running(target_block_id):
+            if self.process_manager.stop(target_block_id):
+                cancelled = True
+                
+        # Only stop all if we really assume that's what Ctrl+C means globally? 
+        # No, 'stop all' is dangerous. 
+        # If nothing stopped and we have active processes, maybe we should warn?
+        # For now, let's strictly stop only what's in context.
             
         # Reset CLI session
         if self.current_cli_widget:

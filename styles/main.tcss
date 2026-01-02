@@ -1710,3 +1710,24 @@ StatusBar .process-active {
 StatusBar .process-inactive {
     color: $text-muted;
 }
+
+/* TUI Mode Styles */
+CommandBlock.mode-tui {
+    border: double $success;
+    background: #000000;
+}
+
+CommandBlock.mode-tui:focus-within {
+    border: double $success;
+    background: #000000;
+}
+
+CommandBlock.mode-tui BlockHeader {
+    color: $success;
+    border-bottom: solid $success;
+}
+
+.prompt-symbol-tui {
+    color: $success;
+    text-style: bold;
+}

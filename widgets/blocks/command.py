@@ -43,6 +43,15 @@ class CommandBlock(BaseBlockWidget):
             return self._terminal_widget
 
         self._mode = "tui"
+        self.add_class("mode-tui")
+        
+        # Update header icon for TUI
+        try:
+             icon_lbl = self.header.query_one(".prompt-symbol", Label)
+             icon_lbl.update("█")
+             icon_lbl.add_class("prompt-symbol-tui")
+        except Exception:
+             pass
 
         # Hide line output widget
         self.body_widget.display = False
@@ -64,6 +73,15 @@ class CommandBlock(BaseBlockWidget):
             return
 
         self._mode = "line"
+        self.remove_class("mode-tui")
+        
+        # Revert header icon
+        try:
+             icon_lbl = self.header.query_one(".prompt-symbol", Label)
+             icon_lbl.update("❯")
+             icon_lbl.remove_class("prompt-symbol-tui")
+        except Exception:
+             pass
 
         # Remove terminal widget
         if self._terminal_widget:
