@@ -20,8 +20,52 @@ class AICommands(CommandMixin):
         self.app = app
 
     async def cmd_provider(self, args: list[str]):
-        """Switch AI provider."""
-        self.app.action_select_provider()
+        """Switch AI provider. Usage: /provider [provider_name]"""
+        if args:
+            # Direct provider configuration
+            provider_name = args[0].lower()
+            valid_providers = AIFactory.list_providers()
+
+            if provider_name not in valid_providers:
+                self.notify(f"Unknown provider: {provider_name}", severity="error")
+                self.notify(f"Available: {', '.join(valid_providers)}")
+                return
+
+            # Go directly to config screen for this provider
+            self._open_provider_config(provider_name)
+        else:
+            # Show provider selection
+            self.app.action_select_provider()
+
+    def _open_provider_config(self, provider_name: str):
+        """Open the config screen for a specific provider."""
+        from screens import ProviderConfigScreen
+
+        sm = Config._get_storage()
+        current_conf = {
+            "api_key": sm.get_config(f"ai.{provider_name}.api_key", ""),
+            "endpoint": sm.get_config(f"ai.{provider_name}.endpoint", ""),
+            "region": sm.get_config(f"ai.{provider_name}.region", ""),
+            "model": sm.get_config(f"ai.{provider_name}.model", ""),
+        }
+
+        def on_config_saved(result):
+            if result is not None:
+                for k, v in result.items():
+                    Config.set(f"ai.{provider_name}.{k}", v)
+
+                Config.set("ai.provider", provider_name)
+                self.notify(f"Provider switched to {provider_name}")
+
+                try:
+                    self.app.config = Config.load_all()
+                    self.app.ai_manager.get_provider(provider_name)
+                    self.app.ai_provider = self.app.ai_manager.get_provider(provider_name)
+                    self.app._update_status_bar()
+                except Exception as e:
+                    self.notify(f"Error initializing provider: {e}", severity="error")
+
+        self.app.push_screen(ProviderConfigScreen(provider_name, current_conf), on_config_saved)
 
     async def cmd_ai(self, args: list[str]):
         """Toggle AI mode."""

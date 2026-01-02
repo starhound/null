@@ -50,7 +50,17 @@ class SlashCommandHandler:
             "exit": (self._core.cmd_exit, CommandInfo("exit", "Exit application")),
 
             # AI commands
-            "provider": (self._ai.cmd_provider, CommandInfo("provider", "Select AI provider", "F4")),
+            "provider": (self._ai.cmd_provider, CommandInfo(
+                "provider", "Select AI provider", "F4",
+                subcommands=[
+                    ("ollama", "Configure Ollama (local)"),
+                    ("lm_studio", "Configure LM Studio (local)"),
+                    ("openai", "Configure OpenAI"),
+                    ("anthropic", "Configure Anthropic"),
+                    ("nvidia", "Configure NVIDIA NIM"),
+                    ("groq", "Configure Groq"),
+                ]
+            )),
             "model": (self._ai.cmd_model, CommandInfo("model", "Select AI model", "F2")),
             "prompts": (self._ai.cmd_prompts, CommandInfo("prompts", "Manage system prompts")),
             "ai": (self._ai.cmd_ai, CommandInfo("ai", "Toggle AI mode", "Ctrl+Space")),

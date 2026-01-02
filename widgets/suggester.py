@@ -44,6 +44,8 @@ class CommandSuggester(Static):
         for i, item in enumerate(items):
             if i == self._selected_index:
                 item.add_class("--highlight")
+                # Scroll the selected item into view
+                item.scroll_visible()
             else:
                 item.remove_class("--highlight")
 

@@ -1,7 +1,7 @@
 """Screen modules for the Null terminal."""
 
 from .help import HelpScreen
-from .selection import SelectionListScreen, ModelListScreen
+from .selection import SelectionListScreen, ModelListScreen, ThemeSelectionScreen
 from .provider import ProviderConfigScreen
 from .mcp import MCPServerConfigScreen
 from .config import ConfigScreen
@@ -12,6 +12,7 @@ __all__ = [
     "HelpScreen",
     "SelectionListScreen",
     "ModelListScreen",
+    "ThemeSelectionScreen",
     "ProviderConfigScreen",
     "MCPServerConfigScreen",
     "ConfigScreen",

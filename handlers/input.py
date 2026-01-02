@@ -143,6 +143,13 @@ class InputHandler:
             await self.app._show_system_output("pwd", cwd_str)
             return True
 
+        # Handle clear/cls/reset - these would mess up the TUI
+        if cmd_stripped in ("clear", "cls", "reset"):
+            self.app.current_cli_block = None
+            self.app.current_cli_widget = None
+            self.app.action_clear_history()
+            return True
+
         return False
 
     async def _handle_cd(self, cmd: str):

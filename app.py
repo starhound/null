@@ -318,8 +318,8 @@ class NullApp(App):
                 self.theme = selected_theme
                 self.notify(f"Theme set to {selected_theme}")
 
-        from screens import SelectionListScreen
-        self.push_screen(SelectionListScreen("Select Theme", themes), on_theme_select)
+        from screens import ThemeSelectionScreen
+        self.push_screen(ThemeSelectionScreen("Select Theme", themes), on_theme_select)
 
     def action_select_prompt(self):
         """Select a system prompt (persona)."""

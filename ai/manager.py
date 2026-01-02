@@ -1,6 +1,7 @@
 """AI Manager - handles multiple AI providers."""
 
-from typing import Dict, List, Optional, Any
+import asyncio
+from typing import Dict, List, Optional, Any, AsyncGenerator, Tuple
 from config import Config
 from .base import LLMProvider
 from .factory import AIFactory
@@ -24,8 +25,6 @@ class AIManager:
 
         # Try to initialize it
         try:
-            # Construct config for this provider
-            # The config structure is "ai.<provider>.key"
             provider_config = {
                 "provider": name,
                 "api_key": Config.get(f"ai.{name}.api_key"),
@@ -36,13 +35,11 @@ class AIManager:
                 "project_id": Config.get(f"ai.{name}.project_id"),
                 "location": Config.get(f"ai.{name}.location"),
             }
-            
+
             provider = AIFactory.get_provider(provider_config)
             self._providers[name] = provider
             return provider
-        except Exception as e:
-            # If initialization fails (e.g. missing API key), return None
-            # print(f"Failed to init {name}: {e}")
+        except Exception:
             return None
 
     def get_active_provider(self) -> Optional[LLMProvider]:
@@ -51,32 +48,21 @@ class AIManager:
         return self.get_provider(provider_name)
 
     def get_autocomplete_provider(self) -> Optional[LLMProvider]:
-        """Get the provider configured for autocomplete (or default to active)."""
-        # check specific override first
-        # override_provider = Config.get("ai.autocomplete.provider") # Todo in config
-        # For now, we will add this logic later when we do autocomplete config.
-        # Fallback to active for now or separate config
-        
-        # Check if there is an explicit provider set for autocomplete
+        """Get the provider configured for autocomplete."""
         ac_provider_name = Config.get("ai.autocomplete.provider")
         if ac_provider_name:
             return self.get_provider(ac_provider_name)
-            
         return self.get_active_provider()
 
     def list_available_providers(self) -> List[str]:
         """List connected/valid providers."""
         return list(self._providers.keys())
 
-    async def list_all_models(self) -> Dict[str, List[str]]:
-        """Fetch models from ALL configured providers."""
-        results = {}
-
-        # Get all known providers from factory
+    def get_usable_providers(self) -> List[str]:
+        """Get list of providers that have required config."""
+        usable = []
         all_types = AIFactory.list_providers()
 
-        # Check which ones have enough config to be usable
-        usable_providers = []
         for p_name in all_types:
             info = AIFactory.get_provider_info(p_name)
 
@@ -86,34 +72,106 @@ class AIManager:
                 if not key:
                     continue
 
-            # For local providers (ollama, lm_studio), always try them
-            # since they have sensible defaults
-            usable_providers.append(p_name)
+            usable.append(p_name)
 
-        # Initialize providers
-        for p_name in usable_providers:
-            try:
-                self.get_provider(p_name)
-            except Exception:
-                pass
+        # Always include active provider
+        active = Config.get("ai.provider")
+        if active and active not in usable:
+            usable.append(active)
 
-        # Also ensure the currently active provider is included
-        active_provider = Config.get("ai.provider")
-        if active_provider and active_provider not in self._providers:
-            try:
-                self.get_provider(active_provider)
-            except Exception:
-                pass
+        return usable
 
-        # Fetch models from all instantiated providers
-        for name, provider in self._providers.items():
-            try:
-                models = await provider.list_models()
-                if models:
-                    results[name] = models
-            except Exception:
-                # Provider failed to list models - skip it
-                pass
+    async def _fetch_models_for_provider(
+        self,
+        provider_name: str
+    ) -> Tuple[str, List[str], Optional[str]]:
+        """Fetch models for a single provider.
 
-        return results
+        Returns: (provider_name, models_list, error_message)
+        """
+        try:
+            # Get or create provider (cached after first call)
+            provider = self.get_provider(provider_name)
 
+            if not provider:
+                return (provider_name, [], "Failed to initialize")
+
+            # Fetch models with timeout
+            models = await asyncio.wait_for(
+                provider.list_models(),
+                timeout=10.0  # 10 second timeout per provider
+            )
+            return (provider_name, models or [], None)
+
+        except asyncio.TimeoutError:
+            return (provider_name, [], "Timeout")
+        except Exception as e:
+            error_msg = str(e)
+            if len(error_msg) > 50:
+                error_msg = error_msg[:50] + "..."
+            return (provider_name, [], error_msg)
+
+    async def list_all_models(self) -> Dict[str, List[str]]:
+        """Fetch models from ALL configured providers in parallel."""
+        usable_providers = self.get_usable_providers()
+
+        if not usable_providers:
+            return {}
+
+        # Fetch all providers in parallel
+        tasks = [
+            self._fetch_models_for_provider(p_name)
+            for p_name in usable_providers
+        ]
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Collect successful results
+        models_by_provider = {}
+        for result in results:
+            if isinstance(result, Exception):
+                continue
+            provider_name, models, error = result
+            if models:  # Only include providers with models
+                models_by_provider[provider_name] = models
+
+        return models_by_provider
+
+    async def list_all_models_streaming(
+        self
+    ) -> AsyncGenerator[Tuple[str, List[str], Optional[str], int, int], None]:
+        """Fetch models from providers, yielding results as they complete.
+
+        Yields: (provider_name, models, error, completed_count, total_count)
+        """
+        usable_providers = self.get_usable_providers()
+        total = len(usable_providers)
+
+        if total == 0:
+            return
+
+        # Create tasks
+        tasks = {
+            asyncio.create_task(self._fetch_models_for_provider(p_name)): p_name
+            for p_name in usable_providers
+        }
+
+        completed = 0
+        pending = set(tasks.keys())
+
+        while pending:
+            # Wait for at least one task to complete
+            done, pending = await asyncio.wait(
+                pending,
+                return_when=asyncio.FIRST_COMPLETED
+            )
+
+            for task in done:
+                completed += 1
+                try:
+                    provider_name, models, error = task.result()
+                    yield (provider_name, models, error, completed, total)
+                except Exception as e:
+                    # Task raised exception
+                    provider_name = tasks.get(task, "unknown")
+                    yield (provider_name, [], str(e), completed, total)

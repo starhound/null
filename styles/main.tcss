@@ -1,33 +1,37 @@
 /* ==========================================================================
-   Null Terminal - Centralized Styles (Premium Upgrade)
-   Variables & Theme Definitions
+   Null Terminal - Centralized Styles
+
+   NOTE: Base colors ($primary, $secondary, $background, $surface, $panel,
+   $success, $warning, $error, $accent, $foreground) are provided by Textual's
+   theme system. Change themes with F3 or /theme command.
+
+   Only custom/derived variables are defined here.
    ========================================================================== */
 
-/* 
-   Using a "Cyber-Noir" palette:
-   - Deep, semi-transparent backgrounds
-   - Vibrant neon accents (Cyan, Purple, Amber)
-   - Round borders for organic feel
-*/
+/* Text aliases - use theme's foreground */
+$text: $foreground;
+$text-muted: $foreground 60%;
+$text-dim: $foreground 40%;
 
-$background: #0f111a;
-$surface: rgba(26, 29, 45, 0.5);
-$panel: #23283d;
-$primary: #7aa2f7;      /* Neon Blue */
-$secondary: #bb9af7;    /* Neon Purple */
-$accent: #7dcfff;       /* Cyan */
-$success: #9ece6a;      /* Green */
-$warning: #e0af68;      /* Amber/Orange */
-$error: #f7768e;        /* Red */
-$text: #c0caf5;
-$text-muted: #565f89;
+/* Lighter surface variants (derived from theme) */
+$surface-light: $surface;
+$panel-light: $panel;
 /* ==========================================================================
    Layout
    ========================================================================== */
 
+/* Main app - fill entire terminal */
+NullApp {
+    width: 100%;
+    height: 100%;
+    background: $background;
+}
+
 /* Main app screen - not modal screens */
 NullApp > Screen {
     layout: vertical;
+    width: 100%;
+    height: 100%;
     padding: 0;
     margin: 0;
     background: $background;
@@ -57,15 +61,18 @@ HistoryViewport {
     height: auto;
     min-height: 4;
     padding: 0 1;
-    border-top: solid $surface;
+    background: $surface;
+    border-top: solid $panel;
 }
 
 #input-container:focus-within {
     border-top: solid $primary;
+    background: $surface-light;
 }
 
 #input-container.ai-mode:focus-within {
     border-top: solid $warning;
+    background: $surface-light;
 }
 
 #prompt-line {
@@ -149,7 +156,7 @@ CommandSuggester ListView > ListItem.--highlight {
 StatusBar {
     dock: bottom;
     height: 1;
-    background: $surface;
+    background: $panel;
     layout: horizontal;
     padding: 0 2;
     color: $text-muted;
@@ -225,7 +232,8 @@ ThinkingWidget {
     height: auto;
     min-height: 0;
     padding: 0;
-    margin: 0 0 0 2;
+    margin: 0;
+    background: $surface;
 }
 
 ThinkingWidget .thinking-header {
@@ -234,7 +242,7 @@ ThinkingWidget .thinking-header {
     width: 100%;
     padding: 0 1;
     margin-bottom: 0;
-    background: $primary 15%;
+    background: $secondary 25%;
     display: none;
 }
 
@@ -243,7 +251,7 @@ ThinkingWidget .thinking-header.loading {
 }
 
 ThinkingWidget .spinner {
-    color: $primary;
+    color: $secondary;
     min-width: 2;
 }
 
@@ -252,7 +260,7 @@ ThinkingWidget .spinner.complete {
 }
 
 ThinkingWidget .thinking-label {
-    color: $primary;
+    color: $secondary;
     text-style: italic;
     padding-left: 1;
     width: 1fr;
@@ -263,7 +271,7 @@ ThinkingWidget .toggle-hint {
 }
 
 ThinkingWidget .toggle-hint:hover {
-    color: $primary;
+    color: $secondary;
     text-style: bold;
 }
 
@@ -272,10 +280,10 @@ ThinkingWidget .peek-window {
     max-height: 4;
     margin: 0;
     padding: 0 1;
-    background: transparent;
-    color: $text;
+    background: $surface-light;
+    color: $text-muted;
     scrollbar-size: 0 0;
-    border-left: wide $surface;
+    border-left: wide $secondary 40%;
 }
 
 ThinkingWidget .peek-window.expanded {
@@ -302,8 +310,8 @@ ExecutionWidget {
     height: auto;
     min-height: 0;
     padding: 0;
-    margin: 1 0 0 2;
-    background: transparent;
+    margin: 1 0 0 0;
+    background: $surface;
 }
 
 ExecutionWidget .hidden {
@@ -321,7 +329,7 @@ ExecutionWidget .exec-header {
     width: 100%;
     padding: 0 1;
     margin-bottom: 0;
-    background: $warning 15%;
+    background: $warning 25%;
 }
 
 ExecutionWidget .exec-title {
@@ -350,7 +358,7 @@ ExecutionWidget .exec-scroll {
     height: auto;
     margin: 0;
     padding: 1;
-    background: $surface 50%;
+    background: $surface-light;
     color: $text;
     overflow: hidden;
 }
@@ -500,10 +508,10 @@ BaseBlockWidget {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: transparent;
+    background: $surface;
     color: $text;
-    margin: 0 0 1 0;
-    padding: 0 1;
+    margin: 1 0;
+    padding: 0;
 }
 
 /* --- Block Types --- */
@@ -512,36 +520,46 @@ CommandBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: transparent;
+    background: $success 10%;
     color: $text;
-    margin: 0 0 1 0;
-    padding: 0 1 0 1;
+    margin: 1 0;
+    padding: 0;
     border-left: wide $success;
 }
 
 CommandBlock BlockHeader {
-    background: $success 10%;
+    background: $success 25%;
     padding: 0 1;
+}
+
+CommandBlock BlockBody {
+    background: $surface;
+    border-left: solid $success 30%;
 }
 
 AIResponseBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: transparent;
+    background: $primary 10%;
     color: $text;
-    margin: 0 0 1 0;
-    padding: 0 1 0 1;
+    margin: 1 0;
+    padding: 0;
     border-left: wide $primary;
 }
 
 AIResponseBlock BlockHeader {
-    background: $primary 10%;
+    background: $primary 25%;
     padding: 0 1;
 }
 
+AIResponseBlock BlockBody {
+    background: $surface;
+    border-left: solid $primary 30%;
+}
+
 AIResponseBlock BlockMeta {
-    background: transparent;
+    background: $panel;
     padding: 0 1;
     margin: 0;
 }
@@ -550,37 +568,47 @@ SystemBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: transparent;
+    background: $secondary 10%;
     color: $text;
-    margin: 0 0 1 0;
-    padding: 0 1 0 1;
+    margin: 1 0;
+    padding: 0;
     border-left: wide $secondary;
 }
 
 SystemBlock BlockHeader {
-    background: $secondary 10%;
+    background: $secondary 25%;
     padding: 0 1;
+}
+
+SystemBlock BlockBody {
+    background: $surface;
+    border-left: solid $secondary 30%;
 }
 
 ToolCallBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: transparent;
+    background: $accent 10%;
     color: $text;
-    margin: 0 0 1 0;
-    padding: 0 1 0 1;
+    margin: 1 0;
+    padding: 0;
     border-left: wide $accent;
 }
 
 ToolCallBlock BlockHeader {
-    background: $accent 15%;
+    background: $accent 30%;
     padding: 0 1;
     color: $accent;
 }
 
+ToolCallBlock BlockBody {
+    background: $surface;
+    border-left: solid $accent 30%;
+}
+
 ToolCallBlock BlockMeta {
-    background: $accent 5%;
+    background: $panel;
     padding: 0 1;
     color: $text-muted;
 }
@@ -694,10 +722,10 @@ BlockMeta .meta-action:hover {
 BlockBody {
     height: auto;
     min-height: 0;
-    padding: 1 1;
-    margin-left: 2;
+    padding: 1 2;
+    margin-left: 0;
     color: $text;
-    border-left: wide $surface;
+    background: $surface;
 }
 
 BlockBody #body-content {
@@ -710,6 +738,7 @@ BlockFooter {
     height: auto;
     min-height: 0;
     padding: 0 2;
+    background: $surface;
     color: $text-muted;
 }
 
@@ -978,6 +1007,16 @@ ModelListScreen #loading-indicator {
     margin-bottom: 1;
 }
 
+ModelListScreen #loading-indicator.success {
+    color: $success;
+    text-style: bold;
+}
+
+ModelListScreen #loading-indicator.error {
+    color: $error;
+    text-style: bold;
+}
+
 ModelListScreen ListView {
     height: auto;
     max-height: 20;
@@ -1082,6 +1121,23 @@ ProviderConfigScreen #cancel {
 ProviderConfigScreen #cancel:hover {
     background: $error;
     color: $text;
+}
+
+ProviderConfigScreen #connection-status {
+    height: 1;
+    margin: 1 0;
+    color: $text-muted;
+    text-style: italic;
+}
+
+ProviderConfigScreen #connection-status.success {
+    color: $success;
+    text-style: bold;
+}
+
+ProviderConfigScreen #connection-status.error {
+    color: $error;
+    text-style: bold;
 }
 
 /* ==========================================================================
