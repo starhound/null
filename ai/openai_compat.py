@@ -1,6 +1,8 @@
-from typing import AsyncGenerator, List, Optional
+from typing import AsyncGenerator, List, Optional, Dict, Any
+import json
 import openai
-from .base import LLMProvider
+from .base import LLMProvider, Message, StreamChunk, ToolCallData
+
 
 class OpenAICompatibleProvider(LLMProvider):
     def __init__(self, api_key: str, base_url: str = None, model: str = "gpt-3.5-turbo"):
@@ -10,17 +12,48 @@ class OpenAICompatibleProvider(LLMProvider):
         )
         self.model = model
 
-    async def generate(self, prompt: str, context: str, system_prompt: Optional[str] = None) -> AsyncGenerator[str, None]:
+    def supports_tools(self) -> bool:
+        """OpenAI models support tool calling."""
+        return True
+
+    def _build_messages(
+        self,
+        prompt: str,
+        messages: List[Message],
+        system_prompt: Optional[str]
+    ) -> List[Dict[str, Any]]:
+        """Build the messages array for the API call."""
         if not system_prompt:
-             system_prompt = "You are a helpful AI assistant integrated into a terminal. You can answer questions or provide commands."
+            system_prompt = "You are a helpful AI assistant integrated into a terminal."
+
+        chat_messages = [{"role": "system", "content": system_prompt}]
+
+        for msg in messages:
+            msg_dict: Dict[str, Any] = {"role": msg["role"]}
+            if "content" in msg:
+                msg_dict["content"] = msg["content"]
+            if "tool_calls" in msg:
+                msg_dict["tool_calls"] = msg["tool_calls"]
+            if "tool_call_id" in msg:
+                msg_dict["tool_call_id"] = msg["tool_call_id"]
+            chat_messages.append(msg_dict)
+
+        chat_messages.append({"role": "user", "content": prompt})
+        return chat_messages
+
+    async def generate(
+        self,
+        prompt: str,
+        messages: List[Message],
+        system_prompt: Optional[str] = None
+    ) -> AsyncGenerator[str, None]:
+        """Generate response using OpenAI chat API with proper message format."""
+        chat_messages = self._build_messages(prompt, messages, system_prompt)
 
         try:
             stream = await self.client.chat.completions.create(
                 model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"{context}\n\nUser: {prompt}"}
-                ],
+                messages=chat_messages,
                 stream=True
             )
             async for chunk in stream:
@@ -28,6 +61,89 @@ class OpenAICompatibleProvider(LLMProvider):
                     yield chunk.choices[0].delta.content
         except Exception as e:
             yield f"Error: {str(e)}"
+
+    async def generate_with_tools(
+        self,
+        prompt: str,
+        messages: List[Message],
+        tools: List[Dict[str, Any]],
+        system_prompt: Optional[str] = None
+    ) -> AsyncGenerator[StreamChunk, None]:
+        """Generate response with tool calling support."""
+        chat_messages = self._build_messages(prompt, messages, system_prompt)
+
+        try:
+            # Prepare API call parameters
+            params = {
+                "model": self.model,
+                "messages": chat_messages,
+                "stream": True
+            }
+
+            # Only add tools if provided
+            if tools:
+                params["tools"] = tools
+                params["tool_choice"] = "auto"
+
+            stream = await self.client.chat.completions.create(**params)
+
+            # Track tool calls being built up across chunks
+            current_tool_calls: Dict[int, Dict[str, Any]] = {}
+            text_buffer = ""
+
+            async for chunk in stream:
+                if not chunk.choices:
+                    continue
+
+                delta = chunk.choices[0].delta
+
+                # Handle text content
+                if delta.content:
+                    text_buffer += delta.content
+                    yield StreamChunk(text=delta.content)
+
+                # Handle tool calls
+                if delta.tool_calls:
+                    for tc in delta.tool_calls:
+                        idx = tc.index
+                        if idx not in current_tool_calls:
+                            current_tool_calls[idx] = {
+                                "id": tc.id or "",
+                                "name": "",
+                                "arguments": ""
+                            }
+
+                        if tc.id:
+                            current_tool_calls[idx]["id"] = tc.id
+                        if tc.function:
+                            if tc.function.name:
+                                current_tool_calls[idx]["name"] = tc.function.name
+                            if tc.function.arguments:
+                                current_tool_calls[idx]["arguments"] += tc.function.arguments
+
+                # Check if this is the final chunk
+                if chunk.choices[0].finish_reason:
+                    tool_calls = []
+                    for tc_data in current_tool_calls.values():
+                        try:
+                            args = json.loads(tc_data["arguments"]) if tc_data["arguments"] else {}
+                        except json.JSONDecodeError:
+                            args = {}
+
+                        tool_calls.append(ToolCallData(
+                            id=tc_data["id"],
+                            name=tc_data["name"],
+                            arguments=args
+                        ))
+
+                    yield StreamChunk(
+                        text="",
+                        tool_calls=tool_calls,
+                        is_complete=True
+                    )
+
+        except Exception as e:
+            yield StreamChunk(text=f"Error: {str(e)}", is_complete=True)
 
     async def list_models(self) -> List[str]:
         try:

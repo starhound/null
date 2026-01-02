@@ -10,7 +10,7 @@ class StatusBar(Static):
     StatusBar {
         dock: bottom;
         height: 1;
-        background: $surface-darken-1;
+        background: $surface;
         layout: horizontal;
         padding: 0 1;
     }

@@ -1,12 +1,30 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import AsyncGenerator, List, Optional, TypedDict
+from dataclasses import dataclass, field
+from typing import AsyncGenerator, List, Optional, TypedDict, Any, Dict, Union
 
 
-class Message(TypedDict):
+class Message(TypedDict, total=False):
     """Chat message format."""
-    role: str  # "system", "user", or "assistant"
+    role: str  # "system", "user", "assistant", or "tool"
     content: str
+    tool_calls: List[Dict[str, Any]]  # For assistant messages with tool calls
+    tool_call_id: str  # For tool result messages
+
+
+@dataclass
+class ToolCallData:
+    """Represents a tool call from the LLM."""
+    id: str
+    name: str
+    arguments: Dict[str, Any]
+
+
+@dataclass
+class StreamChunk:
+    """A chunk from the streaming response."""
+    text: str = ""
+    tool_calls: List[ToolCallData] = field(default_factory=list)
+    is_complete: bool = False
 
 
 @dataclass
@@ -15,6 +33,7 @@ class ModelInfo:
     name: str
     max_tokens: int = 4096  # Default fallback
     context_window: int = 4096  # Default fallback
+    supports_tools: bool = True  # Whether model supports tool calling
 
 
 # Common model context sizes (approximate)
@@ -76,7 +95,7 @@ class LLMProvider(ABC):
         messages: List[Message],
         system_prompt: Optional[str] = None
     ) -> AsyncGenerator[str, None]:
-        """Stream response from the LLM.
+        """Stream text response from the LLM (legacy interface).
 
         Args:
             prompt: Current user prompt
@@ -84,6 +103,28 @@ class LLMProvider(ABC):
             system_prompt: System prompt (always separate from messages)
         """
         pass
+
+    async def generate_with_tools(
+        self,
+        prompt: str,
+        messages: List[Message],
+        tools: List[Dict[str, Any]],
+        system_prompt: Optional[str] = None
+    ) -> AsyncGenerator[StreamChunk, None]:
+        """Stream response with tool calling support.
+
+        Args:
+            prompt: Current user prompt
+            messages: Conversation history as message array
+            tools: Available tools in OpenAI format
+            system_prompt: System prompt (always separate from messages)
+
+        Yields:
+            StreamChunk with text and/or tool_calls
+        """
+        # Default implementation: fall back to regular generate (no tools)
+        async for text in self.generate(prompt, messages, system_prompt):
+            yield StreamChunk(text=text)
 
     @abstractmethod
     async def list_models(self) -> List[str]:
@@ -103,3 +144,7 @@ class LLMProvider(ABC):
             max_tokens=context_size,
             context_window=context_size
         )
+
+    def supports_tools(self) -> bool:
+        """Check if this provider supports tool calling."""
+        return False  # Override in subclasses that support tools
