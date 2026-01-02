@@ -183,42 +183,47 @@ class ModelListScreen(ModalScreen):
         """
         import asyncio
 
-        # Get reference to app's ai_manager
-        app = self.app
-        while hasattr(app, 'app') and app.app is not None:
-            app = app.app
-
-        if not hasattr(app, 'ai_manager'):
-            return {}, 0
-
-        manager = app.ai_manager
-
-        # Get usable providers (this does sync SQLite calls)
-        usable = manager.get_usable_providers()
-        if not usable:
-            return {}, 0
-
-        # Create a new event loop for this thread
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
         try:
-            # Run the async fetch in this thread's event loop
-            result = loop.run_until_complete(manager.list_all_models())
-            return result, len(usable)
-        finally:
-            loop.close()
+            # Get reference to app's ai_manager
+            if not hasattr(self.app, 'ai_manager'):
+                return {}, 0
+
+            manager = self.app.ai_manager
+
+            # Get usable providers (this does sync SQLite calls)
+            usable = manager.get_usable_providers()
+            if not usable:
+                return {}, 0
+
+            # Create a new event loop for this thread
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            try:
+                # Run the async fetch in this thread's event loop
+                result = loop.run_until_complete(manager.list_all_models())
+                return result, len(usable)
+            finally:
+                loop.close()
+
+        except Exception as e:
+            # Log error but don't crash
+            return {}, 0
 
     def on_worker_state_changed(self, event) -> None:
         """Handle worker completion - update UI with results."""
         from textual.worker import WorkerState
 
+        # Only handle model fetch workers (name contains our method name)
+        if "_fetch_models" not in str(event.worker.name):
+            return
+
         if event.state == WorkerState.SUCCESS:
             result = event.worker.result
-            if result:
+            if result and isinstance(result, tuple) and len(result) == 2:
                 self._models_by_provider, self._total_providers = result
 
-                if self._total_providers == 0:
+                if not self._models_by_provider:
                     self._stop_spinner()
                     self.is_loading = False
                     self._show_no_providers()
@@ -237,7 +242,11 @@ class ModelListScreen(ModalScreen):
         elif event.state == WorkerState.ERROR:
             self._stop_spinner()
             self.is_loading = False
-            self._show_error(str(event.worker.error))
+            self._show_error(str(event.worker.error) if event.worker.error else "Unknown error")
+
+        elif event.state == WorkerState.CANCELLED:
+            self._stop_spinner()
+            self.is_loading = False
 
     def _update_list(self):
         """Update the list view with current models."""

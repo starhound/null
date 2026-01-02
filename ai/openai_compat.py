@@ -1,14 +1,18 @@
 from typing import AsyncGenerator, List, Optional, Dict, Any
 import json
+import httpx
 import openai
 from .base import LLMProvider, Message, StreamChunk, ToolCallData, TokenUsage
 
 
 class OpenAICompatibleProvider(LLMProvider):
     def __init__(self, api_key: str, base_url: str = None, model: str = "gpt-3.5-turbo"):
+        # Short connect timeout (3s) to fail fast if server isn't available
+        # Longer read timeout (120s) for model generation
         self.client = openai.AsyncOpenAI(
             api_key=api_key,
-            base_url=base_url
+            base_url=base_url,
+            timeout=httpx.Timeout(120.0, connect=3.0)
         )
         self.model = model
 

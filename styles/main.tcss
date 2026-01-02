@@ -46,10 +46,14 @@ ModalScreen {
 
 HistoryViewport {
     height: 1fr;
-    padding: 0 1;
+    padding: 0;
     margin: 0;
     background: $background;
-    scrollbar-size: 1 1;
+    scrollbar-size-vertical: 1;
+    scrollbar-background: $background;
+    scrollbar-color: $text-dim;
+    scrollbar-color-hover: $text-muted;
+    scrollbar-color-active: $primary;
     min-height: 10;
     overflow-y: auto;
 }
@@ -59,7 +63,7 @@ HistoryViewport {
 
 #input-container {
     height: auto;
-    min-height: 4;
+    min-height: 3;
     padding: 0 1;
     background: $surface;
     border-top: solid $panel;
@@ -89,10 +93,10 @@ HistoryViewport {
 InputController {
     width: 100%;
     height: auto;
-    min-height: 3;
+    min-height: 1;
     max-height: 8;
     border: none;
-    padding: 0 1;
+    padding: 0;
     background: transparent;
     color: $text;
 }
@@ -510,7 +514,7 @@ BaseBlockWidget {
     min-height: 0;
     background: $surface;
     color: $text;
-    margin: 1 0;
+    margin: 1 1;
     padding: 0;
 }
 
@@ -522,7 +526,7 @@ CommandBlock {
     min-height: 0;
     background: $success 10%;
     color: $text;
-    margin: 1 0;
+    margin: 1 1;
     padding: 0;
     border-left: wide $success;
 }
@@ -543,7 +547,7 @@ AIResponseBlock {
     min-height: 0;
     background: $primary 10%;
     color: $text;
-    margin: 1 0;
+    margin: 1 1;
     padding: 0;
     border-left: wide $primary;
 }
@@ -570,7 +574,7 @@ SystemBlock {
     min-height: 0;
     background: $secondary 10%;
     color: $text;
-    margin: 1 0;
+    margin: 1 1;
     padding: 0;
     border-left: wide $secondary;
 }
@@ -591,7 +595,7 @@ ToolCallBlock {
     min-height: 0;
     background: $accent 10%;
     color: $text;
-    margin: 1 0;
+    margin: 1 1;
     padding: 0;
     border-left: wide $accent;
 }
@@ -1138,6 +1142,138 @@ ProviderConfigScreen #connection-status.success {
 ProviderConfigScreen #connection-status.error {
     color: $error;
     text-style: bold;
+}
+
+/* ==========================================================================
+   Providers Screen
+   ========================================================================== */
+
+ProvidersScreen {
+    /* Inherits from ModalScreen */
+}
+
+ProvidersScreen #providers-container {
+    width: 70%;
+    min-width: 60;
+    height: auto;
+    max-height: 80%;
+    background: $surface;
+    border: round $primary;
+    padding: 1 2;
+    layout: vertical;
+}
+
+ProvidersScreen #providers-title {
+    text-style: bold;
+    color: $primary;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 1;
+}
+
+ProvidersScreen #active-provider-label {
+    color: $success;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 1;
+}
+
+ProvidersScreen #providers-list {
+    height: auto;
+    max-height: 20;
+    padding: 0;
+    background: $panel;
+}
+
+ProvidersScreen .section-header {
+    color: $text-muted;
+    text-style: bold dim;
+    margin: 1 0 0 0;
+    padding: 0 1;
+}
+
+ProvidersScreen ProviderRow {
+    height: 1;
+    width: 100%;
+    padding: 0 1;
+    margin: 0;
+}
+
+ProvidersScreen ProviderRow:hover {
+    background: $surface;
+}
+
+ProvidersScreen .provider-status {
+    width: 3;
+    text-style: bold;
+}
+
+ProvidersScreen .provider-status.active {
+    color: $success;
+}
+
+ProvidersScreen .provider-status.configured {
+    color: $warning;
+}
+
+ProvidersScreen .provider-status.unconfigured {
+    color: $text-dim;
+}
+
+ProvidersScreen .provider-name {
+    width: 15;
+    color: $text;
+    text-style: bold;
+}
+
+ProvidersScreen .provider-desc {
+    width: 1fr;
+    color: $text-muted;
+}
+
+ProvidersScreen .provider-btn {
+    width: auto;
+    min-width: 10;
+    height: 1;
+    background: $panel;
+    color: $text-muted;
+    border: none;
+    margin-left: 1;
+}
+
+ProvidersScreen .provider-btn:hover {
+    background: $primary;
+    color: $text;
+}
+
+ProvidersScreen .provider-btn-active {
+    width: auto;
+    min-width: 10;
+    height: 1;
+    background: $success 50%;
+    color: $text;
+    border: none;
+    margin-left: 1;
+}
+
+ProvidersScreen .provider-btn-active:hover {
+    background: $success;
+    color: $text;
+    text-style: bold;
+}
+
+ProvidersScreen #close_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+ProvidersScreen #close_btn:hover {
+    background: $error;
+    color: $text;
 }
 
 /* ==========================================================================

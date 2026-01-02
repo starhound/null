@@ -37,6 +37,33 @@ class AICommands(CommandMixin):
             # Show provider selection
             self.app.action_select_provider()
 
+    async def cmd_providers(self, args: list[str]):
+        """Open providers management screen."""
+        from screens import ProvidersScreen, ProviderConfigScreen
+
+        def on_providers_result(result):
+            if result is None:
+                return
+
+            action, provider_name = result
+
+            if action == "configure":
+                # Open config screen for this provider
+                self._open_provider_config(provider_name)
+
+            elif action == "activated":
+                # Provider was set as active
+                self.notify(f"Switched to {provider_name}")
+                try:
+                    self.app.config = Config.load_all()
+                    self.app.ai_manager.get_provider(provider_name)
+                    self.app.ai_provider = self.app.ai_manager.get_provider(provider_name)
+                    self.app._update_status_bar()
+                except Exception as e:
+                    self.notify(f"Error initializing provider: {e}", severity="error")
+
+        self.app.push_screen(ProvidersScreen(), on_providers_result)
+
     def _open_provider_config(self, provider_name: str):
         """Open the config screen for a specific provider."""
         from screens import ProviderConfigScreen

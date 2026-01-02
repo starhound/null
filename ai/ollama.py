@@ -8,7 +8,11 @@ class OllamaProvider(LLMProvider):
     def __init__(self, endpoint: str, model: str):
         self.endpoint = endpoint
         self.model = model
-        self.client = httpx.AsyncClient(timeout=60.0)
+        # Short connect timeout (3s) to fail fast if Ollama isn't running
+        # Longer read timeout (60s) for model generation
+        self.client = httpx.AsyncClient(
+            timeout=httpx.Timeout(60.0, connect=3.0)
+        )
 
     def supports_tools(self) -> bool:
         """Ollama supports tool calling for compatible models."""

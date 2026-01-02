@@ -61,6 +61,7 @@ class SlashCommandHandler:
                     ("groq", "Configure Groq"),
                 ]
             )),
+            "providers": (self._ai.cmd_providers, CommandInfo("providers", "Manage all AI providers")),
             "model": (self._ai.cmd_model, CommandInfo("model", "Select AI model", "F2")),
             "prompts": (self._ai.cmd_prompts, CommandInfo("prompts", "Manage system prompts")),
             "ai": (self._ai.cmd_ai, CommandInfo("ai", "Toggle AI mode", "Ctrl+Space")),
