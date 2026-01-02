@@ -5,8 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "anthropic>=0.75.0",
     "boto3>=1.42.19",
+    "cohere>=5.20.1",
     "cryptography>=46.0.3",
+    "google-generativeai>=0.8.6",
     "httpx>=0.28.1",
     "keyring>=25.7.0",
     "openai>=2.14.0",
