@@ -415,10 +415,21 @@ def apply_cursor_settings(style: str, blink: bool = True) -> bool:
     }
     code = codes.get((style.lower(), blink), 1)
     try:
-        import sys
-
-        sys.stdout.write(f"\x1b[{code} q")
-        sys.stdout.flush()
+        # Write directly to terminal, bypassing any stdout redirection
+        # (Textual redirects sys.stdout for its own rendering)
+        with open("/dev/tty", "w") as tty:
+            tty.write(f"\x1b[{code} q")
+            tty.flush()
         return True
     except Exception:
+        # Fallback to sys.__stdout__ if /dev/tty isn't available
+        try:
+            import sys
+
+            if sys.__stdout__:
+                sys.__stdout__.write(f"\x1b[{code} q")
+                sys.__stdout__.flush()
+                return True
+        except Exception:
+            pass
         return False
