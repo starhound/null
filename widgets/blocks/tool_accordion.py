@@ -15,50 +15,6 @@ import json
 class ToolHeader(Static):
     """Header line for a tool call item."""
 
-    DEFAULT_CSS = """
-    ToolHeader {
-        width: 100%;
-        height: 1;
-        padding: 0 1;
-    }
-    ToolHeader .tool-icon {
-        width: 2;
-        color: $text-muted;
-    }
-    ToolHeader .tool-icon.expanded {
-        color: $accent;
-    }
-    ToolHeader .tool-name {
-        color: $text;
-        text-style: bold;
-    }
-    ToolHeader .tool-status {
-        width: auto;
-        margin-left: 1;
-    }
-    ToolHeader .tool-status.success {
-        color: $success;
-    }
-    ToolHeader .tool-status.error {
-        color: $error;
-    }
-    ToolHeader .tool-status.running {
-        color: $warning;
-    }
-    ToolHeader .tool-duration {
-        color: $text-muted;
-        text-style: dim;
-        margin-left: 1;
-    }
-    ToolHeader .tool-spacer {
-        width: 1fr;
-    }
-    ToolHeader .tool-line {
-        color: $surface-lighten-2;
-        width: 1fr;
-    }
-    """
-
     SPINNER_FRAMES = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
     def __init__(
@@ -157,32 +113,6 @@ class ToolHeader(Static):
 class ToolOutput(VerticalScroll):
     """Collapsible output container for tool results."""
 
-    DEFAULT_CSS = """
-    ToolOutput {
-        width: 100%;
-        height: auto;
-        max-height: 20;
-        padding: 0 2;
-        background: $surface-darken-1;
-        display: none;
-        border-left: solid $surface-lighten-1;
-        margin-left: 1;
-    }
-    ToolOutput.visible {
-        display: block;
-    }
-    ToolOutput .tool-output-content {
-        width: 100%;
-    }
-    ToolOutput .tool-args {
-        color: $text-muted;
-        margin-bottom: 1;
-    }
-    ToolOutput .tool-result {
-        width: 100%;
-    }
-    """
-
     def __init__(
         self,
         arguments: str = "",
@@ -234,18 +164,6 @@ class ToolOutput(VerticalScroll):
 
 class ToolAccordionItem(Static):
     """Single collapsible tool call in the accordion."""
-
-    DEFAULT_CSS = """
-    ToolAccordionItem {
-        width: 100%;
-        height: auto;
-        border-bottom: solid $surface-lighten-1;
-        padding: 0;
-    }
-    ToolAccordionItem:hover {
-        background: $surface-lighten-1 10%;
-    }
-    """
 
     expanded = reactive(False)
 
@@ -320,18 +238,6 @@ class ToolAccordionItem(Static):
 
 class ToolAccordion(Container):
     """Stack of collapsible tool calls for agent mode."""
-
-    DEFAULT_CSS = """
-    ToolAccordion {
-        width: 100%;
-        height: auto;
-        background: transparent;
-        padding: 0;
-    }
-    ToolAccordion.empty {
-        display: none;
-    }
-    """
 
     def __init__(self, id: str | None = None, classes: str | None = None):
         super().__init__(id=id, classes=classes)

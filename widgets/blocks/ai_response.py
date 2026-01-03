@@ -22,7 +22,7 @@ class AIResponseBlock(BaseBlockWidget):
     Agent mode: Tool-using responses - bold styling with tool accordion
     """
 
-    is_agent_mode = reactive(False)
+    is_agent_mode = reactive(False, init=False)
 
     def __init__(self, block: BlockState):
         super().__init__(block)
@@ -108,9 +108,9 @@ class AIResponseBlock(BaseBlockWidget):
     def watch_is_agent_mode(self, is_agent: bool) -> None:
         """Update styling when mode changes."""
         self._apply_mode_class()
-        
+
         # Hide global thinking widget in agent mode (thinking is in iterations)
-        if self.thinking_widget:
+        if hasattr(self, 'thinking_widget') and self.thinking_widget:
             if is_agent:
                 self.thinking_widget.display = False
             else:

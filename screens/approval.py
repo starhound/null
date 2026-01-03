@@ -14,27 +14,6 @@ import json
 class ToolPreview(Static):
     """Preview of a tool call for approval."""
 
-    DEFAULT_CSS = """
-    ToolPreview {
-        width: 100%;
-        height: auto;
-        padding: 1;
-        background: $surface-darken-1;
-        border: solid $surface-lighten-1;
-        margin-bottom: 1;
-    }
-    ToolPreview .tool-name {
-        text-style: bold;
-        color: $accent;
-        margin-bottom: 1;
-    }
-    ToolPreview .tool-args {
-        width: 100%;
-        height: auto;
-        max-height: 10;
-    }
-    """
-
     def __init__(self, tool_name: str, arguments: dict):
         super().__init__()
         self.tool_name = tool_name
@@ -70,59 +49,6 @@ class ToolApprovalScreen(ModalScreen):
         Binding("a", "approve_all", "Approve All"),
         Binding("r", "reject", "Reject"),
     ]
-
-    DEFAULT_CSS = """
-    ToolApprovalScreen {
-        align: center middle;
-    }
-
-    #approval-container {
-        width: 80;
-        max-width: 90%;
-        height: auto;
-        max-height: 80%;
-        background: $surface;
-        border: solid $primary;
-        padding: 1 2;
-    }
-
-    #approval-title {
-        text-align: center;
-        text-style: bold;
-        color: $warning;
-        margin-bottom: 1;
-    }
-
-    #approval-subtitle {
-        text-align: center;
-        color: $text-muted;
-        margin-bottom: 1;
-    }
-
-    #tools-scroll {
-        width: 100%;
-        height: auto;
-        max-height: 20;
-        margin-bottom: 1;
-    }
-
-    #approval-buttons {
-        width: 100%;
-        height: auto;
-        align: center middle;
-    }
-
-    #approval-buttons Button {
-        margin: 0 1;
-    }
-
-    #approval-hint {
-        text-align: center;
-        color: $text-muted;
-        text-style: dim;
-        margin-top: 1;
-    }
-    """
 
     def __init__(self, tool_calls: List[dict], iteration_number: int = 1):
         """Initialize the approval screen.

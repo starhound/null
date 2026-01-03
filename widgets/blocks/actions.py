@@ -10,23 +10,6 @@ from textual.events import Click
 class ActionButton(Static):
     """ASCII-styled action button."""
 
-    DEFAULT_CSS = """
-    ActionButton {
-        width: auto;
-        height: 1;
-        padding: 0 1;
-        margin: 0 1 0 0;
-        color: $text-muted;
-    }
-    ActionButton:hover {
-        color: $accent;
-        background: $surface-lighten-1;
-    }
-    ActionButton.-disabled {
-        color: $text-disabled;
-    }
-    """
-
     class Pressed(Message, bubble=True):
         """Message sent when an action button is clicked."""
         def __init__(self, action: str, block_id: str):
@@ -60,22 +43,6 @@ class ActionButton(Static):
 
 class ActionBar(Horizontal):
     """Container for action buttons on AI blocks."""
-
-    DEFAULT_CSS = """
-    ActionBar {
-        width: 100%;
-        height: auto;
-        padding: 0 1;
-        align: left middle;
-    }
-    ActionBar .action-spacer {
-        width: 1fr;
-    }
-    ActionBar .action-meta {
-        color: $text-muted;
-        text-style: dim;
-    }
-    """
 
     def __init__(
         self,

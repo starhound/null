@@ -15,18 +15,6 @@ class IterationContainer(Container):
     a clean interface for the execution handler to update iteration state.
     """
 
-    DEFAULT_CSS = """
-    IterationContainer {
-        width: 100%;
-        height: auto;
-        padding: 0;
-        background: transparent;
-    }
-    IterationContainer.empty {
-        display: none;
-    }
-    """
-
     def __init__(
         self,
         show_thinking: bool = True,

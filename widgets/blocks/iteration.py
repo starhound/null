@@ -17,38 +17,6 @@ class IterationHeader(Static):
 
     SPINNER_FRAMES = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
-    DEFAULT_CSS = """
-    IterationHeader {
-        width: 100%;
-        height: 1;
-        padding: 0 1;
-    }
-    IterationHeader .iter-status {
-        width: 2;
-        color: $text-muted;
-    }
-    IterationHeader .iter-status.thinking {
-        color: $warning;
-    }
-    IterationHeader .iter-status.executing {
-        color: $accent;
-    }
-    IterationHeader .iter-status.complete {
-        color: $success;
-    }
-    IterationHeader .iter-status.waiting {
-        color: $primary;
-    }
-    IterationHeader .iter-label {
-        color: $text;
-    }
-    IterationHeader .iter-duration {
-        color: $text-muted;
-        text-style: dim;
-        margin-left: 1;
-    }
-    """
-
     def __init__(self, iteration: AgentIteration):
         super().__init__()
         self.iteration = iteration
@@ -116,48 +84,6 @@ class IterationHeader(Static):
 class ThinkingSection(Static):
     """Collapsible thinking/reasoning content."""
 
-    DEFAULT_CSS = """
-    ThinkingSection {
-        width: 100%;
-        height: auto;
-        padding: 0;
-    }
-    ThinkingSection .thinking-toggle {
-        width: 100%;
-        height: 1;
-        padding: 0 2;
-        color: $text-muted;
-        layout: horizontal;
-    }
-    ThinkingSection .thinking-toggle:hover {
-        background: $surface-lighten-1 15%;
-    }
-    ThinkingSection .thinking-icon {
-        width: 2;
-        color: $text-muted;
-    }
-    ThinkingSection .thinking-icon.expanded {
-        color: $accent;
-    }
-    ThinkingSection .thinking-title {
-        color: $text-muted;
-        text-style: italic;
-    }
-    ThinkingSection .thinking-content {
-        width: 100%;
-        height: auto;
-        max-height: 15;
-        padding: 0 3;
-        background: $surface-darken-1;
-        border-left: solid $surface-lighten-1;
-        margin-left: 2;
-        display: none;
-    }
-    ThinkingSection .thinking-content.visible {
-        display: block;
-    }
-    """
-
     collapsed = reactive(True)
 
     def __init__(self, content: str = "", collapsed: bool = True):
@@ -218,39 +144,6 @@ class ThinkingSection(Static):
 
 class ToolCallItem(Static):
     """Compact display of a single tool call within an iteration."""
-
-    DEFAULT_CSS = """
-    ToolCallItem {
-        width: 100%;
-        height: auto;
-        padding: 0 2;
-    }
-    ToolCallItem .tool-row {
-        width: 100%;
-        height: 1;
-    }
-    ToolCallItem .tool-icon {
-        width: 2;
-        color: $text-muted;
-    }
-    ToolCallItem .tool-icon.running {
-        color: $warning;
-    }
-    ToolCallItem .tool-icon.success {
-        color: $success;
-    }
-    ToolCallItem .tool-icon.error {
-        color: $error;
-    }
-    ToolCallItem .tool-name {
-        color: $text;
-    }
-    ToolCallItem .tool-duration {
-        color: $text-muted;
-        text-style: dim;
-        margin-left: 1;
-    }
-    """
 
     SPINNER_FRAMES = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
@@ -319,17 +212,6 @@ class ToolCallItem(Static):
 class IterationSeparator(Static):
     """Visual separator between iterations."""
 
-    DEFAULT_CSS = """
-    IterationSeparator {
-        width: 100%;
-        height: 1;
-        padding: 0 2;
-        color: $text-muted;
-        text-style: dim;
-        text-align: center;
-    }
-    """
-
     def __init__(self, iteration_number: int):
         super().__init__()
         self.iteration_number = iteration_number
@@ -346,29 +228,6 @@ class IterationWidget(Static):
     - ThinkingSection (collapsible reasoning)
     - Tool calls list
     - Optional response fragment
-    """
-
-    DEFAULT_CSS = """
-    IterationWidget {
-        width: 100%;
-        height: auto;
-        padding: 0;
-        margin-bottom: 1;
-        background: $surface;
-        border: solid $primary;  /* Blue border */
-        border-title-color: $primary;
-    }
-    IterationWidget .iter-tools {
-        width: 100%;
-        height: auto;
-        padding: 0;
-    }
-    IterationWidget .iter-response {
-        width: 100%;
-        height: auto;
-        padding: 0 2;
-        color: $text;
-    }
     """
 
     def __init__(self, iteration: AgentIteration, show_thinking: bool = True):
