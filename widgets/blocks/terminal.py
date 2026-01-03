@@ -9,6 +9,8 @@ from textual.message import Message
 from textual.strip import Strip
 from textual.widget import Widget
 
+from settings import get_settings
+
 # Refresh debounce interval: 16ms = ~60 FPS
 _REFRESH_DEBOUNCE_MS = 16 / 1000  # Convert to seconds for set_timer
 
@@ -53,7 +55,8 @@ class TerminalBlock(Widget):
         self.block_id = block_id
         self._rows = rows
         self._cols = cols
-        self.pyte_screen = pyte.Screen(cols, rows)
+        scrollback_lines = get_settings().terminal.scrollback_lines
+        self.pyte_screen = pyte.HistoryScreen(cols, rows, history=scrollback_lines)
         self.pyte_stream = pyte.Stream(self.pyte_screen)
         self._refresh_scheduled = False
         # Line render cache: maps line number -> (content_hash, Strip)
@@ -241,7 +244,24 @@ class TerminalBlock(Widget):
 
         return None
 
-    def _compute_line_hash(self, line_data: dict, width: int) -> int:
+    def _to_bright_color(self, color: str) -> str:
+        """Convert an ANSI color (0-7) to its bright variant (8-15).
+
+        Used when bold_is_bright setting is enabled and text is bold.
+        """
+        if color == "default":
+            return color
+        try:
+            color_num = int(color)
+            # Only convert standard colors 0-7 to bright variants 8-15
+            if 0 <= color_num <= 7:
+                return str(color_num + 8)
+        except ValueError:
+            # Not a numeric color (could be named color or hex), return as-is
+            pass
+        return color
+
+    def _compute_line_hash(self, line_data: dict, width: int, bold_is_bright: bool) -> int:
         """Compute a hash for a line's content to detect changes."""
         # Build a tuple of character data and attributes for hashing
         line_repr = []
@@ -253,7 +273,7 @@ class TerminalBlock(Widget):
                 )
             else:
                 line_repr.append((" ", "default", "default", False, False, False, False))
-        return hash((tuple(line_repr), width))
+        return hash((tuple(line_repr), width, bold_is_bright))
 
     def render_line(self, y: int) -> Strip:
         """Render a single line of the terminal with caching."""
@@ -265,9 +285,10 @@ class TerminalBlock(Widget):
             return Strip.blank(width)
 
         line_data = self.pyte_screen.buffer[y]
+        bold_is_bright = get_settings().terminal.bold_is_bright
 
         # Check cache
-        line_hash = self._compute_line_hash(line_data, width)
+        line_hash = self._compute_line_hash(line_data, width, bold_is_bright)
         cached = self._line_cache.get(y)
         if cached is not None:
             cached_hash, cached_strip = cached
@@ -285,6 +306,10 @@ class TerminalBlock(Widget):
                 # Map pyte colors to Rich style
                 fg = char.fg if char.fg != "default" else "default"
                 bg = char.bg if char.bg != "default" else "default"
+
+                # When bold_is_bright is enabled, convert bold text colors to bright variants
+                if bold_is_bright and char.bold:
+                    fg = self._to_bright_color(fg)
 
                 style = RichStyle(
                     color=fg,

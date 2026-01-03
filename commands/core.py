@@ -183,3 +183,33 @@ class CoreCommands(CommandMixin):
         alias = args[0]
         self.app.storage.delete_ssh_host(alias)
         self.notify(f"Deleted SSH host: {alias}")
+
+    async def cmd_nullify(self, args: list[str]):
+        """Open a new terminal tab/window with the Null Terminal profile.
+
+        Usage:
+            /nullify        - Open new tab with Null Terminal profile
+            /nullify window - Open new window with Null Terminal profile
+        """
+        from utils.terminal import (
+            activate_null_profile,
+            get_terminal_info,
+            TerminalType,
+        )
+
+        info = get_terminal_info()
+
+        if info.type != TerminalType.WINDOWS_TERMINAL:
+            self.notify(
+                f"{info.name} doesn't require profile activation",
+                severity="warning",
+            )
+            return
+
+        new_window = "window" in args or "-w" in args
+
+        if activate_null_profile(new_window=new_window):
+            action = "window" if new_window else "tab"
+            self.notify(f"Opening new {action} with Null Terminal profile...")
+        else:
+            self.notify("Failed to activate Null Terminal profile", severity="error")

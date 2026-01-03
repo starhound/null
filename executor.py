@@ -9,6 +9,8 @@ import struct
 import termios
 from collections.abc import Callable
 
+from settings import get_settings
+
 
 def _waitpid_nohang(pid: int) -> tuple[int, int]:
     """Wrapper for os.waitpid with WNOHANG to use in executor."""
@@ -126,7 +128,8 @@ class ExecutionEngine:
         Returns:
             Exit code, or -1 if cancelled.
         """
-        shell = os.environ.get("SHELL", "/bin/bash")
+        settings = get_settings()
+        shell = settings.terminal.shell or os.environ.get("SHELL", "/bin/bash")
         self._cancelled = False
         self._in_tui_mode = False
         self._detection_buffer = b""

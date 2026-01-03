@@ -167,6 +167,11 @@ class NullApp(App):
         # Auto-focus the input prompt
         self.query_one("#input", InputController).focus()
 
+        # Set up periodic auto-save if enabled
+        settings = get_settings()
+        if settings.terminal.auto_save_session:
+            self.set_interval(settings.terminal.auto_save_interval, self._auto_save)
+
     def _apply_cursor_settings(self):
         """Apply cursor style and blink settings from config."""
         from utils.terminal import apply_cursor_settings

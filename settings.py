@@ -49,8 +49,12 @@ class TerminalSettings:
     bold_is_bright: bool = True
 
     # Environment-derived (read-only hints)
-    term_type: str = field(default_factory=lambda: os.environ.get("TERM", "xterm-256color"))
-    colorterm: str = field(default_factory=lambda: os.environ.get("COLORTERM", "truecolor"))
+    term_type: str = field(
+        default_factory=lambda: os.environ.get("TERM", "xterm-256color")
+    )
+    colorterm: str = field(
+        default_factory=lambda: os.environ.get("COLORTERM", "truecolor")
+    )
     lang: str = field(default_factory=lambda: os.environ.get("LANG", "en_US.UTF-8"))
 
 
@@ -141,8 +145,8 @@ class SettingsManager:
     def load(self) -> Settings:
         """Load settings from config file."""
         if not CONFIG_PATH.exists():
-            # Create default settings
-            settings = Settings()
+            # First run - create settings with terminal defaults
+            settings = self._create_with_terminal_defaults()
             self.save(settings)
             return settings
 
@@ -151,6 +155,35 @@ class SettingsManager:
             return Settings.from_dict(data)
         except Exception:
             return Settings()
+
+    def _create_with_terminal_defaults(self) -> Settings:
+        """Create settings initialized with host terminal's current config.
+
+        On first run, we read the terminal's config file to get the user's
+        current font and cursor settings as our defaults.
+        """
+        settings = Settings()
+
+        try:
+            from utils.terminal import load_terminal_defaults
+
+            term_config = load_terminal_defaults()
+            if term_config:
+                # Use terminal's font settings as our defaults
+                if term_config.font_family:
+                    settings.appearance.font_family = term_config.font_family
+                if term_config.font_size > 0:
+                    settings.appearance.font_size = int(term_config.font_size)
+
+                # Use terminal's cursor settings
+                if term_config.cursor_style:
+                    settings.terminal.cursor_style = term_config.cursor_style
+                if term_config.cursor_blink is not None:
+                    settings.terminal.cursor_blink = term_config.cursor_blink
+        except Exception:
+            pass  # Use defaults if terminal config reading fails
+
+        return settings
 
     def save(self, settings: Settings | None = None) -> None:
         """Save settings to config file."""

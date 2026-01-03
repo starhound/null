@@ -123,13 +123,12 @@ class ConfigScreen(ModalScreen):
             ),
         )
 
-        # Font settings - show with info about terminal support
         yield Static("Font Settings", classes="settings-header")
 
+        # Show terminal capability info
         if not term_info.supports_font_change:
             yield Label(
-                f"⚠ {term_info.name} does not support runtime font changes. "
-                "Edit your terminal config directly.",
+                f"⚠ {term_info.name} requires manual font configuration.",
                 classes="setting-warning",
             )
 
@@ -137,14 +136,13 @@ class ConfigScreen(ModalScreen):
             ("monospace", "Monospace (Default)"),
             ("Fira Code", "Fira Code"),
             ("JetBrains Mono", "JetBrains Mono"),
-            ("Source Code Pro", "Source Code Pro"),
             ("Cascadia Code", "Cascadia Code"),
-            ("IBM Plex Mono", "IBM Plex Mono"),
+            ("Source Code Pro", "Source Code Pro"),
         ]
         yield from self._setting_row(
             "appearance.font_family",
             "Font Family",
-            f"Terminal font {'(applied to terminal)' if term_info.supports_font_change else '(reference only)'}",
+            "Preferred terminal font",
             Select(
                 [(name, value) for value, name in fonts],
                 value=s.font_family,
@@ -155,22 +153,8 @@ class ConfigScreen(ModalScreen):
         yield from self._setting_row(
             "appearance.font_size",
             "Font Size",
-            f"Font size in pixels {'(applied to terminal)' if term_info.supports_font_change else '(reference only)'}",
+            "Font size in pixels",
             Input(value=str(s.font_size), type="integer", id="font_size"),
-        )
-
-        # Attempt to apply font size via terminal adapter if supported
-        if term_info.supports_font_change:
-            from utils.terminal import get_terminal_adapter
-
-            adapter = get_terminal_adapter()
-            adapter.set_font_size(s.font_size)
-
-        yield from self._setting_row(
-            "appearance.line_height",
-            "Line Height",
-            "Line spacing multiplier (e.g., 1.4)",
-            Input(value=str(s.line_height), type="number", id="line_height"),
         )
 
         yield Static("Display Options", classes="settings-header")
@@ -279,7 +263,7 @@ class ConfigScreen(ModalScreen):
         yield from self._setting_row(
             "terminal.cursor_style",
             "Cursor Style",
-            "Terminal cursor appearance",
+            "Cursor appearance in input",
             Select(
                 [("Block", "block"), ("Beam", "beam"), ("Underline", "underline")],
                 value=s.cursor_style,
@@ -290,7 +274,7 @@ class ConfigScreen(ModalScreen):
         yield from self._setting_row(
             "terminal.cursor_blink",
             "Cursor Blink",
-            "Enable cursor blinking",
+            "Enable cursor blinking in input",
             Switch(value=s.cursor_blink, id="cursor_blink"),
         )
 
@@ -410,39 +394,50 @@ class ConfigScreen(ModalScreen):
                 return val
             return None
 
+        def get_bool(control, default: bool) -> bool:
+            """Get boolean value from control, with proper default handling."""
+            val = get_val(control)
+            return val if val is not None else default
+
+        # Preserve font settings if controls aren't shown (terminal doesn't support)
         appearance = AppearanceSettings(
             theme=get_val(self.controls.get("appearance.theme")) or "null-dark",
             font_family=get_val(self.controls.get("appearance.font_family"))
-            or "monospace",
-            font_size=get_val(self.controls.get("appearance.font_size")) or 14,
-            line_height=get_val(self.controls.get("appearance.line_height")) or 1.4,
-            show_timestamps=get_val(self.controls.get("appearance.show_timestamps"))
-            or False,
-            show_line_numbers=get_val(self.controls.get("appearance.show_line_numbers"))
-            or False,
+            or self.settings.appearance.font_family,
+            font_size=get_val(self.controls.get("appearance.font_size"))
+            or self.settings.appearance.font_size,
+            line_height=self.settings.appearance.line_height,  # Not editable
+            show_timestamps=get_bool(
+                self.controls.get("appearance.show_timestamps"), True
+            ),
+            show_line_numbers=get_bool(
+                self.controls.get("appearance.show_line_numbers"), True
+            ),
         )
 
         editor = EditorSettings(
             tab_size=get_val(self.controls.get("editor.tab_size")) or 4,
-            word_wrap=get_val(self.controls.get("editor.word_wrap")) or False,
-            auto_indent=get_val(self.controls.get("editor.auto_indent")) or False,
-            vim_mode=get_val(self.controls.get("editor.vim_mode")) or False,
+            word_wrap=get_bool(self.controls.get("editor.word_wrap"), True),
+            auto_indent=get_bool(self.controls.get("editor.auto_indent"), True),
+            vim_mode=get_bool(self.controls.get("editor.vim_mode"), False),
         )
 
         terminal = TerminalSettings(
             shell=get_val(self.controls.get("terminal.shell")) or "",
             scrollback_lines=get_val(self.controls.get("terminal.scrollback_lines"))
             or 10000,
-            auto_save_session=get_val(self.controls.get("terminal.auto_save_session"))
-            or False,
+            auto_save_session=get_bool(
+                self.controls.get("terminal.auto_save_session"), True
+            ),
             auto_save_interval=get_val(self.controls.get("terminal.auto_save_interval"))
             or 30,
-            confirm_on_exit=get_val(self.controls.get("terminal.confirm_on_exit"))
-            or False,
-            clear_on_exit=get_val(self.controls.get("terminal.clear_on_exit")) or False,
+            confirm_on_exit=get_bool(
+                self.controls.get("terminal.confirm_on_exit"), True
+            ),
+            clear_on_exit=get_bool(self.controls.get("terminal.clear_on_exit"), False),
             cursor_style=get_val(self.controls.get("terminal.cursor_style")) or "block",
-            cursor_blink=get_val(self.controls.get("terminal.cursor_blink")) or True,
-            bold_is_bright=get_val(self.controls.get("terminal.bold_is_bright")) or True,
+            cursor_blink=get_bool(self.controls.get("terminal.cursor_blink"), True),
+            bold_is_bright=get_bool(self.controls.get("terminal.bold_is_bright"), True),
         )
 
         ai = AISettings(
@@ -450,9 +445,12 @@ class ConfigScreen(ModalScreen):
             context_window=get_val(self.controls.get("ai.context_window")) or 4000,
             max_tokens=get_val(self.controls.get("ai.max_tokens")) or 2048,
             temperature=get_val(self.controls.get("ai.temperature")) or 0.7,
-            stream_responses=get_val(self.controls.get("ai.stream_responses")) or False,
-            autocomplete_enabled=get_val(self.controls.get("ai.autocomplete_enabled"))
-            or False,
+            stream_responses=get_bool(
+                self.controls.get("ai.stream_responses"), True
+            ),
+            autocomplete_enabled=get_bool(
+                self.controls.get("ai.autocomplete_enabled"), False
+            ),
             autocomplete_provider=get_val(self.controls.get("ai.autocomplete_provider"))
             or "",
             autocomplete_model=get_val(self.controls.get("ai.autocomplete_model"))
@@ -499,6 +497,52 @@ class ConfigScreen(ModalScreen):
                 style=new_settings.terminal.cursor_style,
                 blink=new_settings.terminal.cursor_blink
             )
+        except Exception:
+            pass
+
+        # Update InputController's cursor settings
+        try:
+            from widgets.input import InputController
+
+            input_widget = self.app.query_one("#input", InputController)
+            input_widget.cursor_blink = new_settings.terminal.cursor_blink
+
+            # Apply cursor style class
+            cursor_style = new_settings.terminal.cursor_style
+            input_widget.remove_class("cursor-block", "cursor-beam", "cursor-underline")
+            input_widget.add_class(f"cursor-{cursor_style}")
+        except Exception:
+            pass
+
+        # Sync font and cursor settings to host terminal's config file
+        try:
+            from utils.terminal import (
+                get_terminal_info,
+                sync_terminal_config,
+                TerminalType,
+            )
+
+            if sync_terminal_config(
+                font_family=new_settings.appearance.font_family,
+                font_size=float(new_settings.appearance.font_size),
+                cursor_style=new_settings.terminal.cursor_style,
+                cursor_blink=new_settings.terminal.cursor_blink,
+            ):
+                info = get_terminal_info()
+
+                # Customize message based on terminal type
+                if info.type == TerminalType.WINDOWS_TERMINAL:
+                    self.notify(
+                        "Use the 'Null Terminal' profile in Windows Terminal dropdown",
+                        title="Profile Created/Updated",
+                        timeout=5,
+                    )
+                else:
+                    self.notify(
+                        f"Settings synced to {info.name} config",
+                        title="Terminal Config Updated",
+                        timeout=3,
+                    )
         except Exception:
             pass
 

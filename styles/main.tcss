@@ -126,6 +126,24 @@ InputController > .text-area--cursor-line {
 InputController > .text-area--selection {
     background: $primary 30%;
 }
+
+/* Cursor style variants */
+InputController.cursor-block > .text-area--cursor {
+    background: $text;
+    color: $background;
+}
+
+InputController.cursor-beam > .text-area--cursor {
+    background: transparent;
+    color: $text;
+    border-left: tall $primary;
+}
+
+InputController.cursor-underline > .text-area--cursor {
+    background: transparent;
+    color: $text;
+    text-style: underline;
+}
 /* ==========================================================================
    Secondary Widgets
    ========================================================================== */

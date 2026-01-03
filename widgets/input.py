@@ -55,6 +55,26 @@ class InputController(TextArea):
         # Use a dark syntax theme that matches our UI
         self.theme = "vscode_dark"
 
+        # Apply cursor settings from config
+        self._apply_cursor_settings()
+
+    def _apply_cursor_settings(self) -> None:
+        """Apply cursor settings from config."""
+        try:
+            from settings import get_settings
+
+            settings = get_settings()
+            self.cursor_blink = settings.terminal.cursor_blink
+
+            # Apply cursor style class for CSS styling
+            cursor_style = settings.terminal.cursor_style
+            # Remove any existing cursor style classes
+            self.remove_class("cursor-block", "cursor-beam", "cursor-underline")
+            # Add the appropriate class
+            self.add_class(f"cursor-{cursor_style}")
+        except Exception:
+            pass  # Use default if settings unavailable
+
     @property
     def value(self) -> str:
         """Compatibility property for Input-like API."""
