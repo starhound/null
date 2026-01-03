@@ -558,10 +558,11 @@ class ExecutionHandler:
             # Also add to block's tool_calls for backwards compatibility
             block_state.tool_calls.append(tool_state)
 
-            # Show in exec output for non-iteration-aware displays
-            tool_display = f"\n\n**Tool: {tc.name}**\n```json\n{json.dumps(tc.arguments, indent=2)}\n```"
-            block_state.content_exec_output += tool_display
-            widget.update_output()
+            # Only show in exec output for non-iteration-aware displays
+            if not has_iteration_ui:
+                tool_display = f"\n\n**Tool: {tc.name}**\n```json\n{json.dumps(tc.arguments, indent=2)}\n```"
+                block_state.content_exec_output += tool_display
+                widget.update_output()
 
             try:
                 # Execute the tool
@@ -589,14 +590,14 @@ class ExecutionHandler:
                         duration=duration
                     )
 
-                # Show result in exec output
-                if result.is_error:
-                    result_display = f"\n**Error ({duration:.1f}s):**\n```\n{content_preview}\n```"
-                else:
-                    result_display = f"\n**Result ({duration:.1f}s):**\n```\n{content_preview}\n```"
-
-                block_state.content_exec_output += result_display
-                widget.update_output()
+                # Only show result in exec output for non-iteration-aware displays
+                if not has_iteration_ui:
+                    if result.is_error:
+                        result_display = f"\n**Error ({duration:.1f}s):**\n```\n{content_preview}\n```"
+                    else:
+                        result_display = f"\n**Result ({duration:.1f}s):**\n```\n{content_preview}\n```"
+                    block_state.content_exec_output += result_display
+                    widget.update_output()
 
             except Exception as e:
                 duration = time.time() - start_time
@@ -620,9 +621,10 @@ class ExecutionHandler:
                         status="error",
                         duration=duration
                     )
-
-                block_state.content_exec_output += f"\n**System Error ({duration:.1f}s):**\n```\n{str(e)}\n```"
-                widget.update_output()
+                else:
+                    # Only show error in exec output for non-iteration-aware displays
+                    block_state.content_exec_output += f"\n**System Error ({duration:.1f}s):**\n```\n{str(e)}\n```"
+                    widget.update_output()
 
         return results
 

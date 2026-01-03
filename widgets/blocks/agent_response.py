@@ -72,7 +72,7 @@ class AgentResponseBlock(BaseBlockWidget):
     def compose(self) -> ComposeResult:
         yield self.header
         yield self.meta_widget
-        yield self.exec_widget
+        # Note: exec_widget intentionally not yielded - iterations handle tool display
         yield self.iteration_container
         yield self.response_widget
         yield self.action_bar
