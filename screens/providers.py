@@ -175,6 +175,9 @@ class ProvidersScreen(ModalScreen):
             provider_name = button_id.replace("activate-", "")
             # Set as active provider
             Config.set("ai.provider", provider_name)
+            # Also sync to JSON settings
+            from settings import SettingsManager
+            SettingsManager().set("ai", "provider", provider_name)
             self.dismiss(("activated", provider_name))
             return
 

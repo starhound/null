@@ -33,10 +33,17 @@ class ConfigScreen(ModalScreen):
 
     def __init__(self):
         super().__init__()
+        from config import Config
         from settings import get_settings
 
         self.settings = get_settings()
         self.controls = {}
+
+        # Sync ai.provider from SQLite (source of truth) to JSON settings
+        # This ensures model selection changes are reflected in config screen
+        sqlite_provider = Config.get("ai.provider")
+        if sqlite_provider and sqlite_provider != self.settings.ai.provider:
+            self.settings.ai.provider = sqlite_provider
 
     def compose(self) -> ComposeResult:
         with Container(id="config-outer"):

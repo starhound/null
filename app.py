@@ -145,15 +145,18 @@ class NullApp(App):
             self.notify(f"Restored {len(saved_blocks)} blocks from previous session")
 
         self._update_status_bar()
+
+        # Initial provider/header update - use run_worker for async
+        self.run_worker(self._check_provider_health())
+
+        # Periodic health check
         self.set_interval(30, self._check_provider_health)
-        self.call_later(self._check_provider_health)
+
+        # Initialize MCP
         self.run_worker(self._init_mcp())
 
         # Auto-detect model for local providers
         self.run_worker(self._detect_local_model())
-
-        # Register process manager callback
-        self.process_manager.on_change(self._update_process_count)
 
         # Register process manager callback
         self.process_manager.on_change(self._update_process_count)
@@ -420,6 +423,9 @@ class NullApp(App):
 
                 if provider_name != current_provider:
                     Config.set("ai.provider", provider_name)
+                    # Also sync to JSON settings
+                    from settings import SettingsManager
+                    SettingsManager().set("ai", "provider", provider_name)
                     self.notify(f"Switched provider to {provider_name}")
 
                 # Update the model for that provider

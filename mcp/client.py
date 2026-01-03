@@ -168,7 +168,7 @@ class MCPClient:
             "params": params,
         }
 
-        future = asyncio.get_event_loop().create_future()
+        future = asyncio.get_running_loop().create_future()
         self._pending_requests[request_id] = future
 
         data = json.dumps(message) + "\n"

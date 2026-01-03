@@ -2,13 +2,12 @@
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal
-from textual.events import Click
 from textual.message import Message
-from textual.widgets import Label, Static
+from textual.widgets import Button, Label, Static
 
 
-class ActionButton(Static):
-    """ASCII-styled action button."""
+class ActionButton(Button):
+    """Action button using proper Textual Button widget."""
 
     class Pressed(Message, bubble=True):
         """Message sent when an action button is clicked."""
@@ -27,19 +26,14 @@ class ActionButton(Static):
         id: str | None = None,
         classes: str | None = None,
     ):
-        super().__init__(label, id=id, classes=classes)
+        super().__init__(label, id=id, classes=classes, disabled=disabled)
         self.action = action
         self.block_id = block_id
-        self._disabled = disabled
-        if disabled:
-            self.add_class("-disabled")
 
-    def on_click(self, event: Click) -> None:
-        """Handle click events."""
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button press - emit our custom Pressed message."""
         event.stop()
-        event.prevent_default()
-        if not self._disabled:
-            self.post_message(self.Pressed(self.action, self.block_id))
+        self.post_message(self.Pressed(self.action, self.block_id))
 
 
 class ActionBar(Horizontal):

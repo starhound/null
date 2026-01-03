@@ -1968,9 +1968,11 @@ ActionBar .action-meta {
 
 ActionButton {
     width: auto;
+    min-width: 0;
     height: 1;
     padding: 0 1;
     margin: 0 1 0 0;
+    border: none;
     color: $text;
     background: transparent;
     text-style: dim;
@@ -1980,11 +1982,19 @@ ActionButton:hover {
     color: $accent;
     background: $panel;
     text-style: bold;
+    border: none;
 }
 
-ActionButton.-disabled {
+ActionButton:focus {
+    border: none;
+    text-style: bold;
+}
+
+ActionButton.-disabled,
+ActionButton:disabled {
     color: $text-muted;
     text-style: dim;
+    background: transparent;
 }
 
 /* --- BlockFrame: Chat/Agent mode container --- */

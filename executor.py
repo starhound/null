@@ -184,7 +184,7 @@ class ExecutionEngine:
             fcntl.fcntl(master_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
             # Read output asynchronously
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             buffer = b""
 
             while True:

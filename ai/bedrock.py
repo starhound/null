@@ -163,7 +163,7 @@ class BedrockProvider(LLMProvider):
 
         try:
             # Run blocking boto3 call in executor
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             response = await loop.run_in_executor(
                 self._executor,
                 lambda: self.client.invoke_model_with_response_stream(
@@ -228,7 +228,7 @@ class BedrockProvider(LLMProvider):
             body = json.dumps(request_body)
 
             # Run blocking boto3 call in executor
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             response = await loop.run_in_executor(
                 self._executor,
                 lambda: self.client.invoke_model_with_response_stream(
@@ -336,7 +336,7 @@ class BedrockProvider(LLMProvider):
     async def list_models(self) -> list[str]:
         """List available Bedrock foundation models."""
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             response = await loop.run_in_executor(
                 self._executor, self.bedrock.list_foundation_models
             )
@@ -347,7 +347,7 @@ class BedrockProvider(LLMProvider):
     async def validate_connection(self) -> bool:
         """Validate connection to Bedrock."""
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             await loop.run_in_executor(
                 self._executor, self.bedrock.list_foundation_models
             )

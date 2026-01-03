@@ -17,13 +17,25 @@ class AIManager:
         # Pre-load the active provider
         self.get_active_provider()
 
-    def get_provider(self, name: str) -> LLMProvider | None:
-        """Get or create a provider instance."""
+    def get_provider(self, name: str, force_refresh: bool = False) -> LLMProvider | None:
+        """Get or create a provider instance.
+
+        Args:
+            name: Provider name
+            force_refresh: If True, recreate the provider even if cached
+        """
         if not name:
             return None
 
-        if name in self._providers:
-            return self._providers[name]
+        # Check if we should update the cached provider's model
+        if name in self._providers and not force_refresh:
+            cached = self._providers[name]
+            # Check if model in config differs from cached model
+            config_model = Config.get(f"ai.{name}.model")
+            if config_model and config_model != cached.model:
+                # Update the model on the cached provider
+                cached.model = config_model
+            return cached
 
         # Try to initialize it
         try:
