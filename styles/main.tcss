@@ -8,8 +8,7 @@
    Only custom/derived variables are defined here.
    ========================================================================== */
 
-/* Text aliases - use theme's foreground */
-$text: $foreground;
+/* Text opacity variants - use theme's foreground */
 $text-muted: $foreground 70%;
 $text-dim: $foreground 50%;
 
@@ -129,7 +128,7 @@ InputController > .text-area--selection {
 
 /* Cursor style variants */
 InputController.cursor-block > .text-area--cursor {
-    background: $text;
+    background: $foreground;
     color: $background;
 }
 
