@@ -5,28 +5,46 @@ from pathlib import Path
 
 from textual.theme import Theme
 
-# Sleek dark theme inspired by modern terminals like Warp and Claude CLI
+# =============================================================================
+# Cyber Noir - The signature Null Terminal aesthetic
+# Deep darkness with neon accents, layered visual depth, and dramatic contrast
+# =============================================================================
 NULL_DARK = Theme(
     name="null-dark",
     dark=True,
-    primary="#6B8AFF",  # Soft blue - primary accent
-    secondary="#8B5CF6",  # Purple - secondary accent
-    accent="#38BDF8",  # Sky blue - highlights
-    foreground="#D4DAE6",  # Light slate - main text
-    background="#12161F",  # Deep navy-black
-    surface="#1A202E",  # Elevated surface (lighter)
-    panel="#242B3D",  # Panel/card background (lighter still)
-    success="#34D399",  # Emerald - success states
-    warning="#FBBF24",  # Amber - warnings
-    error="#F87171",  # Red 400 - errors
-    boost="#2DD4BF",  # Teal - special highlights
-    luminosity_spread=0.15,  # More variation for lighter darken/lighten
-    text_alpha=0.95,  # Clearer text
+    # Neon accent palette
+    primary="#00D4FF",  # Electric cyan - AI responses, primary actions
+    secondary="#BD00FF",  # Vivid magenta - agent mode, system
+    accent="#00FF88",  # Matrix green - CLI, success states
+    # Text with high clarity
+    foreground="#E0E6F0",  # Bright silver-blue
+    # Layered dark backgrounds (deepest to elevated)
+    background="#08090D",  # Near-black void
+    surface="#0E1018",  # Slightly raised
+    panel="#151822",  # Card/panel surfaces
+    # Semantic colors with neon intensity
+    success="#00FF88",  # Neon green
+    warning="#FFB800",  # Electric amber
+    error="#FF3366",  # Hot pink-red
+    boost="#00FFCC",  # Teal glow
+    luminosity_spread=0.18,  # Dramatic variation for depth
+    text_alpha=0.95,
     variables={
-        "block-cursor-background": "#6B8AFF",
-        "block-cursor-foreground": "#12161F",
-        "input-cursor-background": "#6B8AFF",
-        "input-cursor-foreground": "#12161F",
+        "block-cursor-background": "#00D4FF",
+        "block-cursor-foreground": "#08090D",
+        "input-cursor-background": "#00D4FF",
+        "input-cursor-foreground": "#08090D",
+        # Noir-specific layering colors
+        "noir-void": "#000000",
+        "noir-deep": "#08090D",
+        "noir-shadow": "#0E1018",
+        "noir-surface": "#151822",
+        "noir-elevated": "#1C2030",
+        "noir-highlight": "#252A3A",
+        # Glow intensities for focus states
+        "glow-cyan": "#00D4FF",
+        "glow-magenta": "#BD00FF",
+        "glow-green": "#00FF88",
     },
 )
 
