@@ -1,7 +1,7 @@
 """Iteration widget for agent mode think -> tool -> response cycles."""
 
 from textual.app import ComposeResult
-from textual.containers import Container, VerticalScroll
+from textual.containers import Container
 from textual.widgets import Static, Label
 from textual.reactive import reactive
 from textual.timer import Timer
@@ -100,16 +100,16 @@ class ThinkingSection(Static):
             yield Label("Reasoning...", classes="thinking-title")
 
         content_class = "thinking-content" if self.collapsed else "thinking-content visible"
-        with VerticalScroll(classes=content_class, id="content-scroll"):
-            yield Static(
-                Markdown(self.content) if self.content else "(no reasoning)",
-                id="content"
-            )
+        yield Static(
+            Markdown(self.content) if self.content else "(no reasoning)",
+            classes=content_class,
+            id="content"
+        )
 
     def watch_collapsed(self, collapsed: bool) -> None:
         try:
             icon = self.query_one("#toggle-icon", Label)
-            content = self.query_one("#content-scroll", VerticalScroll)
+            content = self.query_one("#content", Static)
 
             if collapsed:
                 icon.update("▶")

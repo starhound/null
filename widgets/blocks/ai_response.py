@@ -96,10 +96,16 @@ class AIResponseBlock(BaseBlockWidget):
     def compose(self) -> ComposeResult:
         yield self.header
         yield self.meta_widget
-        yield self.thinking_widget
+        # Only yield global thinking widget in chat mode
+        # In agent mode, thinking is shown within iterations
+        if not self.is_agent_mode:
+            yield self.thinking_widget
         yield self.exec_widget
         yield self.iteration_container
-        yield self.tool_accordion
+        # Only yield tool accordion in chat mode (single-shot tool use)
+        # In agent mode, tools are shown within iterations
+        if not self.is_agent_mode:
+            yield self.tool_accordion
         yield self.response_widget
         yield self.action_bar
         if self.footer_widget._has_content():
@@ -109,13 +115,35 @@ class AIResponseBlock(BaseBlockWidget):
         """Update styling when mode changes."""
         self._apply_mode_class()
 
-        # Hide global thinking widget in agent mode (thinking is in iterations)
+        # Remove global thinking widget in agent mode (thinking is in iterations)
         if hasattr(self, 'thinking_widget') and self.thinking_widget:
             if is_agent:
-                self.thinking_widget.display = False
+                try:
+                    self.thinking_widget.remove()
+                except Exception:
+                    pass
             else:
-                # Only show if it has content or we are not in agent mode
-                self.thinking_widget.display = bool(self.thinking_widget.thinking_text)
+                # Re-mount if switching back to chat mode
+                if self.thinking_widget not in self.children:
+                    try:
+                        self.mount(self.thinking_widget, after=self.meta_widget)
+                    except Exception:
+                        pass
+
+        # Remove tool accordion in agent mode (tools shown in iterations)
+        if hasattr(self, 'tool_accordion') and self.tool_accordion:
+            if is_agent:
+                try:
+                    self.tool_accordion.remove()
+                except Exception:
+                    pass
+            else:
+                # Re-mount if switching back to chat mode
+                if self.tool_accordion not in self.children:
+                    try:
+                        self.mount(self.tool_accordion, after=self.iteration_container)
+                    except Exception:
+                        pass
 
     def update_output(self, new_content: str = ""):
         """Update the AI response display."""
@@ -149,7 +177,9 @@ class AIResponseBlock(BaseBlockWidget):
                     reasoning = full_text
 
         # Update widgets
-        if self.thinking_widget:
+        # Only update global thinking widget in chat mode
+        # In agent mode, thinking is handled per-iteration
+        if not self.is_agent_mode and self.thinking_widget:
             self.thinking_widget.thinking_text = reasoning
 
         exec_out = getattr(self.block, 'content_exec_output', '')

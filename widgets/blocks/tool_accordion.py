@@ -37,7 +37,7 @@ class ToolHeader(Static):
         icon = "▼" if self.expanded else "▶"
         icon_classes = "tool-icon expanded" if self.expanded else "tool-icon"
         yield Label(icon, classes=icon_classes, id="tool-icon")
-        yield Label(f"Tool: {self.tool_name}", classes="tool-name")
+        yield Label(self.tool_name, classes="tool-name")
 
         # Status indicator
         status_icon = self._get_status_icon()

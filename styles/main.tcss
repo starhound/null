@@ -2104,7 +2104,7 @@ IterationContainer {
     width: 100%;
     height: auto;
     padding: 0;
-    margin: 0 0 1 0;
+    margin: 0;
     background: transparent;
 }
 
@@ -2116,14 +2116,9 @@ IterationContainer.empty {
 IterationWidget {
     width: 100%;
     height: auto;
-    padding: 0 1;
-    margin-bottom: 1;
+    padding: 0;
+    margin: 0;
     background: transparent;
-    border: round $accent 40%;
-}
-
-IterationWidget:last-child {
-    margin-bottom: 0;
 }
 
 /* --- IterationHeader --- */
@@ -2133,7 +2128,6 @@ IterationHeader {
     padding: 0 1;
     layout: horizontal;
     background: transparent;
-    border-bottom: dashed $accent 30%;
 }
 
 IterationHeader .iter-status {
@@ -2185,7 +2179,7 @@ ThinkingSection {
 ThinkingSection .thinking-toggle {
     width: 100%;
     height: 1;
-    padding: 0 1;
+    padding: 0 2;
     color: $text-muted;
     layout: horizontal;
     background: transparent;
@@ -2213,13 +2207,12 @@ ThinkingSection .thinking-title {
 ThinkingSection .thinking-content {
     width: 100%;
     height: auto;
-    max-height: 15;
-    padding: 1 2;
+    padding: 1 2 1 3;
     background: transparent;
     border-left: solid $accent 40%;
-    margin: 0 0 0 2;
+    margin: 0 0 1 2;
     display: none;
-    color: $text;
+    color: $text-muted;
 }
 
 ThinkingSection .thinking-content.visible {
@@ -2229,8 +2222,8 @@ ThinkingSection .thinking-content.visible {
 /* --- ToolCallItem (in iterations) --- */
 ToolCallItem {
     width: 100%;
-    height: auto;
-    padding: 0 1;
+    height: 1;
+    padding: 0 2;
     background: transparent;
 }
 
