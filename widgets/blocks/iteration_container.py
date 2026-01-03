@@ -144,6 +144,15 @@ class IterationContainer(Container):
         """Number of iterations in the container."""
         return len(self._iterations)
 
+    def remove_iteration(self, iteration_id: str) -> None:
+        """Remove a specific iteration by ID."""
+        widget = self._iterations.get(iteration_id)
+        if widget:
+            widget.remove()
+            del self._iterations[iteration_id]
+            if not self._iterations:
+                self.add_class("empty")
+
     @property
     def has_iterations(self) -> bool:
         """Whether there are any iterations."""

@@ -55,7 +55,12 @@ AGENT_PROMPT = """You are an AI agent that executes commands in the terminal.
 
 ## Safety
 - Confirm destructive actions (rm, overwrite)
-- Use non-destructive checks (ls, cat) first"""
+- Use non-destructive checks (ls, cat) first
+
+## Final Output
+- You MUST provide a final answer when the task is complete.
+- Start your final answer with "## Result" or "## Answer".
+- Summarize what was done and the outcome."""
 
 # Code helper - focused on programming
 CODE_PROMPT = """You are a programming assistant in a terminal environment.

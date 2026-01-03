@@ -108,6 +108,14 @@ class AIResponseBlock(BaseBlockWidget):
     def watch_is_agent_mode(self, is_agent: bool) -> None:
         """Update styling when mode changes."""
         self._apply_mode_class()
+        
+        # Hide global thinking widget in agent mode (thinking is in iterations)
+        if self.thinking_widget:
+            if is_agent:
+                self.thinking_widget.display = False
+            else:
+                # Only show if it has content or we are not in agent mode
+                self.thinking_widget.display = bool(self.thinking_widget.thinking_text)
 
     def update_output(self, new_content: str = ""):
         """Update the AI response display."""
@@ -274,6 +282,12 @@ class AIResponseBlock(BaseBlockWidget):
             response=response,
             duration=duration
         )
+
+    def remove_iteration(self, iteration_id: str) -> None:
+        """Remove a specific iteration."""
+        self.iteration_container.remove_iteration(iteration_id)
+        # Also remove from block state
+        self.block.iterations = [i for i in self.block.iterations if i.id != iteration_id]
 
     def add_iteration_tool_call(
         self,

@@ -88,6 +88,11 @@ class ExecutionHandler:
             agent_mode = self.app.config.get("ai", {}).get("agent_mode", False)
 
             if use_tools and agent_mode:
+                # If using default prompt in agent mode, switch to specialized agent prompt
+                # because default prompt forbids elaboration which contradicts agent reasoning
+                if active_key == "default":
+                    system_prompt = prompt_manager.get_prompt_content("agent", provider_name)
+
                 await self._execute_agent_mode(
                     prompt, block_state, widget,
                     context_info.messages, system_prompt, max_tokens
@@ -375,11 +380,15 @@ class ExecutionHandler:
                 iteration.status = "complete"
                 iteration.duration = time.time() - iteration_start
                 if has_iteration_ui:
-                    widget.update_iteration(
-                        iteration.id,
-                        status="complete",
-                        duration=iteration.duration
-                    )
+                    # If this iteration has no thinking and no tools, remove it to avoid empty box
+                    if not iteration.thinking and not iteration.tool_calls:
+                        widget.remove_iteration(iteration.id)
+                    else:
+                        widget.update_iteration(
+                            iteration.id,
+                            status="complete",
+                            duration=iteration.duration
+                        )
                 break
 
             # Check if approval is needed

@@ -354,7 +354,9 @@ class IterationWidget(Static):
         height: auto;
         padding: 0;
         margin-bottom: 1;
-        border-bottom: solid $surface-lighten-1;
+        background: $surface;
+        border: solid $primary;  /* Blue border */
+        border-title-color: $primary;
     }
     IterationWidget .iter-tools {
         width: 100%;

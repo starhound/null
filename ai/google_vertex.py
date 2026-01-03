@@ -56,6 +56,11 @@ class GoogleVertexProvider(LLMProvider):
             
             # Helper to create part dict
             parts = []
+            
+            # Handle tool roles to avoid confusion
+            if msg["role"] == "tool":
+                content_part = f"Tool Result: {content_part}"
+                
             if content_part:
                 parts.append({"text": content_part})
                 
