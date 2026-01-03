@@ -391,44 +391,100 @@ class ExecutionHandler:
     ) -> List:
         """Execute tools in agent mode - inline visualization in the main block."""
         from tools import ToolCall, ToolResult
-        
+        from models import ToolCallState
+        from widgets.blocks import AIResponseBlock
+        import time
+
         results = []
+
+        # Check if widget supports tool accordion
+        has_accordion = isinstance(widget, AIResponseBlock)
 
         for tc in tool_calls:
             tool_call = ToolCall(id=tc.id, name=tc.name, arguments=tc.arguments)
-            
-            # Prepare display for tool call
-            # We append to existing exec output so we don't overwrite previous tool calls in this turn
+            start_time = time.time()
+
+            # Create tool call state
+            tool_state = ToolCallState(
+                id=tc.id,
+                tool_name=tc.name,
+                arguments=json.dumps(tc.arguments, indent=2) if isinstance(tc.arguments, dict) else str(tc.arguments),
+                status="running"
+            )
+            block_state.tool_calls.append(tool_state)
+
+            # Add to accordion if available
+            if has_accordion:
+                widget.add_tool_call(
+                    tool_id=tc.id,
+                    tool_name=tc.name,
+                    arguments=tool_state.arguments,
+                    status="running"
+                )
+
+            # Also update exec output for backwards compatibility
             tool_display = f"\n\n**Tool Call: {tc.name}**\n```json\n{json.dumps(tc.arguments, indent=2)}\n```"
             block_state.content_exec_output += tool_display
-            widget.update_output()  # Triggers update of exec widget
+            widget.update_output()
 
             try:
                 # Execute the tool
                 result = await registry.execute_tool(tool_call)
                 results.append(result)
 
+                duration = time.time() - start_time
+
                 # Format result
                 content_preview = result.content
                 if len(result.content) > 2000:
                     content_preview = result.content[:2000] + f"\n... ({len(result.content)} chars total)"
 
+                # Update tool state
+                tool_state.status = "error" if result.is_error else "success"
+                tool_state.output = result.content
+                tool_state.duration = duration
+
+                # Update accordion if available
+                if has_accordion:
+                    widget.update_tool_call(
+                        tool_id=tc.id,
+                        status=tool_state.status,
+                        output=content_preview,
+                        duration=duration
+                    )
+
+                # Update exec output for backwards compatibility
                 if result.is_error:
                     result_display = f"\n**Error:**\n```\n{result.content}\n```"
                 else:
                     result_display = f"\n**Result:**\n```\n{content_preview}\n```"
-                
+
                 block_state.content_exec_output += result_display
                 widget.update_output()
 
             except Exception as e:
+                duration = time.time() - start_time
                 error_result = ToolResult(
                     tool_call_id=tc.id,
                     content=f"Error: {str(e)}",
                     is_error=True
                 )
                 results.append(error_result)
-                
+
+                # Update tool state
+                tool_state.status = "error"
+                tool_state.output = str(e)
+                tool_state.duration = duration
+
+                # Update accordion if available
+                if has_accordion:
+                    widget.update_tool_call(
+                        tool_id=tc.id,
+                        status="error",
+                        output=str(e),
+                        duration=duration
+                    )
+
                 block_state.content_exec_output += f"\n**System Error:**\n```\n{str(e)}\n```"
                 widget.update_output()
 
@@ -443,11 +499,34 @@ class ExecutionHandler:
     ) -> List:
         """Process tool calls with approval and execution."""
         from tools import ToolCall, ToolResult
+        from models import ToolCallState
+        from widgets.blocks import AIResponseBlock
+        import time
 
         results = []
+        has_accordion = isinstance(widget, AIResponseBlock)
 
         for tc in tool_calls:
             tool_call = ToolCall(id=tc.id, name=tc.name, arguments=tc.arguments)
+            start_time = time.time()
+
+            # Create tool call state
+            tool_state = ToolCallState(
+                id=tc.id,
+                tool_name=tc.name,
+                arguments=json.dumps(tc.arguments, indent=2) if isinstance(tc.arguments, dict) else str(tc.arguments),
+                status="running"
+            )
+            block_state.tool_calls.append(tool_state)
+
+            # Add to accordion if available
+            if has_accordion:
+                widget.add_tool_call(
+                    tool_id=tc.id,
+                    tool_name=tc.name,
+                    arguments=tool_state.arguments,
+                    status="running"
+                )
 
             # Check if approval is needed
             needs_approval = registry.requires_approval(tc.name)
@@ -464,6 +543,23 @@ class ExecutionHandler:
             # Execute the tool
             result = await registry.execute_tool(tool_call)
             results.append(result)
+
+            duration = time.time() - start_time
+
+            # Update tool state
+            tool_state.status = "error" if result.is_error else "success"
+            tool_state.output = result.content
+            tool_state.duration = duration
+
+            # Update accordion if available
+            if has_accordion:
+                content_preview = result.content[:1000] if len(result.content) > 1000 else result.content
+                widget.update_tool_call(
+                    tool_id=tc.id,
+                    status=tool_state.status,
+                    output=content_preview,
+                    duration=duration
+                )
 
             # Show the result
             result_display = f"\n**Result:**\n```\n{result.content[:1000]}\n```\n"

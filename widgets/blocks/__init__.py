@@ -12,6 +12,9 @@ from .thinking import ThinkingWidget
 from .execution import ExecutionWidget
 from .code_block import CodeBlockWidget, extract_code_blocks, execute_code, get_file_extension
 from .terminal import TerminalBlock
+from .actions import ActionBar, ActionButton
+from .tool_accordion import ToolAccordion, ToolAccordionItem
+from .frame import BlockFrame, FrameSeparator
 
 
 def create_block(block: BlockState) -> BaseBlockWidget:
@@ -60,4 +63,10 @@ __all__ = [
     'execute_code',
     'get_file_extension',
     'create_block',
+    'ActionBar',
+    'ActionButton',
+    'ToolAccordion',
+    'ToolAccordionItem',
+    'BlockFrame',
+    'FrameSeparator',
 ]

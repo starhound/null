@@ -1835,3 +1835,262 @@ ResponseWidget .response-container.simple .response-header {
 ResponseWidget .response-container.simple #response-content {
     padding: 0;
 }
+
+/* ==========================================================================
+   AI Block Redesign: Chat vs Agent Mode
+   ========================================================================== */
+
+/* --- ActionBar: Action buttons for AI blocks --- */
+
+ActionBar {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    layout: horizontal;
+    align: left middle;
+    background: transparent;
+    border-top: dashed $surface-lighten-1;
+}
+
+ActionBar .action-spacer {
+    width: 1fr;
+}
+
+ActionBar .action-meta {
+    color: $text-muted;
+    text-style: dim italic;
+}
+
+ActionButton {
+    width: auto;
+    height: 1;
+    padding: 0 1;
+    margin: 0 1 0 0;
+    color: $text-muted;
+    background: transparent;
+}
+
+ActionButton:hover {
+    color: $accent;
+    background: $surface-lighten-1;
+    text-style: bold;
+}
+
+ActionButton.-disabled {
+    color: $text-dim;
+}
+
+/* --- BlockFrame: Chat/Agent mode container --- */
+
+BlockFrame {
+    width: 100%;
+    height: auto;
+    padding: 0;
+}
+
+BlockFrame.mode-chat {
+    border: round $surface-lighten-1;
+    background: $surface;
+}
+
+BlockFrame.mode-chat .block-mode-tag {
+    color: $text-muted;
+    text-style: dim;
+}
+
+BlockFrame.mode-agent {
+    border: double $accent;
+    background: $surface;
+}
+
+BlockFrame.mode-agent .block-mode-tag {
+    color: $accent;
+    text-style: bold;
+}
+
+BlockFrame .frame-header {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    background: $surface-darken-1;
+    layout: horizontal;
+}
+
+BlockFrame .block-mode-tag {
+    width: auto;
+}
+
+BlockFrame .block-input-preview {
+    color: $text;
+    margin-left: 1;
+    width: 1fr;
+}
+
+FrameSeparator {
+    width: 100%;
+    height: 1;
+    background: $surface-lighten-1 50%;
+    margin: 0;
+    padding: 0;
+}
+
+FrameSeparator.agent {
+    background: $accent 30%;
+}
+
+/* --- ToolAccordion: Collapsible tool calls --- */
+
+ToolAccordion {
+    width: 100%;
+    height: auto;
+    background: transparent;
+    padding: 0;
+    margin: 0 0 1 0;
+}
+
+ToolAccordion.empty {
+    display: none;
+}
+
+ToolAccordionItem {
+    width: 100%;
+    height: auto;
+    border-bottom: solid $surface-lighten-1;
+    padding: 0;
+}
+
+ToolAccordionItem:hover {
+    background: $surface-lighten-1 10%;
+}
+
+/* Tool Header */
+ToolHeader {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    layout: horizontal;
+}
+
+ToolHeader .tool-icon {
+    width: 2;
+    color: $text-muted;
+}
+
+ToolHeader .tool-icon.expanded {
+    color: $accent;
+}
+
+ToolHeader .tool-name {
+    color: $text;
+    text-style: bold;
+}
+
+ToolHeader .tool-status {
+    width: auto;
+    margin-left: 1;
+}
+
+ToolHeader .tool-status.pending {
+    color: $text-muted;
+}
+
+ToolHeader .tool-status.running {
+    color: $warning;
+}
+
+ToolHeader .tool-status.success {
+    color: $success;
+}
+
+ToolHeader .tool-status.error {
+    color: $error;
+}
+
+ToolHeader .tool-duration {
+    color: $text-muted;
+    text-style: dim;
+    margin-left: 1;
+}
+
+ToolHeader .tool-spacer {
+    width: 1fr;
+}
+
+/* Tool Output */
+ToolOutput {
+    width: 100%;
+    height: auto;
+    max-height: 20;
+    padding: 0 2;
+    background: $surface-darken-1;
+    display: none;
+    border-left: solid $surface-lighten-1;
+    margin-left: 1;
+}
+
+ToolOutput.visible {
+    display: block;
+}
+
+ToolOutput .tool-output-content {
+    width: 100%;
+}
+
+ToolOutput .tool-args {
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+ToolOutput .tool-result {
+    width: 100%;
+}
+
+/* --- AIResponseBlock: Chat vs Agent Mode --- */
+
+/* Chat mode - subtle styling */
+AIResponseBlock.mode-chat {
+    border: round $primary 60%;
+}
+
+AIResponseBlock.mode-chat BlockHeader {
+    border-bottom: dashed $primary 30%;
+}
+
+AIResponseBlock.mode-chat .block-mode-tag {
+    color: $text-muted;
+}
+
+/* Agent mode - bold styling */
+AIResponseBlock.mode-agent {
+    border: double $accent;
+}
+
+AIResponseBlock.mode-agent:focus-within {
+    border: double $accent;
+    background: $accent 5%;
+}
+
+AIResponseBlock.mode-agent BlockHeader {
+    color: $accent;
+    border-bottom: solid $accent 60%;
+}
+
+AIResponseBlock.mode-agent .block-mode-tag {
+    color: $accent;
+    text-style: bold;
+}
+
+/* Mode tag in header */
+.block-mode-tag {
+    width: auto;
+    margin-right: 1;
+    text-style: bold;
+}
+
+.block-mode-tag-chat {
+    color: $text-muted;
+}
+
+.block-mode-tag-agent {
+    color: $accent;
+}

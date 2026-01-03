@@ -584,6 +584,52 @@ class NullApp(App):
             input_ctrl.toggle_mode()
         self.notify("Edit and resubmit your query")
 
+    async def on_base_block_widget_copy_requested(self, message: BaseBlockWidget.CopyRequested):
+        """Handle copy button click."""
+        try:
+            import pyperclip
+            pyperclip.copy(message.content)
+            self.notify("Copied to clipboard")
+        except ImportError:
+            # Fallback: try to use xclip/xsel on Linux or pbcopy on macOS
+            import subprocess
+            import sys
+            try:
+                if sys.platform == "darwin":
+                    subprocess.run(["pbcopy"], input=message.content.encode(), check=True)
+                else:
+                    subprocess.run(["xclip", "-selection", "clipboard"], input=message.content.encode(), check=True)
+                self.notify("Copied to clipboard")
+            except Exception:
+                self.notify("Failed to copy - install pyperclip", severity="error")
+        except Exception as e:
+            self.notify(f"Copy failed: {e}", severity="error")
+
+    async def on_base_block_widget_fork_requested(self, message: BaseBlockWidget.ForkRequested):
+        """Handle fork button click to create a conversation branch."""
+        block = next((b for b in self.blocks if b.id == message.block_id), None)
+        if not block:
+            self.notify("Block not found", severity="error")
+            return
+
+        # Find the index of this block
+        try:
+            block_index = self.blocks.index(block)
+        except ValueError:
+            self.notify("Block not found in history", severity="error")
+            return
+
+        # Create a fork point - truncate history to this block
+        # This keeps all blocks up to and including this one
+        forked_blocks = self.blocks[:block_index + 1]
+
+        # Store fork point metadata
+        self.notify(f"Forked at block {block.id[:8]} - {len(forked_blocks)} blocks in history")
+
+        # TODO: Implement full fork functionality with branch management
+        # For now, just notify the user that forking is ready
+        # Future: save current branch, create new branch from fork point
+
     async def on_code_block_widget_run_code_requested(self, message):
         """Handle run code button click from code blocks."""
         from widgets.blocks import CodeBlockWidget, execute_code

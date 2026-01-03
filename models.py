@@ -16,6 +16,43 @@ class BlockType(Enum):
 
 
 @dataclass
+class ToolCallState:
+    """State for a single tool call in agent mode."""
+    id: str
+    tool_name: str
+    arguments: str = ""
+    output: str = ""
+    status: str = "pending"  # pending, running, success, error
+    duration: float = 0.0
+    timestamp: datetime = field(default_factory=datetime.now)
+
+    def to_dict(self) -> dict:
+        """Serialize tool call to dictionary."""
+        return {
+            "id": self.id,
+            "tool_name": self.tool_name,
+            "arguments": self.arguments,
+            "output": self.output,
+            "status": self.status,
+            "duration": self.duration,
+            "timestamp": self.timestamp.isoformat()
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "ToolCallState":
+        """Deserialize tool call from dictionary."""
+        return cls(
+            id=data.get("id", str(uuid.uuid4())),
+            tool_name=data["tool_name"],
+            arguments=data.get("arguments", ""),
+            output=data.get("output", ""),
+            status=data.get("status", "pending"),
+            duration=data.get("duration", 0.0),
+            timestamp=datetime.fromisoformat(data["timestamp"]) if "timestamp" in data else datetime.now()
+        )
+
+
+@dataclass
 class BlockState:
     type: BlockType
     content_input: str
@@ -27,6 +64,7 @@ class BlockState:
     metadata: Dict = field(default_factory=dict)
     content_thinking: str = ""
     content_exec_output: str = ""
+    tool_calls: List["ToolCallState"] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """Serialize block to dictionary."""
@@ -40,12 +78,16 @@ class BlockState:
             "content_exec_output": self.content_exec_output,
             "exit_code": self.exit_code,
             "is_running": self.is_running,
-            "metadata": self.metadata
+            "metadata": self.metadata,
+            "tool_calls": [tc.to_dict() for tc in self.tool_calls]
         }
 
     @classmethod
     def from_dict(cls, data: dict) -> "BlockState":
         """Deserialize block from dictionary."""
+        tool_calls_data = data.get("tool_calls", [])
+        tool_calls = [ToolCallState.from_dict(tc) for tc in tool_calls_data]
+
         return cls(
             id=data.get("id", str(uuid.uuid4())),
             type=BlockType(data["type"]),
@@ -56,7 +98,8 @@ class BlockState:
             content_exec_output=data.get("content_exec_output", ""),
             exit_code=data.get("exit_code"),
             is_running=data.get("is_running", False),
-            metadata=data.get("metadata", {})
+            metadata=data.get("metadata", {}),
+            tool_calls=tool_calls
         )
 
 

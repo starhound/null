@@ -23,6 +23,19 @@ class BaseBlockWidget(Static):
             self.content = content
             super().__init__()
 
+    class CopyRequested(Message):
+        """Sent when user clicks copy button."""
+        def __init__(self, block_id: str, content: str):
+            self.block_id = block_id
+            self.content = content
+            super().__init__()
+
+    class ForkRequested(Message):
+        """Sent when user clicks fork button to create a conversation branch."""
+        def __init__(self, block_id: str):
+            self.block_id = block_id
+            super().__init__()
+
     def __init__(self, block: BlockState):
         super().__init__()
         self.block = block
