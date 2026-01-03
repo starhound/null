@@ -2,9 +2,9 @@
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal
-from textual.widgets import Static, Label
-from textual.message import Message
 from textual.events import Click
+from textual.message import Message
+from textual.widgets import Label, Static
 
 
 class ActionButton(Static):
@@ -12,6 +12,7 @@ class ActionButton(Static):
 
     class Pressed(Message, bubble=True):
         """Message sent when an action button is clicked."""
+
         def __init__(self, action: str, block_id: str):
             super().__init__()
             self.action = action
@@ -24,7 +25,7 @@ class ActionButton(Static):
         block_id: str,
         disabled: bool = False,
         id: str | None = None,
-        classes: str | None = None
+        classes: str | None = None,
     ):
         super().__init__(label, id=id, classes=classes)
         self.action = action
@@ -51,7 +52,7 @@ class ActionBar(Horizontal):
         show_edit: bool = True,
         meta_text: str = "",
         id: str | None = None,
-        classes: str | None = None
+        classes: str | None = None,
     ):
         super().__init__(id=id, classes=classes)
         self.block_id = block_id

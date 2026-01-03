@@ -8,11 +8,11 @@ import os
 import subprocess
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class TerminalType(Enum):
     """Known terminal emulator types."""
+
     KITTY = "kitty"
     WEZTERM = "wezterm"
     ALACRITTY = "alacritty"
@@ -30,6 +30,7 @@ class TerminalType(Enum):
 @dataclass
 class TerminalInfo:
     """Information about the detected terminal."""
+
     type: TerminalType
     name: str
     supports_font_change: bool
@@ -41,13 +42,13 @@ class TerminalInfo:
 
 def detect_terminal() -> TerminalInfo:
     """Detect the current terminal emulator from environment variables.
-    
+
     Returns:
         TerminalInfo with detected terminal type and capabilities.
     """
     # Check TERM_PROGRAM first (set by many modern terminals)
     term_program = os.environ.get("TERM_PROGRAM", "").lower()
-    
+
     # VS Code integrated terminal
     if term_program == "vscode" or os.environ.get("VSCODE_INJECTION"):
         version = os.environ.get("TERM_PROGRAM_VERSION", "")
@@ -57,7 +58,7 @@ def detect_terminal() -> TerminalInfo:
             supports_font_change=False,  # Controlled via VS Code settings
             supports_true_color=True,
             supports_osc=True,
-            version=version
+            version=version,
         )
     # Check for Kitty
     if os.environ.get("KITTY_PID"):
@@ -67,9 +68,9 @@ def detect_terminal() -> TerminalInfo:
             supports_font_change=True,
             supports_true_color=True,
             supports_osc=True,
-            config_path=os.path.expanduser("~/.config/kitty/kitty.conf")
+            config_path=os.path.expanduser("~/.config/kitty/kitty.conf"),
         )
-    
+
     # Check for WezTerm
     if os.environ.get("WEZTERM_EXECUTABLE") or os.environ.get("WEZTERM_PANE"):
         return TerminalInfo(
@@ -78,9 +79,9 @@ def detect_terminal() -> TerminalInfo:
             supports_font_change=True,
             supports_true_color=True,
             supports_osc=True,
-            config_path=os.path.expanduser("~/.config/wezterm/wezterm.lua")
+            config_path=os.path.expanduser("~/.config/wezterm/wezterm.lua"),
         )
-    
+
     # Check for Alacritty
     if os.environ.get("ALACRITTY_LOG") or os.environ.get("ALACRITTY_SOCKET"):
         return TerminalInfo(
@@ -89,9 +90,9 @@ def detect_terminal() -> TerminalInfo:
             supports_font_change=False,  # Requires config file edit
             supports_true_color=True,
             supports_osc=True,
-            config_path=os.path.expanduser("~/.config/alacritty/alacritty.toml")
+            config_path=os.path.expanduser("~/.config/alacritty/alacritty.toml"),
         )
-    
+
     # Check for iTerm2 (macOS)
     if os.environ.get("ITERM_SESSION_ID"):
         return TerminalInfo(
@@ -99,9 +100,9 @@ def detect_terminal() -> TerminalInfo:
             name="iTerm2",
             supports_font_change=True,
             supports_true_color=True,
-            supports_osc=True
+            supports_osc=True,
         )
-    
+
     # Check for GNOME Terminal
     if os.environ.get("GNOME_TERMINAL_SCREEN"):
         return TerminalInfo(
@@ -109,9 +110,9 @@ def detect_terminal() -> TerminalInfo:
             name="GNOME Terminal",
             supports_font_change=False,
             supports_true_color=True,
-            supports_osc=True
+            supports_osc=True,
         )
-    
+
     # Check for Konsole
     if os.environ.get("KONSOLE_VERSION"):
         return TerminalInfo(
@@ -119,9 +120,9 @@ def detect_terminal() -> TerminalInfo:
             name="Konsole",
             supports_font_change=False,
             supports_true_color=True,
-            supports_osc=True
+            supports_osc=True,
         )
-    
+
     # Check for Tilix
     if os.environ.get("TILIX_ID"):
         return TerminalInfo(
@@ -129,9 +130,9 @@ def detect_terminal() -> TerminalInfo:
             name="Tilix",
             supports_font_change=False,
             supports_true_color=True,
-            supports_osc=True
+            supports_osc=True,
         )
-    
+
     # Check for tmux (passthrough to underlying terminal)
     if os.environ.get("TMUX"):
         return TerminalInfo(
@@ -139,9 +140,9 @@ def detect_terminal() -> TerminalInfo:
             name="tmux",
             supports_font_change=False,
             supports_true_color=True,
-            supports_osc=True
+            supports_osc=True,
         )
-    
+
     # Check TERM_PROGRAM (set by some terminals)
     # Note: term_program is already defined at the top of the function
     if "kitty" in term_program:
@@ -152,21 +153,23 @@ def detect_terminal() -> TerminalInfo:
         return TerminalInfo(TerminalType.ITERM2, "iTerm2", True)
     if "alacritty" in term_program:
         return TerminalInfo(TerminalType.ALACRITTY, "Alacritty", False)
-    
+
     # Check for Windows Terminal via WSL
     # WSL sets WSL_DISTRO_NAME and WT_SESSION for Windows Terminal
     wt_session = os.environ.get("WT_SESSION")
     wsl_distro = os.environ.get("WSL_DISTRO_NAME")
-    
-    if wt_session or (wsl_distro and os.path.exists("/proc/sys/fs/binfmt_misc/WSLInterop")):
+
+    if wt_session or (
+        wsl_distro and os.path.exists("/proc/sys/fs/binfmt_misc/WSLInterop")
+    ):
         return TerminalInfo(
             type=TerminalType.WINDOWS_TERMINAL,
-            name=f"Windows Terminal" + (f" (WSL: {wsl_distro})" if wsl_distro else ""),
+            name="Windows Terminal" + (f" (WSL: {wsl_distro})" if wsl_distro else ""),
             supports_font_change=False,  # Controlled via Windows Terminal settings
             supports_true_color=True,
-            supports_osc=True
+            supports_osc=True,
         )
-    
+
     # Fallback to TERM variable
     term = os.environ.get("TERM", "")
     if "xterm" in term.lower():
@@ -175,20 +178,20 @@ def detect_terminal() -> TerminalInfo:
             name="xterm-compatible",
             supports_font_change=False,
             supports_true_color="256color" in term or "truecolor" in term,
-            supports_osc=True
+            supports_osc=True,
         )
-    
+
     return TerminalInfo(
         type=TerminalType.UNKNOWN,
         name="Unknown Terminal",
         supports_font_change=False,
         supports_true_color=False,
-        supports_osc=False
+        supports_osc=False,
     )
 
 
 # Global cached terminal info
-_terminal_info: Optional[TerminalInfo] = None
+_terminal_info: TerminalInfo | None = None
 
 
 def get_terminal_info() -> TerminalInfo:
@@ -210,20 +213,21 @@ def refresh_terminal_info() -> TerminalInfo:
 # Terminal Adapters for font/appearance control
 # =============================================================================
 
+
 class TerminalAdapter:
     """Base class for terminal-specific adapters."""
-    
+
     def __init__(self, terminal_info: TerminalInfo):
         self.info = terminal_info
-    
+
     def set_font(self, family: str, size: int) -> bool:
         """Set terminal font. Returns True if successful."""
         return False
-    
-    def get_font(self) -> Optional[tuple]:
+
+    def get_font(self) -> tuple | None:
         """Get current font (family, size) if possible."""
         return None
-    
+
     def set_opacity(self, opacity: float) -> bool:
         """Set terminal opacity (0.0 - 1.0). Returns True if successful."""
         return False
@@ -231,7 +235,7 @@ class TerminalAdapter:
 
 class KittyAdapter(TerminalAdapter):
     """Adapter for Kitty terminal."""
-    
+
     def set_font(self, family: str, size: int) -> bool:
         """Set font using Kitty remote control."""
         try:
@@ -241,7 +245,7 @@ class KittyAdapter(TerminalAdapter):
             return result.returncode == 0
         except Exception:
             return False
-    
+
     def set_opacity(self, opacity: float) -> bool:
         """Set opacity using Kitty remote control."""
         try:
@@ -255,7 +259,7 @@ class KittyAdapter(TerminalAdapter):
 
 class WezTermAdapter(TerminalAdapter):
     """Adapter for WezTerm terminal."""
-    
+
     def set_font(self, family: str, size: int) -> bool:
         """WezTerm requires lua config changes or cli."""
         # WezTerm can be controlled via CLI in some cases
@@ -265,13 +269,14 @@ class WezTermAdapter(TerminalAdapter):
 
 class GenericAdapter(TerminalAdapter):
     """Generic adapter for unsupported terminals."""
+
     pass
 
 
 def get_terminal_adapter() -> TerminalAdapter:
     """Get the appropriate adapter for the current terminal."""
     info = get_terminal_info()
-    
+
     if info.type == TerminalType.KITTY:
         return KittyAdapter(info)
     elif info.type == TerminalType.WEZTERM:

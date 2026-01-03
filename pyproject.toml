@@ -70,3 +70,58 @@ packages = [
     "storage.py",
     "themes.py",
 ]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+    "ruff>=0.14.10",
+]
+
+# Ruff configuration
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+exclude = [
+    ".venv",
+    "__pycache__",
+    ".git",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort (import sorting)
+    "UP",     # pyupgrade (modernize for 3.12+)
+    "ASYNC",  # async linting
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "RUF",    # ruff-specific rules
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # unused imports in __init__ files
+
+[tool.ruff.format]
+quote-style = "double"
+
+# Mypy configuration
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Start permissive, tighten later
+check_untyped_defs = true
+ignore_missing_imports = true  # Many AI SDK stubs missing
+exclude = [
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+]

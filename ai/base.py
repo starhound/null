@@ -1,27 +1,31 @@
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
-from typing import AsyncGenerator, List, Optional, TypedDict, Any, Dict, Union
+from typing import Any, TypedDict
 
 
 class Message(TypedDict, total=False):
     """Chat message format."""
+
     role: str  # "system", "user", "assistant", or "tool"
     content: str
-    tool_calls: List[Dict[str, Any]]  # For assistant messages with tool calls
+    tool_calls: list[dict[str, Any]]  # For assistant messages with tool calls
     tool_call_id: str  # For tool result messages
 
 
 @dataclass
 class ToolCallData:
     """Represents a tool call from the LLM."""
+
     id: str
     name: str
-    arguments: Dict[str, Any]
+    arguments: dict[str, Any]
 
 
 @dataclass
 class TokenUsage:
     """Token usage information from an API response."""
+
     input_tokens: int = 0
     output_tokens: int = 0
 
@@ -32,22 +36,23 @@ class TokenUsage:
     def __add__(self, other: "TokenUsage") -> "TokenUsage":
         return TokenUsage(
             input_tokens=self.input_tokens + other.input_tokens,
-            output_tokens=self.output_tokens + other.output_tokens
+            output_tokens=self.output_tokens + other.output_tokens,
         )
 
 
 @dataclass
 class StreamChunk:
     """A chunk from the streaming response."""
+
     text: str = ""
-    tool_calls: List[ToolCallData] = field(default_factory=list)
+    tool_calls: list[ToolCallData] = field(default_factory=list)
     is_complete: bool = False
-    usage: Optional[TokenUsage] = None
+    usage: TokenUsage | None = None
 
 
 # Model pricing per 1M tokens (input_cost, output_cost) in USD
 # Updated January 2025
-MODEL_PRICING: Dict[str, tuple] = {
+MODEL_PRICING: dict[str, tuple] = {
     # OpenAI
     "gpt-4o": (2.50, 10.00),
     "gpt-4o-mini": (0.15, 0.60),
@@ -125,6 +130,7 @@ def calculate_cost(usage: TokenUsage, model_name: str) -> float:
 @dataclass
 class ModelInfo:
     """Model information including context limits."""
+
     name: str
     max_tokens: int = 4096  # Default fallback
     context_window: int = 4096  # Default fallback
@@ -199,7 +205,7 @@ KNOWN_MODEL_CONTEXTS = {
     "qwen2.5-coder": 32768,
     "qwen3": 40000,
     "qwen3-coder": 40000,
-    # Other local models  
+    # Other local models
     "phi3": 128000,
     "phi4": 16384,
     "gemma2": 8192,
@@ -246,10 +252,7 @@ class LLMProvider(ABC):
 
     @abstractmethod
     async def generate(
-        self,
-        prompt: str,
-        messages: List[Message],
-        system_prompt: Optional[str] = None
+        self, prompt: str, messages: list[Message], system_prompt: str | None = None
     ) -> AsyncGenerator[str, None]:
         """Stream text response from the LLM (legacy interface).
 
@@ -263,9 +266,9 @@ class LLMProvider(ABC):
     async def generate_with_tools(
         self,
         prompt: str,
-        messages: List[Message],
-        tools: List[Dict[str, Any]],
-        system_prompt: Optional[str] = None
+        messages: list[Message],
+        tools: list[dict[str, Any]],
+        system_prompt: str | None = None,
     ) -> AsyncGenerator[StreamChunk, None]:
         """Stream response with tool calling support.
 
@@ -283,7 +286,7 @@ class LLMProvider(ABC):
             yield StreamChunk(text=text)
 
     @abstractmethod
-    async def list_models(self) -> List[str]:
+    async def list_models(self) -> list[str]:
         """Return a list of available model names."""
         pass
 
@@ -296,9 +299,7 @@ class LLMProvider(ABC):
         """Get model information including context limits."""
         context_size = get_model_context_size(self.model)
         return ModelInfo(
-            name=self.model,
-            max_tokens=context_size,
-            context_window=context_size
+            name=self.model, max_tokens=context_size, context_window=context_size
         )
 
     def supports_tools(self) -> bool:

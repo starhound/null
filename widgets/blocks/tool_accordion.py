@@ -1,15 +1,15 @@
 """Tool accordion widget for agent mode tool calls."""
 
+import json
+
+from rich.markdown import Markdown
+from rich.syntax import Syntax
 from textual.app import ComposeResult
 from textual.containers import Container, VerticalScroll
-from textual.widgets import Static, Label
+from textual.events import Click
 from textual.reactive import reactive
 from textual.timer import Timer
-from textual.events import Click
-from rich.syntax import Syntax
-from rich.markdown import Markdown
-from typing import Optional
-import json
+from textual.widgets import Label, Static
 
 
 class ToolHeader(Static):
@@ -23,7 +23,7 @@ class ToolHeader(Static):
         status: str = "pending",
         duration: float = 0.0,
         expanded: bool = False,
-        id: str | None = None
+        id: str | None = None,
     ):
         super().__init__(id=id)
         self.tool_name = tool_name
@@ -31,7 +31,7 @@ class ToolHeader(Static):
         self.duration = duration
         self.expanded = expanded
         self._spinner_index = 0
-        self._spinner_timer: Optional[Timer] = None
+        self._spinner_timer: Timer | None = None
 
     def compose(self) -> ComposeResult:
         icon = "▼" if self.expanded else "▶"
@@ -55,7 +55,7 @@ class ToolHeader(Static):
             "pending": "○",
             "running": self.SPINNER_FRAMES[0],
             "success": "[✓]",
-            "error": "[✗]"
+            "error": "[✗]",
         }
         return icons.get(self.status, "○")
 
@@ -113,12 +113,7 @@ class ToolHeader(Static):
 class ToolOutput(VerticalScroll):
     """Collapsible output container for tool results."""
 
-    def __init__(
-        self,
-        arguments: str = "",
-        output: str = "",
-        id: str | None = None
-    ):
+    def __init__(self, arguments: str = "", output: str = "", id: str | None = None):
         super().__init__(id=id)
         self.arguments = arguments
         self.output = output
@@ -132,15 +127,19 @@ class ToolOutput(VerticalScroll):
                     args_dict = json.loads(self.arguments)
                     args_formatted = json.dumps(args_dict, indent=2)
                     yield Static(
-                        Syntax(args_formatted, "json", theme="monokai", line_numbers=False),
-                        classes="tool-args"
+                        Syntax(
+                            args_formatted, "json", theme="monokai", line_numbers=False
+                        ),
+                        classes="tool-args",
                     )
                 except (json.JSONDecodeError, TypeError):
                     yield Static(f"Args: {self.arguments}", classes="tool-args")
 
             # Show output
             if self.output:
-                yield Static(Markdown(self.output), classes="tool-result", id="tool-result")
+                yield Static(
+                    Markdown(self.output), classes="tool-result", id="tool-result"
+                )
             else:
                 yield Static("(no output)", classes="tool-result", id="tool-result")
 
@@ -176,7 +175,7 @@ class ToolAccordionItem(Static):
         status: str = "pending",
         duration: float = 0.0,
         id: str | None = None,
-        classes: str | None = None
+        classes: str | None = None,
     ):
         super().__init__(id=id, classes=classes)
         self.tool_id = tool_id
@@ -185,8 +184,8 @@ class ToolAccordionItem(Static):
         self.output = output
         self.status = status
         self.duration = duration
-        self._header: Optional[ToolHeader] = None
-        self._output_panel: Optional[ToolOutput] = None
+        self._header: ToolHeader | None = None
+        self._output_panel: ToolOutput | None = None
 
     def compose(self) -> ComposeResult:
         self._header = ToolHeader(
@@ -194,14 +193,12 @@ class ToolAccordionItem(Static):
             status=self.status,
             duration=self.duration,
             expanded=self.expanded,
-            id=f"header-{self.tool_id}"
+            id=f"header-{self.tool_id}",
         )
         yield self._header
 
         self._output_panel = ToolOutput(
-            arguments=self.arguments,
-            output=self.output,
-            id=f"output-{self.tool_id}"
+            arguments=self.arguments, output=self.output, id=f"output-{self.tool_id}"
         )
         yield self._output_panel
 
@@ -249,11 +246,7 @@ class ToolAccordion(Container):
         yield from []
 
     def add_tool(
-        self,
-        tool_id: str,
-        tool_name: str,
-        arguments: str = "",
-        status: str = "running"
+        self, tool_id: str, tool_name: str, arguments: str = "", status: str = "running"
     ) -> ToolAccordionItem:
         """Add a new tool call to the accordion."""
         # Remove empty class if this is the first tool
@@ -265,7 +258,7 @@ class ToolAccordion(Container):
             tool_name=tool_name,
             arguments=arguments,
             status=status,
-            id=f"tool-{tool_id}"
+            id=f"tool-{tool_id}",
         )
         self._tools[tool_id] = item
         self.mount(item)
@@ -276,7 +269,7 @@ class ToolAccordion(Container):
         tool_id: str,
         status: str | None = None,
         output: str | None = None,
-        duration: float | None = None
+        duration: float | None = None,
     ) -> None:
         """Update an existing tool call."""
         item = self._tools.get(tool_id)
@@ -286,7 +279,7 @@ class ToolAccordion(Container):
             if output is not None:
                 item.update_output(output)
 
-    def get_tool(self, tool_id: str) -> Optional[ToolAccordionItem]:
+    def get_tool(self, tool_id: str) -> ToolAccordionItem | None:
         """Get a tool item by ID."""
         return self._tools.get(tool_id)
 

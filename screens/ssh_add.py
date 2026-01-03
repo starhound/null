@@ -1,8 +1,9 @@
-from textual.screen import ModalScreen
 from textual.app import ComposeResult
-from textual.containers import Grid, Vertical, Horizontal
-from textual.widgets import Label, Input, Button, Static
+from textual.containers import Grid, Horizontal, Vertical
+from textual.screen import ModalScreen
 from textual.validation import Integer
+from textual.widgets import Button, Input, Label
+
 
 class SSHAddScreen(ModalScreen):
     """Screen to add or edit an SSH host."""
@@ -84,13 +85,13 @@ class SSHAddScreen(ModalScreen):
     def compose(self) -> ComposeResult:
         with Vertical(id="ssh-form"):
             yield Label("Add SSH Host", classes="header")
-            
+
             yield Label("Alias (unique name)")
             yield Input(placeholder="e.g. prod-db", id="alias")
-            
+
             yield Label("Hostname")
             yield Input(placeholder="example.com or IP", id="hostname")
-            
+
             with Grid(id="creds-row"):
                 with Vertical():
                     yield Label("Username")
@@ -98,16 +99,16 @@ class SSHAddScreen(ModalScreen):
                 with Vertical():
                     yield Label("Port")
                     yield Input(str(22), validators=[Integer()], id="port")
-            
+
             yield Label("Key Path (optional)")
             yield Input(placeholder="~/.ssh/id_rsa", id="key_path")
-            
+
             yield Label("Jump Host Alias (optional)")
             yield Input(placeholder="bastion", id="jump_host")
-            
+
             yield Label("Password (optional)")
             yield Input(placeholder="Top Secret", password=True, id="password")
-            
+
             with Horizontal(id="form-actions"):
                 yield Button("Cancel", variant="error", id="cancel")
                 yield Button("Save", variant="success", id="save")
@@ -126,7 +127,7 @@ class SSHAddScreen(ModalScreen):
         key_path = self.query_one("#key_path", Input).value
         jump_host = self.query_one("#jump_host", Input).value
         password = self.query_one("#password", Input).value
-        
+
         if not alias or not hostname:
             self.notify("Alias and Hostname are required", severity="error")
             return
@@ -136,7 +137,7 @@ class SSHAddScreen(ModalScreen):
         except ValueError:
             self.notify("Port must be a number", severity="error")
             return
-            
+
         self.app.storage.add_ssh_host(
             alias=alias,
             hostname=hostname,
@@ -144,8 +145,8 @@ class SSHAddScreen(ModalScreen):
             username=username or None,
             key_path=key_path or None,
             password=password or None,
-            jump_host=jump_host or None
+            jump_host=jump_host or None,
         )
-        
+
         self.notify(f"Saved SSH host: {alias}")
         self.dismiss(True)

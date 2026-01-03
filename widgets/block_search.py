@@ -1,11 +1,11 @@
 """Block content search widget (Ctrl+F)."""
 
 from textual.app import ComposeResult
-from textual.widgets import Static, Label, Input
-from textual.containers import Vertical
-from textual.reactive import reactive
-from textual.message import Message
 from textual.binding import Binding
+from textual.containers import Vertical
+from textual.message import Message
+from textual.reactive import reactive
+from textual.widgets import Input, Label, Static
 
 
 class BlockSearch(Static, can_focus=True):
@@ -26,6 +26,7 @@ class BlockSearch(Static, can_focus=True):
 
     class Selected(Message):
         """Sent when user selects a search result."""
+
         def __init__(self, block_id: str, match_text: str):
             self.block_id = block_id
             self.match_text = match_text
@@ -33,12 +34,19 @@ class BlockSearch(Static, can_focus=True):
 
     class Cancelled(Message):
         """Sent when user cancels search."""
+
         pass
 
     def compose(self) -> ComposeResult:
         yield Vertical(id="block-search-results", classes="search-results")
-        yield Input(placeholder="Search blocks...", id="block-search-input", classes="search-input")
-        yield Label("↑↓ navigate • Enter jump to block • Esc cancel", classes="search-header")
+        yield Input(
+            placeholder="Search blocks...",
+            id="block-search-input",
+            classes="search-input",
+        )
+        yield Label(
+            "↑↓ navigate • Enter jump to block • Esc cancel", classes="search-header"
+        )
 
     def show(self):
         """Show the search widget and focus input."""
@@ -121,7 +129,7 @@ class BlockSearch(Static, can_focus=True):
         results = []
 
         try:
-            blocks = getattr(self.app, 'blocks', [])
+            blocks = getattr(self.app, "blocks", [])
 
             for block in blocks:
                 matches = []
@@ -133,17 +141,21 @@ class BlockSearch(Static, can_focus=True):
                 # Search in output
                 if block.content_output and query in block.content_output.lower():
                     # Find the specific lines that match
-                    for line in block.content_output.split('\n'):
+                    for line in block.content_output.split("\n"):
                         if query in line.lower():
                             matches.append(("output", line.strip()[:100]))
 
                 for match_type, match_text in matches:
-                    results.append({
-                        "block_id": block.id,
-                        "type": match_type,
-                        "text": match_text,
-                        "block_type": block.type.value if hasattr(block.type, 'value') else str(block.type)
-                    })
+                    results.append(
+                        {
+                            "block_id": block.id,
+                            "type": match_type,
+                            "text": match_text,
+                            "block_type": block.type.value
+                            if hasattr(block.type, "value")
+                            else str(block.type),
+                        }
+                    )
 
         except Exception:
             pass
@@ -163,7 +175,11 @@ class BlockSearch(Static, can_focus=True):
 
             for i, result in enumerate(self.results[:10]):  # Show top 10
                 prefix = ">" if result["type"] == "input" else "<"
-                text = result["text"][:60] + "..." if len(result["text"]) > 60 else result["text"]
+                text = (
+                    result["text"][:60] + "..."
+                    if len(result["text"]) > 60
+                    else result["text"]
+                )
                 display = f"{prefix} {text}"
 
                 label = Label(display, classes="search-result")
@@ -172,7 +188,11 @@ class BlockSearch(Static, can_focus=True):
                 container.mount(label)
 
             if len(self.results) > 10:
-                container.mount(Label(f"... and {len(self.results) - 10} more", classes="no-results"))
+                container.mount(
+                    Label(
+                        f"... and {len(self.results) - 10} more", classes="no-results"
+                    )
+                )
 
         except Exception:
             pass
@@ -187,7 +207,8 @@ class BlockSearch(Static, can_focus=True):
             block_id = result["block_id"]
 
             # Find the block widget
-            from widgets.block import BlockWidget, BaseBlockWidget
+            from widgets.block import BaseBlockWidget
+
             history = self.app.query_one("#history")
 
             for widget in history.query(BaseBlockWidget):
@@ -206,6 +227,7 @@ class BlockSearch(Static, can_focus=True):
 
         try:
             from widgets.block import BaseBlockWidget
+
             history = self.app.query_one("#history")
 
             # Get unique block IDs that have matches
@@ -224,6 +246,7 @@ class BlockSearch(Static, can_focus=True):
         """Clear all search highlights."""
         try:
             from widgets.block import BaseBlockWidget
+
             history = self.app.query_one("#history")
 
             for widget in history.query(BaseBlockWidget):

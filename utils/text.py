@@ -1,19 +1,18 @@
 """Text processing utilities."""
 
 import re
-from typing import Optional
 
 # Regex to match URLs that are NOT already in markdown link format
 # Matches http://, https://, ftp:// URLs
 URL_PATTERN = re.compile(
-    r'(?<!\]\()(?<!\[)'  # Not preceded by ]( or [
-    r'(https?://|ftp://)'  # Protocol
-    r'[^\s<>\[\]\"\'`\)]+',  # URL characters (exclude markdown/quote chars)
-    re.IGNORECASE
+    r"(?<!\]\()(?<!\[)"  # Not preceded by ]( or [
+    r"(https?://|ftp://)"  # Protocol
+    r"[^\s<>\[\]\"\'`\)]+",  # URL characters (exclude markdown/quote chars)
+    re.IGNORECASE,
 )
 
 # Pattern to detect if URL is already a markdown link
-MARKDOWN_LINK_PATTERN = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
+MARKDOWN_LINK_PATTERN = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
 
 def make_links_clickable(text: str) -> str:
@@ -51,12 +50,12 @@ def make_links_clickable(text: str) -> str:
 
 def strip_ansi(text: str) -> str:
     """Remove ANSI escape codes from text."""
-    ansi_pattern = re.compile(r'\x1b\[[0-9;]*m')
-    return ansi_pattern.sub('', text)
+    ansi_pattern = re.compile(r"\x1b\[[0-9;]*m")
+    return ansi_pattern.sub("", text)
 
 
 def truncate_text(text: str, max_length: int, suffix: str = "...") -> str:
     """Truncate text to max_length, adding suffix if truncated."""
     if len(text) <= max_length:
         return text
-    return text[:max_length - len(suffix)] + suffix
+    return text[: max_length - len(suffix)] + suffix

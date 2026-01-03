@@ -1,10 +1,8 @@
 """Project-local .nullrc configuration support."""
 
 import json
-import os
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Optional
-from dataclasses import dataclass, field, asdict
 
 
 @dataclass
@@ -12,13 +10,13 @@ class ProjectConfig:
     """Project-specific configuration from .nullrc."""
 
     # AI settings
-    provider: Optional[str] = None
-    model: Optional[str] = None
-    system_prompt: Optional[str] = None
-    temperature: Optional[float] = None
+    provider: str | None = None
+    model: str | None = None
+    system_prompt: str | None = None
+    temperature: float | None = None
 
     # Shell settings
-    shell: Optional[str] = None
+    shell: str | None = None
     env: dict = field(default_factory=dict)
 
     # Project context
@@ -58,7 +56,7 @@ class NullrcManager:
         self._cache: dict[str, ProjectConfig] = {}
         self._file_cache: dict[str, Path] = {}
 
-    def find_nullrc(self, start_path: Optional[Path] = None) -> Optional[Path]:
+    def find_nullrc(self, start_path: Path | None = None) -> Path | None:
         """Find .nullrc file by walking up from start_path or cwd."""
         if start_path is None:
             start_path = Path.cwd()
@@ -79,7 +77,7 @@ class NullrcManager:
 
         return None
 
-    def load(self, start_path: Optional[Path] = None) -> Optional[ProjectConfig]:
+    def load(self, start_path: Path | None = None) -> ProjectConfig | None:
         """Load .nullrc from current directory or parents."""
         nullrc_path = self.find_nullrc(start_path)
 
@@ -103,14 +101,14 @@ class NullrcManager:
         except Exception:
             return None
 
-    def get_project_root(self, start_path: Optional[Path] = None) -> Optional[Path]:
+    def get_project_root(self, start_path: Path | None = None) -> Path | None:
         """Get the project root (directory containing .nullrc)."""
         nullrc_path = self.find_nullrc(start_path)
         if nullrc_path:
             return nullrc_path.parent
         return None
 
-    def create_default(self, path: Optional[Path] = None) -> Path:
+    def create_default(self, path: Path | None = None) -> Path:
         """Create a default .nullrc in the specified directory."""
         if path is None:
             path = Path.cwd()
@@ -126,16 +124,13 @@ class NullrcManager:
             "aliases": {
                 "test": "npm test",
                 "build": "npm run build",
-                "lint": "npm run lint"
+                "lint": "npm run lint",
             },
             "env": {},
-            "on_start": []
+            "on_start": [],
         }
 
-        nullrc_path.write_text(
-            json.dumps(default_config, indent=2),
-            encoding="utf-8"
-        )
+        nullrc_path.write_text(json.dumps(default_config, indent=2), encoding="utf-8")
 
         return nullrc_path
 
@@ -183,7 +178,7 @@ class NullrcManager:
 
 
 # Singleton instance
-_nullrc_manager: Optional[NullrcManager] = None
+_nullrc_manager: NullrcManager | None = None
 
 
 def get_nullrc_manager() -> NullrcManager:
@@ -194,6 +189,6 @@ def get_nullrc_manager() -> NullrcManager:
     return _nullrc_manager
 
 
-def get_project_config() -> Optional[ProjectConfig]:
+def get_project_config() -> ProjectConfig | None:
     """Get project configuration for current directory."""
     return get_nullrc_manager().load()

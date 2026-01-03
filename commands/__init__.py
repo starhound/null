@@ -1,5 +1,5 @@
 """Command modules for the Null terminal."""
 
-from .handler import SlashCommandHandler, CommandInfo
+from .handler import CommandInfo, SlashCommandHandler
 
-__all__ = ["SlashCommandHandler", "CommandInfo"]
+__all__ = ["CommandInfo", "SlashCommandHandler"]

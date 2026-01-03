@@ -1,9 +1,10 @@
 import re
-from textual.app import ComposeResult
-from textual.widgets import Static, Label
-from textual.reactive import reactive
-from textual.message import Message
+
 from rich.text import Text
+from textual.app import ComposeResult
+from textual.message import Message
+from textual.reactive import reactive
+from textual.widgets import Label, Static
 
 from models import BlockState, BlockType
 
@@ -13,6 +14,7 @@ class StopButton(Label):
 
     class Pressed(Message, bubble=True):
         """Message sent when stop button is pressed."""
+
         def __init__(self, block_id: str):
             super().__init__()
             self.block_id = block_id
@@ -46,13 +48,10 @@ class StopButton(Label):
 
 
 # URL pattern for making links clickable in plain text output
-URL_PATTERN = re.compile(
-    r'(https?://|ftp://)[^\s<>\[\]\"\'`\)]+',
-    re.IGNORECASE
-)
+URL_PATTERN = re.compile(r"(https?://|ftp://)[^\s<>\[\]\"\'`\)]+", re.IGNORECASE)
 
 # ANSI escape sequence pattern - matches color codes, cursor movement, etc.
-ANSI_PATTERN = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?\x07')
+ANSI_PATTERN = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?\x07")
 
 # Maximum lines to display in a block (prevents unbounded growth)
 MAX_OUTPUT_LINES = 1000
@@ -90,7 +89,9 @@ class BlockHeader(Static):
             icon = "◈"
             icon_class = "prompt-symbol prompt-symbol-system"
             text_class = "header-text-system"
-            display_text = self.block.content_input if self.block.content_input else "System"
+            display_text = (
+                self.block.content_input if self.block.content_input else "System"
+            )
         else:
             icon = "▸"
             icon_class = "prompt-symbol prompt-symbol-cli"
@@ -197,18 +198,18 @@ class BlockBody(Static):
         if not text:
             return text, False, 0
 
-        lines = text.split('\n')
+        lines = text.split("\n")
         total_lines = len(lines)
 
         if total_lines <= self._max_lines:
             return text, False, total_lines
 
         # Keep the last max_lines, add truncation indicator at top
-        kept_lines = lines[-self._max_lines:]
+        kept_lines = lines[-self._max_lines :]
         truncated_count = total_lines - self._max_lines
         indicator = f"... ({truncated_count:,} lines truncated, showing last {self._max_lines:,}) ...\n"
 
-        return indicator + '\n'.join(kept_lines), True, total_lines
+        return indicator + "\n".join(kept_lines), True, total_lines
 
     def _make_links_clickable(self, text: str) -> Text:
         """Convert plain text with URLs to Rich Text with clickable links.
@@ -229,7 +230,7 @@ class BlockBody(Static):
         for match in URL_PATTERN.finditer(text):
             # Add text before the URL (with separator styling)
             if match.start() > last_end:
-                segment = text[last_end:match.start()]
+                segment = text[last_end : match.start()]
                 self._append_styled_segment(result, segment)
 
             # Add the URL as a clickable link
@@ -264,20 +265,20 @@ class BlockBody(Static):
     def _append_styled_segment(self, result: Text, segment: str):
         """Append a text segment with appropriate styling for separators and prompts."""
         # Split by lines to handle separators and prompts
-        lines = segment.split('\n')
+        lines = segment.split("\n")
         for i, line in enumerate(lines):
             if i > 0:
-                result.append('\n')
+                result.append("\n")
 
             # Style command separators (dim)
-            if line.startswith('┄') or line.startswith('─'):
+            if line.startswith("┄") or line.startswith("─"):
                 result.append(line, style="dim")
             # Style command prompts (bold green)
-            elif line.startswith('❯ '):
-                result.append('❯ ', style="bold green")
+            elif line.startswith("❯ "):
+                result.append("❯ ", style="bold green")
                 result.append(line[2:], style="bold")
-            elif line.startswith('$ '):
-                result.append('$ ', style="bold green")
+            elif line.startswith("$ "):
+                result.append("$ ", style="bold green")
                 result.append(line[2:], style="bold")
             else:
                 result.append(line)

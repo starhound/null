@@ -1,24 +1,27 @@
 """Core commands: help, status, clear, quit."""
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app import NullApp
 
-from .base import CommandMixin
 from widgets import HistoryViewport, StatusBar
+
+from .base import CommandMixin
 
 
 class CoreCommands(CommandMixin):
     """Core application commands."""
 
-    def __init__(self, app: "NullApp"):
+    def __init__(self, app: NullApp):
         self.app = app
 
     async def cmd_help(self, args: list[str]):
         """Show help screen."""
         from screens import HelpScreen
+
         self.app.push_screen(HelpScreen())
 
     async def cmd_status(self, args: list[str]):
@@ -26,15 +29,16 @@ class CoreCommands(CommandMixin):
         from context import ContextManager
 
         provider_name = self.app.config.get("ai", {}).get("provider", "none")
-        
+
         # Get model from actual provider instance (most accurate)
         if self.app.ai_provider and self.app.ai_provider.model:
             model = self.app.ai_provider.model
         else:
             # Fallback to config
             from config import Config
+
             model = Config.get(f"ai.{provider_name}.model") or "none"
-        
+
         persona = self.app.config.get("ai", {}).get("active_prompt", "default")
         blocks_count = len(self.app.blocks)
 
@@ -46,7 +50,9 @@ class CoreCommands(CommandMixin):
         provider_status = status_bar.provider_status
 
         # Token usage info
-        total_tokens = status_bar.session_input_tokens + status_bar.session_output_tokens
+        total_tokens = (
+            status_bar.session_input_tokens + status_bar.session_output_tokens
+        )
         session_cost = status_bar.session_cost
 
         lines = [
@@ -91,41 +97,43 @@ class CoreCommands(CommandMixin):
 
         alias = args[0]
         host_config = self.app.storage.get_ssh_host(alias)
-        
+
         if not host_config:
             self.notify(f"Unknown host alias: {alias}", severity="error")
             return
 
-        from utils.ssh_client import SSHSession
         from screens.ssh import SSHScreen
-        
+        from utils.ssh_client import SSHSession
+
         # Resolve jump host if configured
         tunnel_session = None
-        jump_alias = host_config.get('jump_host')
-        
+        jump_alias = host_config.get("jump_host")
+
         if jump_alias:
             jump_config = self.app.storage.get_ssh_host(jump_alias)
             if not jump_config:
-                self.notify(f"Jump host alias not found: {jump_alias}", severity="error")
+                self.notify(
+                    f"Jump host alias not found: {jump_alias}", severity="error"
+                )
                 return
 
             tunnel_session = SSHSession(
-                hostname=jump_config['hostname'],
-                port=jump_config['port'],
-                username=jump_config['username'],
-                password=jump_config['password'],
-                key_path=jump_config['key_path']
+                hostname=jump_config["hostname"],
+                port=jump_config["port"],
+                username=jump_config["username"],
+                password=jump_config["password"],
+                key_path=jump_config["key_path"],
             )
 
         session = SSHSession(
-            hostname=host_config['hostname'],
-            port=host_config['port'],
-            username=host_config['username'],
-            password=host_config['password'],
-            key_path=host_config['key_path'],
-            tunnel=tunnel_session
+            hostname=host_config["hostname"],
+            port=host_config["port"],
+            username=host_config["username"],
+            password=host_config["password"],
+            key_path=host_config["key_path"],
+            tunnel=tunnel_session,
         )
-        
+
         self.app.push_screen(SSHScreen(session, alias))
 
     async def cmd_ssh_add(self, args: list[str]):
@@ -133,11 +141,15 @@ class CoreCommands(CommandMixin):
         if not args:
             # Show interactive form
             from screens.ssh_add import SSHAddScreen
+
             self.app.push_screen(SSHAddScreen())
             return
 
         if len(args) < 3:
-            self.notify("Usage: /ssh-add <alias> <host> <user> [port] [key_path]", severity="error")
+            self.notify(
+                "Usage: /ssh-add <alias> <host> <user> [port] [key_path]",
+                severity="error",
+            )
             return
 
         alias = args[0]
@@ -145,7 +157,7 @@ class CoreCommands(CommandMixin):
         username = args[2]
         port = int(args[3]) if len(args) > 3 else 22
         key_path = args[4] if len(args) > 4 else None
-        
+
         self.app.storage.add_ssh_host(alias, hostname, port, username, key_path)
         self.notify(f"Added SSH host: {alias}")
 
@@ -156,10 +168,10 @@ class CoreCommands(CommandMixin):
             self.notify("No SSH hosts saved.")
             return
 
-        lines = [f"SSH Hosts:", "----------"]
+        lines = ["SSH Hosts:", "----------"]
         for h in hosts:
             lines.append(f"{h['alias']}: {h['username']}@{h['hostname']}:{h['port']}")
-            
+
         await self.show_output("/ssh-list", "\n".join(lines))
 
     async def cmd_ssh_del(self, args: list[str]):
@@ -167,7 +179,7 @@ class CoreCommands(CommandMixin):
         if not args:
             self.notify("Usage: /ssh-del <alias>", severity="error")
             return
-            
+
         alias = args[0]
         self.app.storage.delete_ssh_host(alias)
         self.notify(f"Deleted SSH host: {alias}")

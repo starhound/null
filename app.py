@@ -1,27 +1,33 @@
 """Main application module for Null terminal."""
 
+from pathlib import Path
+
 from textual.app import App, ComposeResult
 from textual.containers import Container
-from textual.widgets import Footer, TextArea, Label
-from pathlib import Path
-import os
-
-from config import Config
-from models import BlockState, BlockType
-from widgets import (
-    InputController, HistoryViewport, BlockWidget, BaseBlockWidget,
-    CommandSuggester, StatusBar, HistorySearch, BlockSearch,
-    CommandPalette
-)
-# from executor import ExecutionEngine  # Removed global import
-from mcp import MCPManager
-from handlers import SlashCommandHandler, ExecutionHandler, InputHandler
+from textual.widgets import Footer, Label, TextArea
 
 from ai.factory import AIFactory
 from ai.manager import AIManager
+from config import Config
+from handlers import ExecutionHandler, InputHandler, SlashCommandHandler
+from managers import ProcessManager
+
+# from executor import ExecutionEngine  # Removed global import
+from mcp import MCPManager
+from models import BlockState, BlockType
 from screens import HelpScreen, ModelListScreen
 from themes import get_all_themes
-from managers import ProcessManager
+from widgets import (
+    BaseBlockWidget,
+    BlockSearch,
+    BlockWidget,
+    CommandPalette,
+    CommandSuggester,
+    HistorySearch,
+    HistoryViewport,
+    InputController,
+    StatusBar,
+)
 
 
 class NullApp(App):
@@ -65,11 +71,12 @@ class NullApp(App):
             self.theme = "null-dark"
 
         self.blocks = []
-        
+
         # Initialize Storage
         from storage import StorageManager
+
         self.storage = StorageManager()
-        
+
         # self.executor removed - executor is now per-process
         self.process_manager = ProcessManager()
 
@@ -83,7 +90,7 @@ class NullApp(App):
 
         # AI Manager
         self.ai_manager = AIManager()
-        
+
         # Legacy/Convenience pointer to active provider for existing checks
         self.ai_provider = self.ai_manager.get_active_provider()
 
@@ -179,10 +186,12 @@ class NullApp(App):
             provider_name = Config.get("ai.provider")
             if provider_name not in ("lm_studio", "ollama"):
                 return
-            
+
             # Fetch models to trigger auto-detection
-            _, models, _ = await self.ai_manager._fetch_models_for_provider(provider_name)
-            
+            _, models, _ = await self.ai_manager._fetch_models_for_provider(
+                provider_name
+            )
+
             if models and self.ai_provider:
                 # Update the cached provider reference
                 self.ai_provider = self.ai_manager.get_provider(provider_name)
@@ -213,31 +222,31 @@ class NullApp(App):
     def action_cancel_operation(self):
         """Cancel any running operation."""
         cancelled = False
-        
+
         # Determine target process to stop
         target_block_id = None
-        
+
         # 1. Check if a specific block is focused
         focused = self.screen.focused
-        if hasattr(focused, "block_id"): # TerminalBlock
+        if hasattr(focused, "block_id"):  # TerminalBlock
             target_block_id = focused.block_id
-        elif hasattr(focused, "block") and focused.block: # CommandBlock/BlockWidget
+        elif hasattr(focused, "block") and focused.block:  # CommandBlock/BlockWidget
             target_block_id = focused.block.id
-            
+
         # 2. Fallback to current CLI session block
         if not target_block_id and self.current_cli_block:
             target_block_id = self.current_cli_block.id
-            
+
         # Stop specific process if identified
         if target_block_id and self.process_manager.is_running(target_block_id):
             if self.process_manager.stop(target_block_id):
                 cancelled = True
-                
-        # Only stop all if we really assume that's what Ctrl+C means globally? 
-        # No, 'stop all' is dangerous. 
+
+        # Only stop all if we really assume that's what Ctrl+C means globally?
+        # No, 'stop all' is dangerous.
         # If nothing stopped and we have active processes, maybe we should warn?
         # For now, let's strictly stop only what's in context.
-            
+
         # Reset CLI session
         if self.current_cli_widget:
             self.current_cli_widget.set_loading(False)
@@ -298,7 +307,6 @@ class NullApp(App):
 
     def action_select_provider(self):
         """Switch and configure AI Provider."""
-        from ai.factory import AIFactory
         providers = AIFactory.list_providers()
 
         def on_provider_selected(provider_name):
@@ -325,64 +333,74 @@ class NullApp(App):
 
                     provider_config = {
                         "provider": provider_name,
-                        "api_key": result.get("api_key") or Config.get(f"ai.{provider_name}.api_key"),
-                        "endpoint": result.get("endpoint") or Config.get(f"ai.{provider_name}.endpoint"),
-                        "region": result.get("region") or Config.get(f"ai.{provider_name}.region"),
-                        "model": result.get("model") or Config.get(f"ai.{provider_name}.model"),
+                        "api_key": result.get("api_key")
+                        or Config.get(f"ai.{provider_name}.api_key"),
+                        "endpoint": result.get("endpoint")
+                        or Config.get(f"ai.{provider_name}.endpoint"),
+                        "region": result.get("region")
+                        or Config.get(f"ai.{provider_name}.region"),
+                        "model": result.get("model")
+                        or Config.get(f"ai.{provider_name}.model"),
                         "api_version": Config.get(f"ai.{provider_name}.api_version"),
                     }
 
                     try:
                         # Refresh config loading
                         self.config = Config.load_all()
-                        
+
                         # Re-initialize the specific provider through the manager
                         # This ensures the manager has the latest instance
                         self.ai_manager.get_provider(provider_name)
-                        
+
                         # Update raw pointer for legacy support
                         self.ai_provider = self.ai_manager.get_provider(provider_name)
                     except Exception as e:
-                        self.notify(f"Error initializing provider: {e}", severity="error")
+                        self.notify(
+                            f"Error initializing provider: {e}", severity="error"
+                        )
 
-            self.push_screen(ProviderConfigScreen(provider_name, current_conf), on_config_saved)
+            self.push_screen(
+                ProviderConfigScreen(provider_name, current_conf), on_config_saved
+            )
 
         from screens import SelectionListScreen
-        self.push_screen(SelectionListScreen("Select Provider", providers), on_provider_selected)
+
+        self.push_screen(
+            SelectionListScreen("Select Provider", providers), on_provider_selected
+        )
 
     def action_select_model(self):
         """Select an AI model from ALL providers."""
-        
+
         def on_model_select(selection):
             if selection:
                 provider_name, model_name = selection
-                
+
                 # Normalize provider name
                 provider_name = provider_name.lower()
-                
+
                 # Check if we need to switch active provider
                 current_provider = Config.get("ai.provider", "").lower()
-                
+
                 if provider_name != current_provider:
-                     Config.set("ai.provider", provider_name)
-                     self.notify(f"Switched provider to {provider_name}")
-                
+                    Config.set("ai.provider", provider_name)
+                    self.notify(f"Switched provider to {provider_name}")
+
                 # Update the model for that provider
                 Config.set(f"ai.{provider_name}.model", str(model_name))
                 self.notify(f"Model set to {model_name}")
-                
+
                 # Force refresh of provider instance
                 self.ai_provider = self.ai_manager.get_provider(provider_name)
                 # Ensure the provider instance knows its model (some store it internally)
                 if self.ai_provider:
                     self.ai_provider.model = str(model_name)
-                    
+
                 self._update_status_bar()
 
         # Show screen immediately with async fetch
         self.push_screen(
-            ModelListScreen(fetch_func=self.ai_manager.list_all_models),
-            on_model_select
+            ModelListScreen(fetch_func=self.ai_manager.list_all_models), on_model_select
         )
 
     def action_select_theme(self):
@@ -400,6 +418,7 @@ class NullApp(App):
                 self.notify(f"Theme set to {selected_theme}")
 
         from screens import ThemeSelectionScreen
+
         self.push_screen(ThemeSelectionScreen("Select Theme", themes), on_theme_select)
 
     def action_select_prompt(self):
@@ -426,12 +445,17 @@ class NullApp(App):
                 self.config["ai"]["active_prompt"] = key
 
         from screens import SelectionListScreen
-        self.push_screen(SelectionListScreen("Select Persona", display_items), on_prompt_select)
+
+        self.push_screen(
+            SelectionListScreen("Select Persona", display_items), on_prompt_select
+        )
 
     def action_clear_history(self):
         """Clear history and context."""
+
         async def do_clear():
             await self.command_handler.handle("/clear")
+
         self.run_worker(do_clear())
 
     # -------------------------------------------------------------------------
@@ -514,7 +538,9 @@ class NullApp(App):
         """Handle history search cancellation."""
         self.query_one("#input", InputController).focus()
 
-    async def on_command_palette_action_selected(self, message: CommandPalette.ActionSelected):
+    async def on_command_palette_action_selected(
+        self, message: CommandPalette.ActionSelected
+    ):
         """Handle command palette action selection."""
         action = message.action
         action_id = action.action_id
@@ -561,7 +587,9 @@ class NullApp(App):
         except Exception:
             pass
 
-    async def on_base_block_widget_retry_requested(self, message: BaseBlockWidget.RetryRequested):
+    async def on_base_block_widget_retry_requested(
+        self, message: BaseBlockWidget.RetryRequested
+    ):
         """Handle retry button click."""
         block = next((b for b in self.blocks if b.id == message.block_id), None)
         if not block:
@@ -575,7 +603,9 @@ class NullApp(App):
 
         await self.execution_handler.regenerate_ai(block, widget)
 
-    async def on_base_block_widget_edit_requested(self, message: BaseBlockWidget.EditRequested):
+    async def on_base_block_widget_edit_requested(
+        self, message: BaseBlockWidget.EditRequested
+    ):
         """Handle edit button click."""
         input_ctrl = self.query_one("#input", InputController)
         input_ctrl.text = message.content
@@ -584,28 +614,40 @@ class NullApp(App):
             input_ctrl.toggle_mode()
         self.notify("Edit and resubmit your query")
 
-    async def on_base_block_widget_copy_requested(self, message: BaseBlockWidget.CopyRequested):
+    async def on_base_block_widget_copy_requested(
+        self, message: BaseBlockWidget.CopyRequested
+    ):
         """Handle copy button click."""
         try:
             import pyperclip
+
             pyperclip.copy(message.content)
             self.notify("Copied to clipboard")
         except ImportError:
             # Fallback: try to use xclip/xsel on Linux or pbcopy on macOS
             import subprocess
             import sys
+
             try:
                 if sys.platform == "darwin":
-                    subprocess.run(["pbcopy"], input=message.content.encode(), check=True)
+                    subprocess.run(
+                        ["pbcopy"], input=message.content.encode(), check=True
+                    )
                 else:
-                    subprocess.run(["xclip", "-selection", "clipboard"], input=message.content.encode(), check=True)
+                    subprocess.run(
+                        ["xclip", "-selection", "clipboard"],
+                        input=message.content.encode(),
+                        check=True,
+                    )
                 self.notify("Copied to clipboard")
             except Exception:
                 self.notify("Failed to copy - install pyperclip", severity="error")
         except Exception as e:
             self.notify(f"Copy failed: {e}", severity="error")
 
-    async def on_base_block_widget_fork_requested(self, message: BaseBlockWidget.ForkRequested):
+    async def on_base_block_widget_fork_requested(
+        self, message: BaseBlockWidget.ForkRequested
+    ):
         """Handle fork button click to create a conversation branch."""
         block = next((b for b in self.blocks if b.id == message.block_id), None)
         if not block:
@@ -621,10 +663,12 @@ class NullApp(App):
 
         # Create a fork point - truncate history to this block
         # This keeps all blocks up to and including this one
-        forked_blocks = self.blocks[:block_index + 1]
+        forked_blocks = self.blocks[: block_index + 1]
 
         # Store fork point metadata
-        self.notify(f"Forked at block {block.id[:8]} - {len(forked_blocks)} blocks in history")
+        self.notify(
+            f"Forked at block {block.id[:8]} - {len(forked_blocks)} blocks in history"
+        )
 
         # TODO: Implement full fork functionality with branch management
         # For now, just notify the user that forking is ready
@@ -632,7 +676,7 @@ class NullApp(App):
 
     async def on_code_block_widget_run_code_requested(self, message):
         """Handle run code button click from code blocks."""
-        from widgets.blocks import CodeBlockWidget, execute_code
+        from widgets.blocks import execute_code
 
         code = message.code
         language = message.language
@@ -649,6 +693,7 @@ class NullApp(App):
     async def on_stop_button_pressed(self, message):
         """Handle stop button click from blocks."""
         from widgets.blocks.parts import StopButton
+
         if not isinstance(message, StopButton.Pressed):
             return
 
@@ -686,8 +731,8 @@ class NullApp(App):
 
     async def on_code_block_widget_save_code_requested(self, message):
         """Handle save code button click from code blocks."""
-        from widgets.blocks import get_file_extension
         from screens import SaveFileDialog
+        from widgets.blocks import get_file_extension
 
         code = message.code
         language = message.language
@@ -730,7 +775,6 @@ class NullApp(App):
 
     async def on_terminal_block_input_requested(self, message):
         """Handle keyboard input from TUI terminal blocks."""
-        from widgets.blocks import TerminalBlock
 
         block_id = message.block_id
         data = message.data
@@ -784,6 +828,7 @@ class NullApp(App):
             status_bar.set_agent_mode(agent_mode)
 
             from context import ContextManager
+
             context_str = ContextManager.get_context(self.blocks)
 
             # Get context limit from model info
@@ -804,7 +849,7 @@ class NullApp(App):
         """Check if AI provider is connected."""
         try:
             status_bar = self.query_one("#status-bar", StatusBar)
-            
+
             # Refresh provider reference from manager
             if self.ai_manager:
                 self.ai_provider = self.ai_manager.get_active_provider()
@@ -820,15 +865,17 @@ class NullApp(App):
             if self.mcp_manager:
                 status = self.mcp_manager.get_status()
                 active_mcp = sum(1 for s in status.values() if s.get("connected"))
-            
+
             status_bar.set_mcp_status(active_mcp)
-            
+
             # Update process count
             status_bar.set_process_count(self.process_manager.get_count())
 
         except Exception:
             try:
-                self.query_one("#status-bar", StatusBar).provider_status = "disconnected"
+                self.query_one(
+                    "#status-bar", StatusBar
+                ).provider_status = "disconnected"
             except Exception:
                 pass
 
@@ -846,7 +893,7 @@ class NullApp(App):
             type=BlockType.SYSTEM_MSG,
             content_input=title,
             content_output=content,
-            is_running=False
+            is_running=False,
         )
         history_vp = self.query_one("#history", HistoryViewport)
         block_widget = BlockWidget(block)

@@ -1,13 +1,23 @@
 """Selection list screens."""
 
-from typing import Callable, Coroutine, Any, Optional, Dict, List, Tuple
-from textual.timer import Timer
-from textual.reactive import reactive
-from textual.widgets import Static, Input, Collapsible
+from collections.abc import Callable
+
 from textual.containers import VerticalScroll
 from textual.message import Message
+from textual.reactive import reactive
+from textual.timer import Timer
+from textual.widgets import Collapsible, Input, Static
 
-from .base import ModalScreen, ComposeResult, Binding, Container, Label, ListView, ListItem, Button
+from .base import (
+    Binding,
+    Button,
+    ComposeResult,
+    Container,
+    Label,
+    ListItem,
+    ListView,
+    ModalScreen,
+)
 
 
 class ThemeSelectionScreen(ModalScreen):
@@ -19,7 +29,7 @@ class ThemeSelectionScreen(ModalScreen):
         super().__init__()
         self.title = title
         self.items = items
-        self._original_theme: Optional[str] = None
+        self._original_theme: str | None = None
 
     def compose(self) -> ComposeResult:
         with Container(id="selection-container"):
@@ -27,7 +37,9 @@ class ThemeSelectionScreen(ModalScreen):
             if not self.items:
                 yield Label("No themes found.", classes="empty-msg")
             else:
-                yield ListView(*[ListItem(Label(m)) for m in self.items], id="item_list")
+                yield ListView(
+                    *[ListItem(Label(m)) for m in self.items], id="item_list"
+                )
             yield Button("Cancel [Esc]", variant="default", id="cancel_btn")
 
     def on_mount(self):
@@ -90,7 +102,9 @@ class SelectionListScreen(ModalScreen):
             if not self.items:
                 yield Label("No items found.", classes="empty-msg")
             else:
-                yield ListView(*[ListItem(Label(m)) for m in self.items], id="item_list")
+                yield ListView(
+                    *[ListItem(Label(m)) for m in self.items], id="item_list"
+                )
             yield Button("Cancel [Esc]", variant="default", id="cancel_btn")
 
     def on_list_view_selected(self, message: ListView.Selected):
@@ -112,6 +126,7 @@ class ModelItem(Static):
 
     class Selected(Message):
         """Message sent when a model is selected."""
+
         def __init__(self, provider: str, model: str):
             super().__init__()
             self.provider = provider
@@ -137,13 +152,13 @@ class ModelListScreen(ModalScreen):
     is_loading = reactive(True)
     search_query = reactive("")
 
-    def __init__(self, fetch_func: Optional[Callable] = None):
+    def __init__(self, fetch_func: Callable | None = None):
         """Initialize model list screen."""
         super().__init__()
         self.ai_manager = fetch_func
         self._spinner_index = 0
-        self._spinner_timer: Optional[Timer] = None
-        self._models_by_provider: Dict[str, List[str]] = {}
+        self._spinner_timer: Timer | None = None
+        self._models_by_provider: dict[str, list[str]] = {}
         self._total_providers = 0
 
     def compose(self) -> ComposeResult:
@@ -193,20 +208,21 @@ class ModelListScreen(ModalScreen):
             indicator = self.query_one("#loading-indicator", Label)
             if self._total_providers > 0:
                 indicator.update(
-                    f"{self.SPINNER_FRAMES[self._spinner_index]} "
-                    f"Loading models..."
+                    f"{self.SPINNER_FRAMES[self._spinner_index]} Loading models..."
                 )
             else:
-                indicator.update(f"{self.SPINNER_FRAMES[self._spinner_index]} Checking providers...")
+                indicator.update(
+                    f"{self.SPINNER_FRAMES[self._spinner_index]} Checking providers..."
+                )
         except Exception:
             pass
 
-    def _fetch_models_in_thread(self) -> Tuple[Dict[str, List[str]], int]:
+    def _fetch_models_in_thread(self) -> tuple[dict[str, list[str]], int]:
         """Synchronous model fetching - runs in a separate thread."""
         import asyncio
 
         try:
-            if not hasattr(self.app, 'ai_manager'):
+            if not hasattr(self.app, "ai_manager"):
                 return {}, 0
 
             manager = self.app.ai_manager
@@ -256,7 +272,9 @@ class ModelListScreen(ModalScreen):
         elif event.state == WorkerState.ERROR:
             self._stop_spinner()
             self.is_loading = False
-            self._show_error(str(event.worker.error) if event.worker.error else "Unknown error")
+            self._show_error(
+                str(event.worker.error) if event.worker.error else "Unknown error"
+            )
 
         elif event.state == WorkerState.CANCELLED:
             self._stop_spinner()
@@ -273,11 +291,12 @@ class ModelListScreen(ModalScreen):
 
             # Get sorted providers: active first, then alphabetically
             from config import Config
+
             active_provider = Config.get("ai.provider")
 
             sorted_providers = sorted(
                 self._models_by_provider.keys(),
-                key=lambda p: (0 if p == active_provider else 1, p)
+                key=lambda p: (0 if p == active_provider else 1, p),
             )
 
             # Create collapsibles for each provider
@@ -308,12 +327,22 @@ class ModelListScreen(ModalScreen):
                 model_widgets = []
                 for model in filtered[:100]:  # Limit to 100 per provider
                     model_widgets.append(ModelItem(provider, model))
-                
+
                 if len(filtered) > 100:
-                    model_widgets.append(Static(f"  ... and {len(filtered) - 100} more", classes="more-label"))
+                    model_widgets.append(
+                        Static(
+                            f"  ... and {len(filtered) - 100} more",
+                            classes="more-label",
+                        )
+                    )
 
                 # Create collapsible WITH the children
-                collapsible = Collapsible(*model_widgets, title=title, collapsed=collapsed, id=f"provider-{provider}")
+                collapsible = Collapsible(
+                    *model_widgets,
+                    title=title,
+                    collapsed=collapsed,
+                    id=f"provider-{provider}",
+                )
                 scroll.mount(collapsible)
 
         except Exception as e:
@@ -331,7 +360,9 @@ class ModelListScreen(ModalScreen):
             else:
                 total_models = sum(len(m) for m in self._models_by_provider.values())
                 provider_count = len(self._models_by_provider)
-                indicator.update(f"✓ Found {total_models} models from {provider_count} provider(s)")
+                indicator.update(
+                    f"✓ Found {total_models} models from {provider_count} provider(s)"
+                )
                 indicator.add_class("success")
 
             # Focus the search input

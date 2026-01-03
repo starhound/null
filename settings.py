@@ -1,15 +1,17 @@
 """Settings management using JSON config file."""
 
 import json
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Optional
-from dataclasses import dataclass, field, asdict
 
 CONFIG_PATH = Path.home() / ".null" / "config.json"
+
 
 @dataclass
 class AppearanceSettings:
     """UI appearance settings."""
+
     theme: str = "null-dark"
     font_family: str = "monospace"
     font_size: int = 14
@@ -17,17 +19,21 @@ class AppearanceSettings:
     show_timestamps: bool = True
     show_line_numbers: bool = True
 
+
 @dataclass
 class EditorSettings:
     """Editor/input settings."""
+
     tab_size: int = 4
     word_wrap: bool = True
     auto_indent: bool = True
     vim_mode: bool = False
 
+
 @dataclass
 class TerminalSettings:
     """Terminal behavior settings."""
+
     shell: str = ""  # Empty = use $SHELL
     scrollback_lines: int = 10000
     clear_on_exit: bool = False
@@ -35,9 +41,11 @@ class TerminalSettings:
     auto_save_session: bool = True
     auto_save_interval: int = 30  # seconds
 
+
 @dataclass
 class AISettings:
     """AI provider settings."""
+
     provider: str = "ollama"
     default_model: str = ""
     active_prompt: str = "default"
@@ -49,9 +57,11 @@ class AISettings:
     autocomplete_provider: str = ""
     autocomplete_model: str = ""
 
+
 @dataclass
 class Settings:
     """Application settings container."""
+
     appearance: AppearanceSettings = field(default_factory=AppearanceSettings)
     editor: EditorSettings = field(default_factory=EditorSettings)
     terminal: TerminalSettings = field(default_factory=TerminalSettings)
@@ -63,7 +73,7 @@ class Settings:
             "appearance": asdict(self.appearance),
             "editor": asdict(self.editor),
             "terminal": asdict(self.terminal),
-            "ai": asdict(self.ai)
+            "ai": asdict(self.ai),
         }
 
     @classmethod
@@ -98,7 +108,7 @@ class SettingsManager:
     """Manages loading and saving settings from JSON config file."""
 
     _instance: Optional["SettingsManager"] = None
-    _settings: Optional[Settings] = None
+    _settings: Settings | None = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -130,7 +140,7 @@ class SettingsManager:
         except Exception:
             return Settings()
 
-    def save(self, settings: Optional[Settings] = None) -> None:
+    def save(self, settings: Settings | None = None) -> None:
         """Save settings to config file."""
         if settings is None:
             settings = self._settings
@@ -139,8 +149,7 @@ class SettingsManager:
 
         CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
         CONFIG_PATH.write_text(
-            json.dumps(settings.to_dict(), indent=2),
-            encoding="utf-8"
+            json.dumps(settings.to_dict(), indent=2), encoding="utf-8"
         )
         self._settings = settings
 
@@ -169,6 +178,6 @@ def get_settings() -> Settings:
     return SettingsManager().settings
 
 
-def save_settings(settings: Optional[Settings] = None) -> None:
+def save_settings(settings: Settings | None = None) -> None:
     """Save settings to disk."""
     SettingsManager().save(settings)

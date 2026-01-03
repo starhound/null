@@ -1,15 +1,16 @@
 """AI Response block widget for chat mode (simple Q&A)."""
 
-from textual.app import ComposeResult
 from textual import on
+from textual.app import ComposeResult
 
 from models import BlockState
-from .base import BaseBlockWidget
-from .parts import BlockHeader, BlockMeta, BlockFooter
-from .thinking import ThinkingWidget
-from .execution import ExecutionWidget
-from .response import ResponseWidget
+
 from .actions import ActionBar, ActionButton
+from .base import BaseBlockWidget
+from .execution import ExecutionWidget
+from .parts import BlockFooter, BlockHeader, BlockMeta
+from .response import ResponseWidget
+from .thinking import ThinkingWidget
 from .tool_accordion import ToolAccordion
 
 
@@ -38,10 +39,7 @@ class AIResponseBlock(BaseBlockWidget):
         # Create action bar with meta info
         meta_text = self._build_meta_text()
         self.action_bar = ActionBar(
-            block_id=block.id,
-            show_fork=True,
-            show_edit=True,
-            meta_text=meta_text
+            block_id=block.id, show_fork=True, show_edit=True, meta_text=meta_text
         )
 
         self.footer_widget = BlockFooter(block)
@@ -54,16 +52,16 @@ class AIResponseBlock(BaseBlockWidget):
         parts = []
         meta = self.block.metadata
 
-        if meta.get('model'):
-            model = meta['model']
+        if meta.get("model"):
+            model = meta["model"]
             if len(model) > 20:
                 model = model[:17] + "..."
             parts.append(model)
 
-        if meta.get('tokens'):
+        if meta.get("tokens"):
             parts.append(f"{meta['tokens']} tok")
 
-        if meta.get('cost'):
+        if meta.get("cost"):
             parts.append(f"${meta['cost']:.4f}")
 
         return " · ".join(parts) if parts else ""
@@ -112,12 +110,14 @@ class AIResponseBlock(BaseBlockWidget):
         if self.thinking_widget:
             self.thinking_widget.thinking_text = reasoning
 
-        exec_out = getattr(self.block, 'content_exec_output', '')
+        exec_out = getattr(self.block, "content_exec_output", "")
         if self.exec_widget:
             self.exec_widget.exec_output = exec_out
 
         # Check if we have tool calls
-        has_tools = bool(self.block.tool_calls) or "empty" not in self.tool_accordion.classes
+        has_tools = (
+            bool(self.block.tool_calls) or "empty" not in self.tool_accordion.classes
+        )
 
         if self.response_widget:
             self.response_widget.content_text = final_answer
@@ -126,7 +126,11 @@ class AIResponseBlock(BaseBlockWidget):
             # - No reasoning AND no execution output
             # - OR we have tools and minimal response (tool result is the answer)
             is_minimal_response = len(final_answer.strip()) < 50
-            is_simple = (not reasoning) and (not exec_out) and not (has_tools and is_minimal_response)
+            is_simple = (
+                (not reasoning)
+                and (not exec_out)
+                and not (has_tools and is_minimal_response)
+            )
 
             # If we have tools and very little text response, use simple mode
             # to de-emphasize the text (tool result is the answer)
@@ -175,18 +179,11 @@ class AIResponseBlock(BaseBlockWidget):
                 self.thinking_widget.force_render()
 
     def add_tool_call(
-        self,
-        tool_id: str,
-        tool_name: str,
-        arguments: str = "",
-        status: str = "running"
+        self, tool_id: str, tool_name: str, arguments: str = "", status: str = "running"
     ):
         """Add a tool call to the accordion (for chat mode tool calls)."""
         return self.tool_accordion.add_tool(
-            tool_id=tool_id,
-            tool_name=tool_name,
-            arguments=arguments,
-            status=status
+            tool_id=tool_id, tool_name=tool_name, arguments=arguments, status=status
         )
 
     def update_tool_call(
@@ -194,14 +191,11 @@ class AIResponseBlock(BaseBlockWidget):
         tool_id: str,
         status: str | None = None,
         output: str | None = None,
-        duration: float | None = None
+        duration: float | None = None,
     ):
         """Update an existing tool call in the accordion."""
         self.tool_accordion.update_tool(
-            tool_id=tool_id,
-            status=status,
-            output=output,
-            duration=duration
+            tool_id=tool_id, status=status, output=output, duration=duration
         )
 
     # Action button handlers
@@ -211,16 +205,14 @@ class AIResponseBlock(BaseBlockWidget):
         event.stop()
 
         if event.action == "copy":
-            self.post_message(self.CopyRequested(
-                self.block.id,
-                self.block.content_output or ""
-            ))
+            self.post_message(
+                self.CopyRequested(self.block.id, self.block.content_output or "")
+            )
         elif event.action == "retry":
             self.post_message(self.RetryRequested(self.block.id))
         elif event.action == "edit":
-            self.post_message(self.EditRequested(
-                self.block.id,
-                self.block.content_input
-            ))
+            self.post_message(
+                self.EditRequested(self.block.id, self.block.content_input)
+            )
         elif event.action == "fork":
             self.post_message(self.ForkRequested(self.block.id))

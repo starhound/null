@@ -1,6 +1,15 @@
 """Save file dialog screen."""
 
-from .base import ModalScreen, ComposeResult, Binding, Container, Label, Input, Button, Horizontal
+from .base import (
+    Binding,
+    Button,
+    ComposeResult,
+    Container,
+    Horizontal,
+    Input,
+    Label,
+    ModalScreen,
+)
 
 
 class SaveFileDialog(ModalScreen):
@@ -20,7 +29,7 @@ class SaveFileDialog(ModalScreen):
             yield Input(
                 value=self.suggested_name,
                 placeholder="filename.py",
-                id="filename-input"
+                id="filename-input",
             )
             with Horizontal(id="save-dialog-buttons"):
                 yield Button("Save", variant="primary", id="save-btn")
@@ -54,12 +63,13 @@ class SaveFileDialog(ModalScreen):
 
         try:
             from pathlib import Path
+
             filepath = Path.cwd() / filename
 
             # Create parent directories if needed
             filepath.parent.mkdir(parents=True, exist_ok=True)
 
-            filepath.write_text(self.content, encoding='utf-8')
+            filepath.write_text(self.content, encoding="utf-8")
             self.notify(f"Saved to {filepath}")
             self.dismiss(str(filepath))
         except Exception as e:

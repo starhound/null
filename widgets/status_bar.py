@@ -1,6 +1,6 @@
 from textual.app import ComposeResult
-from textual.widgets import Static, Label
 from textual.reactive import reactive
+from textual.widgets import Label, Static
 
 
 class StatusBar(Static):
@@ -32,7 +32,9 @@ class StatusBar(Static):
         yield Label("", id="token-indicator", classes="status-section")
         yield Label("|", id="token-sep", classes="status-sep")
         # Context indicator
-        yield Label("ctx: ~0 / 1k", id="context-indicator", classes="status-section context-low")
+        yield Label(
+            "ctx: ~0 / 1k", id="context-indicator", classes="status-section context-low"
+        )
 
     def on_mount(self):
         """Initialize display."""
@@ -79,7 +81,7 @@ class StatusBar(Static):
         try:
             indicator = self.query_one("#mcp-indicator", Label)
             indicator.remove_class("mcp-active", "mcp-inactive")
-            
+
             if self.mcp_count > 0:
                 indicator.update(f"MCP: {self.mcp_count}")
                 indicator.add_class("mcp-active")
@@ -93,7 +95,7 @@ class StatusBar(Static):
         try:
             indicator = self.query_one("#process-indicator", Label)
             indicator.remove_class("process-active", "process-inactive")
-            
+
             if self.process_count > 0:
                 indicator.update(f"PROC: {self.process_count}")
                 indicator.add_class("process-active")
@@ -126,7 +128,11 @@ class StatusBar(Static):
             indicator = self.query_one("#context-indicator", Label)
             indicator.remove_class("context-low", "context-medium", "context-high")
 
-            pct = (self.context_chars / self.context_limit * 100) if self.context_limit > 0 else 0
+            pct = (
+                (self.context_chars / self.context_limit * 100)
+                if self.context_limit > 0
+                else 0
+            )
             tokens = self.context_chars // 4
             limit_tokens = self.context_limit // 4
 
@@ -145,14 +151,16 @@ class StatusBar(Static):
                 indicator.add_class("context-medium")
             else:
                 indicator.add_class("context-high")
-        except Exception as e:
+        except Exception:
             # Debug: show error
             pass
 
     def _update_provider_display(self):
         try:
             indicator = self.query_one("#provider-indicator", Label)
-            indicator.remove_class("provider-connected", "provider-disconnected", "provider-checking")
+            indicator.remove_class(
+                "provider-connected", "provider-disconnected", "provider-checking"
+            )
 
             name = self.provider_name or ""
             if not name:

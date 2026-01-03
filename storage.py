@@ -1,28 +1,26 @@
-import sqlite3
 import os
-import secrets
-import base64
-from pathlib import Path
+import sqlite3
 from datetime import datetime
-from typing import Optional, Dict, List, Any
+from pathlib import Path
+from typing import Any
+
 import keyring
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 DB_PATH = Path.home() / ".null" / "null.db"
 APP_NAME = "null-terminal"
 KEYRING_SERVICE_NAME = "null-terminal-encryption-key"
 
+
 class SecurityManager:
     def __init__(self):
-        self._fernet: Optional[Fernet] = None
+        self._fernet: Fernet | None = None
         self._init_key()
 
     def _init_key(self):
         key = None
         use_keyring = True
-        
+
         try:
             # Try to get key from keyring
             key = keyring.get_password(APP_NAME, KEYRING_SERVICE_NAME)
@@ -35,11 +33,11 @@ class SecurityManager:
             key_path = Path.home() / ".null" / ".key"
             if key_path.exists():
                 key = key_path.read_text().strip()
-            
+
             if not key:
                 # Generate new key
                 key = Fernet.generate_key().decode()
-                
+
                 # Try saving to keyring if it didn't fail earlier (e.g. key was just None)
                 saved_to_keyring = False
                 if use_keyring:
@@ -48,18 +46,18 @@ class SecurityManager:
                         saved_to_keyring = True
                     except Exception:
                         pass
-                
+
                 if not saved_to_keyring:
                     # Fallback: Store in a hidden file
                     key_path = Path.home() / ".null" / ".key"
                     key_path.parent.mkdir(parents=True, exist_ok=True)
                     key_path.write_text(key)
-                    # Try to set permissions to read/write only by user 
+                    # Try to set permissions to read/write only by user
                     try:
                         os.chmod(key_path, 0o600)
                     except Exception:
                         pass
-        
+
         self._fernet = Fernet(key.encode())
 
     def encrypt(self, data: str) -> str:
@@ -75,6 +73,7 @@ class SecurityManager:
         except Exception:
             return "[Decryption Failed]"
 
+
 class StorageManager:
     def __init__(self):
         self.db_path = DB_PATH
@@ -89,7 +88,7 @@ class StorageManager:
 
     def _create_schema(self):
         cursor = self.conn.cursor()
-        
+
         # Config Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS config (
@@ -98,7 +97,7 @@ class StorageManager:
                 is_sensitive BOOLEAN DEFAULT 0
             )
         """)
-        
+
         # History Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS history (
@@ -121,14 +120,14 @@ class StorageManager:
                 jump_host TEXT
             )
         """)
-        
+
         # Migration: Add jump_host if missing
         try:
             cursor.execute("ALTER TABLE ssh_hosts ADD COLUMN jump_host TEXT")
         except Exception:
             # Column likely exists
             pass
-        
+
         self.conn.commit()
 
     def get_config(self, key: str, default: Any = None) -> Any:
@@ -136,8 +135,8 @@ class StorageManager:
         cursor.execute("SELECT value, is_sensitive FROM config WHERE key = ?", (key,))
         row = cursor.fetchone()
         if row:
-            val = row['value']
-            if row['is_sensitive']:
+            val = row["value"]
+            if row["is_sensitive"]:
                 return self.security.decrypt(val)
             return val
         return default
@@ -148,10 +147,13 @@ class StorageManager:
         if is_sensitive:
             stored_val = self.security.encrypt(value)
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO config (key, value, is_sensitive)
             VALUES (?, ?, ?)
-        """, (key, stored_val, is_sensitive))
+        """,
+            (key, stored_val, is_sensitive),
+        )
         self.conn.commit()
 
     def delete_config(self, key: str):
@@ -170,23 +172,26 @@ class StorageManager:
         if not command.strip():
             return
         cursor = self.conn.cursor()
-        cursor.execute("INSERT INTO history (command, exit_code) VALUES (?, ?)", (command, exit_code))
+        cursor.execute(
+            "INSERT INTO history (command, exit_code) VALUES (?, ?)",
+            (command, exit_code),
+        )
         self.conn.commit()
 
-    def get_last_history(self, limit: int = 50) -> List[str]:
+    def get_last_history(self, limit: int = 50) -> list[str]:
         cursor = self.conn.cursor()
         cursor.execute("SELECT command FROM history ORDER BY id DESC LIMIT ?", (limit,))
         # Return reversed so latest is last in list (for easy up/cycling)
-        return [row['command'] for row in cursor.fetchall()][::-1]
+        return [row["command"] for row in cursor.fetchall()][::-1]
 
-    def search_history(self, query: str, limit: int = 20) -> List[str]:
+    def search_history(self, query: str, limit: int = 20) -> list[str]:
         """Search history for commands matching query."""
         cursor = self.conn.cursor()
         cursor.execute(
             "SELECT DISTINCT command FROM history WHERE command LIKE ? ORDER BY id DESC LIMIT ?",
-            (f"%{query}%", limit)
+            (f"%{query}%", limit),
         )
-        return [row['command'] for row in cursor.fetchall()]
+        return [row["command"] for row in cursor.fetchall()]
 
     # Session Management
     def _get_sessions_dir(self) -> Path:
@@ -199,9 +204,10 @@ class StorageManager:
         """Get path to current session file."""
         return self._get_sessions_dir() / "current.json"
 
-    def save_session(self, blocks: List[Any], name: Optional[str] = None) -> Path:
+    def save_session(self, blocks: list[Any], name: str | None = None) -> Path:
         """Save session to JSON file."""
         import json
+
         from models import BlockState
 
         sessions_dir = self._get_sessions_dir()
@@ -215,20 +221,23 @@ class StorageManager:
         # Serialize blocks
         data = {
             "saved_at": datetime.now().isoformat(),
-            "blocks": [b.to_dict() if isinstance(b, BlockState) else b for b in blocks]
+            "blocks": [b.to_dict() if isinstance(b, BlockState) else b for b in blocks],
         }
 
         filepath = sessions_dir / filename
         filepath.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
         # Also save as current
-        self._get_current_session_file().write_text(json.dumps(data, indent=2), encoding="utf-8")
+        self._get_current_session_file().write_text(
+            json.dumps(data, indent=2), encoding="utf-8"
+        )
 
         return filepath
 
-    def save_current_session(self, blocks: List[Any]):
+    def save_current_session(self, blocks: list[Any]):
         """Quick save to current session (for auto-save)."""
         import json
+
         from models import BlockState
 
         if not blocks:
@@ -236,14 +245,17 @@ class StorageManager:
 
         data = {
             "saved_at": datetime.now().isoformat(),
-            "blocks": [b.to_dict() if isinstance(b, BlockState) else b for b in blocks]
+            "blocks": [b.to_dict() if isinstance(b, BlockState) else b for b in blocks],
         }
 
-        self._get_current_session_file().write_text(json.dumps(data, indent=2), encoding="utf-8")
+        self._get_current_session_file().write_text(
+            json.dumps(data, indent=2), encoding="utf-8"
+        )
 
-    def load_session(self, name: Optional[str] = None) -> List[Any]:
+    def load_session(self, name: str | None = None) -> list[Any]:
         """Load session from JSON file."""
         import json
+
         from models import BlockState
 
         sessions_dir = self._get_sessions_dir()
@@ -263,7 +275,7 @@ class StorageManager:
         except Exception:
             return []
 
-    def list_sessions(self) -> List[Dict[str, Any]]:
+    def list_sessions(self) -> list[dict[str, Any]]:
         """List all saved sessions."""
         sessions = []
         sessions_dir = self._get_sessions_dir()
@@ -273,14 +285,17 @@ class StorageManager:
                 continue
             try:
                 import json
+
                 data = json.loads(f.read_text(encoding="utf-8"))
                 name = f.stem.replace("session-", "")
-                sessions.append({
-                    "name": name,
-                    "saved_at": data.get("saved_at", ""),
-                    "block_count": len(data.get("blocks", [])),
-                    "path": str(f)
-                })
+                sessions.append(
+                    {
+                        "name": name,
+                        "saved_at": data.get("saved_at", ""),
+                        "block_count": len(data.get("blocks", [])),
+                        "path": str(f),
+                    }
+                )
             except Exception:
                 pass
 
@@ -293,40 +308,52 @@ class StorageManager:
             current.unlink()
 
     # SSH Management
-    def add_ssh_host(self, alias: str, hostname: str, port: int = 22, 
-                     username: str = None, key_path: str = None, password: str = None,
-                     jump_host: str = None):
+    def add_ssh_host(
+        self,
+        alias: str,
+        hostname: str,
+        port: int = 22,
+        username: str = None,
+        key_path: str = None,
+        password: str = None,
+        jump_host: str = None,
+    ):
         """Add or update an SSH host config."""
         cursor = self.conn.cursor()
-        
+
         enc_pass = None
         if password:
             enc_pass = self.security.encrypt(password)
-            
-        cursor.execute("""
+
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO ssh_hosts (alias, hostname, port, username, key_path, encrypted_password, jump_host)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (alias, hostname, port, username, key_path, enc_pass, jump_host))
+        """,
+            (alias, hostname, port, username, key_path, enc_pass, jump_host),
+        )
         self.conn.commit()
 
-    def get_ssh_host(self, alias: str) -> Optional[Dict[str, Any]]:
+    def get_ssh_host(self, alias: str) -> dict[str, Any] | None:
         """Get host config by alias."""
         cursor = self.conn.cursor()
         cursor.execute("SELECT * FROM ssh_hosts WHERE alias = ?", (alias,))
         row = cursor.fetchone()
         if row:
             data = dict(row)
-            if data['encrypted_password']:
-                data['password'] = self.security.decrypt(data['encrypted_password'])
+            if data["encrypted_password"]:
+                data["password"] = self.security.decrypt(data["encrypted_password"])
             else:
-                data['password'] = None
+                data["password"] = None
             return data
         return None
 
-    def list_ssh_hosts(self) -> List[Dict[str, Any]]:
+    def list_ssh_hosts(self) -> list[dict[str, Any]]:
         """List all SSH hosts."""
         cursor = self.conn.cursor()
-        cursor.execute("SELECT alias, hostname, port, username, jump_host FROM ssh_hosts ORDER BY alias")
+        cursor.execute(
+            "SELECT alias, hostname, port, username, jump_host FROM ssh_hosts ORDER BY alias"
+        )
         return [dict(row) for row in cursor.fetchall()]
 
     def delete_ssh_host(self, alias: str):

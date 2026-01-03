@@ -1,15 +1,13 @@
 """Terminal block widget for rendering TUI applications using pyte."""
 
-from textual.widget import Widget
-from textual.geometry import Size
-from textual.strip import Strip
-from textual.message import Message
-from textual.events import Key
+import pyte
 from rich.segment import Segment
 from rich.style import Style as RichStyle
-
-import pyte
-from typing import Optional, Callable
+from textual.events import Key
+from textual.geometry import Size
+from textual.message import Message
+from textual.strip import Strip
+from textual.widget import Widget
 
 
 class TerminalBlock(Widget):
@@ -33,6 +31,7 @@ class TerminalBlock(Widget):
 
     class InputRequested(Message):
         """Message to send input data to the process."""
+
         def __init__(self, data: bytes, block_id: str):
             super().__init__()
             self.data = data
@@ -45,7 +44,7 @@ class TerminalBlock(Widget):
         cols: int = 120,
         name: str | None = None,
         id: str | None = None,
-        classes: str | None = None
+        classes: str | None = None,
     ):
         super().__init__(name=name, id=id, classes=classes)
         self.block_id = block_id
@@ -58,7 +57,7 @@ class TerminalBlock(Widget):
     def feed(self, data: bytes) -> None:
         """Feed raw terminal data to the pyte emulator."""
         try:
-            decoded = data.decode('utf-8', errors='replace')
+            decoded = data.decode("utf-8", errors="replace")
             self.pyte_stream.feed(decoded)
             self._schedule_refresh()
         except Exception:
@@ -118,40 +117,46 @@ class TerminalBlock(Widget):
         # modes 1000, 1002, 1006 etc.
         # pyte.modes: 1000 (MOUSE_X10), 1002 (MOUSE_DRAG), 1003 (MOUSE_MOTION), 1006 (MOUSE_SGR)
         # We need to know if the application requested mouse events.
-        
+
         # Check if any mouse mode is active
         mouse_modes = {1000, 1002, 1003, 1006}
         if not (self.pyte_screen.mode & mouse_modes):
-             return
+            return
 
         x = event.x + 1
         y = event.y + 1
-        
+
         # SGR mouse encoding: \e[<r;c;m
         # button_code: 0=left, 1=middle, 2=right, 3=release
-        
+
         # Map button to code
         code = 0
-        if event.button == 1: code = 0  # Left
-        elif event.button == 2: code = 2  # Right
-        elif event.button == 3: code = 1  # Middle
-        
-        if button_code == 3: # Release
+        if event.button == 1:
+            code = 0  # Left
+        elif event.button == 2:
+            code = 2  # Right
+        elif event.button == 3:
+            code = 1  # Middle
+
+        if button_code == 3:  # Release
             action = "m"
         else:
             action = "M"
-            
+
         # Modifiers
-        if event.ctrl: code += 16
-        if event.shift: code += 4
-        if event.meta: code += 8
-        
+        if event.ctrl:
+            code += 16
+        if event.shift:
+            code += 4
+        if event.meta:
+            code += 8
+
         # Protocol: CSI < button ; x ; y M (or m for release)
         seq = f"\x1b[<{code};{x};{y}{action}"
-        
+
         self.post_message(self.InputRequested(seq.encode(), self.block_id))
 
-    def _key_to_bytes(self, event: Key) -> Optional[bytes]:
+    def _key_to_bytes(self, event: Key) -> bytes | None:
         """Convert a key event to bytes for the terminal."""
         key = event.key
 
@@ -193,11 +198,11 @@ class TerminalBlock(Widget):
             char = key[5:]
             if len(char) == 1 and char.isalpha():
                 # Ctrl+A = 0x01, Ctrl+B = 0x02, etc.
-                return bytes([ord(char.lower()) - ord('a') + 1])
+                return bytes([ord(char.lower()) - ord("a") + 1])
 
         # Regular character
         if event.character:
-            return event.character.encode('utf-8')
+            return event.character.encode("utf-8")
 
         return None
 
@@ -229,7 +234,7 @@ class TerminalBlock(Widget):
                     bold=char.bold,
                     italic=char.italics,
                     reverse=char.reverse,
-                    underline=char.underscore
+                    underline=char.underscore,
                 )
 
                 if style != current_style:

@@ -1,10 +1,10 @@
 import re
 from pathlib import Path
 
-from textual.widgets import TextArea
-from textual.message import Message
 from textual.binding import Binding
 from textual.events import Click
+from textual.message import Message
+from textual.widgets import TextArea
 
 try:
     import pyperclip
@@ -26,12 +26,14 @@ class InputController(TextArea):
 
     class Submitted(Message):
         """Sent when user submits input."""
+
         def __init__(self, value: str):
             self.value = value
             super().__init__()
 
     class Toggled(Message):
         """Sent when input mode is toggled."""
+
         def __init__(self, mode: str):
             self.mode = mode
             super().__init__()
@@ -157,7 +159,7 @@ class InputController(TextArea):
         if not last_word:
             return False
         # Detect: /path, ./path, ../path, ~/path
-        return bool(re.match(r'^[~./]|^\.\./', last_word))
+        return bool(re.match(r"^[~./]|^\.\./", last_word))
 
     def _get_path_completions(self, partial: str) -> list[str]:
         """Get filesystem completions for partial path."""
@@ -323,15 +325,20 @@ class InputController(TextArea):
             else:
                 # Fallback to xclip on Linux
                 import subprocess
+
                 try:
                     result = subprocess.run(
-                        ['xclip', '-selection', 'clipboard', '-o'],
-                        capture_output=True, text=True, timeout=1
+                        ["xclip", "-selection", "clipboard", "-o"],
+                        capture_output=True,
+                        text=True,
+                        timeout=1,
                     )
                     if result.returncode == 0 and result.stdout:
                         self.insert(result.stdout)
                 except FileNotFoundError:
-                    self.notify("Install pyperclip for clipboard support", severity="warning")
+                    self.notify(
+                        "Install pyperclip for clipboard support", severity="warning"
+                    )
         except Exception:
             pass
 
@@ -356,12 +363,12 @@ class InputController(TextArea):
             else:
                 # Fallback to xclip on Linux
                 import subprocess
+
                 try:
                     process = subprocess.Popen(
-                        ['xclip', '-selection', 'clipboard'],
-                        stdin=subprocess.PIPE
+                        ["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE
                     )
-                    process.communicate(text.encode('utf-8'), timeout=1)
+                    process.communicate(text.encode("utf-8"), timeout=1)
                 except FileNotFoundError:
                     pass
         except Exception:

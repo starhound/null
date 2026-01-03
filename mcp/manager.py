@@ -1,10 +1,10 @@
 """MCP Manager - manages multiple MCP server connections."""
 
 import asyncio
-from typing import Dict, List, Any, Optional
+from typing import Any
 
+from .client import MCPClient, MCPResource, MCPTool
 from .config import MCPConfig, MCPServerConfig
-from .client import MCPClient, MCPTool, MCPResource
 
 
 class MCPManager:
@@ -12,7 +12,7 @@ class MCPManager:
 
     def __init__(self):
         self.config = MCPConfig()
-        self.clients: Dict[str, MCPClient] = {}
+        self.clients: dict[str, MCPClient] = {}
         self._initialized = False
 
     async def initialize(self):
@@ -64,21 +64,21 @@ class MCPManager:
         await self.disconnect_server(name)
         return await self.connect_server(name)
 
-    def get_all_tools(self) -> List[MCPTool]:
+    def get_all_tools(self) -> list[MCPTool]:
         """Get all available tools from all connected servers."""
         tools = []
         for client in self.clients.values():
             tools.extend(client.tools)
         return tools
 
-    def get_all_resources(self) -> List[MCPResource]:
+    def get_all_resources(self) -> list[MCPResource]:
         """Get all available resources from all connected servers."""
         resources = []
         for client in self.clients.values():
             resources.extend(client.resources)
         return resources
 
-    def get_tool(self, name: str) -> Optional[MCPTool]:
+    def get_tool(self, name: str) -> MCPTool | None:
         """Find a tool by name."""
         for client in self.clients.values():
             for tool in client.tools:
@@ -86,7 +86,7 @@ class MCPManager:
                     return tool
         return None
 
-    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> Any:
         """Call a tool by name."""
         tool = self.get_tool(tool_name)
         if not tool:
@@ -108,18 +108,20 @@ class MCPManager:
 
         raise Exception(f"Resource not found: {uri}")
 
-    def get_tools_schema(self) -> List[Dict[str, Any]]:
+    def get_tools_schema(self) -> list[dict[str, Any]]:
         """Get tool schemas in format suitable for LLM tool use."""
         tools = []
         for tool in self.get_all_tools():
-            tools.append({
-                "name": tool.name,
-                "description": tool.description,
-                "input_schema": tool.input_schema
-            })
+            tools.append(
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "input_schema": tool.input_schema,
+                }
+            )
         return tools
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get status of all configured servers."""
         status = {}
         for name, server in self.config.servers.items():
@@ -129,13 +131,18 @@ class MCPManager:
                 "connected": client.is_connected if client else False,
                 "tools": len(client.tools) if client else 0,
                 "resources": len(client.resources) if client else 0,
-                "command": server.command
+                "command": server.command,
             }
         return status
 
     # Config management methods
-    def add_server(self, name: str, command: str, args: List[str] = None,
-                   env: Dict[str, str] = None) -> MCPServerConfig:
+    def add_server(
+        self,
+        name: str,
+        command: str,
+        args: list[str] = None,
+        env: dict[str, str] = None,
+    ) -> MCPServerConfig:
         """Add a new MCP server."""
         return self.config.add_server(name, command, args, env)
 
@@ -146,7 +153,7 @@ class MCPManager:
             asyncio.create_task(self.disconnect_server(name))
         return self.config.remove_server(name)
 
-    def toggle_server(self, name: str) -> Optional[bool]:
+    def toggle_server(self, name: str) -> bool | None:
         """Toggle server enabled state."""
         return self.config.toggle_server(name)
 

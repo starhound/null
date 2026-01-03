@@ -1,10 +1,7 @@
-from textual.app import ComposeResult
-from textual.widgets import Static
 from textual.message import Message
-from textual.events import Click
-from textual import on
+from textual.widgets import Static
 
-from models import BlockState, BlockType
+from models import BlockState
 
 
 class BaseBlockWidget(Static):
@@ -12,12 +9,14 @@ class BaseBlockWidget(Static):
 
     class RetryRequested(Message):
         """Sent when user clicks retry button."""
+
         def __init__(self, block_id: str):
             self.block_id = block_id
             super().__init__()
 
     class EditRequested(Message):
         """Sent when user clicks edit button."""
+
         def __init__(self, block_id: str, content: str):
             self.block_id = block_id
             self.content = content
@@ -25,6 +24,7 @@ class BaseBlockWidget(Static):
 
     class CopyRequested(Message):
         """Sent when user clicks copy button."""
+
         def __init__(self, block_id: str, content: str):
             self.block_id = block_id
             self.content = content
@@ -32,6 +32,7 @@ class BaseBlockWidget(Static):
 
     class ForkRequested(Message):
         """Sent when user clicks fork button to create a conversation branch."""
+
         def __init__(self, block_id: str):
             self.block_id = block_id
             super().__init__()

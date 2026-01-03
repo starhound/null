@@ -1,19 +1,18 @@
-from textual.widget import Widget
-from textual.geometry import Size
-from textual.strip import Strip
-from textual.color import Color
-from textual.style import Style
-from textual.driver import Driver
+import asyncio
+
+import pyte
 from rich.segment import Segment
 from rich.style import Style as RichStyle
+from textual.geometry import Size
+from textual.strip import Strip
+from textual.widget import Widget
 
-import asyncio
-import pyte
 from utils.ssh_client import SSHSession
+
 
 class SSHTerminal(Widget):
     """A terminal emulator widget for SSH sessions."""
-    
+
     DEFAULT_CSS = """
     SSHTerminal {
         height: 1fr;
@@ -23,14 +22,20 @@ class SSHTerminal(Widget):
     }
     """
 
-    def __init__(self, session: SSHSession, name: str | None = None, id: str | None = None, classes: str | None = None):
+    def __init__(
+        self,
+        session: SSHSession,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+    ):
         super().__init__(name=name, id=id, classes=classes)
         self.session = session
         self.pyte_screen = pyte.Screen(80, 24)
         self.pyte_stream = pyte.Stream(self.pyte_screen)
-        
+
         self._listen_task = None
-        self._stdin = None # Writer
+        self._stdin = None  # Writer
         self._connected = False
 
     def on_mount(self):
@@ -51,12 +56,11 @@ class SSHTerminal(Widget):
         """Connect and start receiving data."""
         try:
             stdin, stdout, stderr = await self.session.start_shell(
-                cols=self.size.width,
-                lines=self.size.height
+                cols=self.size.width, lines=self.size.height
             )
             self._stdin = stdin
             self._connected = True
-            
+
             # Start listener
             self._listen_task = asyncio.create_task(self._read_loop(stdout))
         except Exception as e:
@@ -92,7 +96,7 @@ class SSHTerminal(Widget):
         elif event.key == "tab":
             char = "\t"
         elif event.key == "escape":
-             char = "\x1b"
+            char = "\x1b"
         elif event.key == "up":
             char = "\x1b[A"
         elif event.key == "down":
@@ -101,9 +105,9 @@ class SSHTerminal(Widget):
             char = "\x1b[C"
         elif event.key == "left":
             char = "\x1b[D"
-            
+
         if char:
-             self._stdin.write(char)
+            self._stdin.write(char)
 
     def render_line(self, y: int) -> Strip:
         """Render a single line of the terminal."""
@@ -114,38 +118,44 @@ class SSHTerminal(Widget):
         # Get the line from pyte buffer
         # Pyte stores as a mapping {x: Char(data, fg, bg, ...)}
         # We need to constructing segments
-        
+
         segments = []
         line_data = self.pyte_screen.buffer[y]
-        
+
         # We assume full width for simplicity, iterate 0 to width
         # Pyte's buffer is sparse (it's a dict), waiting for text.
         # Ensure we fill blanks with default style.
-        
+
         current_style = RichStyle.parse("white on black")
         text_accumulator = ""
-        
+
         for x in range(width):
             char = line_data.get(x)
             if char:
                 # Map pyte attrs to Rich style
                 # This is a simplification. Pyte has 'fg', 'bg', 'bold', 'italics' etc.
                 # Colors can be 'red', 'green', 'default' or hex.
-                
+
                 fg = char.fg if char.fg != "default" else "white"
                 bg = char.bg if char.bg != "default" else "black"
-                
+
                 # Convert pyte color names to standard CSS/Rich names if needed
                 # Rich handles standard names.
-                
-                style = RichStyle(color=fg, bgcolor=bg, bold=char.bold, italic=char.italics, reverse=char.reverse)
-                
+
+                style = RichStyle(
+                    color=fg,
+                    bgcolor=bg,
+                    bold=char.bold,
+                    italic=char.italics,
+                    reverse=char.reverse,
+                )
+
                 if style != current_style:
-                     if text_accumulator:
-                         segments.append(Segment(text_accumulator, current_style))
-                         text_accumulator = ""
-                     current_style = style
-                
+                    if text_accumulator:
+                        segments.append(Segment(text_accumulator, current_style))
+                        text_accumulator = ""
+                    current_style = style
+
                 text_accumulator += char.data
             else:
                 # Empty space
@@ -155,11 +165,11 @@ class SSHTerminal(Widget):
                         text_accumulator = ""
                     current_style = RichStyle.parse("white on black")
                 text_accumulator += " "
-        
+
         if text_accumulator:
             segments.append(Segment(text_accumulator, current_style))
-            
+
         return Strip(segments, width)
-        
+
     def get_content_height(self, container: Size, viewport: Size, width: int) -> int:
         return self.pyte_screen.lines

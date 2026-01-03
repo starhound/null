@@ -1,19 +1,19 @@
 """Command palette widget for quick action access."""
 
-from textual.app import ComposeResult
-from textual.widgets import Static, Label, Input
-from textual.containers import Vertical
-from textual.reactive import reactive
-from textual.message import Message
-from textual.binding import Binding
 from dataclasses import dataclass
-from typing import Callable, Optional
-import re
+
+from textual.app import ComposeResult
+from textual.binding import Binding
+from textual.containers import Vertical
+from textual.message import Message
+from textual.reactive import reactive
+from textual.widgets import Input, Label, Static
 
 
 @dataclass
 class PaletteAction:
     """Represents an action in the command palette."""
+
     name: str
     description: str
     shortcut: str = ""
@@ -67,6 +67,7 @@ class PaletteItem(Static):
 
     class Selected(Message):
         """Sent when item is clicked."""
+
         def __init__(self, action: PaletteAction):
             self.action = action
             super().__init__()
@@ -104,12 +105,14 @@ class CommandPalette(Static, can_focus=True):
 
     class ActionSelected(Message):
         """Sent when user selects an action."""
+
         def __init__(self, action: PaletteAction):
             self.action = action
             super().__init__()
 
     class Closed(Message):
         """Sent when palette is closed."""
+
         pass
 
     def __init__(self, **kwargs):
@@ -120,7 +123,9 @@ class CommandPalette(Static, can_focus=True):
         yield Label("Command Palette", id="palette-title")
         yield Input(placeholder="Type to search commands...", id="palette-input")
         yield Vertical(id="palette-results")
-        yield Label("Up/Down to navigate, Enter to execute, Esc to close", id="palette-hint")
+        yield Label(
+            "Up/Down to navigate, Enter to execute, Esc to close", id="palette-hint"
+        )
 
     def _build_actions(self) -> list[PaletteAction]:
         """Build the list of all available actions dynamically."""
@@ -128,27 +133,31 @@ class CommandPalette(Static, can_focus=True):
 
         # Get slash commands dynamically from the command handler
         # Note: self.app always returns the App instance directly in Textual
-        if hasattr(self.app, 'command_handler'):
+        if hasattr(self.app, "command_handler"):
             command_handler = self.app.command_handler
             for cmd_info in command_handler.get_all_commands():
                 # Main command
-                actions.append(PaletteAction(
-                    name=f"/{cmd_info.name}",
-                    description=cmd_info.description,
-                    shortcut=cmd_info.shortcut,
-                    category="commands",
-                    action_id=f"slash:/{cmd_info.name}"
-                ))
+                actions.append(
+                    PaletteAction(
+                        name=f"/{cmd_info.name}",
+                        description=cmd_info.description,
+                        shortcut=cmd_info.shortcut,
+                        category="commands",
+                        action_id=f"slash:/{cmd_info.name}",
+                    )
+                )
 
                 # Subcommands if any
                 for subcmd, subdesc in cmd_info.subcommands:
-                    actions.append(PaletteAction(
-                        name=f"/{cmd_info.name} {subcmd}",
-                        description=subdesc,
-                        shortcut="",
-                        category="commands",
-                        action_id=f"slash:/{cmd_info.name} {subcmd}"
-                    ))
+                    actions.append(
+                        PaletteAction(
+                            name=f"/{cmd_info.name} {subcmd}",
+                            description=subdesc,
+                            shortcut="",
+                            category="commands",
+                            action_id=f"slash:/{cmd_info.name} {subcmd}",
+                        )
+                    )
 
         # Key binding actions
         keybindings = [
@@ -165,29 +174,34 @@ class CommandPalette(Static, can_focus=True):
 
         for name, desc, shortcut in keybindings:
             action_id = name.lower().replace(" ", "_")
-            actions.append(PaletteAction(
-                name=name,
-                description=desc,
-                shortcut=shortcut,
-                category="keybindings",
-                action_id=f"action:{action_id}"
-            ))
+            actions.append(
+                PaletteAction(
+                    name=name,
+                    description=desc,
+                    shortcut=shortcut,
+                    category="keybindings",
+                    action_id=f"action:{action_id}",
+                )
+            )
 
         # Recent commands from history
         try:
             from config import Config
+
             storage = Config._get_storage()
             recent = storage.get_last_history(limit=10)
             for cmd in recent:
                 # Skip slash commands - they're already listed
                 if not cmd.startswith("/"):
-                    actions.append(PaletteAction(
-                        name=cmd,
-                        description="Recent command",
-                        shortcut="",
-                        category="history",
-                        action_id=f"history:{cmd}"
-                    ))
+                    actions.append(
+                        PaletteAction(
+                            name=cmd,
+                            description="Recent command",
+                            shortcut="",
+                            category="history",
+                            action_id=f"history:{cmd}",
+                        )
+                    )
         except Exception:
             pass
 
@@ -239,7 +253,10 @@ class CommandPalette(Static, can_focus=True):
 
     def action_select_next(self):
         """Move selection down."""
-        if self.filtered_actions and self.selected_index < len(self.filtered_actions) - 1:
+        if (
+            self.filtered_actions
+            and self.selected_index < len(self.filtered_actions) - 1
+        ):
             self.selected_index += 1
             self._render_results()
 
@@ -284,7 +301,9 @@ class CommandPalette(Static, can_focus=True):
             container.remove_children()
 
             if not self.filtered_actions:
-                container.mount(Label("No matching commands", classes="palette-no-results"))
+                container.mount(
+                    Label("No matching commands", classes="palette-no-results")
+                )
                 return
 
             # Show up to 15 results

@@ -1,49 +1,48 @@
 """MCP configuration management."""
 
 import json
-from pathlib import Path
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
 
 
 @dataclass
 class MCPServerConfig:
     """Configuration for a single MCP server."""
+
     name: str
     command: str
-    args: List[str] = field(default_factory=list)
-    env: Dict[str, str] = field(default_factory=dict)
+    args: list[str] = field(default_factory=list)
+    env: dict[str, str] = field(default_factory=dict)
     enabled: bool = True
 
     @classmethod
-    def from_dict(cls, name: str, data: Dict[str, Any]) -> "MCPServerConfig":
+    def from_dict(cls, name: str, data: dict[str, Any]) -> "MCPServerConfig":
         return cls(
             name=name,
             command=data.get("command", ""),
             args=data.get("args", []),
             env=data.get("env", {}),
-            enabled=data.get("enabled", True)
+            enabled=data.get("enabled", True),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "command": self.command,
             "args": self.args,
             "env": self.env,
-            "enabled": self.enabled
+            "enabled": self.enabled,
         }
 
 
 class MCPConfig:
     """Manages MCP configuration from ~/.null/mcp.json"""
 
-    DEFAULT_CONFIG = {
-        "mcpServers": {}
-    }
+    DEFAULT_CONFIG = {"mcpServers": {}}
 
     def __init__(self):
         self.config_path = Path.home() / ".null" / "mcp.json"
-        self.servers: Dict[str, MCPServerConfig] = {}
+        self.servers: dict[str, MCPServerConfig] = {}
         self._ensure_config_exists()
         self.load()
 
@@ -52,8 +51,7 @@ class MCPConfig:
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
         if not self.config_path.exists():
             self.config_path.write_text(
-                json.dumps(self.DEFAULT_CONFIG, indent=2),
-                encoding="utf-8"
+                json.dumps(self.DEFAULT_CONFIG, indent=2), encoding="utf-8"
             )
 
     def load(self):
@@ -73,24 +71,21 @@ class MCPConfig:
         """Save configuration to file."""
         data = {
             "mcpServers": {
-                name: server.to_dict()
-                for name, server in self.servers.items()
+                name: server.to_dict() for name, server in self.servers.items()
             }
         }
-        self.config_path.write_text(
-            json.dumps(data, indent=2),
-            encoding="utf-8"
-        )
+        self.config_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
-    def add_server(self, name: str, command: str, args: List[str] = None,
-                   env: Dict[str, str] = None) -> MCPServerConfig:
+    def add_server(
+        self,
+        name: str,
+        command: str,
+        args: list[str] = None,
+        env: dict[str, str] = None,
+    ) -> MCPServerConfig:
         """Add a new MCP server configuration."""
         server = MCPServerConfig(
-            name=name,
-            command=command,
-            args=args or [],
-            env=env or {},
-            enabled=True
+            name=name, command=command, args=args or [], env=env or {}, enabled=True
         )
         self.servers[name] = server
         self.save()
@@ -104,11 +99,11 @@ class MCPConfig:
             return True
         return False
 
-    def get_enabled_servers(self) -> List[MCPServerConfig]:
+    def get_enabled_servers(self) -> list[MCPServerConfig]:
         """Get list of enabled servers."""
         return [s for s in self.servers.values() if s.enabled]
 
-    def toggle_server(self, name: str) -> Optional[bool]:
+    def toggle_server(self, name: str) -> bool | None:
         """Toggle server enabled state. Returns new state or None if not found."""
         if name in self.servers:
             self.servers[name].enabled = not self.servers[name].enabled

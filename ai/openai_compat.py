@@ -1,18 +1,23 @@
-from typing import AsyncGenerator, List, Optional, Dict, Any
 import json
+from collections.abc import AsyncGenerator
+from typing import Any
+
 import httpx
 import openai
-from .base import LLMProvider, Message, StreamChunk, ToolCallData, TokenUsage
+
+from .base import LLMProvider, Message, StreamChunk, TokenUsage, ToolCallData
 
 
 class OpenAICompatibleProvider(LLMProvider):
-    def __init__(self, api_key: str, base_url: str = None, model: str = "gpt-3.5-turbo"):
+    def __init__(
+        self, api_key: str, base_url: str = None, model: str = "gpt-3.5-turbo"
+    ):
         # Short connect timeout (3s) to fail fast if server isn't available
         # Longer read timeout (120s) for model generation
         self.client = openai.AsyncOpenAI(
             api_key=api_key,
             base_url=base_url,
-            timeout=httpx.Timeout(120.0, connect=3.0)
+            timeout=httpx.Timeout(120.0, connect=3.0),
         )
         self.model = model
 
@@ -21,11 +26,8 @@ class OpenAICompatibleProvider(LLMProvider):
         return True
 
     def _build_messages(
-        self,
-        prompt: str,
-        messages: List[Message],
-        system_prompt: Optional[str]
-    ) -> List[Dict[str, Any]]:
+        self, prompt: str, messages: list[Message], system_prompt: str | None
+    ) -> list[dict[str, Any]]:
         """Build the messages array for the API call."""
         if not system_prompt:
             system_prompt = "You are a helpful AI assistant integrated into a terminal."
@@ -33,7 +35,7 @@ class OpenAICompatibleProvider(LLMProvider):
         chat_messages = [{"role": "system", "content": system_prompt}]
 
         for msg in messages:
-            msg_dict: Dict[str, Any] = {"role": msg["role"]}
+            msg_dict: dict[str, Any] = {"role": msg["role"]}
             if "content" in msg:
                 msg_dict["content"] = msg["content"]
             if "tool_calls" in msg:
@@ -46,10 +48,7 @@ class OpenAICompatibleProvider(LLMProvider):
         return chat_messages
 
     async def generate(
-        self,
-        prompt: str,
-        messages: List[Message],
-        system_prompt: Optional[str] = None
+        self, prompt: str, messages: list[Message], system_prompt: str | None = None
     ) -> AsyncGenerator[str, None]:
         """Generate response using OpenAI chat API with proper message format."""
         chat_messages = self._build_messages(prompt, messages, system_prompt)
@@ -65,8 +64,7 @@ class OpenAICompatibleProvider(LLMProvider):
             # Some servers (like LM Studio) may not support stream_options
             try:
                 stream = await self.client.chat.completions.create(
-                    **params,
-                    stream_options={"include_usage": True}
+                    **params, stream_options={"include_usage": True}
                 )
             except Exception:
                 # Fallback without stream_options
@@ -76,14 +74,14 @@ class OpenAICompatibleProvider(LLMProvider):
                 if chunk.choices and chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
         except Exception as e:
-            yield f"Error: {str(e)}"
+            yield f"Error: {e!s}"
 
     async def generate_with_tools(
         self,
         prompt: str,
-        messages: List[Message],
-        tools: List[Dict[str, Any]],
-        system_prompt: Optional[str] = None
+        messages: list[Message],
+        tools: list[dict[str, Any]],
+        system_prompt: str | None = None,
     ) -> AsyncGenerator[StreamChunk, None]:
         """Generate response with tool calling support."""
         chat_messages = self._build_messages(prompt, messages, system_prompt)
@@ -104,24 +102,23 @@ class OpenAICompatibleProvider(LLMProvider):
             # Try with stream_options first (for usage tracking), fall back if not supported
             try:
                 stream = await self.client.chat.completions.create(
-                    **params,
-                    stream_options={"include_usage": True}
+                    **params, stream_options={"include_usage": True}
                 )
             except Exception:
                 # Some servers (LM Studio, etc.) don't support stream_options
                 stream = await self.client.chat.completions.create(**params)
 
             # Track tool calls being built up across chunks
-            current_tool_calls: Dict[int, Dict[str, Any]] = {}
+            current_tool_calls: dict[int, dict[str, Any]] = {}
             text_buffer = ""
-            usage_data: Optional[TokenUsage] = None
+            usage_data: TokenUsage | None = None
 
             async for chunk in stream:
                 # Check for usage data (comes in final chunk for OpenAI)
-                if hasattr(chunk, 'usage') and chunk.usage:
+                if hasattr(chunk, "usage") and chunk.usage:
                     usage_data = TokenUsage(
                         input_tokens=chunk.usage.prompt_tokens or 0,
-                        output_tokens=chunk.usage.completion_tokens or 0
+                        output_tokens=chunk.usage.completion_tokens or 0,
                     )
 
                 if not chunk.choices:
@@ -142,7 +139,7 @@ class OpenAICompatibleProvider(LLMProvider):
                             current_tool_calls[idx] = {
                                 "id": tc.id or "",
                                 "name": "",
-                                "arguments": ""
+                                "arguments": "",
                             }
 
                         if tc.id:
@@ -151,34 +148,40 @@ class OpenAICompatibleProvider(LLMProvider):
                             if tc.function.name:
                                 current_tool_calls[idx]["name"] = tc.function.name
                             if tc.function.arguments:
-                                current_tool_calls[idx]["arguments"] += tc.function.arguments
+                                current_tool_calls[idx]["arguments"] += (
+                                    tc.function.arguments
+                                )
 
                 # Check if this is the final chunk
                 if chunk.choices[0].finish_reason:
                     tool_calls = []
                     for tc_data in current_tool_calls.values():
                         try:
-                            args = json.loads(tc_data["arguments"]) if tc_data["arguments"] else {}
+                            args = (
+                                json.loads(tc_data["arguments"])
+                                if tc_data["arguments"]
+                                else {}
+                            )
                         except json.JSONDecodeError:
                             args = {}
 
-                        tool_calls.append(ToolCallData(
-                            id=tc_data["id"],
-                            name=tc_data["name"],
-                            arguments=args
-                        ))
+                        tool_calls.append(
+                            ToolCallData(
+                                id=tc_data["id"], name=tc_data["name"], arguments=args
+                            )
+                        )
 
                     yield StreamChunk(
                         text="",
                         tool_calls=tool_calls,
                         is_complete=True,
-                        usage=usage_data
+                        usage=usage_data,
                     )
 
         except Exception as e:
-            yield StreamChunk(text=f"Error: {str(e)}", is_complete=True)
+            yield StreamChunk(text=f"Error: {e!s}", is_complete=True)
 
-    async def list_models(self) -> List[str]:
+    async def list_models(self) -> list[str]:
         try:
             models_response = await self.client.models.list()
 
@@ -186,19 +189,19 @@ class OpenAICompatibleProvider(LLMProvider):
             models = []
 
             # Standard OpenAI format: response.data is a list of Model objects
-            if hasattr(models_response, 'data'):
+            if hasattr(models_response, "data"):
                 for m in models_response.data:
-                    if hasattr(m, 'id'):
+                    if hasattr(m, "id"):
                         models.append(m.id)
-                    elif isinstance(m, dict) and 'id' in m:
-                        models.append(m['id'])
+                    elif isinstance(m, dict) and "id" in m:
+                        models.append(m["id"])
             # Some servers return list directly
             elif isinstance(models_response, list):
                 for m in models_response:
-                    if hasattr(m, 'id'):
+                    if hasattr(m, "id"):
                         models.append(m.id)
-                    elif isinstance(m, dict) and 'id' in m:
-                        models.append(m['id'])
+                    elif isinstance(m, dict) and "id" in m:
+                        models.append(m["id"])
                     elif isinstance(m, str):
                         models.append(m)
 

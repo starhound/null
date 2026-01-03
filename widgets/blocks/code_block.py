@@ -1,19 +1,17 @@
 """Widget for rendering code blocks with Run/Copy/Save actions."""
 
-import re
 import asyncio
+import os
+import re
 import subprocess
 import tempfile
-import os
-from pathlib import Path
-from typing import Optional
 
-from textual.app import ComposeResult
-from textual.widgets import Static, Label
-from textual.containers import Container, Horizontal
-from textual.message import Message
-from textual.events import Click
 from textual import on
+from textual.app import ComposeResult
+from textual.containers import Container, Horizontal
+from textual.events import Click
+from textual.message import Message
+from textual.widgets import Label, Static
 
 try:
     import pyperclip
@@ -26,6 +24,7 @@ class CodeBlockWidget(Static):
 
     class RunCodeRequested(Message):
         """Sent when user clicks run button."""
+
         def __init__(self, code: str, language: str):
             self.code = code
             self.language = language
@@ -33,6 +32,7 @@ class CodeBlockWidget(Static):
 
     class SaveCodeRequested(Message):
         """Sent when user clicks save button."""
+
         def __init__(self, code: str, language: str):
             self.code = code
             self.language = language
@@ -57,7 +57,9 @@ class CodeBlockWidget(Static):
         super().__init__()
         self.code = code
         self.language = language.lower().strip() if language else ""
-        self._canonical_language = self.LANGUAGE_ALIASES.get(self.language, self.language)
+        self._canonical_language = self.LANGUAGE_ALIASES.get(
+            self.language, self.language
+        )
 
     def compose(self) -> ComposeResult:
         """Compose the code block with header and content."""
@@ -70,25 +72,35 @@ class CodeBlockWidget(Static):
 
                 # Action buttons (using classes instead of IDs for multiple code blocks)
                 if self._is_executable():
-                    yield Static("run", classes="code-action code-action-run code-run-btn")
-                yield Static("copy", classes="code-action code-action-copy code-copy-btn")
-                yield Static("save", classes="code-action code-action-save code-save-btn")
+                    yield Static(
+                        "run", classes="code-action code-action-run code-run-btn"
+                    )
+                yield Static(
+                    "copy", classes="code-action code-action-copy code-copy-btn"
+                )
+                yield Static(
+                    "save", classes="code-action code-action-save code-save-btn"
+                )
 
             # Code content with syntax highlighting
             with Container(classes="code-block-content"):
                 from rich.syntax import Syntax
+
                 syntax = Syntax(
                     self.code,
                     self._canonical_language or "text",
                     theme="monokai",
                     line_numbers=False,
-                    word_wrap=True
+                    word_wrap=True,
                 )
                 yield Static(syntax, classes="code-syntax")
 
     def _is_executable(self) -> bool:
         """Check if this code block's language is executable."""
-        return self.language in self.EXECUTABLE_LANGUAGES or self._canonical_language in self.EXECUTABLE_LANGUAGES
+        return (
+            self.language in self.EXECUTABLE_LANGUAGES
+            or self._canonical_language in self.EXECUTABLE_LANGUAGES
+        )
 
     @on(Click, ".code-run-btn")
     def on_run_clicked(self, event: Click):
@@ -117,18 +129,21 @@ class CodeBlockWidget(Static):
             else:
                 # Fallback: try using subprocess for Linux
                 import sys
-                if sys.platform == 'linux':
+
+                if sys.platform == "linux":
                     try:
                         subprocess.run(
-                            ['xclip', '-selection', 'clipboard'],
+                            ["xclip", "-selection", "clipboard"],
                             input=self.code.encode(),
-                            check=True
+                            check=True,
                         )
                         self.notify("Copied to clipboard")
                         return
                     except (subprocess.CalledProcessError, FileNotFoundError):
                         pass
-                self.notify("Install pyperclip: pip install pyperclip", severity="warning")
+                self.notify(
+                    "Install pyperclip: pip install pyperclip", severity="warning"
+                )
         except Exception as e:
             self.notify(f"Copy failed: {e}", severity="error")
 
@@ -140,12 +155,12 @@ def extract_code_blocks(markdown_text: str) -> list[tuple[str, str, int, int]]:
     Returns list of tuples: (code, language, start_pos, end_pos)
     """
     # Pattern to match fenced code blocks
-    pattern = r'```(\w*)\n(.*?)```'
+    pattern = r"```(\w*)\n(.*?)```"
     blocks = []
 
     for match in re.finditer(pattern, markdown_text, re.DOTALL):
         language = match.group(1)
-        code = match.group(2).rstrip('\n')
+        code = match.group(2).rstrip("\n")
         blocks.append((code, language, match.start(), match.end()))
 
     return blocks
@@ -201,10 +216,10 @@ async def _execute_bash(code: str) -> tuple[str, int]:
             code,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
-            shell=True
+            shell=True,
         )
         stdout, _ = await process.communicate()
-        output = stdout.decode('utf-8', errors='replace')
+        output = stdout.decode("utf-8", errors="replace")
         return output, process.returncode or 0
     except Exception as e:
         return f"Execution error: {e}", 1
@@ -214,18 +229,19 @@ async def _execute_python(code: str) -> tuple[str, int]:
     """Execute python code."""
     try:
         # Write code to temporary file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(code)
             temp_path = f.name
 
         try:
             process = await asyncio.create_subprocess_exec(
-                'python3', temp_path,
+                "python3",
+                temp_path,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.STDOUT
+                stderr=asyncio.subprocess.STDOUT,
             )
             stdout, _ = await process.communicate()
-            output = stdout.decode('utf-8', errors='replace')
+            output = stdout.decode("utf-8", errors="replace")
             return output, process.returncode or 0
         finally:
             # Clean up temp file

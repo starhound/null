@@ -1,22 +1,24 @@
 """AI-related commands: model, provider, prompts, chat, compact."""
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app import NullApp
 
-from .base import CommandMixin
+from ai.factory import AIFactory
 from config import Config
 from models import BlockState, BlockType
 from widgets import BlockWidget, HistoryViewport
-from ai.factory import AIFactory
+
+from .base import CommandMixin
 
 
 class AICommands(CommandMixin):
     """AI-related commands."""
 
-    def __init__(self, app: "NullApp"):
+    def __init__(self, app: NullApp):
         self.app = app
 
     async def cmd_provider(self, args: list[str]):
@@ -39,7 +41,7 @@ class AICommands(CommandMixin):
 
     async def cmd_providers(self, args: list[str]):
         """Open providers management screen."""
-        from screens import ProvidersScreen, ProviderConfigScreen
+        from screens import ProvidersScreen
 
         def on_providers_result(result):
             if result is None:
@@ -57,7 +59,9 @@ class AICommands(CommandMixin):
                 try:
                     self.app.config = Config.load_all()
                     self.app.ai_manager.get_provider(provider_name)
-                    self.app.ai_provider = self.app.ai_manager.get_provider(provider_name)
+                    self.app.ai_provider = self.app.ai_manager.get_provider(
+                        provider_name
+                    )
                     self.app._update_status_bar()
                 except Exception as e:
                     self.notify(f"Error initializing provider: {e}", severity="error")
@@ -97,12 +101,16 @@ class AICommands(CommandMixin):
                 try:
                     self.app.config = Config.load_all()
                     self.app.ai_manager.get_provider(provider_name)
-                    self.app.ai_provider = self.app.ai_manager.get_provider(provider_name)
+                    self.app.ai_provider = self.app.ai_manager.get_provider(
+                        provider_name
+                    )
                     self.app._update_status_bar()
                 except Exception as e:
                     self.notify(f"Error initializing provider: {e}", severity="error")
 
-        self.app.push_screen(ProviderConfigScreen(provider_name, current_conf), on_config_saved)
+        self.app.push_screen(
+            ProviderConfigScreen(provider_name, current_conf), on_config_saved
+        )
 
     async def cmd_ai(self, args: list[str]):
         """Toggle AI mode."""
@@ -125,7 +133,9 @@ class AICommands(CommandMixin):
             self.app.config = Config.load_all()
             self.app.ai_provider = AIFactory.get_provider(self.app.config["ai"])
         else:
-            self.notify("Usage: /model OR /model <provider> <model_name>", severity="error")
+            self.notify(
+                "Usage: /model OR /model <provider> <model_name>", severity="error"
+            )
 
     async def cmd_prompts(self, args: list[str]):
         """Select or manage system prompts."""
@@ -139,12 +149,14 @@ class AICommands(CommandMixin):
             await self._prompts_list()
         elif subcommand == "reload":
             from prompts import get_prompt_manager
+
             get_prompt_manager().reload()
             self.notify("Prompts reloaded from ~/.null/prompts/")
         elif subcommand == "show" and len(args) >= 2:
             await self._prompts_show(args[1])
         elif subcommand == "dir":
             from prompts import get_prompt_manager
+
             pm = get_prompt_manager()
             self.notify(f"Prompts directory: {pm.prompts_dir}")
         else:
@@ -214,6 +226,7 @@ Use /agent again to disable."""
             return
 
         from context import ContextManager
+
         context_info = ContextManager.build_messages(self.app.blocks)
 
         if context_info.estimated_tokens < 500:
@@ -248,7 +261,7 @@ Be brief but preserve essential context. Output only the summary."""
             async for chunk in self.app.ai_provider.generate(
                 summary_prompt,
                 [{"role": "user", "content": context_text}],
-                system_prompt="You are a helpful assistant that creates concise conversation summaries."
+                system_prompt="You are a helpful assistant that creates concise conversation summaries.",
             ):
                 summary += chunk
 
@@ -263,7 +276,7 @@ Be brief but preserve essential context. Output only the summary."""
                 type=BlockType.SYSTEM_MSG,
                 content_input="Context Summary",
                 content_output=summary,
-                is_running=False
+                is_running=False,
             )
             self.app.blocks.append(summary_block)
 
@@ -274,7 +287,9 @@ Be brief but preserve essential context. Output only the summary."""
             reduction = ((old_token_count - new_token_count) / old_token_count) * 100
 
             self.app._update_status_bar()
-            self.notify(f"Compacted: ~{old_token_count} → ~{new_token_count} tokens ({reduction:.0f}% reduction)")
+            self.notify(
+                f"Compacted: ~{old_token_count} → ~{new_token_count} tokens ({reduction:.0f}% reduction)"
+            )
 
         except Exception as e:
             self.notify(f"Compact failed: {e}", severity="error")

@@ -1,5 +1,5 @@
 """Managers for various application concerns."""
 
-from .process import ProcessManager, ProcessInfo
+from .process import ProcessInfo, ProcessManager
 
-__all__ = ["ProcessManager", "ProcessInfo"]
+__all__ = ["ProcessInfo", "ProcessManager"]

@@ -1,16 +1,15 @@
+import json
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
 from pathlib import Path
-import uuid
-import json
 
 
 class BlockType(Enum):
     COMMAND = "command"
-    AI_RESPONSE = "ai"           # Chat mode - simple Q&A
-    AGENT_RESPONSE = "agent"     # Agent mode - structured iterations with tool use
+    AI_RESPONSE = "ai"  # Chat mode - simple Q&A
+    AGENT_RESPONSE = "agent"  # Agent mode - structured iterations with tool use
     AI_QUERY = "ai_query"
     SYSTEM_MSG = "system"
     TOOL_CALL = "tool_call"
@@ -19,6 +18,7 @@ class BlockType(Enum):
 @dataclass
 class ToolCallState:
     """State for a single tool call in agent mode."""
+
     id: str
     tool_name: str
     arguments: str = ""
@@ -36,7 +36,7 @@ class ToolCallState:
             "output": self.output,
             "status": self.status,
             "duration": self.duration,
-            "timestamp": self.timestamp.isoformat()
+            "timestamp": self.timestamp.isoformat(),
         }
 
     @classmethod
@@ -49,7 +49,9 @@ class ToolCallState:
             output=data.get("output", ""),
             status=data.get("status", "pending"),
             duration=data.get("duration", 0.0),
-            timestamp=datetime.fromisoformat(data["timestamp"]) if "timestamp" in data else datetime.now()
+            timestamp=datetime.fromisoformat(data["timestamp"])
+            if "timestamp" in data
+            else datetime.now(),
         )
 
 
@@ -63,10 +65,11 @@ class AgentIteration:
     - response_fragment: Any text response generated
     - status: Current state of the iteration
     """
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     iteration_number: int = 0
     thinking: str = ""
-    tool_calls: List[ToolCallState] = field(default_factory=list)
+    tool_calls: list[ToolCallState] = field(default_factory=list)
     response_fragment: str = ""
     status: str = "pending"  # pending, thinking, executing, waiting_approval, complete
     timestamp: datetime = field(default_factory=datetime.now)
@@ -82,7 +85,7 @@ class AgentIteration:
             "response_fragment": self.response_fragment,
             "status": self.status,
             "timestamp": self.timestamp.isoformat(),
-            "duration": self.duration
+            "duration": self.duration,
         }
 
     @classmethod
@@ -98,8 +101,10 @@ class AgentIteration:
             tool_calls=tool_calls,
             response_fragment=data.get("response_fragment", ""),
             status=data.get("status", "pending"),
-            timestamp=datetime.fromisoformat(data["timestamp"]) if "timestamp" in data else datetime.now(),
-            duration=data.get("duration", 0.0)
+            timestamp=datetime.fromisoformat(data["timestamp"])
+            if "timestamp" in data
+            else datetime.now(),
+            duration=data.get("duration", 0.0),
         )
 
 
@@ -110,13 +115,13 @@ class BlockState:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = field(default_factory=datetime.now)
     content_output: str = ""
-    exit_code: Optional[int] = None
+    exit_code: int | None = None
     is_running: bool = True
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
     content_thinking: str = ""
     content_exec_output: str = ""
-    tool_calls: List["ToolCallState"] = field(default_factory=list)
-    iterations: List["AgentIteration"] = field(default_factory=list)
+    tool_calls: list["ToolCallState"] = field(default_factory=list)
+    iterations: list["AgentIteration"] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """Serialize block to dictionary."""
@@ -132,7 +137,7 @@ class BlockState:
             "is_running": self.is_running,
             "metadata": self.metadata,
             "tool_calls": [tc.to_dict() for tc in self.tool_calls],
-            "iterations": [it.to_dict() for it in self.iterations]
+            "iterations": [it.to_dict() for it in self.iterations],
         }
 
     @classmethod
@@ -156,21 +161,21 @@ class BlockState:
             is_running=data.get("is_running", False),
             metadata=data.get("metadata", {}),
             tool_calls=tool_calls,
-            iterations=iterations
+            iterations=iterations,
         )
 
 
-def export_to_json(blocks: List[BlockState]) -> str:
+def export_to_json(blocks: list[BlockState]) -> str:
     """Export blocks to JSON string."""
     data = {
         "exported_at": datetime.now().isoformat(),
         "version": "1.0",
-        "blocks": [block.to_dict() for block in blocks]
+        "blocks": [block.to_dict() for block in blocks],
     }
     return json.dumps(data, indent=2)
 
 
-def export_to_markdown(blocks: List[BlockState]) -> str:
+def export_to_markdown(blocks: list[BlockState]) -> str:
     """Export blocks to formatted markdown."""
     lines = []
 
@@ -185,7 +190,7 @@ def export_to_markdown(blocks: List[BlockState]) -> str:
         if block.type == BlockType.COMMAND:
             lines.append(f"## Command [{ts}]")
             lines.append("")
-            lines.append(f"```bash")
+            lines.append("```bash")
             lines.append(f"$ {block.content_input}")
             lines.append("```")
             if block.content_output:
@@ -204,7 +209,7 @@ def export_to_markdown(blocks: List[BlockState]) -> str:
             lines.append(f"**User:** {block.content_input}")
             lines.append("")
             if block.content_output:
-                lines.append(f"**Assistant:**")
+                lines.append("**Assistant:**")
                 lines.append("")
                 lines.append(block.content_output.rstrip())
             if block.content_exec_output:
@@ -277,7 +282,7 @@ def export_to_markdown(blocks: List[BlockState]) -> str:
                     lines.append("")
                     lines.append("**Arguments:**")
                     lines.append("```json")
-                    lines.append(block.metadata['arguments'])
+                    lines.append(block.metadata["arguments"])
                     lines.append("```")
             if block.content_output:
                 lines.append("")
@@ -293,7 +298,7 @@ def export_to_markdown(blocks: List[BlockState]) -> str:
     return "\n".join(lines)
 
 
-def save_export(blocks: List[BlockState], format: str = "md") -> Path:
+def save_export(blocks: list[BlockState], format: str = "md") -> Path:
     """Save export to file and return path."""
     export_dir = Path.home() / ".null" / "exports"
     export_dir.mkdir(parents=True, exist_ok=True)

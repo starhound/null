@@ -3,8 +3,9 @@
 from textual.app import ComposeResult
 
 from models import BlockState
+
 from .base import BaseBlockWidget
-from .parts import BlockHeader, BlockBody, BlockMeta
+from .parts import BlockBody, BlockHeader, BlockMeta
 
 
 class ToolCallBlock(BaseBlockWidget):

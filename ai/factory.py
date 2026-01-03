@@ -1,14 +1,15 @@
 """AI provider factory."""
 
-from typing import Dict, Any
+from typing import Any
+
+from .anthropic import AnthropicProvider
+from .azure import AzureProvider
 from .base import LLMProvider
+from .bedrock import BedrockProvider
+from .cohere import CohereProvider
+from .google_vertex import GoogleVertexProvider
 from .ollama import OllamaProvider
 from .openai_compat import OpenAICompatibleProvider
-from .azure import AzureProvider
-from .bedrock import BedrockProvider
-from .anthropic import AnthropicProvider
-from .google_vertex import GoogleVertexProvider
-from .cohere import CohereProvider
 
 
 class AIFactory:
@@ -145,13 +146,13 @@ class AIFactory:
     }
 
     @staticmethod
-    def _get_or_default(config: Dict[str, Any], key: str, default: str) -> str:
+    def _get_or_default(config: dict[str, Any], key: str, default: str) -> str:
         """Get config value, using default if missing or empty."""
         value = config.get(key)
         return value if value else default
 
     @staticmethod
-    def get_provider(config: Dict[str, Any]) -> LLMProvider:
+    def get_provider(config: dict[str, Any]) -> LLMProvider:
         """Create a provider instance from config."""
         provider_name = config.get("provider", "ollama")
         get = lambda k, d: AIFactory._get_or_default(config, k, d)
@@ -162,14 +163,14 @@ class AIFactory:
         if provider_name == "ollama":
             return OllamaProvider(
                 endpoint=get("endpoint", "http://localhost:11434"),
-                model=get("model", "llama3.2")
+                model=get("model", "llama3.2"),
             )
 
         elif provider_name == "lm_studio":
             return OpenAICompatibleProvider(
                 api_key="lm-studio",
                 base_url=get("endpoint", "http://localhost:1234/v1"),
-                model=get("model", "local-model")
+                model=get("model", "local-model"),
             )
 
         # =====================================================================
@@ -177,14 +178,13 @@ class AIFactory:
         # =====================================================================
         elif provider_name == "openai":
             return OpenAICompatibleProvider(
-                api_key=config.get("api_key", ""),
-                model=get("model", "gpt-4o-mini")
+                api_key=config.get("api_key", ""), model=get("model", "gpt-4o-mini")
             )
 
         elif provider_name == "anthropic":
             return AnthropicProvider(
                 api_key=config.get("api_key", ""),
-                model=get("model", "claude-3-5-sonnet-20241022")
+                model=get("model", "claude-3-5-sonnet-20241022"),
             )
 
         elif provider_name == "google":
@@ -192,7 +192,7 @@ class AIFactory:
                 project_id=config.get("project_id", ""),
                 location=get("location", "us-central1"),
                 api_key=config.get("api_key", ""),
-                model=get("model", "gemini-2.0-flash")
+                model=get("model", "gemini-2.0-flash"),
             )
 
         elif provider_name == "azure":
@@ -200,13 +200,13 @@ class AIFactory:
                 endpoint=config.get("endpoint", ""),
                 api_key=config.get("api_key", ""),
                 api_version=get("api_version", "2024-02-01"),
-                model=get("model", "gpt-4o")
+                model=get("model", "gpt-4o"),
             )
 
         elif provider_name == "bedrock":
             return BedrockProvider(
                 region_name=get("region", "us-east-1"),
-                model=get("model", "anthropic.claude-3-sonnet-20240229-v1:0")
+                model=get("model", "anthropic.claude-3-sonnet-20240229-v1:0"),
             )
 
         # =====================================================================
@@ -216,70 +216,70 @@ class AIFactory:
             return OpenAICompatibleProvider(
                 api_key=config.get("api_key", ""),
                 base_url="https://api.groq.com/openai/v1",
-                model=get("model", "llama-3.3-70b-versatile")
+                model=get("model", "llama-3.3-70b-versatile"),
             )
 
         elif provider_name == "mistral":
             return OpenAICompatibleProvider(
                 api_key=config.get("api_key", ""),
                 base_url="https://api.mistral.ai/v1",
-                model=get("model", "mistral-large-latest")
+                model=get("model", "mistral-large-latest"),
             )
 
         elif provider_name == "together":
             return OpenAICompatibleProvider(
                 api_key=config.get("api_key", ""),
                 base_url="https://api.together.xyz/v1",
-                model=get("model", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
+                model=get("model", "meta-llama/Llama-3.3-70B-Instruct-Turbo"),
             )
 
         elif provider_name == "nvidia":
             return OpenAICompatibleProvider(
                 api_key=config.get("api_key", ""),
                 base_url="https://integrate.api.nvidia.com/v1",
-                model=get("model", "meta/llama-3.1-405b-instruct")
+                model=get("model", "meta/llama-3.1-405b-instruct"),
             )
 
         elif provider_name == "xai":
             return OpenAICompatibleProvider(
                 api_key=config.get("api_key", ""),
                 base_url="https://api.x.ai/v1",
-                model=get("model", "grok-beta")
+                model=get("model", "grok-beta"),
             )
 
         elif provider_name == "openrouter":
             return OpenAICompatibleProvider(
                 api_key=config.get("api_key", ""),
                 base_url="https://openrouter.ai/api/v1",
-                model=get("model", "openai/gpt-4o-mini")
+                model=get("model", "openai/gpt-4o-mini"),
             )
 
         elif provider_name == "fireworks":
             return OpenAICompatibleProvider(
                 api_key=config.get("api_key", ""),
                 base_url="https://api.fireworks.ai/inference/v1",
-                model=get("model", "accounts/fireworks/models/llama-v3p3-70b-instruct")
+                model=get("model", "accounts/fireworks/models/llama-v3p3-70b-instruct"),
             )
 
         elif provider_name == "deepseek":
             return OpenAICompatibleProvider(
                 api_key=config.get("api_key", ""),
                 base_url="https://api.deepseek.com/v1",
-                model=get("model", "deepseek-chat")
+                model=get("model", "deepseek-chat"),
             )
 
         elif provider_name == "perplexity":
             return OpenAICompatibleProvider(
                 api_key=config.get("api_key", ""),
                 base_url="https://api.perplexity.ai",
-                model=get("model", "llama-3.1-sonar-large-128k-online")
+                model=get("model", "llama-3.1-sonar-large-128k-online"),
             )
 
         elif provider_name == "custom":
             return OpenAICompatibleProvider(
                 api_key=config.get("api_key", ""),
                 base_url=get("endpoint", "http://localhost:8000/v1"),
-                model=get("model", "custom-model")
+                model=get("model", "custom-model"),
             )
 
         elif provider_name == "cloudflare":
@@ -287,7 +287,7 @@ class AIFactory:
             return OpenAICompatibleProvider(
                 api_key=config.get("api_key", ""),
                 base_url=f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1",
-                model=get("model", "@cf/meta/llama-3-8b-instruct")
+                model=get("model", "@cf/meta/llama-3-8b-instruct"),
             )
 
         elif provider_name == "huggingface":
@@ -295,14 +295,14 @@ class AIFactory:
             return OpenAICompatibleProvider(
                 api_key=config.get("api_key", ""),
                 base_url=f"https://api-inference.huggingface.co/models/{model_id}/v1",
-                model=model_id
+                model=model_id,
             )
 
         elif provider_name == "llama_cpp":
             return OpenAICompatibleProvider(
                 api_key="token-not-needed",
                 base_url=get("endpoint", "http://localhost:8000/v1"),
-                model=get("model", "default")
+                model=get("model", "default"),
             )
 
         # =====================================================================
@@ -310,8 +310,7 @@ class AIFactory:
         # =====================================================================
         elif provider_name == "cohere":
             return CohereProvider(
-                api_key=config.get("api_key", ""),
-                model=get("model", "command-r-plus")
+                api_key=config.get("api_key", ""), model=get("model", "command-r-plus")
             )
 
         raise ValueError(f"Unknown provider: {provider_name}")

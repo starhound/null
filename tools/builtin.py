@@ -2,21 +2,23 @@
 
 import asyncio
 import os
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Awaitable
+from typing import Any
 
 
 @dataclass
 class BuiltinTool:
     """A built-in tool definition."""
+
     name: str
     description: str
-    input_schema: Dict[str, Any]
+    input_schema: dict[str, Any]
     handler: Callable[..., Awaitable[str]]
     requires_approval: bool = True  # Whether to ask user before executing
 
 
-async def run_command(command: str, working_dir: Optional[str] = None) -> str:
+async def run_command(command: str, working_dir: str | None = None) -> str:
     """Execute a shell command and return the output."""
     cwd = working_dir or os.getcwd()
 
@@ -25,13 +27,10 @@ async def run_command(command: str, working_dir: Optional[str] = None) -> str:
             command,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
-            cwd=cwd
+            cwd=cwd,
         )
 
-        stdout, _ = await asyncio.wait_for(
-            process.communicate(),
-            timeout=60.0
-        )
+        stdout, _ = await asyncio.wait_for(process.communicate(), timeout=60.0)
 
         output = stdout.decode("utf-8", errors="replace")
         exit_code = process.returncode
@@ -40,13 +39,13 @@ async def run_command(command: str, working_dir: Optional[str] = None) -> str:
             return f"{output}\n[Exit code: {exit_code}]"
         return output
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return "[Command timed out after 60 seconds]"
     except Exception as e:
-        return f"[Error executing command: {str(e)}]"
+        return f"[Error executing command: {e!s}]"
 
 
-async def read_file(path: str, max_lines: Optional[int] = None) -> str:
+async def read_file(path: str, max_lines: int | None = None) -> str:
     """Read a file and return its contents."""
     try:
         expanded = os.path.expanduser(path)
@@ -59,7 +58,7 @@ async def read_file(path: str, max_lines: Optional[int] = None) -> str:
         if not os.path.isfile(expanded):
             return f"[Not a file: {path}]"
 
-        with open(expanded, "r", encoding="utf-8", errors="replace") as f:
+        with open(expanded, encoding="utf-8", errors="replace") as f:
             if max_lines:
                 lines = []
                 for i, line in enumerate(f):
@@ -72,11 +71,11 @@ async def read_file(path: str, max_lines: Optional[int] = None) -> str:
                 content = f.read()
                 # Truncate very large files
                 if len(content) > 50000:
-                    return content[:50000] + f"\n... (truncated at 50000 chars)"
+                    return content[:50000] + "\n... (truncated at 50000 chars)"
                 return content
 
     except Exception as e:
-        return f"[Error reading file: {str(e)}]"
+        return f"[Error reading file: {e!s}]"
 
 
 async def write_file(path: str, content: str) -> str:
@@ -95,7 +94,7 @@ async def write_file(path: str, content: str) -> str:
         return f"[Successfully wrote {len(content)} bytes to {path}]"
 
     except Exception as e:
-        return f"[Error writing file: {str(e)}]"
+        return f"[Error writing file: {e!s}]"
 
 
 async def list_directory(path: str = ".", show_hidden: bool = False) -> str:
@@ -129,11 +128,11 @@ async def list_directory(path: str = ".", show_hidden: bool = False) -> str:
         return "\n".join(entries)
 
     except Exception as e:
-        return f"[Error listing directory: {str(e)}]"
+        return f"[Error listing directory: {e!s}]"
 
 
 # Define built-in tools with their schemas
-BUILTIN_TOOLS: List[BuiltinTool] = [
+BUILTIN_TOOLS: list[BuiltinTool] = [
     BuiltinTool(
         name="run_command",
         description="Execute a shell command in the terminal. Use this to run CLI commands, scripts, or system utilities.",
@@ -142,17 +141,17 @@ BUILTIN_TOOLS: List[BuiltinTool] = [
             "properties": {
                 "command": {
                     "type": "string",
-                    "description": "The shell command to execute"
+                    "description": "The shell command to execute",
                 },
                 "working_dir": {
                     "type": "string",
-                    "description": "Working directory for the command (optional)"
-                }
+                    "description": "Working directory for the command (optional)",
+                },
             },
-            "required": ["command"]
+            "required": ["command"],
         },
         handler=run_command,
-        requires_approval=True
+        requires_approval=True,
     ),
     BuiltinTool(
         name="read_file",
@@ -160,19 +159,16 @@ BUILTIN_TOOLS: List[BuiltinTool] = [
         input_schema={
             "type": "object",
             "properties": {
-                "path": {
-                    "type": "string",
-                    "description": "Path to the file to read"
-                },
+                "path": {"type": "string", "description": "Path to the file to read"},
                 "max_lines": {
                     "type": "integer",
-                    "description": "Maximum number of lines to read (optional)"
-                }
+                    "description": "Maximum number of lines to read (optional)",
+                },
             },
-            "required": ["path"]
+            "required": ["path"],
         },
         handler=read_file,
-        requires_approval=False
+        requires_approval=False,
     ),
     BuiltinTool(
         name="write_file",
@@ -180,19 +176,16 @@ BUILTIN_TOOLS: List[BuiltinTool] = [
         input_schema={
             "type": "object",
             "properties": {
-                "path": {
-                    "type": "string",
-                    "description": "Path to the file to write"
-                },
+                "path": {"type": "string", "description": "Path to the file to write"},
                 "content": {
                     "type": "string",
-                    "description": "Content to write to the file"
-                }
+                    "description": "Content to write to the file",
+                },
             },
-            "required": ["path", "content"]
+            "required": ["path", "content"],
         },
         handler=write_file,
-        requires_approval=True
+        requires_approval=True,
     ),
     BuiltinTool(
         name="list_directory",
@@ -202,22 +195,22 @@ BUILTIN_TOOLS: List[BuiltinTool] = [
             "properties": {
                 "path": {
                     "type": "string",
-                    "description": "Path to the directory (defaults to current directory)"
+                    "description": "Path to the directory (defaults to current directory)",
                 },
                 "show_hidden": {
                     "type": "boolean",
-                    "description": "Whether to show hidden files (default: false)"
-                }
+                    "description": "Whether to show hidden files (default: false)",
+                },
             },
-            "required": []
+            "required": [],
         },
         handler=list_directory,
-        requires_approval=False
+        requires_approval=False,
     ),
 ]
 
 
-def get_builtin_tool(name: str) -> Optional[BuiltinTool]:
+def get_builtin_tool(name: str) -> BuiltinTool | None:
     """Get a built-in tool by name."""
     for tool in BUILTIN_TOOLS:
         if tool.name == name:

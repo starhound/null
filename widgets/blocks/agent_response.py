@@ -1,15 +1,16 @@
 """Agent Response block widget for structured think → tool → response flow."""
 
-from textual.app import ComposeResult
 from textual import on
+from textual.app import ComposeResult
 
-from models import BlockState, AgentIteration, ToolCallState
-from .base import BaseBlockWidget
-from .parts import BlockHeader, BlockMeta, BlockFooter
-from .execution import ExecutionWidget
-from .response import ResponseWidget
+from models import AgentIteration, BlockState, ToolCallState
+
 from .actions import ActionBar, ActionButton
+from .base import BaseBlockWidget
+from .execution import ExecutionWidget
 from .iteration_container import IterationContainer
+from .parts import BlockFooter, BlockHeader, BlockMeta
+from .response import ResponseWidget
 
 
 class AgentResponseBlock(BaseBlockWidget):
@@ -31,18 +32,14 @@ class AgentResponseBlock(BaseBlockWidget):
         self.meta_widget = BlockMeta(block)
         self.exec_widget = ExecutionWidget(block)
         self.iteration_container = IterationContainer(
-            show_thinking=True,
-            classes="" if block.iterations else "empty"
+            show_thinking=True, classes="" if block.iterations else "empty"
         )
         self.response_widget = ResponseWidget(block)
 
         # Create action bar with meta info
         meta_text = self._build_meta_text()
         self.action_bar = ActionBar(
-            block_id=block.id,
-            show_fork=True,
-            show_edit=True,
-            meta_text=meta_text
+            block_id=block.id, show_fork=True, show_edit=True, meta_text=meta_text
         )
 
         self.footer_widget = BlockFooter(block)
@@ -55,16 +52,16 @@ class AgentResponseBlock(BaseBlockWidget):
         parts = []
         meta = self.block.metadata
 
-        if meta.get('model'):
-            model = meta['model']
+        if meta.get("model"):
+            model = meta["model"]
             if len(model) > 20:
                 model = model[:17] + "..."
             parts.append(model)
 
-        if meta.get('tokens'):
+        if meta.get("tokens"):
             parts.append(f"{meta['tokens']} tok")
 
-        if meta.get('cost'):
+        if meta.get("cost"):
             parts.append(f"${meta['cost']:.4f}")
 
         return " · ".join(parts) if parts else ""
@@ -88,12 +85,12 @@ class AgentResponseBlock(BaseBlockWidget):
         if self.response_widget:
             self.response_widget.content_text = full_text
             # Simple mode if no execution output
-            exec_out = getattr(self.block, 'content_exec_output', '')
+            exec_out = getattr(self.block, "content_exec_output", "")
             is_simple = not exec_out and not self.block.iterations
             self.response_widget.set_simple(is_simple)
 
         # Update exec output widget
-        exec_out = getattr(self.block, 'content_exec_output', '')
+        exec_out = getattr(self.block, "content_exec_output", "")
         if self.exec_widget:
             self.exec_widget.exec_output = exec_out
 
@@ -143,7 +140,7 @@ class AgentResponseBlock(BaseBlockWidget):
         status: str | None = None,
         thinking: str | None = None,
         response: str | None = None,
-        duration: float | None = None
+        duration: float | None = None,
     ):
         """Update an existing iteration."""
         self.iteration_container.update_iteration(
@@ -151,19 +148,17 @@ class AgentResponseBlock(BaseBlockWidget):
             status=status,
             thinking=thinking,
             response=response,
-            duration=duration
+            duration=duration,
         )
 
     def remove_iteration(self, iteration_id: str) -> None:
         """Remove a specific iteration."""
         self.iteration_container.remove_iteration(iteration_id)
-        self.block.iterations = [i for i in self.block.iterations if i.id != iteration_id]
+        self.block.iterations = [
+            i for i in self.block.iterations if i.id != iteration_id
+        ]
 
-    def add_iteration_tool_call(
-        self,
-        iteration_id: str,
-        tool_call: ToolCallState
-    ):
+    def add_iteration_tool_call(self, iteration_id: str, tool_call: ToolCallState):
         """Add a tool call to a specific iteration."""
         self.iteration_container.add_tool_call(iteration_id, tool_call)
 
@@ -172,14 +167,11 @@ class AgentResponseBlock(BaseBlockWidget):
         iteration_id: str,
         tool_id: str,
         status: str | None = None,
-        duration: float | None = None
+        duration: float | None = None,
     ):
         """Update a tool call within an iteration."""
         self.iteration_container.update_tool_call(
-            iteration_id=iteration_id,
-            tool_id=tool_id,
-            status=status,
-            duration=duration
+            iteration_id=iteration_id, tool_id=tool_id, status=status, duration=duration
         )
 
     def get_current_iteration(self):
@@ -193,16 +185,14 @@ class AgentResponseBlock(BaseBlockWidget):
         event.stop()
 
         if event.action == "copy":
-            self.post_message(self.CopyRequested(
-                self.block.id,
-                self.block.content_output or ""
-            ))
+            self.post_message(
+                self.CopyRequested(self.block.id, self.block.content_output or "")
+            )
         elif event.action == "retry":
             self.post_message(self.RetryRequested(self.block.id))
         elif event.action == "edit":
-            self.post_message(self.EditRequested(
-                self.block.id,
-                self.block.content_input
-            ))
+            self.post_message(
+                self.EditRequested(self.block.id, self.block.content_input)
+            )
         elif event.action == "fork":
             self.post_message(self.ForkRequested(self.block.id))

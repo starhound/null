@@ -1,13 +1,12 @@
 """Iteration widget for agent mode think -> tool -> response cycles."""
 
+from rich.markdown import Markdown
 from textual.app import ComposeResult
 from textual.containers import Container
-from textual.widgets import Static, Label
+from textual.events import Click
 from textual.reactive import reactive
 from textual.timer import Timer
-from textual.events import Click
-from rich.markdown import Markdown
-from typing import Optional
+from textual.widgets import Label, Static
 
 from models import AgentIteration, ToolCallState
 
@@ -21,16 +20,17 @@ class IterationHeader(Static):
         super().__init__()
         self.iteration = iteration
         self._spinner_index = 0
-        self._spinner_timer: Optional[Timer] = None
+        self._spinner_timer: Timer | None = None
 
     def compose(self) -> ComposeResult:
         status_class = f"iter-status {self.iteration.status}"
         yield Label(self._get_status_icon(), classes=status_class, id="status-icon")
         yield Label(
-            f"Iteration {self.iteration.iteration_number}",
-            classes="iter-label"
+            f"Iteration {self.iteration.iteration_number}", classes="iter-label"
         )
-        duration_text = f"{self.iteration.duration:.1f}s" if self.iteration.duration > 0 else ""
+        duration_text = (
+            f"{self.iteration.duration:.1f}s" if self.iteration.duration > 0 else ""
+        )
         yield Label(duration_text, classes="iter-duration", id="duration")
 
     def _get_status_icon(self) -> str:
@@ -39,7 +39,7 @@ class IterationHeader(Static):
             "thinking": self.SPINNER_FRAMES[0],
             "executing": "◐",
             "waiting_approval": "⏸",
-            "complete": "●"
+            "complete": "●",
         }
         return icons.get(self.iteration.status, "○")
 
@@ -99,11 +99,13 @@ class ThinkingSection(Static):
             yield Label(icon, classes=icon_class, id="toggle-icon")
             yield Label("Reasoning...", classes="thinking-title")
 
-        content_class = "thinking-content" if self.collapsed else "thinking-content visible"
+        content_class = (
+            "thinking-content" if self.collapsed else "thinking-content visible"
+        )
         yield Static(
             Markdown(self.content) if self.content else "(no reasoning)",
             classes=content_class,
-            id="content"
+            id="content",
         )
 
     def watch_collapsed(self, collapsed: bool) -> None:
@@ -151,7 +153,7 @@ class ToolCallItem(Static):
         super().__init__()
         self.tool_call = tool_call
         self._spinner_index = 0
-        self._spinner_timer: Optional[Timer] = None
+        self._spinner_timer: Timer | None = None
 
     def compose(self) -> ComposeResult:
         icon = self._get_status_icon()
@@ -159,7 +161,9 @@ class ToolCallItem(Static):
         with Container(classes="tool-row"):
             yield Label(icon, classes=icon_class, id="icon")
             yield Label(self.tool_call.tool_name, classes="tool-name")
-            duration = f"{self.tool_call.duration:.1f}s" if self.tool_call.duration > 0 else ""
+            duration = (
+                f"{self.tool_call.duration:.1f}s" if self.tool_call.duration > 0 else ""
+            )
             yield Label(duration, classes="tool-duration", id="duration")
 
     def _get_status_icon(self) -> str:
@@ -167,7 +171,7 @@ class ToolCallItem(Static):
             "pending": "○",
             "running": self.SPINNER_FRAMES[0],
             "success": "✓",
-            "error": "✗"
+            "error": "✗",
         }
         return icons.get(self.tool_call.status, "○")
 
@@ -234,8 +238,8 @@ class IterationWidget(Static):
         super().__init__()
         self.iteration = iteration
         self.show_thinking = show_thinking
-        self._header: Optional[IterationHeader] = None
-        self._thinking: Optional[ThinkingSection] = None
+        self._header: IterationHeader | None = None
+        self._thinking: ThinkingSection | None = None
         self._tool_widgets: dict[str, ToolCallItem] = {}
 
     def compose(self) -> ComposeResult:
@@ -244,8 +248,7 @@ class IterationWidget(Static):
 
         if self.show_thinking and self.iteration.thinking:
             self._thinking = ThinkingSection(
-                content=self.iteration.thinking,
-                collapsed=True
+                content=self.iteration.thinking, collapsed=True
             )
             yield self._thinking
 
@@ -259,7 +262,7 @@ class IterationWidget(Static):
             yield Static(
                 Markdown(self.iteration.response_fragment),
                 classes="iter-response",
-                id="response"
+                id="response",
             )
 
     def update_status(self, status: str, duration: float = 0.0) -> None:
@@ -298,10 +301,7 @@ class IterationWidget(Static):
         return widget
 
     def update_tool_call(
-        self,
-        tool_id: str,
-        status: str | None = None,
-        duration: float | None = None
+        self, tool_id: str, status: str | None = None, duration: float | None = None
     ) -> None:
         """Update a tool call within this iteration."""
         widget = self._tool_widgets.get(tool_id)
@@ -317,10 +317,8 @@ class IterationWidget(Static):
         except Exception:
             # Mount new response widget
             try:
-                self.mount(Static(
-                    Markdown(response),
-                    classes="iter-response",
-                    id="response"
-                ))
+                self.mount(
+                    Static(Markdown(response), classes="iter-response", id="response")
+                )
             except Exception:
                 pass

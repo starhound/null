@@ -1,11 +1,16 @@
-from storage import StorageManager
 import os
+
+from storage import StorageManager
 
 # Keys that should be encrypted
 SENSITIVE_KEYS = {
-    "ai.openai.api_key", "ai.azure.api_key", "ai.xai.api_key", 
-    "ai.bedrock.secret_key", "ai.lm_studio.api_key"
+    "ai.openai.api_key",
+    "ai.azure.api_key",
+    "ai.xai.api_key",
+    "ai.bedrock.secret_key",
+    "ai.lm_studio.api_key",
 }
+
 
 class Config:
     @staticmethod
@@ -27,7 +32,9 @@ class Config:
                 "provider": provider,
                 # Dynamic load based on active provider
                 "model": sm.get_config(f"ai.{provider}.model", "llama3"),
-                "endpoint": sm.get_config(f"ai.{provider}.endpoint", "http://localhost:11434"),
+                "endpoint": sm.get_config(
+                    f"ai.{provider}.endpoint", "http://localhost:11434"
+                ),
                 "api_key": sm.get_config(f"ai.{provider}.api_key", ""),
                 "region": sm.get_config(f"ai.{provider}.region", ""),
                 "agent_mode": agent_mode,
@@ -55,9 +62,9 @@ ls -la
 The system will execute the code block and provide you with the output. 
 Use this to explore the system, check files, and perform tasks. 
 Do not assume standard output; check it by running commands.
-"""
-                }
-            }
+""",
+                },
+            },
         }
 
     @staticmethod
@@ -76,5 +83,3 @@ Do not assume standard output; check it by running commands.
         """Update a specific config key. key_path e.g. ['ai', 'model'] -> key='ai.model'"""
         key_str = ".".join(key_path)
         Config.set(key_str, value)
-
-

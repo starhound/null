@@ -1,6 +1,7 @@
 """MCP server management commands."""
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -12,7 +13,7 @@ from .base import CommandMixin
 class MCPCommands(CommandMixin):
     """MCP server management commands."""
 
-    def __init__(self, app: "NullApp"):
+    def __init__(self, app: NullApp):
         self.app = app
 
     async def cmd_mcp(self, args: list[str]):
@@ -41,19 +42,25 @@ class MCPCommands(CommandMixin):
         else:
             self.notify(
                 "Usage: /mcp [list|tools|add|edit|remove|enable|disable|reconnect]",
-                severity="warning"
+                severity="warning",
             )
 
     async def _mcp_list(self):
         """List MCP servers."""
         status = self.app.mcp_manager.get_status()
         if not status:
-            self.notify("No MCP servers configured. Edit ~/.null/mcp.json", severity="warning")
+            self.notify(
+                "No MCP servers configured. Edit ~/.null/mcp.json", severity="warning"
+            )
             return
 
         lines = []
         for name, info in status.items():
-            state = "connected" if info["connected"] else ("disabled" if not info["enabled"] else "disconnected")
+            state = (
+                "connected"
+                if info["connected"]
+                else ("disabled" if not info["enabled"] else "disconnected")
+            )
             tools = info["tools"]
             lines.append(f"  {name:20} {state:12} {tools} tools")
         await self.show_output("/mcp list", "\n".join(lines))
@@ -67,7 +74,11 @@ class MCPCommands(CommandMixin):
 
         lines = []
         for tool in tools:
-            desc = tool.description[:40] + "..." if len(tool.description) > 40 else tool.description
+            desc = (
+                tool.description[:40] + "..."
+                if len(tool.description) > 40
+                else tool.description
+            )
             lines.append(f"  {tool.name:25} {tool.server_name:15} {desc}")
         await self.show_output("/mcp tools", "\n".join(lines))
 
@@ -79,10 +90,7 @@ class MCPCommands(CommandMixin):
             if result:
                 name = result["name"]
                 self.app.mcp_manager.add_server(
-                    name,
-                    result["command"],
-                    result["args"],
-                    result["env"]
+                    name, result["command"], result["args"], result["env"]
                 )
                 self.notify(f"Added MCP server: {name}")
                 self.app.run_worker(self.app._connect_new_mcp_server(name))
@@ -96,12 +104,9 @@ class MCPCommands(CommandMixin):
             return
 
         from screens import MCPServerConfigScreen
+
         server = self.app.mcp_manager.config.servers[name]
-        current = {
-            "command": server.command,
-            "args": server.args,
-            "env": server.env
-        }
+        current = {"command": server.command, "args": server.args, "env": server.env}
 
         def on_server_edited(result):
             if result:
@@ -157,4 +162,5 @@ class MCPCommands(CommandMixin):
     async def cmd_tools_ui(self, args: list[str]):
         """Open MCP Tools UI."""
         from screens import ToolsScreen
+
         self.app.push_screen(ToolsScreen())

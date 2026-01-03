@@ -1,6 +1,6 @@
 """MCP server configuration screen."""
 
-from .base import ModalScreen, ComposeResult, Binding, Container, Label, Input, Button
+from .base import Binding, Button, ComposeResult, Container, Input, Label, ModalScreen
 
 
 class MCPServerConfigScreen(ModalScreen):
@@ -16,7 +16,11 @@ class MCPServerConfigScreen(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Container(id="mcp-config-container"):
-            title = f"Edit MCP Server: {self.server_name}" if self.is_edit else "Add MCP Server"
+            title = (
+                f"Edit MCP Server: {self.server_name}"
+                if self.is_edit
+                else "Add MCP Server"
+            )
             yield Label(title)
 
             yield Label("Server Name", classes="input-label")
@@ -24,35 +28,41 @@ class MCPServerConfigScreen(ModalScreen):
                 placeholder="e.g., filesystem, github, sqlite",
                 id="name",
                 value=self.server_name,
-                disabled=self.is_edit
+                disabled=self.is_edit,
             )
 
             yield Label("Command", classes="input-label")
-            yield Label("The executable to run (e.g., npx, python, node)", classes="input-hint")
+            yield Label(
+                "The executable to run (e.g., npx, python, node)", classes="input-hint"
+            )
             yield Input(
                 placeholder="npx",
                 id="command",
-                value=self.current_config.get("command", "")
+                value=self.current_config.get("command", ""),
             )
 
             yield Label("Arguments", classes="input-label")
-            yield Label("Space-separated arguments for the command", classes="input-hint")
+            yield Label(
+                "Space-separated arguments for the command", classes="input-hint"
+            )
             args = self.current_config.get("args", [])
             args_str = " ".join(args) if isinstance(args, list) else str(args)
             yield Input(
                 placeholder="-y @modelcontextprotocol/server-filesystem /path",
                 id="args",
-                value=args_str
+                value=args_str,
             )
 
             yield Label("Environment Variables", classes="input-label")
             yield Label("KEY=value pairs, space-separated", classes="input-hint")
             env = self.current_config.get("env", {})
-            env_str = " ".join(f"{k}={v}" for k, v in env.items()) if isinstance(env, dict) else ""
+            env_str = (
+                " ".join(f"{k}={v}" for k, v in env.items())
+                if isinstance(env, dict)
+                else ""
+            )
             yield Input(
-                placeholder="GITHUB_TOKEN=xxx API_KEY=yyy",
-                id="env",
-                value=env_str
+                placeholder="GITHUB_TOKEN=xxx API_KEY=yyy", id="env", value=env_str
             )
 
             with Container(id="buttons"):
@@ -82,12 +92,7 @@ class MCPServerConfigScreen(ModalScreen):
                         key, value = pair.split("=", 1)
                         env[key] = value
 
-            result = {
-                "name": name,
-                "command": command,
-                "args": args,
-                "env": env
-            }
+            result = {"name": name, "command": command, "args": args, "env": env}
             self.dismiss(result)
         else:
             self.dismiss(None)

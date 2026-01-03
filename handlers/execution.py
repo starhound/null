@@ -1,22 +1,23 @@
 """Execution handlers for AI and CLI commands."""
 
 from __future__ import annotations
+
 import asyncio
 import json
-from typing import TYPE_CHECKING, List, Dict, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from app import NullApp
 
+from ai.base import TokenUsage, calculate_cost
 from models import BlockState
 from widgets import BaseBlockWidget
-from ai.base import TokenUsage, calculate_cost
 
 
 class ExecutionHandler:
     """Handles AI and CLI command execution."""
 
-    def __init__(self, app: "NullApp"):
+    def __init__(self, app: NullApp):
         self.app = app
         self._tool_registry = None
 
@@ -24,17 +25,20 @@ class ExecutionHandler:
         """Get or create the tool registry."""
         if self._tool_registry is None:
             from tools import ToolRegistry
+
             self._tool_registry = ToolRegistry(
-                mcp_manager=getattr(self.app, 'mcp_manager', None)
+                mcp_manager=getattr(self.app, "mcp_manager", None)
             )
         return self._tool_registry
 
-    async def execute_ai(self, prompt: str, block_state: BlockState, widget: BaseBlockWidget):
+    async def execute_ai(
+        self, prompt: str, block_state: BlockState, widget: BaseBlockWidget
+    ):
         """Execute AI generation with streaming response and tool support."""
         try:
+            from config import Config
             from context import ContextManager
             from prompts import get_prompt_manager
-            from config import Config
 
             # Get FRESH config values (not stale self.app.config)
             provider_name = Config.get("ai.provider") or ""
@@ -52,25 +56,26 @@ class ExecutionHandler:
 
             # Build proper message array (exclude current block)
             context_info = ContextManager.build_messages(
-                self.app.blocks[:-1],
-                max_tokens=max_tokens,
-                reserve_tokens=1024
+                self.app.blocks[:-1], max_tokens=max_tokens, reserve_tokens=1024
             )
 
             # Check if we're using unknown model with default context
             from ai.base import KNOWN_MODEL_CONTEXTS
+
             if model_name.lower() not in KNOWN_MODEL_CONTEXTS:
-                is_known = any(model_name.lower().startswith(k) for k in KNOWN_MODEL_CONTEXTS)
+                is_known = any(
+                    model_name.lower().startswith(k) for k in KNOWN_MODEL_CONTEXTS
+                )
                 if not is_known:
                     self.app.notify(
                         f"Unknown model '{model_name}', using 4k context limit",
-                        severity="warning"
+                        severity="warning",
                     )
 
             if context_info.truncated:
                 self.app.notify(
                     f"Context truncated to fit {max_tokens} token limit",
-                    severity="warning"
+                    severity="warning",
                 )
 
             # Store metadata
@@ -78,13 +83,14 @@ class ExecutionHandler:
                 "provider": provider_name,
                 "model": model_name,
                 "context": f"~{context_info.estimated_tokens} tokens ({context_info.message_count} msgs)",
-                "persona": active_key
+                "persona": active_key,
             }
             if widget:
                 widget.update_metadata()
 
             # Determine execution path based on block type
             from models import BlockType
+
             is_agent_block = block_state.type == BlockType.AGENT_RESPONSE
             use_tools = self.app.ai_provider.supports_tools()
 
@@ -93,23 +99,37 @@ class ExecutionHandler:
                 # If using default prompt in agent mode, switch to specialized agent prompt
                 # because default prompt forbids elaboration which contradicts agent reasoning
                 if active_key == "default":
-                    system_prompt = prompt_manager.get_prompt_content("agent", provider_name)
+                    system_prompt = prompt_manager.get_prompt_content(
+                        "agent", provider_name
+                    )
 
                 await self._execute_agent_mode(
-                    prompt, block_state, widget,
-                    context_info.messages, system_prompt, max_tokens
+                    prompt,
+                    block_state,
+                    widget,
+                    context_info.messages,
+                    system_prompt,
+                    max_tokens,
                 )
             elif use_tools:
                 # Chat mode with tools
                 await self._execute_with_tools(
-                    prompt, block_state, widget,
-                    context_info.messages, system_prompt, max_tokens
+                    prompt,
+                    block_state,
+                    widget,
+                    context_info.messages,
+                    system_prompt,
+                    max_tokens,
                 )
             else:
                 # Chat mode without tools
                 await self._execute_without_tools(
-                    prompt, block_state, widget,
-                    context_info.messages, system_prompt, max_tokens
+                    prompt,
+                    block_state,
+                    widget,
+                    context_info.messages,
+                    system_prompt,
+                    max_tokens,
                 )
 
         except asyncio.CancelledError:
@@ -119,9 +139,9 @@ class ExecutionHandler:
             widget.set_loading(False)
             self.app._active_worker = None
         except Exception as e:
-            block_state.content_output = f"AI Error: {str(e)}"
+            block_state.content_output = f"AI Error: {e!s}"
             block_state.is_running = False
-            widget.update_output(f"Error: {str(e)}")
+            widget.update_output(f"Error: {e!s}")
             self.app._active_worker = None
 
     async def _execute_without_tools(
@@ -129,9 +149,9 @@ class ExecutionHandler:
         prompt: str,
         block_state: BlockState,
         widget: BaseBlockWidget,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         system_prompt: str,
-        max_tokens: int
+        max_tokens: int,
     ):
         """Execute AI generation without tool support (legacy mode)."""
         full_response = ""
@@ -149,19 +169,20 @@ class ExecutionHandler:
             block_state.content_output = full_response
             widget.update_output(full_response)
 
-        self._finalize_response(block_state, widget, full_response, messages, max_tokens)
+        self._finalize_response(
+            block_state, widget, full_response, messages, max_tokens
+        )
 
     async def _execute_with_tools(
         self,
         prompt: str,
         block_state: BlockState,
         widget: BaseBlockWidget,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         system_prompt: str,
-        max_tokens: int
+        max_tokens: int,
     ):
         """Execute AI generation with tool calling support."""
-        from tools import ToolCall
 
         registry = self._get_tool_registry()
         tools = registry.get_all_tools_schema()
@@ -170,7 +191,7 @@ class ExecutionHandler:
         current_messages = list(messages)
         iteration = 0
         max_iterations = 3  # Limit tool loops - most tasks need 1-2
-        total_usage: Optional[TokenUsage] = None
+        total_usage: TokenUsage | None = None
 
         while iteration < max_iterations:
             iteration += 1
@@ -180,7 +201,7 @@ class ExecutionHandler:
                 prompt if iteration == 1 else "",  # Only send prompt on first iteration
                 current_messages,
                 tools,
-                system_prompt=system_prompt
+                system_prompt=system_prompt,
             ):
                 if self.app._ai_cancelled:
                     full_response += "\n\n[Cancelled]"
@@ -236,21 +257,23 @@ class ExecutionHandler:
                         "type": "function",
                         "function": {
                             "name": tc.name,
-                            "arguments": json.dumps(tc.arguments)
-                        }
+                            "arguments": json.dumps(tc.arguments),
+                        },
                     }
                     for tc in tool_to_run
-                ]
+                ],
             }
             current_messages.append(assistant_msg)
 
             # Add tool result
             for result in tool_results:
-                current_messages.append({
-                    "role": "tool",
-                    "tool_call_id": result.tool_call_id,
-                    "content": result.content
-                })
+                current_messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": result.tool_call_id,
+                        "content": result.content,
+                    }
+                )
 
             # After first tool success, stop unless it was an error
             if iteration == 1 and tool_results and not tool_results[0].is_error:
@@ -261,28 +284,30 @@ class ExecutionHandler:
             # Clear prompt for next iteration (context is in messages)
             prompt = ""
 
-        self._finalize_response(block_state, widget, full_response, messages, max_tokens, total_usage)
+        self._finalize_response(
+            block_state, widget, full_response, messages, max_tokens, total_usage
+        )
 
     async def _execute_agent_mode(
         self,
         prompt: str,
         block_state: BlockState,
         widget: BaseBlockWidget,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         system_prompt: str,
-        max_tokens: int
+        max_tokens: int,
     ):
         """Execute AI with structured think → tool → think flow.
 
         This uses model-specific thinking strategies and creates discrete
         iterations for each think → action cycle.
         """
-        from tools import ToolCall, ToolResult
-        from models import AgentIteration, ToolCallState
-        from widgets.blocks import AgentResponseBlock
+        import time
+
         from ai.thinking import get_thinking_strategy
         from config import Config
-        import time
+        from models import AgentIteration
+        from widgets.blocks import AgentResponseBlock
 
         registry = self._get_tool_registry()
         tools = registry.get_all_tools_schema()
@@ -302,13 +327,15 @@ class ExecutionHandler:
         # Agent settings
         ai_config = self.app.config.get("ai", {})
         max_iterations = ai_config.get("agent_max_iterations", 10)
-        approval_mode = ai_config.get("agent_approval_mode", "auto")  # auto, per_tool, per_iteration
+        approval_mode = ai_config.get(
+            "agent_approval_mode", "auto"
+        )  # auto, per_tool, per_iteration
         auto_approve_all = False  # Set to True when user chooses "Approve All"
 
         full_response = ""
         current_messages = list(messages)
         iteration_num = 0
-        total_usage: Optional[TokenUsage] = None
+        total_usage: TokenUsage | None = None
         has_iteration_ui = isinstance(widget, AgentResponseBlock)
 
         while iteration_num < max_iterations:
@@ -319,8 +346,7 @@ class ExecutionHandler:
 
             # Create iteration state
             iteration = AgentIteration(
-                iteration_number=iteration_num,
-                status="thinking"
+                iteration_number=iteration_num, status="thinking"
             )
 
             # Add iteration to UI if widget supports it
@@ -332,7 +358,7 @@ class ExecutionHandler:
                 prompt if iteration_num == 1 else "",
                 current_messages,
                 tools,
-                system_prompt=enhanced_prompt
+                system_prompt=enhanced_prompt,
             ):
                 if self.app._ai_cancelled:
                     full_response += "\n\n[Cancelled]"
@@ -389,9 +415,7 @@ class ExecutionHandler:
                         widget.remove_iteration(iteration.id)
                     else:
                         widget.update_iteration(
-                            iteration.id,
-                            status="complete",
-                            duration=iteration.duration
+                            iteration.id, status="complete", duration=iteration.duration
                         )
                 break
 
@@ -403,8 +427,7 @@ class ExecutionHandler:
 
                 # Request approval for tool calls
                 approval_result = await self._request_tool_approval(
-                    pending_tool_calls,
-                    iteration_num
+                    pending_tool_calls, iteration_num
                 )
 
                 if approval_result == "cancel":
@@ -423,9 +446,7 @@ class ExecutionHandler:
                     iteration.duration = time.time() - iteration_start
                     if has_iteration_ui:
                         widget.update_iteration(
-                            iteration.id,
-                            status="complete",
-                            duration=iteration.duration
+                            iteration.id, status="complete", duration=iteration.duration
                         )
                     # Don't break - continue to next iteration without executing tools
                     prompt = ""
@@ -457,11 +478,11 @@ class ExecutionHandler:
                         "type": "function",
                         "function": {
                             "name": tc.name,
-                            "arguments": json.dumps(tc.arguments)
-                        }
+                            "arguments": json.dumps(tc.arguments),
+                        },
                     }
                     for tc in pending_tool_calls
-                ]
+                ],
             }
             current_messages.append(assistant_msg)
 
@@ -472,7 +493,7 @@ class ExecutionHandler:
                 iteration,
                 block_state,
                 widget,
-                has_iteration_ui
+                has_iteration_ui,
             )
 
             if not tool_results:
@@ -481,28 +502,26 @@ class ExecutionHandler:
                 iteration.duration = time.time() - iteration_start
                 if has_iteration_ui:
                     widget.update_iteration(
-                        iteration.id,
-                        status="complete",
-                        duration=iteration.duration
+                        iteration.id, status="complete", duration=iteration.duration
                     )
                 break
 
             # Add tool results to conversation
             for result in tool_results:
-                current_messages.append({
-                    "role": "tool",
-                    "tool_call_id": result.tool_call_id,
-                    "content": result.content
-                })
+                current_messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": result.tool_call_id,
+                        "content": result.content,
+                    }
+                )
 
             # Mark iteration complete
             iteration.status = "complete"
             iteration.duration = time.time() - iteration_start
             if has_iteration_ui:
                 widget.update_iteration(
-                    iteration.id,
-                    status="complete",
-                    duration=iteration.duration
+                    iteration.id, status="complete", duration=iteration.duration
                 )
 
             # Clear prompt for next iteration
@@ -510,29 +529,34 @@ class ExecutionHandler:
 
         # Check if we hit max iterations
         if iteration_num >= max_iterations:
-            full_response += f"\n\n*Warning: Reached maximum iterations ({max_iterations})*"
+            full_response += (
+                f"\n\n*Warning: Reached maximum iterations ({max_iterations})*"
+            )
             block_state.content_output = full_response
             widget.update_output(full_response)
 
-        self._finalize_response(block_state, widget, full_response, messages, max_tokens, total_usage)
+        self._finalize_response(
+            block_state, widget, full_response, messages, max_tokens, total_usage
+        )
 
     async def _execute_iteration_tools(
         self,
-        tool_calls: List,
+        tool_calls: list,
         registry,
-        iteration: "AgentIteration",
+        iteration: AgentIteration,
         block_state: BlockState,
         widget: BaseBlockWidget,
-        has_iteration_ui: bool
-    ) -> List:
+        has_iteration_ui: bool,
+    ) -> list:
         """Execute tools within a specific iteration.
 
         This creates tool call states within the iteration and updates
         both the iteration UI and the execution log.
         """
-        from tools import ToolCall, ToolResult
-        from models import ToolCallState
         import time
+
+        from models import ToolCallState
+        from tools import ToolCall, ToolResult
 
         results = []
 
@@ -544,8 +568,10 @@ class ExecutionHandler:
             tool_state = ToolCallState(
                 id=tc.id,
                 tool_name=tc.name,
-                arguments=json.dumps(tc.arguments, indent=2) if isinstance(tc.arguments, dict) else str(tc.arguments),
-                status="running"
+                arguments=json.dumps(tc.arguments, indent=2)
+                if isinstance(tc.arguments, dict)
+                else str(tc.arguments),
+                status="running",
             )
 
             # Add to iteration
@@ -574,7 +600,10 @@ class ExecutionHandler:
                 # Format result preview
                 content_preview = result.content
                 if len(result.content) > 2000:
-                    content_preview = result.content[:2000] + f"\n... ({len(result.content)} chars total)"
+                    content_preview = (
+                        result.content[:2000]
+                        + f"\n... ({len(result.content)} chars total)"
+                    )
 
                 # Update tool state
                 tool_state.status = "error" if result.is_error else "success"
@@ -584,10 +613,7 @@ class ExecutionHandler:
                 # Update iteration UI
                 if has_iteration_ui:
                     widget.update_iteration_tool_call(
-                        iteration.id,
-                        tc.id,
-                        status=tool_state.status,
-                        duration=duration
+                        iteration.id, tc.id, status=tool_state.status, duration=duration
                     )
 
                 # Only show result in exec output for non-iteration-aware displays
@@ -602,9 +628,7 @@ class ExecutionHandler:
             except Exception as e:
                 duration = time.time() - start_time
                 error_result = ToolResult(
-                    tool_call_id=tc.id,
-                    content=f"Error: {str(e)}",
-                    is_error=True
+                    tool_call_id=tc.id, content=f"Error: {e!s}", is_error=True
                 )
                 results.append(error_result)
 
@@ -616,22 +640,19 @@ class ExecutionHandler:
                 # Update UI
                 if has_iteration_ui:
                     widget.update_iteration_tool_call(
-                        iteration.id,
-                        tc.id,
-                        status="error",
-                        duration=duration
+                        iteration.id, tc.id, status="error", duration=duration
                     )
                 else:
                     # Only show error in exec output for non-iteration-aware displays
-                    block_state.content_exec_output += f"\n**System Error ({duration:.1f}s):**\n```\n{str(e)}\n```"
+                    block_state.content_exec_output += (
+                        f"\n**System Error ({duration:.1f}s):**\n```\n{e!s}\n```"
+                    )
                     widget.update_output()
 
         return results
 
     async def _request_tool_approval(
-        self,
-        tool_calls: List,
-        iteration_number: int
+        self, tool_calls: list, iteration_number: int
     ) -> str:
         """Request user approval for tool execution.
 
@@ -642,22 +663,15 @@ class ExecutionHandler:
         Returns:
             One of: "approve", "approve-all", "reject", "cancel"
         """
+
         from screens import ToolApprovalScreen
-        import asyncio
 
         # Build tool call data for the approval screen
-        tool_data = [
-            {
-                "name": tc.name,
-                "arguments": tc.arguments
-            }
-            for tc in tool_calls
-        ]
+        tool_data = [{"name": tc.name, "arguments": tc.arguments} for tc in tool_calls]
 
         # Create and push the approval screen
         screen = ToolApprovalScreen(
-            tool_calls=tool_data,
-            iteration_number=iteration_number
+            tool_calls=tool_data, iteration_number=iteration_number
         )
 
         # Wait for user decision
@@ -667,11 +681,11 @@ class ExecutionHandler:
 
     async def _execute_agent_tools(
         self,
-        tool_calls: List,
+        tool_calls: list,
         registry,
         block_state: BlockState,
-        widget: BaseBlockWidget
-    ) -> List:
+        widget: BaseBlockWidget,
+    ) -> list:
         """Execute tools in agent mode - inline visualization in the main block.
 
         Note: In agent mode with multiple iterations, we use the ExecutionWidget
@@ -679,9 +693,10 @@ class ExecutionHandler:
         flow. We skip the ToolAccordion here as it groups all tool calls together
         which breaks the interleaved thinking/tool call flow.
         """
-        from tools import ToolCall, ToolResult
-        from models import ToolCallState
         import time
+
+        from models import ToolCallState
+        from tools import ToolCall, ToolResult
 
         results = []
 
@@ -693,8 +708,10 @@ class ExecutionHandler:
             tool_state = ToolCallState(
                 id=tc.id,
                 tool_name=tc.name,
-                arguments=json.dumps(tc.arguments, indent=2) if isinstance(tc.arguments, dict) else str(tc.arguments),
-                status="running"
+                arguments=json.dumps(tc.arguments, indent=2)
+                if isinstance(tc.arguments, dict)
+                else str(tc.arguments),
+                status="running",
             )
             block_state.tool_calls.append(tool_state)
 
@@ -713,7 +730,10 @@ class ExecutionHandler:
                 # Format result
                 content_preview = result.content
                 if len(result.content) > 2000:
-                    content_preview = result.content[:2000] + f"\n... ({len(result.content)} chars total)"
+                    content_preview = (
+                        result.content[:2000]
+                        + f"\n... ({len(result.content)} chars total)"
+                    )
 
                 # Update tool state
                 tool_state.status = "error" if result.is_error else "success"
@@ -722,9 +742,13 @@ class ExecutionHandler:
 
                 # Show result in exec output
                 if result.is_error:
-                    result_display = f"\n**Error ({duration:.1f}s):**\n```\n{result.content}\n```"
+                    result_display = (
+                        f"\n**Error ({duration:.1f}s):**\n```\n{result.content}\n```"
+                    )
                 else:
-                    result_display = f"\n**Result ({duration:.1f}s):**\n```\n{content_preview}\n```"
+                    result_display = (
+                        f"\n**Result ({duration:.1f}s):**\n```\n{content_preview}\n```"
+                    )
 
                 block_state.content_exec_output += result_display
                 widget.update_output()
@@ -732,9 +756,7 @@ class ExecutionHandler:
             except Exception as e:
                 duration = time.time() - start_time
                 error_result = ToolResult(
-                    tool_call_id=tc.id,
-                    content=f"Error: {str(e)}",
-                    is_error=True
+                    tool_call_id=tc.id, content=f"Error: {e!s}", is_error=True
                 )
                 results.append(error_result)
 
@@ -743,23 +765,26 @@ class ExecutionHandler:
                 tool_state.output = str(e)
                 tool_state.duration = duration
 
-                block_state.content_exec_output += f"\n**System Error ({duration:.1f}s):**\n```\n{str(e)}\n```"
+                block_state.content_exec_output += (
+                    f"\n**System Error ({duration:.1f}s):**\n```\n{e!s}\n```"
+                )
                 widget.update_output()
 
         return results
 
     async def _process_tool_calls(
         self,
-        tool_calls: List,
+        tool_calls: list,
         block_state: BlockState,
         widget: BaseBlockWidget,
-        registry
-    ) -> List:
+        registry,
+    ) -> list:
         """Process tool calls with approval and execution."""
-        from tools import ToolCall, ToolResult
-        from models import ToolCallState
-        from widgets.blocks import AIResponseBlock
         import time
+
+        from models import ToolCallState
+        from tools import ToolCall
+        from widgets.blocks import AIResponseBlock
 
         results = []
         has_accordion = isinstance(widget, AIResponseBlock)
@@ -772,8 +797,10 @@ class ExecutionHandler:
             tool_state = ToolCallState(
                 id=tc.id,
                 tool_name=tc.name,
-                arguments=json.dumps(tc.arguments, indent=2) if isinstance(tc.arguments, dict) else str(tc.arguments),
-                status="running"
+                arguments=json.dumps(tc.arguments, indent=2)
+                if isinstance(tc.arguments, dict)
+                else str(tc.arguments),
+                status="running",
             )
             block_state.tool_calls.append(tool_state)
 
@@ -783,7 +810,7 @@ class ExecutionHandler:
                     tool_id=tc.id,
                     tool_name=tc.name,
                     arguments=tool_state.arguments,
-                    status="running"
+                    status="running",
                 )
 
             # Check if approval is needed
@@ -811,12 +838,16 @@ class ExecutionHandler:
 
             # Update accordion if available
             if has_accordion:
-                content_preview = result.content[:1000] if len(result.content) > 1000 else result.content
+                content_preview = (
+                    result.content[:1000]
+                    if len(result.content) > 1000
+                    else result.content
+                )
                 widget.update_tool_call(
                     tool_id=tc.id,
                     status=tool_state.status,
                     output=content_preview,
-                    duration=duration
+                    duration=duration,
                 )
 
             # Show the result
@@ -834,9 +865,9 @@ class ExecutionHandler:
         block_state: BlockState,
         widget: BaseBlockWidget,
         full_response: str,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         max_tokens: int,
-        usage: Optional[TokenUsage] = None
+        usage: TokenUsage | None = None,
     ):
         """Finalize the AI response."""
         block_state.is_running = False
@@ -851,7 +882,9 @@ class ExecutionHandler:
             input_tokens = usage.input_tokens
             output_tokens = usage.output_tokens
             cost = calculate_cost(usage, model_name)
-            block_state.metadata["tokens"] = f"{input_tokens:,} in / {output_tokens:,} out"
+            block_state.metadata["tokens"] = (
+                f"{input_tokens:,} in / {output_tokens:,} out"
+            )
             if cost > 0:
                 block_state.metadata["cost"] = f"${cost:.4f}"
         else:
@@ -859,7 +892,9 @@ class ExecutionHandler:
             response_tokens = len(full_response) // 4
             context_chars = sum(len(m.get("content", "")) for m in messages)
             context_tokens = context_chars // 4
-            block_state.metadata["tokens"] = f"~{response_tokens} out / ~{context_tokens} ctx"
+            block_state.metadata["tokens"] = (
+                f"~{response_tokens} out / ~{context_tokens} ctx"
+            )
             # Create estimated usage for status bar
             input_tokens = context_tokens
             output_tokens = response_tokens
@@ -871,6 +906,7 @@ class ExecutionHandler:
         # Update status bar with context and token usage
         try:
             from widgets import StatusBar
+
             status_bar = self.app.query_one("#status-bar", StatusBar)
 
             # Update context display
@@ -883,7 +919,7 @@ class ExecutionHandler:
             status_bar.add_token_usage(
                 input_tokens=usage.input_tokens,
                 output_tokens=usage.output_tokens,
-                cost=cost
+                cost=cost,
             )
         except Exception:
             pass
@@ -891,7 +927,9 @@ class ExecutionHandler:
         widget.set_loading(False)
         self.app._auto_save()
 
-    def run_agent_command(self, command: str, ai_block: BlockState, ai_widget: BaseBlockWidget):
+    def run_agent_command(
+        self, command: str, ai_block: BlockState, ai_widget: BaseBlockWidget
+    ):
         """Execute a command requested by the AI agent."""
 
         async def run_inline():
@@ -920,7 +958,7 @@ class ExecutionHandler:
                 ai_widget.update_output("")
 
             except Exception as e:
-                err_msg = f"\n**Error Running Command:** {str(e)}\n"
+                err_msg = f"\n**Error Running Command:** {e!s}\n"
                 ai_block.content_exec_output = err_msg
                 ai_widget.update_output("")
                 self.app.notify(f"Agent Execution Error: {e}", severity="error")
@@ -933,6 +971,7 @@ class ExecutionHandler:
     async def execute_cli(self, block: BlockState, widget: BaseBlockWidget):
         """Execute a CLI command and stream output."""
         import asyncio
+
         from widgets.blocks import CommandBlock
 
         def update_callback(line: str):
@@ -946,13 +985,13 @@ class ExecutionHandler:
             if not isinstance(widget, CommandBlock):
                 return
 
-            if mode == 'enter':
+            if mode == "enter":
                 # Switch to TUI mode
                 widget.switch_to_tui()
                 widget.feed_terminal(data)
                 # Mark as TUI in process manager
                 self.app.process_manager.set_tui_mode(block.id, True)
-            elif mode == 'exit':
+            elif mode == "exit":
                 # Switch back to line mode
                 widget.switch_to_line()
                 self.app.process_manager.set_tui_mode(block.id, False)
@@ -963,6 +1002,7 @@ class ExecutionHandler:
                 widget.feed_terminal(data)
 
         from executor import ExecutionEngine
+
         executor = ExecutionEngine()
 
         # Start command execution
@@ -971,7 +1011,7 @@ class ExecutionHandler:
                 block.content_input,
                 update_callback,
                 mode_callback=mode_callback,
-                raw_callback=raw_callback
+                raw_callback=raw_callback,
             )
         )
 
@@ -983,7 +1023,7 @@ class ExecutionHandler:
                 pid=executor.pid,
                 command=block.content_input,
                 master_fd=executor.master_fd,
-                executor=executor
+                executor=executor,
             )
 
         try:
@@ -995,9 +1035,12 @@ class ExecutionHandler:
         widget.set_exit_code(exit_code)
         self.app._auto_save()
 
-    async def execute_cli_append(self, cmd: str, block: BlockState, widget: BaseBlockWidget):
+    async def execute_cli_append(
+        self, cmd: str, block: BlockState, widget: BaseBlockWidget
+    ):
         """Execute a command and append output to existing CLI block."""
         import asyncio
+
         from widgets.blocks import CommandBlock
 
         def update_callback(line: str):
@@ -1009,12 +1052,12 @@ class ExecutionHandler:
             if not isinstance(widget, CommandBlock):
                 return
 
-            if mode == 'enter':
+            if mode == "enter":
                 # Switch to TUI mode
                 widget.switch_to_tui()
                 widget.feed_terminal(data)
                 self.app.process_manager.set_tui_mode(block.id, True)
-            elif mode == 'exit':
+            elif mode == "exit":
                 # Switch back to line mode
                 widget.switch_to_line()
                 self.app.process_manager.set_tui_mode(block.id, False)
@@ -1025,6 +1068,7 @@ class ExecutionHandler:
                 widget.feed_terminal(data)
 
         from executor import ExecutionEngine
+
         executor = ExecutionEngine()
 
         # Start execution with full TUI support
@@ -1033,7 +1077,7 @@ class ExecutionHandler:
                 cmd,
                 update_callback,
                 mode_callback=mode_callback,
-                raw_callback=raw_callback
+                raw_callback=raw_callback,
             )
         )
 
@@ -1045,7 +1089,7 @@ class ExecutionHandler:
                 pid=executor.pid,
                 command=cmd,
                 master_fd=executor.master_fd,
-                executor=executor
+                executor=executor,
             )
 
         try:
@@ -1073,10 +1117,10 @@ class ExecutionHandler:
 
         # Reset widget display
         widget.set_loading(True)
-        if hasattr(widget, 'thinking_widget') and widget.thinking_widget:
+        if hasattr(widget, "thinking_widget") and widget.thinking_widget:
             widget.thinking_widget.thinking_text = ""
             widget.thinking_widget.start_loading()
-        if hasattr(widget, 'exec_widget') and widget.exec_widget:
+        if hasattr(widget, "exec_widget") and widget.exec_widget:
             widget.exec_widget.exec_output = ""
 
         widget.update_metadata()

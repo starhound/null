@@ -1,19 +1,21 @@
 """Configuration commands: config, settings, theme."""
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app import NullApp
 
-from .base import CommandMixin
 from config import Config
+
+from .base import CommandMixin
 
 
 class ConfigCommands(CommandMixin):
     """Configuration-related commands."""
 
-    def __init__(self, app: "NullApp"):
+    def __init__(self, app: NullApp):
         self.app = app
 
     async def cmd_config(self, args: list[str]):

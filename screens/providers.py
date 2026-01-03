@@ -1,15 +1,18 @@
 """Providers management screen."""
 
-from typing import Optional
-from textual.reactive import reactive
-from textual.timer import Timer
+from ai.factory import AIFactory
+from config import Config
 
 from .base import (
-    ModalScreen, ComposeResult, Binding, Container, Label,
-    ListView, ListItem, Button, Horizontal, VerticalScroll, Switch
+    Binding,
+    Button,
+    ComposeResult,
+    Container,
+    Horizontal,
+    Label,
+    ModalScreen,
+    VerticalScroll,
 )
-from config import Config
-from ai.factory import AIFactory
 
 
 class ProviderRow(Horizontal):
@@ -17,7 +20,9 @@ class ProviderRow(Horizontal):
 
     can_focus = True
 
-    def __init__(self, provider_name: str, info: dict, is_active: bool, is_configured: bool):
+    def __init__(
+        self, provider_name: str, info: dict, is_active: bool, is_configured: bool
+    ):
         super().__init__()
         self.provider_name = provider_name
         self.info = info
@@ -42,15 +47,25 @@ class ProviderRow(Horizontal):
         yield Label(self.info.get("description", ""), classes="provider-desc")
 
         # Configure button
-        yield Button("Configure", id=f"config-{self.provider_name}", classes="provider-btn")
+        yield Button(
+            "Configure", id=f"config-{self.provider_name}", classes="provider-btn"
+        )
 
         # Set Active button (only if configured and not already active)
         if self.is_configured and not self.is_active:
-            yield Button("Set Active", id=f"activate-{self.provider_name}", classes="provider-btn-active")
+            yield Button(
+                "Set Active",
+                id=f"activate-{self.provider_name}",
+                classes="provider-btn-active",
+            )
 
         # Unconfigure button (only if configured and not active)
         if self.is_configured and not self.is_active:
-            yield Button("Remove", id=f"unconfigure-{self.provider_name}", classes="provider-btn-remove")
+            yield Button(
+                "Remove",
+                id=f"unconfigure-{self.provider_name}",
+                classes="provider-btn-remove",
+            )
 
 
 class ProvidersScreen(ModalScreen):
@@ -85,8 +100,7 @@ class ProvidersScreen(ModalScreen):
         with Container(id="providers-container"):
             yield Label("AI Providers", id="providers-title")
             yield Label(
-                f"Active: {self._active_provider or 'None'}",
-                id="active-provider-label"
+                f"Active: {self._active_provider or 'None'}", id="active-provider-label"
             )
 
             with VerticalScroll(id="providers-list"):

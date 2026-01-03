@@ -1,10 +1,9 @@
 """Provider configuration screen."""
 
-from typing import Optional
-from textual.timer import Timer
 from textual.reactive import reactive
+from textual.timer import Timer
 
-from .base import ModalScreen, ComposeResult, Binding, Container, Label, Input, Button
+from .base import Binding, Button, ComposeResult, Container, Input, Label, ModalScreen
 
 
 class ProviderConfigScreen(ModalScreen):
@@ -99,7 +98,7 @@ class ProviderConfigScreen(ModalScreen):
         self.current_config = current_config
         self.inputs = {}
         self._spinner_index = 0
-        self._spinner_timer: Optional[Timer] = None
+        self._spinner_timer: Timer | None = None
 
     def compose(self) -> ComposeResult:
         from ai.factory import AIFactory
@@ -122,7 +121,7 @@ class ProviderConfigScreen(ModalScreen):
                     placeholder=placeholder,
                     password=is_password,
                     id=field_key,
-                    value=self.current_config.get(field_key, "")
+                    value=self.current_config.get(field_key, ""),
                 )
                 self.inputs[field_key] = inp
                 yield inp
@@ -192,10 +191,7 @@ class ProviderConfigScreen(ModalScreen):
 
         try:
             # Build provider config
-            provider_config = {
-                "provider": self.provider,
-                **result
-            }
+            provider_config = {"provider": self.provider, **result}
 
             # Create provider instance
             provider = AIFactory.get_provider(provider_config)
@@ -238,6 +234,7 @@ class ProviderConfigScreen(ModalScreen):
     async def _delay_and_dismiss(self, result: dict):
         """Brief delay to show success message, then dismiss."""
         import asyncio
+
         await asyncio.sleep(0.5)
         self.dismiss(result)
 

@@ -1,31 +1,31 @@
 """Widgets package for Null terminal."""
 
-from .input import InputController
-from .suggester import CommandItem, CommandSuggester
-from .history import HistoryViewport
-from .status_bar import StatusBar
-from .history_search import HistorySearch
 from .block_search import BlockSearch
-from .palette import CommandPalette, PaletteAction
 
 # Import block widgets from the blocks subpackage
 from .blocks import (
-    BlockWidget,
-    BaseBlockWidget,
-    CommandBlock,
     AIResponseBlock,
-    SystemBlock,
-    BlockHeader,
+    BaseBlockWidget,
     BlockBody,
     BlockFooter,
+    BlockHeader,
     BlockMeta,
-    ThinkingWidget,
-    ExecutionWidget,
+    BlockWidget,
     CodeBlockWidget,
+    CommandBlock,
+    ExecutionWidget,
+    SystemBlock,
+    ThinkingWidget,
+    create_block,
     execute_code,
     get_file_extension,
-    create_block,
 )
+from .history import HistoryViewport
+from .history_search import HistorySearch
+from .input import InputController
+from .palette import CommandPalette, PaletteAction
+from .status_bar import StatusBar
+from .suggester import CommandItem, CommandSuggester
 
 __all__ = [
     "InputController",

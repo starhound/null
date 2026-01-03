@@ -1,7 +1,8 @@
 """Base command utilities."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Protocol
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app import NullApp
@@ -10,7 +11,7 @@ if TYPE_CHECKING:
 class CommandMixin:
     """Mixin class providing common command utilities."""
 
-    app: "NullApp"
+    app: NullApp
 
     async def show_output(self, title: str, content: str):
         """Display system output in a block."""

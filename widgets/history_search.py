@@ -1,9 +1,9 @@
 from textual.app import ComposeResult
-from textual.widgets import Static, Label, Input
-from textual.containers import Vertical
-from textual.reactive import reactive
-from textual.message import Message
 from textual.binding import Binding
+from textual.containers import Vertical
+from textual.message import Message
+from textual.reactive import reactive
+from textual.widgets import Input, Label, Static
 
 
 class HistorySearch(Static, can_focus=True):
@@ -22,18 +22,22 @@ class HistorySearch(Static, can_focus=True):
 
     class Selected(Message):
         """Sent when user selects a history item."""
+
         def __init__(self, command: str):
             self.command = command
             super().__init__()
 
     class Cancelled(Message):
         """Sent when user cancels search."""
+
         pass
 
     def compose(self) -> ComposeResult:
         # Results first (above), then input at bottom
         yield Vertical(id="search-results", classes="search-results")
-        yield Input(placeholder="Type to search...", id="search-input", classes="search-input")
+        yield Input(
+            placeholder="Type to search...", id="search-input", classes="search-input"
+        )
         yield Label("↑↓ navigate • Enter select • Esc cancel", classes="search-header")
 
     def show(self):

@@ -1,11 +1,10 @@
 from textual.app import ComposeResult
-from textual.containers import VerticalScroll, Vertical
-from textual.widgets import Static, Label
+from textual.containers import VerticalScroll
 from textual.reactive import reactive
 from textual.timer import Timer
+from textual.widgets import Label, Static
 
 from models import BlockState
-from .code_block import CodeBlockWidget, extract_code_blocks
 from utils.text import make_links_clickable
 
 
@@ -59,7 +58,9 @@ class ThinkingWidget(Static):
             pass
 
     def compose(self) -> ComposeResult:
-        header_classes = "thinking-header loading" if self.is_loading else "thinking-header"
+        header_classes = (
+            "thinking-header loading" if self.is_loading else "thinking-header"
+        )
         with Static(classes=header_classes, id="thinking-header"):
             yield Label(self.SPINNER_FRAMES[0], classes="spinner", id="spinner")
             yield Label("Generating...", classes="thinking-label", id="status-label")
@@ -139,7 +140,11 @@ class ThinkingWidget(Static):
             else:
                 spinner.add_class("complete")
                 spinner.update("✓")
-                label = "Thought complete" if self._detected_reasoning else "Response complete"
+                label = (
+                    "Thought complete"
+                    if self._detected_reasoning
+                    else "Response complete"
+                )
                 status.update(label)
                 if self._spinner_timer:
                     self._spinner_timer.stop()
@@ -183,11 +188,14 @@ class ThinkingWidget(Static):
             # Throttle rendering for performance
             current_len = len(new_text) if new_text else 0
             delta = current_len - self._last_rendered_len
-            if delta < self._render_threshold and not (new_text and new_text.endswith('\n')):
+            if delta < self._render_threshold and not (
+                new_text and new_text.endswith("\n")
+            ):
                 return
 
             self._last_rendered_len = current_len
             from rich.markdown import Markdown
+
             # Make plain URLs clickable before rendering
             linkified_text = make_links_clickable(new_text) if new_text else ""
 
@@ -207,7 +215,7 @@ class ThinkingWidget(Static):
         """Force a full render of current content."""
         try:
             self._last_rendered_len = len(self.thinking_text)
-            
+
             # Ensure peek window is visible
             peek = self.query_one("#peek-window", VerticalScroll)
             if "empty" in peek.classes:
@@ -220,6 +228,7 @@ class ThinkingWidget(Static):
                 # Standard markdown rendering during streaming
                 content = self.query_one("#peek-content", Static)
                 from rich.markdown import Markdown
+
                 # Make plain URLs clickable before rendering
                 linkified_text = make_links_clickable(self.thinking_text)
                 content.update(Markdown(linkified_text, code_theme="monokai"))
@@ -233,6 +242,7 @@ class ThinkingWidget(Static):
             # The complex DOM manipulation was breaking subsequent renders
             content = self.query_one("#peek-content", Static)
             from rich.markdown import Markdown
+
             linkified_text = make_links_clickable(self.thinking_text)
             content.update(Markdown(linkified_text, code_theme="monokai"))
             self._code_blocks_rendered = True

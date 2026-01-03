@@ -1,10 +1,10 @@
 from textual.app import ComposeResult
 from textual.containers import Container
-from textual.widgets import Static, Label
 from textual.reactive import reactive
+from textual.widgets import Label, Static
 
 from models import BlockState
-from .code_block import CodeBlockWidget
+
 
 class ResponseWidget(Static):
     """Widget for the final AI response content."""
@@ -20,7 +20,7 @@ class ResponseWidget(Static):
             with Static(classes="response-header"):
                 yield Label("◆", classes="response-icon")
                 yield Label("Final Answer", classes="response-title")
-            
+
             yield Static(id="response-content")
 
     def watch_content_text(self, new_text: str):
@@ -29,6 +29,7 @@ class ResponseWidget(Static):
             if new_text:
                 self.remove_class("hidden")
                 from rich.markdown import Markdown
+
                 content.update(Markdown(new_text, code_theme="monokai"))
             else:
                 self.add_class("hidden")

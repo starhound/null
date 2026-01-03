@@ -2,26 +2,26 @@
 
 import json
 from pathlib import Path
-from textual.theme import Theme
 
+from textual.theme import Theme
 
 # Sleek dark theme inspired by modern terminals like Warp and Claude CLI
 NULL_DARK = Theme(
     name="null-dark",
     dark=True,
-    primary="#6B8AFF",        # Soft blue - primary accent
-    secondary="#8B5CF6",      # Purple - secondary accent
-    accent="#38BDF8",         # Sky blue - highlights
-    foreground="#D4DAE6",     # Light slate - main text
-    background="#12161F",     # Deep navy-black
-    surface="#1A202E",        # Elevated surface (lighter)
-    panel="#242B3D",          # Panel/card background (lighter still)
-    success="#34D399",        # Emerald - success states
-    warning="#FBBF24",        # Amber - warnings
-    error="#F87171",          # Red 400 - errors
-    boost="#2DD4BF",          # Teal - special highlights
-    luminosity_spread=0.15,   # More variation for lighter darken/lighten
-    text_alpha=0.95,          # Clearer text
+    primary="#6B8AFF",  # Soft blue - primary accent
+    secondary="#8B5CF6",  # Purple - secondary accent
+    accent="#38BDF8",  # Sky blue - highlights
+    foreground="#D4DAE6",  # Light slate - main text
+    background="#12161F",  # Deep navy-black
+    surface="#1A202E",  # Elevated surface (lighter)
+    panel="#242B3D",  # Panel/card background (lighter still)
+    success="#34D399",  # Emerald - success states
+    warning="#FBBF24",  # Amber - warnings
+    error="#F87171",  # Red 400 - errors
+    boost="#2DD4BF",  # Teal - special highlights
+    luminosity_spread=0.15,  # More variation for lighter darken/lighten
+    text_alpha=0.95,  # Clearer text
     variables={
         "block-cursor-background": "#6B8AFF",
         "block-cursor-foreground": "#12161F",
@@ -34,17 +34,17 @@ NULL_DARK = Theme(
 NULL_WARM = Theme(
     name="null-warm",
     dark=True,
-    primary="#F59E0B",        # Amber - primary accent
-    secondary="#EC4899",      # Pink - secondary accent
-    accent="#FB923C",         # Orange - highlights
-    foreground="#E7E5E4",     # Stone 200 - main text
-    background="#0C0A09",     # Stone 950 - deep warm black
-    surface="#1C1917",        # Stone 900 - elevated surface
-    panel="#292524",          # Stone 800 - panel background
-    success="#4ADE80",        # Green 400 - success
-    warning="#FACC15",        # Yellow 400 - warnings
-    error="#FB7185",          # Rose 400 - errors
-    boost="#2DD4BF",          # Teal - special highlights
+    primary="#F59E0B",  # Amber - primary accent
+    secondary="#EC4899",  # Pink - secondary accent
+    accent="#FB923C",  # Orange - highlights
+    foreground="#E7E5E4",  # Stone 200 - main text
+    background="#0C0A09",  # Stone 950 - deep warm black
+    surface="#1C1917",  # Stone 900 - elevated surface
+    panel="#292524",  # Stone 800 - panel background
+    success="#4ADE80",  # Green 400 - success
+    warning="#FACC15",  # Yellow 400 - warnings
+    error="#FB7185",  # Rose 400 - errors
+    boost="#2DD4BF",  # Teal - special highlights
     luminosity_spread=0.10,
     text_alpha=0.90,
     variables={
@@ -57,36 +57,36 @@ NULL_WARM = Theme(
 NULL_MONO = Theme(
     name="null-mono",
     dark=True,
-    primary="#94A3B8",        # Slate 400 - subtle primary
-    secondary="#64748B",      # Slate 500 - secondary
-    accent="#7DD3FC",         # Sky 300 - rare highlights
-    foreground="#CBD5E1",     # Slate 300 - main text
-    background="#020617",     # Slate 950 - deepest black
-    surface="#0F172A",        # Slate 900 - surface
-    panel="#1E293B",          # Slate 800 - panels
-    success="#86EFAC",        # Green 300
-    warning="#FDE047",        # Yellow 300
-    error="#FCA5A5",          # Red 300
-    boost="#67E8F9",          # Cyan 300
-    luminosity_spread=0.08,   # Very subtle variation
-    text_alpha=0.88,          # Softer text
+    primary="#94A3B8",  # Slate 400 - subtle primary
+    secondary="#64748B",  # Slate 500 - secondary
+    accent="#7DD3FC",  # Sky 300 - rare highlights
+    foreground="#CBD5E1",  # Slate 300 - main text
+    background="#020617",  # Slate 950 - deepest black
+    surface="#0F172A",  # Slate 900 - surface
+    panel="#1E293B",  # Slate 800 - panels
+    success="#86EFAC",  # Green 300
+    warning="#FDE047",  # Yellow 300
+    error="#FCA5A5",  # Red 300
+    boost="#67E8F9",  # Cyan 300
+    luminosity_spread=0.08,  # Very subtle variation
+    text_alpha=0.88,  # Softer text
 )
 
 # Light theme option
 NULL_LIGHT = Theme(
     name="null-light",
     dark=False,
-    primary="#2563EB",        # Blue 600
-    secondary="#7C3AED",      # Violet 600
-    accent="#0891B2",         # Cyan 600
-    foreground="#1E293B",     # Slate 800 - dark text
-    background="#F8FAFC",     # Slate 50 - off-white
-    surface="#FFFFFF",        # Pure white cards
-    panel="#F1F5F9",          # Slate 100 - panels
-    success="#059669",        # Emerald 600
-    warning="#D97706",        # Amber 600
-    error="#DC2626",          # Red 600
-    boost="#0D9488",          # Teal 600
+    primary="#2563EB",  # Blue 600
+    secondary="#7C3AED",  # Violet 600
+    accent="#0891B2",  # Cyan 600
+    foreground="#1E293B",  # Slate 800 - dark text
+    background="#F8FAFC",  # Slate 50 - off-white
+    surface="#FFFFFF",  # Pure white cards
+    panel="#F1F5F9",  # Slate 100 - panels
+    success="#059669",  # Emerald 600
+    warning="#D97706",  # Amber 600
+    error="#DC2626",  # Red 600
+    boost="#0D9488",  # Teal 600
     luminosity_spread=0.15,
     text_alpha=0.95,
 )
@@ -174,7 +174,7 @@ def _create_example_theme(themes_dir: Path):
         "error": "#FF6B6B",
         "luminosity_spread": 0.12,
         "text_alpha": 0.92,
-        "_comment": "This is an example theme. Edit or copy to create your own!"
+        "_comment": "This is an example theme. Edit or copy to create your own!",
     }
 
     example_path = themes_dir / "example-custom.json.example"

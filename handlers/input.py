@@ -1,6 +1,7 @@
 """Input handling for the Null terminal."""
 
 from __future__ import annotations
+
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -10,13 +11,13 @@ if TYPE_CHECKING:
 
 from config import Config
 from models import BlockState, BlockType
-from widgets import BlockWidget, HistoryViewport, InputController, CommandSuggester
+from widgets import BlockWidget, CommandSuggester, HistoryViewport, InputController
 
 
 class InputHandler:
     """Handles user input processing."""
 
-    def __init__(self, app: "NullApp"):
+    def __init__(self, app: NullApp):
         self.app = app
 
     async def handle_submission(self, value: str):
@@ -49,7 +50,9 @@ class InputHandler:
         self.app.current_cli_widget = None
 
         if not self.app.ai_provider:
-            self.app.notify("AI Provider not configured. Use /provider.", severity="error")
+            self.app.notify(
+                "AI Provider not configured. Use /provider.", severity="error"
+            )
             self.app.action_select_provider()
             return
 
@@ -65,11 +68,7 @@ class InputHandler:
             block_type = BlockType.AI_RESPONSE
 
         # Create AI/Agent block
-        block = BlockState(
-            type=block_type,
-            content_input=text,
-            content_output=""
-        )
+        block = BlockState(type=block_type, content_input=text, content_output="")
         self.app.blocks.append(block)
         input_ctrl.value = ""
 
@@ -101,13 +100,24 @@ class InputHandler:
         # Only append if the current block is NOT a TUI block
         is_tui = False
         if self.app.current_cli_block:
-             info = self.app.process_manager.get(self.app.current_cli_block.id)
-             if info and info.is_tui:
-                 is_tui = True
+            info = self.app.process_manager.get(self.app.current_cli_block.id)
+            if info and info.is_tui:
+                is_tui = True
 
         # Heuristic: Known TUI commands should always start a new block
         # to ensure a clean window and proper mouse handling
-        tui_heuristic = ["top", "htop", "vim", "vi", "nano", "less", "more", "man", "mc", "tmux"]
+        tui_heuristic = [
+            "top",
+            "htop",
+            "vim",
+            "vi",
+            "nano",
+            "less",
+            "more",
+            "man",
+            "mc",
+            "tmux",
+        ]
         cmd_base = cmd.split(" ")[0]
         if cmd_base in tui_heuristic:
             is_tui = True  # Force new block
@@ -126,13 +136,15 @@ class InputHandler:
         if self.app.current_cli_block and self.app.current_cli_block.id:
             block_id = self.app.current_cli_block.id
             if self.app.process_manager.is_running(block_id):
-                 info = self.app.process_manager.get(block_id)
-                 # Don't send input if it's a TUI (handled via raw keys)
-                 if info and info.is_tui:
-                     return False
-                 
-                 # Send input to this process
-                 return self.app.process_manager.send_input(block_id, (text + "\n").encode('utf-8'))
+                info = self.app.process_manager.get(block_id)
+                # Don't send input if it's a TUI (handled via raw keys)
+                if info and info.is_tui:
+                    return False
+
+                # Send input to this process
+                return self.app.process_manager.send_input(
+                    block_id, (text + "\n").encode("utf-8")
+                )
 
         return False
 
@@ -157,10 +169,7 @@ class InputHandler:
 
     async def _create_cli_block(self, cmd: str):
         """Create a new CLI block."""
-        block = BlockState(
-            type=BlockType.COMMAND,
-            content_input=cmd
-        )
+        block = BlockState(type=BlockType.COMMAND, content_input=cmd)
         self.app.blocks.append(block)
 
         # Track as current CLI session
@@ -174,9 +183,7 @@ class InputHandler:
         block_widget.scroll_visible()
 
         # Execute command
-        self.app.run_worker(
-            self.app.execution_handler.execute_cli(block, block_widget)
-        )
+        self.app.run_worker(self.app.execution_handler.execute_cli(block, block_widget))
 
     async def handle_builtin(self, cmd: str) -> bool:
         """Handle shell builtins. Returns True if handled."""
@@ -233,7 +240,7 @@ class InputHandler:
             if not target.exists():
                 self.app.notify(
                     f"cd: no such directory: {parts[1] if len(parts) > 1 else '~'}",
-                    severity="error"
+                    severity="error",
                 )
                 return
             if not target.is_dir():
@@ -245,7 +252,7 @@ class InputHandler:
         except PermissionError:
             self.app.notify(
                 f"cd: permission denied: {parts[1] if len(parts) > 1 else '~'}",
-                severity="error"
+                severity="error",
             )
         except Exception as e:
             self.app.notify(f"cd: {e}", severity="error")

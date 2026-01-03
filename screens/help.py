@@ -1,6 +1,14 @@
 """Help screen."""
 
-from .base import ModalScreen, ComposeResult, Binding, Container, Label, DataTable, Button
+from .base import (
+    Binding,
+    Button,
+    ComposeResult,
+    Container,
+    DataTable,
+    Label,
+    ModalScreen,
+)
 
 
 class HelpScreen(ModalScreen):
@@ -20,9 +28,11 @@ class HelpScreen(ModalScreen):
 
         # Get commands from the handler if available
         commands = []
-        if hasattr(self.app, 'command_handler'):
+        if hasattr(self.app, "command_handler"):
             for info in self.app.command_handler.get_all_commands():
-                commands.append((f"/{info.name}", info.description, info.shortcut or ""))
+                commands.append(
+                    (f"/{info.name}", info.description, info.shortcut or "")
+                )
         else:
             # Fallback hardcoded list
             commands = [

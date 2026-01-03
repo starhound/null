@@ -1,9 +1,21 @@
 """Settings configuration screen."""
 
 from .base import (
-    ModalScreen, ComposeResult, Binding, Container, Horizontal, Vertical,
-    VerticalScroll, Label, Input, Button, Switch, Select, Static,
-    TabbedContent, TabPane
+    Binding,
+    Button,
+    ComposeResult,
+    Container,
+    Horizontal,
+    Input,
+    Label,
+    ModalScreen,
+    Select,
+    Static,
+    Switch,
+    TabbedContent,
+    TabPane,
+    Vertical,
+    VerticalScroll,
 )
 
 
@@ -18,6 +30,7 @@ class ConfigScreen(ModalScreen):
     def __init__(self):
         super().__init__()
         from settings import get_settings
+
         self.settings = get_settings()
         self.controls = {}
 
@@ -49,13 +62,7 @@ class ConfigScreen(ModalScreen):
                 yield Static("", classes="spacer")
                 yield Button("Reset to Defaults", id="reset-btn")
 
-    def _setting_row(
-        self,
-        key: str,
-        label: str,
-        hint: str,
-        control
-    ) -> ComposeResult:
+    def _setting_row(self, key: str, label: str, hint: str, control) -> ComposeResult:
         """Create a setting row with label, hint, and control."""
         with Horizontal(classes="setting-row"):
             with Vertical(classes="setting-info"):
@@ -68,14 +75,16 @@ class ConfigScreen(ModalScreen):
     def _appearance_settings(self) -> ComposeResult:
         """Appearance tab settings."""
         from utils.terminal import get_terminal_info
-        
+
         s = self.settings.appearance
         term_info = get_terminal_info()
 
         # Show detected terminal info
         yield Static("Terminal Detection", classes="settings-header")
-        
-        font_support = "✓ Supported" if term_info.supports_font_change else "✗ Not supported"
+
+        font_support = (
+            "✓ Supported" if term_info.supports_font_change else "✗ Not supported"
+        )
         with Horizontal(classes="setting-row terminal-info"):
             with Vertical(classes="setting-info"):
                 yield Label(f"Detected: {term_info.name}", classes="setting-label")
@@ -98,17 +107,19 @@ class ConfigScreen(ModalScreen):
             "appearance.theme",
             "Theme",
             "Color theme for the interface",
-            Select([(name, value) for value, name in themes], value=s.theme, id="theme")
+            Select(
+                [(name, value) for value, name in themes], value=s.theme, id="theme"
+            ),
         )
 
         # Font settings - show with info about terminal support
         yield Static("Font Settings", classes="settings-header")
-        
+
         if not term_info.supports_font_change:
             yield Label(
                 f"⚠ {term_info.name} does not support runtime font changes. "
                 "Edit your terminal config directly.",
-                classes="setting-warning"
+                classes="setting-warning",
             )
 
         fonts = [
@@ -123,21 +134,25 @@ class ConfigScreen(ModalScreen):
             "appearance.font_family",
             "Font Family",
             f"Terminal font {'(applied to terminal)' if term_info.supports_font_change else '(reference only)'}",
-            Select([(name, value) for value, name in fonts], value=s.font_family, id="font_family")
+            Select(
+                [(name, value) for value, name in fonts],
+                value=s.font_family,
+                id="font_family",
+            ),
         )
 
         yield from self._setting_row(
             "appearance.font_size",
             "Font Size",
             f"Font size in pixels {'(applied to terminal)' if term_info.supports_font_change else '(reference only)'}",
-            Input(value=str(s.font_size), type="integer", id="font_size")
+            Input(value=str(s.font_size), type="integer", id="font_size"),
         )
 
         yield from self._setting_row(
             "appearance.line_height",
             "Line Height",
             "Line spacing multiplier (e.g., 1.4)",
-            Input(value=str(s.line_height), type="number", id="line_height")
+            Input(value=str(s.line_height), type="number", id="line_height"),
         )
 
         yield Static("Display Options", classes="settings-header")
@@ -146,14 +161,14 @@ class ConfigScreen(ModalScreen):
             "appearance.show_timestamps",
             "Show Timestamps",
             "Display timestamps on blocks",
-            Switch(value=s.show_timestamps, id="show_timestamps")
+            Switch(value=s.show_timestamps, id="show_timestamps"),
         )
 
         yield from self._setting_row(
             "appearance.show_line_numbers",
             "Show Line Numbers",
             "Display line numbers in code blocks",
-            Switch(value=s.show_line_numbers, id="show_line_numbers")
+            Switch(value=s.show_line_numbers, id="show_line_numbers"),
         )
 
     def _editor_settings(self) -> ComposeResult:
@@ -164,28 +179,28 @@ class ConfigScreen(ModalScreen):
             "editor.tab_size",
             "Tab Size",
             "Number of spaces per tab",
-            Input(value=str(s.tab_size), type="integer", id="tab_size")
+            Input(value=str(s.tab_size), type="integer", id="tab_size"),
         )
 
         yield from self._setting_row(
             "editor.word_wrap",
             "Word Wrap",
             "Wrap long lines in the editor",
-            Switch(value=s.word_wrap, id="word_wrap")
+            Switch(value=s.word_wrap, id="word_wrap"),
         )
 
         yield from self._setting_row(
             "editor.auto_indent",
             "Auto Indent",
             "Automatically indent new lines",
-            Switch(value=s.auto_indent, id="auto_indent")
+            Switch(value=s.auto_indent, id="auto_indent"),
         )
 
         yield from self._setting_row(
             "editor.vim_mode",
             "Vim Mode",
             "Enable vim-style keybindings",
-            Switch(value=s.vim_mode, id="vim_mode")
+            Switch(value=s.vim_mode, id="vim_mode"),
         )
 
     def _terminal_settings(self) -> ComposeResult:
@@ -197,42 +212,48 @@ class ConfigScreen(ModalScreen):
             "terminal.shell",
             "Shell",
             f"Shell to use (empty = $SHELL: {os.environ.get('SHELL', '/bin/bash')})",
-            Input(value=s.shell, placeholder=os.environ.get("SHELL", "/bin/bash"), id="shell")
+            Input(
+                value=s.shell,
+                placeholder=os.environ.get("SHELL", "/bin/bash"),
+                id="shell",
+            ),
         )
 
         yield from self._setting_row(
             "terminal.scrollback_lines",
             "Scrollback Lines",
             "Maximum lines to keep in history",
-            Input(value=str(s.scrollback_lines), type="integer", id="scrollback_lines")
+            Input(value=str(s.scrollback_lines), type="integer", id="scrollback_lines"),
         )
 
         yield from self._setting_row(
             "terminal.auto_save_session",
             "Auto Save Session",
             "Automatically save session on changes",
-            Switch(value=s.auto_save_session, id="auto_save_session")
+            Switch(value=s.auto_save_session, id="auto_save_session"),
         )
 
         yield from self._setting_row(
             "terminal.auto_save_interval",
             "Auto Save Interval",
             "Seconds between auto-saves",
-            Input(value=str(s.auto_save_interval), type="integer", id="auto_save_interval")
+            Input(
+                value=str(s.auto_save_interval), type="integer", id="auto_save_interval"
+            ),
         )
 
         yield from self._setting_row(
             "terminal.confirm_on_exit",
             "Confirm on Exit",
             "Ask for confirmation before quitting",
-            Switch(value=s.confirm_on_exit, id="confirm_on_exit")
+            Switch(value=s.confirm_on_exit, id="confirm_on_exit"),
         )
 
         yield from self._setting_row(
             "terminal.clear_on_exit",
             "Clear on Exit",
             "Clear session when exiting",
-            Switch(value=s.clear_on_exit, id="clear_on_exit")
+            Switch(value=s.clear_on_exit, id="clear_on_exit"),
         )
 
     def _ai_settings(self) -> ComposeResult:
@@ -251,35 +272,35 @@ class ConfigScreen(ModalScreen):
             "ai.provider",
             "Default Provider",
             "Default AI provider to use",
-            Select(providers, value=s.provider, id="ai_provider")
+            Select(providers, value=s.provider, id="ai_provider"),
         )
 
         yield from self._setting_row(
             "ai.context_window",
             "Context Window",
             "Default context window size (tokens)",
-            Input(value=str(s.context_window), type="integer", id="context_window")
+            Input(value=str(s.context_window), type="integer", id="context_window"),
         )
 
         yield from self._setting_row(
             "ai.max_tokens",
             "Max Response Tokens",
             "Maximum tokens in AI response",
-            Input(value=str(s.max_tokens), type="integer", id="max_tokens")
+            Input(value=str(s.max_tokens), type="integer", id="max_tokens"),
         )
 
         yield from self._setting_row(
             "ai.temperature",
             "Temperature",
             "Creativity level (0.0 - 2.0)",
-            Input(value=str(s.temperature), type="number", id="temperature")
+            Input(value=str(s.temperature), type="number", id="temperature"),
         )
 
         yield from self._setting_row(
             "ai.stream_responses",
             "Stream Responses",
             "Show AI responses as they generate",
-            Switch(value=s.stream_responses, id="stream_responses")
+            Switch(value=s.stream_responses, id="stream_responses"),
         )
 
         yield Static("Autocomplete Settings", classes="settings-header")
@@ -288,7 +309,7 @@ class ConfigScreen(ModalScreen):
             "ai.autocomplete_enabled",
             "Enable Autocomplete",
             "AI-powered command suggestions",
-            Switch(value=s.autocomplete_enabled, id="autocomplete_enabled")
+            Switch(value=s.autocomplete_enabled, id="autocomplete_enabled"),
         )
 
         # Autocomplete Provider override (optional)
@@ -298,19 +319,29 @@ class ConfigScreen(ModalScreen):
             "ai.autocomplete_provider",
             "Autocomplete Provider",
             "Provider for suggestions (empty = default)",
-            Select(ac_providers, value=s.autocomplete_provider or "", id="autocomplete_provider")
+            Select(
+                ac_providers,
+                value=s.autocomplete_provider or "",
+                id="autocomplete_provider",
+            ),
         )
 
         yield from self._setting_row(
             "ai.autocomplete_model",
             "Autocomplete Model",
             "Model override (empty = default)",
-            Input(value=s.autocomplete_model, id="autocomplete_model")
+            Input(value=s.autocomplete_model, id="autocomplete_model"),
         )
 
     def _collect_values(self):
         """Collect all control values into settings structure."""
-        from settings import Settings, AppearanceSettings, EditorSettings, TerminalSettings, AISettings
+        from settings import (
+            AISettings,
+            AppearanceSettings,
+            EditorSettings,
+            Settings,
+            TerminalSettings,
+        )
 
         def get_val(control):
             if control is None:
@@ -336,11 +367,14 @@ class ConfigScreen(ModalScreen):
 
         appearance = AppearanceSettings(
             theme=get_val(self.controls.get("appearance.theme")) or "null-dark",
-            font_family=get_val(self.controls.get("appearance.font_family")) or "monospace",
+            font_family=get_val(self.controls.get("appearance.font_family"))
+            or "monospace",
             font_size=get_val(self.controls.get("appearance.font_size")) or 14,
             line_height=get_val(self.controls.get("appearance.line_height")) or 1.4,
-            show_timestamps=get_val(self.controls.get("appearance.show_timestamps")) or False,
-            show_line_numbers=get_val(self.controls.get("appearance.show_line_numbers")) or False,
+            show_timestamps=get_val(self.controls.get("appearance.show_timestamps"))
+            or False,
+            show_line_numbers=get_val(self.controls.get("appearance.show_line_numbers"))
+            or False,
         )
 
         editor = EditorSettings(
@@ -352,10 +386,14 @@ class ConfigScreen(ModalScreen):
 
         terminal = TerminalSettings(
             shell=get_val(self.controls.get("terminal.shell")) or "",
-            scrollback_lines=get_val(self.controls.get("terminal.scrollback_lines")) or 10000,
-            auto_save_session=get_val(self.controls.get("terminal.auto_save_session")) or False,
-            auto_save_interval=get_val(self.controls.get("terminal.auto_save_interval")) or 30,
-            confirm_on_exit=get_val(self.controls.get("terminal.confirm_on_exit")) or False,
+            scrollback_lines=get_val(self.controls.get("terminal.scrollback_lines"))
+            or 10000,
+            auto_save_session=get_val(self.controls.get("terminal.auto_save_session"))
+            or False,
+            auto_save_interval=get_val(self.controls.get("terminal.auto_save_interval"))
+            or 30,
+            confirm_on_exit=get_val(self.controls.get("terminal.confirm_on_exit"))
+            or False,
             clear_on_exit=get_val(self.controls.get("terminal.clear_on_exit")) or False,
         )
 
@@ -365,17 +403,15 @@ class ConfigScreen(ModalScreen):
             max_tokens=get_val(self.controls.get("ai.max_tokens")) or 2048,
             temperature=get_val(self.controls.get("ai.temperature")) or 0.7,
             stream_responses=get_val(self.controls.get("ai.stream_responses")) or False,
-            autocomplete_enabled=get_val(self.controls.get("ai.autocomplete_enabled")) or False,
-            autocomplete_provider=get_val(self.controls.get("ai.autocomplete_provider")) or "",
-            autocomplete_model=get_val(self.controls.get("ai.autocomplete_model")) or "",
+            autocomplete_enabled=get_val(self.controls.get("ai.autocomplete_enabled"))
+            or False,
+            autocomplete_provider=get_val(self.controls.get("ai.autocomplete_provider"))
+            or "",
+            autocomplete_model=get_val(self.controls.get("ai.autocomplete_model"))
+            or "",
         )
 
-        return Settings(
-            appearance=appearance,
-            editor=editor,
-            terminal=terminal,
-            ai=ai
-        )
+        return Settings(appearance=appearance, editor=editor, terminal=terminal, ai=ai)
 
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "save-btn":
@@ -387,8 +423,8 @@ class ConfigScreen(ModalScreen):
 
     def action_save(self):
         """Save settings and close."""
-        from settings import save_settings
         from config import Config
+        from settings import save_settings
 
         new_settings = self._collect_values()
         save_settings(new_settings)

@@ -1,9 +1,9 @@
 """Tool registry combining built-in and MCP tools."""
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Optional
 
-from .builtin import BUILTIN_TOOLS, BuiltinTool, get_builtin_tool
+from .builtin import BUILTIN_TOOLS, BuiltinTool
 
 if TYPE_CHECKING:
     from mcp.manager import MCPManager
@@ -12,14 +12,16 @@ if TYPE_CHECKING:
 @dataclass
 class ToolCall:
     """Represents a tool call from the LLM."""
+
     id: str
     name: str
-    arguments: Dict[str, Any]
+    arguments: dict[str, Any]
 
 
 @dataclass
 class ToolResult:
     """Result of a tool execution."""
+
     tool_call_id: str
     content: str
     is_error: bool = False
@@ -32,63 +34,71 @@ class ToolRegistry:
         self.mcp_manager = mcp_manager
         self._builtin_tools = {t.name: t for t in BUILTIN_TOOLS}
 
-    def get_all_tools_schema(self) -> List[Dict[str, Any]]:
+    def get_all_tools_schema(self) -> list[dict[str, Any]]:
         """Get all tool schemas in OpenAI-compatible format."""
         tools = []
 
         # Add built-in tools
         for tool in BUILTIN_TOOLS:
-            tools.append({
-                "type": "function",
-                "function": {
-                    "name": tool.name,
-                    "description": tool.description,
-                    "parameters": tool.input_schema
+            tools.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.input_schema,
+                    },
                 }
-            })
+            )
 
         # Add MCP tools
         if self.mcp_manager:
             for mcp_tool in self.mcp_manager.get_all_tools():
-                tools.append({
-                    "type": "function",
-                    "function": {
-                        "name": f"mcp_{mcp_tool.name}",  # Prefix to avoid conflicts
-                        "description": f"[MCP: {mcp_tool.server_name}] {mcp_tool.description}",
-                        "parameters": mcp_tool.input_schema
+                tools.append(
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": f"mcp_{mcp_tool.name}",  # Prefix to avoid conflicts
+                            "description": f"[MCP: {mcp_tool.server_name}] {mcp_tool.description}",
+                            "parameters": mcp_tool.input_schema,
+                        },
                     }
-                })
+                )
 
         return tools
 
-    def get_ollama_tools_schema(self) -> List[Dict[str, Any]]:
+    def get_ollama_tools_schema(self) -> list[dict[str, Any]]:
         """Get tool schemas in Ollama format."""
         tools = []
 
         for tool in BUILTIN_TOOLS:
-            tools.append({
-                "type": "function",
-                "function": {
-                    "name": tool.name,
-                    "description": tool.description,
-                    "parameters": tool.input_schema
+            tools.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.input_schema,
+                    },
                 }
-            })
+            )
 
         if self.mcp_manager:
             for mcp_tool in self.mcp_manager.get_all_tools():
-                tools.append({
-                    "type": "function",
-                    "function": {
-                        "name": f"mcp_{mcp_tool.name}",
-                        "description": f"[MCP: {mcp_tool.server_name}] {mcp_tool.description}",
-                        "parameters": mcp_tool.input_schema
+                tools.append(
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": f"mcp_{mcp_tool.name}",
+                            "description": f"[MCP: {mcp_tool.server_name}] {mcp_tool.description}",
+                            "parameters": mcp_tool.input_schema,
+                        },
                     }
-                })
+                )
 
         return tools
 
-    def get_tool(self, name: str) -> Optional[BuiltinTool]:
+    def get_tool(self, name: str) -> BuiltinTool | None:
         """Get a built-in tool by name."""
         return self._builtin_tools.get(name)
 
@@ -118,16 +128,13 @@ class ToolRegistry:
                     return ToolResult(
                         tool_call_id=tool_call.id,
                         content="MCP not available",
-                        is_error=True
+                        is_error=True,
                     )
 
                 result = await self.mcp_manager.call_tool(mcp_name, args)
                 # Extract text content from MCP result
                 content = self._extract_mcp_content(result)
-                return ToolResult(
-                    tool_call_id=tool_call.id,
-                    content=content
-                )
+                return ToolResult(tool_call_id=tool_call.id, content=content)
 
             else:
                 # Built-in tool
@@ -136,20 +143,17 @@ class ToolRegistry:
                     return ToolResult(
                         tool_call_id=tool_call.id,
                         content=f"Unknown tool: {name}",
-                        is_error=True
+                        is_error=True,
                     )
 
                 result = await tool.handler(**args)
-                return ToolResult(
-                    tool_call_id=tool_call.id,
-                    content=result
-                )
+                return ToolResult(tool_call_id=tool_call.id, content=result)
 
         except Exception as e:
             return ToolResult(
                 tool_call_id=tool_call.id,
-                content=f"Error executing tool: {str(e)}",
-                is_error=True
+                content=f"Error executing tool: {e!s}",
+                is_error=True,
             )
 
     def _extract_mcp_content(self, result: Any) -> str:

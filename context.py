@@ -1,12 +1,13 @@
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+
 from models import BlockState, BlockType
 
 
 @dataclass
 class ContextInfo:
     """Context information with size metrics."""
-    messages: List[dict]  # List of Message dicts
+
+    messages: list[dict]  # List of Message dicts
     total_chars: int
     estimated_tokens: int
     message_count: int
@@ -15,7 +16,7 @@ class ContextInfo:
 
 class ContextManager:
     @staticmethod
-    def get_context(history_blocks: List[BlockState], limit_chars: int = 4000) -> str:
+    def get_context(history_blocks: list[BlockState], limit_chars: int = 4000) -> str:
         """
         Legacy method - builds a text context from the block history.
         Kept for backward compatibility.
@@ -32,9 +33,9 @@ class ContextManager:
 
     @staticmethod
     def build_messages(
-        history_blocks: List[BlockState],
+        history_blocks: list[BlockState],
         max_tokens: int = 4096,
-        reserve_tokens: int = 1024
+        reserve_tokens: int = 1024,
     ) -> ContextInfo:
         """
         Build proper message array from block history.
@@ -75,7 +76,9 @@ class ContextManager:
 
             elif block.type == BlockType.AI_RESPONSE:
                 if block.content_output:
-                    all_messages.append({"role": "assistant", "content": block.content_output})
+                    all_messages.append(
+                        {"role": "assistant", "content": block.content_output}
+                    )
 
         # Now trim from the beginning if we exceed the limit
         total_chars = sum(len(m["content"]) for m in all_messages)
@@ -95,14 +98,12 @@ class ContextManager:
             total_chars=current_chars,
             estimated_tokens=current_chars // 4,
             message_count=len(messages),
-            truncated=truncated
+            truncated=truncated,
         )
 
     @staticmethod
     def estimate_total_tokens(
-        system_prompt: str,
-        messages: List[dict],
-        current_prompt: str
+        system_prompt: str, messages: list[dict], current_prompt: str
     ) -> int:
         """Estimate total tokens for a request."""
         total_chars = len(system_prompt) + len(current_prompt)

@@ -1,20 +1,22 @@
 """Session management commands: session, export."""
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app import NullApp
 
-from .base import CommandMixin
 from config import Config
 from widgets import BlockWidget, HistoryViewport, StatusBar
+
+from .base import CommandMixin
 
 
 class SessionCommands(CommandMixin):
     """Session management commands."""
 
-    def __init__(self, app: "NullApp"):
+    def __init__(self, app: NullApp):
         self.app = app
 
     async def cmd_export(self, args: list[str]):
@@ -30,7 +32,9 @@ class SessionCommands(CommandMixin):
     async def cmd_session(self, args: list[str]):
         """Session management."""
         if not args:
-            self.notify("Usage: /session [save|load|list|new] [name]", severity="warning")
+            self.notify(
+                "Usage: /session [save|load|list|new] [name]", severity="warning"
+            )
             return
 
         subcommand = args[0]
@@ -97,7 +101,10 @@ class SessionCommands(CommandMixin):
                         )
 
                 from screens import SelectionListScreen
-                self.app.push_screen(SelectionListScreen("Load Session", names), on_select)
+
+                self.app.push_screen(
+                    SelectionListScreen("Load Session", names), on_select
+                )
             else:
                 self.notify("No saved sessions found", severity="warning")
 

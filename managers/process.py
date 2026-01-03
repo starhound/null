@@ -2,20 +2,22 @@
 
 import os
 import signal
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Callable, Any
+from typing import Any
 
 
 @dataclass
 class ProcessInfo:
     """Information about a running process."""
+
     pid: int
     command: str
     block_id: str
     start_time: datetime = field(default_factory=datetime.now)
     is_tui: bool = False
-    master_fd: Optional[int] = None  # PTY master fd for sending signals
+    master_fd: int | None = None  # PTY master fd for sending signals
     executor: Any = None  # ExecutionEngine instance
 
 
@@ -23,17 +25,17 @@ class ProcessManager:
     """Manages running processes and provides control operations."""
 
     def __init__(self):
-        self._processes: Dict[str, ProcessInfo] = {}
-        self._on_change_callbacks: List[Callable[[], None]] = []
+        self._processes: dict[str, ProcessInfo] = {}
+        self._on_change_callbacks: list[Callable[[], None]] = []
 
     def register(
         self,
         block_id: str,
         pid: int,
         command: str,
-        master_fd: Optional[int] = None,
+        master_fd: int | None = None,
         is_tui: bool = False,
-        executor: Any = None
+        executor: Any = None,
     ) -> None:
         """Register a new running process."""
         self._processes[block_id] = ProcessInfo(
@@ -42,7 +44,7 @@ class ProcessManager:
             block_id=block_id,
             master_fd=master_fd,
             is_tui=is_tui,
-            executor=executor
+            executor=executor,
         )
         self._notify_change()
 
@@ -52,11 +54,11 @@ class ProcessManager:
             del self._processes[block_id]
             self._notify_change()
 
-    def get(self, block_id: str) -> Optional[ProcessInfo]:
+    def get(self, block_id: str) -> ProcessInfo | None:
         """Get info for a specific process."""
         return self._processes.get(block_id)
 
-    def get_running(self) -> List[ProcessInfo]:
+    def get_running(self) -> list[ProcessInfo]:
         """Get all running processes."""
         return list(self._processes.values())
 

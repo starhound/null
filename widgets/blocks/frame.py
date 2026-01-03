@@ -2,8 +2,8 @@
 
 from textual.app import ComposeResult
 from textual.containers import Container
-from textual.widgets import Static, Label
 from textual.reactive import reactive
+from textual.widgets import Label, Static
 
 
 class BlockFrame(Container):
@@ -78,13 +78,25 @@ class BlockFrame(Container):
     # Box drawing characters for each mode
     CHARS = {
         "chat": {
-            "tl": "┌", "tr": "┐", "bl": "└", "br": "┘",
-            "h": "─", "v": "│", "lt": "├", "rt": "┤"
+            "tl": "┌",
+            "tr": "┐",
+            "bl": "└",
+            "br": "┘",
+            "h": "─",
+            "v": "│",
+            "lt": "├",
+            "rt": "┤",
         },
         "agent": {
-            "tl": "╔", "tr": "╗", "bl": "╚", "br": "╝",
-            "h": "═", "v": "║", "lt": "╠", "rt": "╣"
-        }
+            "tl": "╔",
+            "tr": "╗",
+            "bl": "╚",
+            "br": "╝",
+            "h": "═",
+            "v": "║",
+            "lt": "╠",
+            "rt": "╣",
+        },
     }
 
     def __init__(
@@ -92,7 +104,7 @@ class BlockFrame(Container):
         mode: str = "chat",
         input_preview: str = "",
         id: str | None = None,
-        classes: str | None = None
+        classes: str | None = None,
     ):
         super().__init__(id=id, classes=classes)
         self.mode = mode
@@ -107,7 +119,11 @@ class BlockFrame(Container):
             yield Label(tag, classes="block-mode-tag", id="mode-tag")
             if self.input_preview:
                 # Truncate long inputs
-                preview = self.input_preview[:60] + "..." if len(self.input_preview) > 60 else self.input_preview
+                preview = (
+                    self.input_preview[:60] + "..."
+                    if len(self.input_preview) > 60
+                    else self.input_preview
+                )
                 preview = f"> {preview}"
                 yield Label(preview, classes="block-input-preview")
 

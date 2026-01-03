@@ -1,14 +1,20 @@
 """Tool approval screen for agent mode."""
 
-from .base import (
-    ModalScreen, ComposeResult, Binding,
-    Container, Horizontal, Vertical, VerticalScroll,
-    Label, Button, Static
-)
-from rich.syntax import Syntax
-from rich.markdown import Markdown
-from typing import List, Optional
 import json
+
+from rich.syntax import Syntax
+
+from .base import (
+    Binding,
+    Button,
+    ComposeResult,
+    Container,
+    Horizontal,
+    Label,
+    ModalScreen,
+    Static,
+    VerticalScroll,
+)
 
 
 class ToolPreview(Static):
@@ -27,7 +33,7 @@ class ToolPreview(Static):
             args_json = json.dumps(self.arguments, indent=2)
             yield Static(
                 Syntax(args_json, "json", theme="monokai", line_numbers=False),
-                classes="tool-args"
+                classes="tool-args",
             )
         except (TypeError, ValueError):
             yield Static(str(self.arguments), classes="tool-args")
@@ -50,7 +56,7 @@ class ToolApprovalScreen(ModalScreen):
         Binding("r", "reject", "Reject"),
     ]
 
-    def __init__(self, tool_calls: List[dict], iteration_number: int = 1):
+    def __init__(self, tool_calls: list[dict], iteration_number: int = 1):
         """Initialize the approval screen.
 
         Args:
@@ -60,21 +66,21 @@ class ToolApprovalScreen(ModalScreen):
         super().__init__()
         self.tool_calls = tool_calls
         self.iteration_number = iteration_number
-        self.result: Optional[str] = None
+        self.result: str | None = None
 
     def compose(self) -> ComposeResult:
         with Container(id="approval-container"):
             yield Label("Tool Approval Required", id="approval-title")
             yield Label(
                 f"Iteration {self.iteration_number} - Agent wants to execute:",
-                id="approval-subtitle"
+                id="approval-subtitle",
             )
 
             with VerticalScroll(id="tools-scroll"):
                 for tc in self.tool_calls:
                     yield ToolPreview(
                         tool_name=tc.get("name", "Unknown"),
-                        arguments=tc.get("arguments", {})
+                        arguments=tc.get("arguments", {}),
                     )
 
             with Horizontal(id="approval-buttons"):
@@ -85,7 +91,7 @@ class ToolApprovalScreen(ModalScreen):
 
             yield Label(
                 "Enter: Approve | A: Approve All | R: Reject | Esc: Cancel",
-                id="approval-hint"
+                id="approval-hint",
             )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

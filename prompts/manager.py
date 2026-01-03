@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import Optional
 
 from .templates import BUILTIN_PROMPTS
 
@@ -47,20 +46,23 @@ To use this prompt:
 
         # Example JSON prompt with metadata
         example_json = self.prompts_dir / "example.json.example"
-        example_json.write_text(json.dumps({
-            "name": "My Custom Prompt",
-            "description": "A custom prompt for specific tasks",
-            "content": "You are a helpful assistant...",
-            "provider_overrides": {
-                "ollama": {
-                    "temperature": 0.7,
-                    "content_suffix": "\nRespond in a conversational tone."
+        example_json.write_text(
+            json.dumps(
+                {
+                    "name": "My Custom Prompt",
+                    "description": "A custom prompt for specific tasks",
+                    "content": "You are a helpful assistant...",
+                    "provider_overrides": {
+                        "ollama": {
+                            "temperature": 0.7,
+                            "content_suffix": "\nRespond in a conversational tone.",
+                        },
+                        "openai": {"temperature": 0.5},
+                    },
                 },
-                "openai": {
-                    "temperature": 0.5
-                }
-            }
-        }, indent=2))
+                indent=2,
+            )
+        )
 
     def _load_user_prompts(self):
         """Load prompts from ~/.null/prompts/"""
@@ -128,7 +130,7 @@ To use this prompt:
         prompts.update(self._user_prompts)
         return prompts
 
-    def get_prompt(self, key: str) -> Optional[dict]:
+    def get_prompt(self, key: str) -> dict | None:
         """Get a specific prompt by key."""
         if key in BUILTIN_PROMPTS:
             return BUILTIN_PROMPTS[key]
@@ -207,7 +209,7 @@ To use this prompt:
 
 
 # Global instance
-_manager: Optional[PromptManager] = None
+_manager: PromptManager | None = None
 
 
 def get_prompt_manager() -> PromptManager:

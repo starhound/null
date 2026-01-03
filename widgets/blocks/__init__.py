@@ -2,28 +2,33 @@
 
 from models import BlockState, BlockType
 
-from .base import BaseBlockWidget
-from .command import CommandBlock
-from .ai_response import AIResponseBlock
-from .agent_response import AgentResponseBlock
-from .system import SystemBlock
-from .tool_call import ToolCallBlock
-from .parts import BlockHeader, BlockMeta, BlockBody, BlockFooter, StopButton
-from .thinking import ThinkingWidget
-from .execution import ExecutionWidget
-from .code_block import CodeBlockWidget, extract_code_blocks, execute_code, get_file_extension
-from .terminal import TerminalBlock
 from .actions import ActionBar, ActionButton
-from .tool_accordion import ToolAccordion, ToolAccordionItem
+from .agent_response import AgentResponseBlock
+from .ai_response import AIResponseBlock
+from .base import BaseBlockWidget
+from .code_block import (
+    CodeBlockWidget,
+    execute_code,
+    extract_code_blocks,
+    get_file_extension,
+)
+from .command import CommandBlock
+from .execution import ExecutionWidget
 from .frame import BlockFrame, FrameSeparator
 from .iteration import (
-    IterationWidget,
     IterationHeader,
+    IterationSeparator,
+    IterationWidget,
     ThinkingSection,
     ToolCallItem,
-    IterationSeparator
 )
 from .iteration_container import IterationContainer
+from .parts import BlockBody, BlockFooter, BlockHeader, BlockMeta, StopButton
+from .system import SystemBlock
+from .terminal import TerminalBlock
+from .thinking import ThinkingWidget
+from .tool_accordion import ToolAccordion, ToolAccordionItem
+from .tool_call import ToolCallBlock
 
 
 def create_block(block: BlockState) -> BaseBlockWidget:
@@ -56,35 +61,35 @@ class BlockWidget:
 
 
 __all__ = [
-    'BaseBlockWidget',
-    'BlockWidget',
-    'CommandBlock',
-    'AIResponseBlock',
-    'AgentResponseBlock',
-    'SystemBlock',
-    'ToolCallBlock',
-    'TerminalBlock',
-    'BlockHeader',
-    'BlockMeta',
-    'BlockBody',
-    'BlockFooter',
-    'ThinkingWidget',
-    'ExecutionWidget',
-    'CodeBlockWidget',
-    'extract_code_blocks',
-    'execute_code',
-    'get_file_extension',
-    'create_block',
-    'ActionBar',
-    'ActionButton',
-    'ToolAccordion',
-    'ToolAccordionItem',
-    'BlockFrame',
-    'FrameSeparator',
-    'IterationWidget',
-    'IterationHeader',
-    'ThinkingSection',
-    'ToolCallItem',
-    'IterationSeparator',
-    'IterationContainer',
+    "AIResponseBlock",
+    "ActionBar",
+    "ActionButton",
+    "AgentResponseBlock",
+    "BaseBlockWidget",
+    "BlockBody",
+    "BlockFooter",
+    "BlockFrame",
+    "BlockHeader",
+    "BlockMeta",
+    "BlockWidget",
+    "CodeBlockWidget",
+    "CommandBlock",
+    "ExecutionWidget",
+    "FrameSeparator",
+    "IterationContainer",
+    "IterationHeader",
+    "IterationSeparator",
+    "IterationWidget",
+    "SystemBlock",
+    "TerminalBlock",
+    "ThinkingSection",
+    "ThinkingWidget",
+    "ToolAccordion",
+    "ToolAccordionItem",
+    "ToolCallBlock",
+    "ToolCallItem",
+    "create_block",
+    "execute_code",
+    "extract_code_blocks",
+    "get_file_extension",
 ]

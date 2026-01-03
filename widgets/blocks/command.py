@@ -1,9 +1,9 @@
 from textual.app import ComposeResult
-from typing import Optional
 
 from models import BlockState
+
 from .base import BaseBlockWidget
-from .parts import BlockHeader, BlockBody, BlockFooter
+from .parts import BlockBody, BlockFooter, BlockHeader
 from .terminal import TerminalBlock
 
 
@@ -16,7 +16,7 @@ class CommandBlock(BaseBlockWidget):
         self.body_widget = BlockBody(block.content_output or "")
         self.footer_widget = BlockFooter(block)
         self._mode = "line"  # "line" or "tui"
-        self._terminal_widget: Optional[TerminalBlock] = None
+        self._terminal_widget: TerminalBlock | None = None
 
     def compose(self) -> ComposeResult:
         yield self.header
@@ -44,24 +44,20 @@ class CommandBlock(BaseBlockWidget):
 
         self._mode = "tui"
         self.add_class("mode-tui")
-        
+
         # Update header icon for TUI
         try:
-             icon_lbl = self.header.query_one(".prompt-symbol", Label)
-             icon_lbl.update("█")
-             icon_lbl.add_class("prompt-symbol-tui")
+            icon_lbl = self.header.query_one(".prompt-symbol", Label)
+            icon_lbl.update("█")
+            icon_lbl.add_class("prompt-symbol-tui")
         except Exception:
-             pass
+            pass
 
         # Hide line output widget
         self.body_widget.display = False
 
         # Create and mount terminal widget
-        self._terminal_widget = TerminalBlock(
-            block_id=self.block.id,
-            rows=24,
-            cols=120
-        )
+        self._terminal_widget = TerminalBlock(block_id=self.block.id, rows=24, cols=120)
         self.mount(self._terminal_widget, before=self.footer_widget)
         # self._terminal_widget.focus()  # User requested no auto-focus
 
@@ -74,14 +70,14 @@ class CommandBlock(BaseBlockWidget):
 
         self._mode = "line"
         self.remove_class("mode-tui")
-        
+
         # Revert header icon
         try:
-             icon_lbl = self.header.query_one(".prompt-symbol", Label)
-             icon_lbl.update("❯")
-             icon_lbl.remove_class("prompt-symbol-tui")
+            icon_lbl = self.header.query_one(".prompt-symbol", Label)
+            icon_lbl.update("❯")
+            icon_lbl.remove_class("prompt-symbol-tui")
         except Exception:
-             pass
+            pass
 
         # Remove terminal widget
         if self._terminal_widget:

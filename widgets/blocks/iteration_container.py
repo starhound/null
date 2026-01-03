@@ -1,10 +1,12 @@
 """Container for managing agent iterations."""
 
+from typing import Optional
+
 from textual.app import ComposeResult
 from textual.containers import Container
-from typing import Optional, Dict
 
 from models import AgentIteration, ToolCallState
+
 from .iteration import IterationWidget
 
 
@@ -19,10 +21,10 @@ class IterationContainer(Container):
         self,
         show_thinking: bool = True,
         id: str | None = None,
-        classes: str | None = None
+        classes: str | None = None,
     ):
         super().__init__(id=id, classes=classes)
-        self._iterations: Dict[str, IterationWidget] = {}
+        self._iterations: dict[str, IterationWidget] = {}
         self.show_thinking = show_thinking
 
     def compose(self) -> ComposeResult:
@@ -42,19 +44,16 @@ class IterationContainer(Container):
         if "empty" in self.classes:
             self.remove_class("empty")
 
-        widget = IterationWidget(
-            iteration=iteration,
-            show_thinking=self.show_thinking
-        )
+        widget = IterationWidget(iteration=iteration, show_thinking=self.show_thinking)
         self._iterations[iteration.id] = widget
         self.mount(widget)
         return widget
 
-    def get_iteration(self, iteration_id: str) -> Optional[IterationWidget]:
+    def get_iteration(self, iteration_id: str) -> IterationWidget | None:
         """Get an iteration widget by ID."""
         return self._iterations.get(iteration_id)
 
-    def get_current_iteration(self) -> Optional[IterationWidget]:
+    def get_current_iteration(self) -> IterationWidget | None:
         """Get the most recently added iteration."""
         if not self._iterations:
             return None
@@ -67,7 +66,7 @@ class IterationContainer(Container):
         status: str | None = None,
         thinking: str | None = None,
         response: str | None = None,
-        duration: float | None = None
+        duration: float | None = None,
     ) -> None:
         """Update an existing iteration.
 
@@ -90,9 +89,7 @@ class IterationContainer(Container):
             widget.update_response(response)
 
     def add_tool_call(
-        self,
-        iteration_id: str,
-        tool_call: ToolCallState
+        self, iteration_id: str, tool_call: ToolCallState
     ) -> Optional["IterationWidget"]:
         """Add a tool call to an iteration.
 
@@ -113,7 +110,7 @@ class IterationContainer(Container):
         iteration_id: str,
         tool_id: str,
         status: str | None = None,
-        duration: float | None = None
+        duration: float | None = None,
     ) -> None:
         """Update a tool call within an iteration.
 

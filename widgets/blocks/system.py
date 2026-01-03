@@ -1,8 +1,9 @@
 from textual.app import ComposeResult
 
 from models import BlockState
+
 from .base import BaseBlockWidget
-from .parts import BlockHeader, BlockBody
+from .parts import BlockBody, BlockHeader
 
 
 class SystemBlock(BaseBlockWidget):
