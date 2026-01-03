@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
+
 from textual.app import ComposeResult
 from textual.containers import Grid, Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.validation import Integer
 from textual.widgets import Button, Input, Label
+
+if TYPE_CHECKING:
+    from app import NullApp
 
 
 class SSHAddScreen(ModalScreen):
@@ -138,7 +143,8 @@ class SSHAddScreen(ModalScreen):
             self.notify("Port must be a number", severity="error")
             return
 
-        self.app.storage.add_ssh_host(
+        app: NullApp = self.app  # type: ignore[assignment]
+        app.storage.add_ssh_host(
             alias=alias,
             hostname=hostname,
             port=port,

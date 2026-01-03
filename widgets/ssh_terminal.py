@@ -1,4 +1,6 @@
 import asyncio
+from asyncio import Task
+from typing import Any
 
 import pyte
 from rich.segment import Segment
@@ -34,8 +36,8 @@ class SSHTerminal(Widget):
         self.pyte_screen = pyte.Screen(80, 24)
         self.pyte_stream = pyte.Stream(self.pyte_screen)
 
-        self._listen_task = None
-        self._stdin = None  # Writer
+        self._listen_task: Task[Any] | None = None
+        self._stdin: Any = None  # Writer
         self._connected = False
 
     def on_mount(self):

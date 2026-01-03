@@ -29,13 +29,13 @@ class ThemeSelectionScreen(ModalScreen):
 
     def __init__(self, title: str, items: list[str]):
         super().__init__()
-        self.title = title
+        self._screen_title = title
         self.items = items
         self._original_theme: str | None = None
 
     def compose(self) -> ComposeResult:
         with Container(id="selection-container"):
-            yield Label(self.title)
+            yield Label(self._screen_title)
             if not self.items:
                 yield Label("No themes found.", classes="empty-msg")
             else:
@@ -81,7 +81,7 @@ class ThemeSelectionScreen(ModalScreen):
             self.app.theme = self._original_theme
         self.dismiss(None)
 
-    def action_dismiss(self):
+    async def action_dismiss(self, result: object = None) -> None:
         """Restore original theme on escape."""
         if self._original_theme:
             self.app.theme = self._original_theme
@@ -95,12 +95,12 @@ class SelectionListScreen(ModalScreen):
 
     def __init__(self, title: str, items: list[str]):
         super().__init__()
-        self.title = title
+        self._screen_title = title
         self.items = items
 
     def compose(self) -> ComposeResult:
         with Container(id="selection-container"):
-            yield Label(self.title)
+            yield Label(self._screen_title)
             if not self.items:
                 yield Label("No items found.", classes="empty-msg")
             else:
@@ -116,10 +116,10 @@ class SelectionListScreen(ModalScreen):
         else:
             self.dismiss(None)
 
-    def on_button_pressed(self, event: Button.Pressed):
+    def on_button_pressed(self, event: Button.Pressed) -> None:
         self.dismiss(None)
 
-    def action_dismiss(self):
+    async def action_dismiss(self, result: object = None) -> None:
         self.dismiss(None)
 
 
@@ -151,8 +151,8 @@ class ModelListScreen(ModalScreen):
     BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "dismiss", "Close")]
     SPINNER_FRAMES: ClassVar[list[str]] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
-    is_loading = reactive(True)
-    search_query = reactive("")
+    is_loading: reactive[bool] = reactive(True)
+    search_query: reactive[str] = reactive("")
 
     def __init__(self, fetch_func: Callable | None = None):
         """Initialize model list screen."""
@@ -326,7 +326,7 @@ class ModelListScreen(ModalScreen):
                 collapsed = not is_active and not self.search_query
 
                 # Build list of model widgets to pass to Collapsible
-                model_widgets = []
+                model_widgets: list[ModelItem | Static] = []
                 for model in filtered[:100]:  # Limit to 100 per provider
                     model_widgets.append(ModelItem(provider, model))
 
@@ -401,8 +401,8 @@ class ModelListScreen(ModalScreen):
         """Handle model selection from ModelItem."""
         self.dismiss((message.provider, message.model))
 
-    def on_button_pressed(self, event: Button.Pressed):
+    def on_button_pressed(self, event: Button.Pressed) -> None:
         self.dismiss(None)
 
-    def action_dismiss(self):
+    async def action_dismiss(self, result: object = None) -> None:
         self.dismiss(None)

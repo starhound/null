@@ -13,9 +13,9 @@ class AnthropicProvider(LLMProvider):
     def __init__(self, api_key: str, model: str = "claude-3-5-sonnet-20241022"):
         self.api_key = api_key
         self.model = model
-        self._client = None
+        self._client: Any = None
 
-    def _get_client(self):
+    def _get_client(self) -> Any:
         """Lazy-load the Anthropic client."""
         if self._client is None:
             try:

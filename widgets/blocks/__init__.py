@@ -53,11 +53,9 @@ def create_block(block: BlockState) -> BaseBlockWidget:
 
 
 # For backwards compatibility, alias BlockWidget to the factory
-class BlockWidget:
-    """Backwards-compatible wrapper that creates the appropriate block type."""
-
-    def __new__(cls, block: BlockState) -> BaseBlockWidget:
-        return create_block(block)
+# Note: BlockWidget is not actually a class meant to be instantiated directly,
+# it's a factory pattern. Use create_block() instead.
+BlockWidget = create_block
 
 
 __all__ = [

@@ -1,8 +1,9 @@
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from textual.app import ComposeResult
 from textual.binding import BindingType
 from textual.containers import Container, Vertical, VerticalScroll
+from textual.widget import Widget
 from textual.widgets import (
     Button,
     Collapsible,
@@ -11,6 +12,9 @@ from textual.widgets import (
 )
 
 from .base import Binding, ModalScreen
+
+if TYPE_CHECKING:
+    from app import NullApp
 
 
 class ToolsScreen(ModalScreen):
@@ -27,10 +31,11 @@ class ToolsScreen(ModalScreen):
 
             yield Button("Close", variant="default", id="close_btn")
 
-    async def _load_tools(self):
+    async def _load_tools(self):  # type: ignore[misc]
         """Fetch tools from MCP manager."""
         try:
-            mcp = self.app.mcp_manager
+            app: NullApp = self.app  # type: ignore[assignment]
+            mcp = app.mcp_manager
             status = mcp.get_status()
 
             container = self.query_one("#tools-list", VerticalScroll)
@@ -70,10 +75,11 @@ class ToolsScreen(ModalScreen):
         except Exception as e:
             self.notify(f"Error loading tools: {e}", severity="error")
 
-    async def _load_tools_refactored(self):
+    async def _load_tools_refactored(self) -> None:
         """Fetch tools from MCP manager."""
         try:
-            mcp = self.app.mcp_manager
+            app: NullApp = self.app  # type: ignore[assignment]
+            mcp = app.mcp_manager
             status = mcp.get_status()
 
             container = self.query_one("#tools-list", VerticalScroll)
@@ -89,7 +95,7 @@ class ToolsScreen(ModalScreen):
                 header_text = f"{conn_status} {server_name} {enabled_status}"
 
                 # Check for tools if connected
-                tools_widgets = []
+                tools_widgets: list[Widget] = []
                 if info["connected"]:
                     client = mcp.clients.get(server_name)
                     if client and client.tools:
@@ -135,5 +141,5 @@ class ToolsScreen(ModalScreen):
     def on_button_pressed(self, event: Button.Pressed):
         self.dismiss()
 
-    def action_dismiss(self):
-        self.dismiss()
+    async def action_dismiss(self, result: object = None) -> None:
+        self.dismiss(result)

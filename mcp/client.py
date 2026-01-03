@@ -248,5 +248,6 @@ class MCPClient:
 
         contents = result.get("contents", [])
         if contents:
-            return contents[0].get("text", "")
+            text: str = contents[0].get("text", "")
+            return text
         return ""

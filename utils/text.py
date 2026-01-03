@@ -35,8 +35,8 @@ def make_links_clickable(text: str) -> str:
     for match in MARKDOWN_LINK_PATTERN.finditer(text):
         existing_links.add(match.group(2))  # The URL part
 
-    def replace_url(match: re.Match) -> str:
-        url = match.group(0)
+    def replace_url(match: re.Match[str]) -> str:
+        url: str = match.group(0)
         # Skip if this URL is already part of a markdown link
         if url in existing_links:
             return url
@@ -45,7 +45,8 @@ def make_links_clickable(text: str) -> str:
         display = url if len(url) <= 60 else url[:57] + "..."
         return f"[{display}]({url})"
 
-    return URL_PATTERN.sub(replace_url, text)
+    result: str = URL_PATTERN.sub(replace_url, text)
+    return result
 
 
 def strip_ansi(text: str) -> str:

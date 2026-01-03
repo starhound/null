@@ -103,7 +103,7 @@ BUILTIN_THEMES = {
 
 def load_user_themes() -> dict[str, Theme]:
     """Load custom themes from ~/.null/themes/*.json"""
-    themes = {}
+    themes: dict[str, Theme] = {}
     themes_dir = Path.home() / ".null" / "themes"
 
     if not themes_dir.exists():

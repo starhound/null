@@ -39,7 +39,7 @@ class StopButton(Label):
 
     def on_mount(self) -> None:
         """Set up click handling."""
-        self.styles.cursor = "pointer"
+        # Note: cursor style handled via CSS
 
     def on_click(self, event) -> None:
         """Handle click on stop button."""

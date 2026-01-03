@@ -59,9 +59,9 @@ class AzureProvider(LLMProvider):
 
         try:
             stream = await self.client.chat.completions.create(
-                model=self.deployment_name, messages=chat_messages, stream=True
+                model=self.deployment_name, messages=chat_messages, stream=True  # type: ignore[arg-type]
             )
-            async for chunk in stream:
+            async for chunk in stream:  # type: ignore[union-attr]
                 if chunk.choices and chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
         except Exception as e:
@@ -94,10 +94,10 @@ class AzureProvider(LLMProvider):
             try:
                 stream = await self.client.chat.completions.create(
                     **params, stream_options={"include_usage": True}
-                )
+                )  # type: ignore[call-overload]
             except Exception:
                 # Some Azure deployments may not support stream_options
-                stream = await self.client.chat.completions.create(**params)
+                stream = await self.client.chat.completions.create(**params)  # type: ignore[call-overload]
 
             # Track tool calls being built up across chunks
             current_tool_calls: dict[int, dict[str, Any]] = {}

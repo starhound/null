@@ -147,13 +147,16 @@ To use this prompt:
 
         # Apply provider overrides if available
         if provider and "provider_overrides" in prompt:
-            overrides = prompt["provider_overrides"].get(provider, {})
-            if "content_suffix" in overrides:
-                content += overrides["content_suffix"]
-            if "content_prefix" in overrides:
-                content = overrides["content_prefix"] + content
-            if "content" in overrides:
-                content = overrides["content"]
+            provider_overrides = prompt["provider_overrides"]
+            if isinstance(provider_overrides, dict):
+                overrides = provider_overrides.get(provider, {})
+                if isinstance(overrides, dict):
+                    if "content_suffix" in overrides:
+                        content += overrides["content_suffix"]
+                    if "content_prefix" in overrides:
+                        content = overrides["content_prefix"] + content
+                    if "content" in overrides:
+                        content = overrides["content"]
 
         return content
 

@@ -128,7 +128,7 @@ class BedrockProvider(LLMProvider):
         if not system_prompt:
             system_prompt = "You are a helpful AI assistant."
 
-        body = {}
+        body: str = ""
         if self._is_claude_model():
             claude_messages = self._build_claude_messages(prompt, messages)
             body = json.dumps(

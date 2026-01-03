@@ -65,10 +65,3 @@ class HistoryViewport(VerticalScroll):
         """Force scroll to bottom and enable auto-scroll."""
         self._auto_scroll = True
         self.scroll_end(animate=False)
-
-    async def mount(self, *widgets, **kwargs):
-        """Override mount to scroll after adding widgets."""
-        result = await super().mount(*widgets, **kwargs)
-        if self._auto_scroll:
-            self.call_later(self._do_scroll_end)
-        return result

@@ -22,9 +22,9 @@ class BlockSearch(Static, can_focus=True):
         Binding("shift+f3", "select_prev", "Previous", show=False),
     ]
 
-    search_query = reactive("")
-    results = reactive([])
-    selected_index = reactive(0)
+    search_query: reactive[str] = reactive("")
+    results: reactive[list[dict[str, str]]] = reactive([])
+    selected_index: reactive[int] = reactive(0)
 
     class Selected(Message):
         """Sent when user selects a search result."""
@@ -261,7 +261,8 @@ class BlockSearch(Static, can_focus=True):
     def _select_current(self):
         """Select the currently highlighted result and jump to it."""
         if self.results and 0 <= self.selected_index < len(self.results):
-            self.results[self.selected_index]
+            # Result is accessed to validate bounds, then scroll to it
+            _ = self.results[self.selected_index]
             self._scroll_to_current()
             # Keep search open to allow F3 navigation
         else:

@@ -230,10 +230,12 @@ class NullApp(App):
 
         # 1. Check if a specific block is focused
         focused = self.screen.focused
-        if hasattr(focused, "block_id"):  # TerminalBlock
-            target_block_id = focused.block_id
-        elif hasattr(focused, "block") and focused.block:  # CommandBlock/BlockWidget
-            target_block_id = focused.block.id
+        if focused is not None and hasattr(focused, "block_id"):  # TerminalBlock
+            target_block_id = getattr(focused, "block_id", None)
+        elif focused is not None and hasattr(focused, "block"):  # CommandBlock/BlockWidget
+            block = getattr(focused, "block", None)
+            if block:
+                target_block_id = block.id
 
         # 2. Fallback to current CLI session block
         if not target_block_id and self.current_cli_block:
@@ -267,16 +269,15 @@ class NullApp(App):
 
     def action_smart_quit(self):
         """Smart Ctrl+C: Cancel if busy, quit if idle."""
-        if self.is_busy:
+        if self.is_busy():
             self.action_cancel_operation()
         else:
             self.exit()
 
     def is_busy(self) -> bool:
         """Check if any operation is currently running."""
-        return self.process_manager.get_count() > 0 or (
-            self._active_worker and not self._active_worker.is_finished
-        )
+        worker_active = self._active_worker is not None and not self._active_worker.is_finished
+        return self.process_manager.get_count() > 0 or worker_active
 
     def action_quick_export(self):
         """Quick export to markdown."""
@@ -807,7 +808,8 @@ class NullApp(App):
 
             # Update provider status
             if self.ai_provider:
-                status_bar.set_provider(self.ai_provider.name, "connected")
+                provider_name = Config.get("ai.provider") or "Provider"
+                status_bar.set_provider(str(provider_name), "connected")
             else:
                 status_bar.set_provider("No Provider", "disconnected")
 
@@ -830,7 +832,7 @@ class NullApp(App):
             except Exception:
                 pass
 
-    def _find_widget_for_block(self, block_id: str) -> BaseBlockWidget:
+    def _find_widget_for_block(self, block_id: str) -> BaseBlockWidget | None:
         """Find the BlockWidget for a given block ID."""
         history_vp = self.query_one("#history", HistoryViewport)
         for widget in history_vp.query(BaseBlockWidget):

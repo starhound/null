@@ -1,11 +1,14 @@
 import re
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from textual.binding import Binding, BindingType
 from textual.events import Click
 from textual.message import Message
 from textual.widgets import TextArea
+
+if TYPE_CHECKING:
+    pass
 
 try:
     import pyperclip
@@ -78,7 +81,8 @@ class InputController(TextArea):
         """Handle Enter key - submit input or select from suggester."""
         # Check if suggester is visible and has selection
         try:
-            suggester = self.app.query_one("CommandSuggester")
+            from widgets.suggester import CommandSuggester
+            suggester = cast(CommandSuggester, self.app.query_one("CommandSuggester"))
             if suggester.display and self.text.startswith("/"):
                 complete = suggester.get_selected()
                 if complete:
@@ -252,9 +256,10 @@ class InputController(TextArea):
 
     async def on_key(self, event):
         # Handle navigation keys manually to support both Suggester and History
+        from widgets.suggester import CommandSuggester
         if event.key == "up":
             if self.text.startswith("/"):
-                suggester = self.app.query_one("CommandSuggester")
+                suggester = cast(CommandSuggester, self.app.query_one("CommandSuggester"))
                 if suggester.display:
                     suggester.select_prev()
                     event.stop()
@@ -266,7 +271,7 @@ class InputController(TextArea):
 
         elif event.key == "down":
             if self.text.startswith("/"):
-                suggester = self.app.query_one("CommandSuggester")
+                suggester = cast(CommandSuggester, self.app.query_one("CommandSuggester"))
                 if suggester.display:
                     suggester.select_next()
                     event.stop()
@@ -279,7 +284,7 @@ class InputController(TextArea):
         elif event.key == "tab":
             # First check slash commands
             if self.text.startswith("/"):
-                suggester = self.app.query_one("CommandSuggester")
+                suggester = cast(CommandSuggester, self.app.query_one("CommandSuggester"))
                 if suggester.display:
                     complete = suggester.get_selected()
                     if complete:
@@ -302,7 +307,7 @@ class InputController(TextArea):
                     return
 
         elif event.key == "escape":
-            suggester = self.app.query_one("CommandSuggester")
+            suggester = cast(CommandSuggester, self.app.query_one("CommandSuggester"))
             if suggester.display:
                 suggester.display = False
                 event.stop()

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from models import BlockState, BlockType
 
@@ -7,7 +8,7 @@ from models import BlockState, BlockType
 class ContextInfo:
     """Context information with size metrics."""
 
-    messages: list[dict]  # List of Message dicts
+    messages: list[dict[str, Any]]  # List of Message dicts
     total_chars: int
     estimated_tokens: int
     message_count: int

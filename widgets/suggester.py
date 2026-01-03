@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING, cast
+
 from textual.app import ComposeResult
 from textual.events import Click
 from textual.timer import Timer
@@ -5,6 +7,9 @@ from textual.widgets import Label, ListItem, ListView, Static
 
 from config import Config
 from models import BlockType
+
+if TYPE_CHECKING:
+    pass
 
 
 class CommandItem(ListItem):
@@ -61,7 +66,8 @@ class CommandSuggester(Static):
     def _apply_selection(self):
         """Apply the current selection to the input."""
         try:
-            input_ctrl = self.app.query_one("#input")
+            from widgets.input import InputController
+            input_ctrl = cast(InputController, self.app.query_one("#input"))
             complete = self.get_selected()
             if complete:
                 parts = input_ctrl.text.split(" ")
@@ -214,15 +220,18 @@ class CommandSuggester(Static):
     async def _fetch_ai_suggestion(self, text: str):
         """Fetch suggestion from AI provider."""
         try:
-            if not self.app.ai_manager:
+            # Access app attributes with getattr to avoid type errors
+            ai_manager = getattr(self.app, "ai_manager", None)
+            if not ai_manager:
                 return
 
-            provider = self.app.ai_manager.get_autocomplete_provider()
+            provider = ai_manager.get_autocomplete_provider()
             if not provider:
                 return
 
             # Build minimal context from last few blocks
-            history_blocks = self.app.blocks[-5:]
+            blocks = getattr(self.app, "blocks", [])
+            history_blocks = blocks[-5:]
             context_str = ""
             for b in history_blocks:
                 if b.type == BlockType.COMMAND:

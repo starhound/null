@@ -105,7 +105,7 @@ class ThinkingSection(Static):
             "thinking-content" if self.collapsed else "thinking-content visible"
         )
         yield Static(
-            Markdown(self.content) if self.content else "(no reasoning)",
+            Markdown(str(self.content)) if self.content else "(no reasoning)",
             classes=content_class,
             id="content",
         )
@@ -179,9 +179,9 @@ class ToolCallItem(Static):
 
     def on_mount(self) -> None:
         if self.tool_call.status == "running":
-            self._spinner_timer = self.set_interval(0.08, self._animate)
+            self._spinner_timer = self.set_interval(0.08, self._animate_spinner)
 
-    def _animate(self) -> None:
+    def _animate_spinner(self) -> None:
         if self.tool_call.status != "running":
             if self._spinner_timer:
                 self._spinner_timer.stop()
@@ -208,7 +208,7 @@ class ToolCallItem(Static):
             dur.update(f"{duration:.1f}s" if duration > 0 else "")
 
             if status == "running" and not self._spinner_timer:
-                self._spinner_timer = self.set_interval(0.08, self._animate)
+                self._spinner_timer = self.set_interval(0.08, self._animate_spinner)
             elif status != "running" and self._spinner_timer:
                 self._spinner_timer.stop()
         except Exception:

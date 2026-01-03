@@ -122,8 +122,8 @@ def get_model_pricing(model_name: str) -> tuple:
 def calculate_cost(usage: TokenUsage, model_name: str) -> float:
     """Calculate cost in USD for token usage."""
     input_price, output_price = get_model_pricing(model_name)
-    input_cost = (usage.input_tokens / 1_000_000) * input_price
-    output_cost = (usage.output_tokens / 1_000_000) * output_price
+    input_cost: float = (usage.input_tokens / 1_000_000) * input_price
+    output_cost: float = (usage.output_tokens / 1_000_000) * output_price
     return input_cost + output_cost
 
 
@@ -249,7 +249,7 @@ class LLMProvider(ABC):
     model: str = ""
 
     @abstractmethod
-    async def generate(
+    def generate(
         self, prompt: str, messages: list[Message], system_prompt: str | None = None
     ) -> AsyncGenerator[str, None]:
         """Stream text response from the LLM (legacy interface).
@@ -259,7 +259,7 @@ class LLMProvider(ABC):
             messages: Conversation history as message array
             system_prompt: System prompt (always separate from messages)
         """
-        pass
+        ...
 
     async def generate_with_tools(
         self,
@@ -280,7 +280,8 @@ class LLMProvider(ABC):
             StreamChunk with text and/or tool_calls
         """
         # Default implementation: fall back to regular generate (no tools)
-        async for text in self.generate(prompt, messages, system_prompt):
+        gen = self.generate(prompt, messages, system_prompt)
+        async for text in gen:
             yield StreamChunk(text=text)
 
     @abstractmethod

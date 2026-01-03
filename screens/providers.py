@@ -191,5 +191,5 @@ class ProvidersScreen(ModalScreen):
         # Delete all keys starting with ai.<provider_name>.
         sm.delete_config_prefix(f"ai.{provider_name}.")
 
-    def action_dismiss(self):
+    async def action_dismiss(self, result: object = None) -> None:
         self.dismiss(None)

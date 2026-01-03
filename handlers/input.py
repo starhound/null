@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 
 from config import Config
 from models import BlockState, BlockType
-from widgets import BlockWidget, CommandSuggester, HistoryViewport, InputController
+from widgets import BaseBlockWidget, CommandSuggester, HistoryViewport, InputController
+from widgets.blocks import create_block
 
 
 class InputHandler:
@@ -72,9 +73,9 @@ class InputHandler:
         self.app.blocks.append(block)
         input_ctrl.value = ""
 
-        # Mount widget - BlockWidget factory creates correct widget type
+        # Mount widget - create_block factory creates correct widget type
         history_vp = self.app.query_one("#history", HistoryViewport)
-        block_widget = BlockWidget(block)
+        block_widget: BaseBlockWidget = create_block(block)
         await history_vp.mount(block_widget)
         block_widget.scroll_visible()
 
@@ -156,6 +157,10 @@ class InputHandler:
         block = self.app.current_cli_block
         widget = self.app.current_cli_widget
 
+        # Type narrowing - caller ensures these are not None
+        assert block is not None, "current_cli_block must be set"
+        assert widget is not None, "current_cli_widget must be set"
+
         if block.content_output:
             # Add visual separator between command chains
             block.content_output += f"\n{self.COMMAND_SEPARATOR}\n\n"
@@ -177,7 +182,7 @@ class InputHandler:
 
         # Mount widget
         history_vp = self.app.query_one("#history", HistoryViewport)
-        block_widget = BlockWidget(block)
+        block_widget: BaseBlockWidget = create_block(block)
         self.app.current_cli_widget = block_widget
         await history_vp.mount(block_widget)
         block_widget.scroll_visible()

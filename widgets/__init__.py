@@ -35,7 +35,6 @@ __all__ = [
     "BlockHeader",
     "BlockMeta",
     "BlockSearch",
-    # Block widgets
     "BlockWidget",
     "CodeBlockWidget",
     "CommandBlock",

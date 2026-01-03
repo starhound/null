@@ -100,9 +100,9 @@ class CommandPalette(Static, can_focus=True):
         Binding("enter", "execute", "Execute", show=False),
     ]
 
-    search_query = reactive("")
-    filtered_actions = reactive([])
-    selected_index = reactive(0)
+    search_query: reactive[str] = reactive("")
+    filtered_actions: reactive[list[PaletteAction]] = reactive([])
+    selected_index: reactive[int] = reactive(0)
 
     class ActionSelected(Message):
         """Sent when user selects an action."""

@@ -20,9 +20,9 @@ class GoogleVertexProvider(LLMProvider):
         self.location = location
         self.model = model.strip() if model else "gemini-2.0-flash"
         self.api_key = api_key.strip() if api_key else None
-        self._client = None
+        self._client: Any = None
 
-    def _get_client(self):
+    def _get_client(self) -> Any:
         """Lazy-load the Vertex AI client."""
         if self._client is None:
             try:
@@ -139,7 +139,7 @@ class GoogleVertexProvider(LLMProvider):
             config = types.GenerateContentConfig(
                 temperature=0.7,
                 system_instruction=sys_prompt if sys_prompt else None,
-                tools=[types.Tool(function_declarations=google_tools)],
+                tools=[types.Tool(function_declarations=google_tools)],  # type: ignore[arg-type]
                 thinking_config=thinking_config,
             )
 
@@ -230,7 +230,7 @@ class GoogleVertexProvider(LLMProvider):
         if not isinstance(schema, dict):
             return schema
 
-        new_schema = {}
+        new_schema: dict[str, Any] = {}
         for key, value in schema.items():
             if key == "type":
                 # Google expects uppercase types (STRING, OBJECT, INTEGER, etc.)

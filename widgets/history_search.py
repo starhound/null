@@ -18,9 +18,9 @@ class HistorySearch(Static, can_focus=True):
         Binding("enter", "select", "Select", show=False),
     ]
 
-    search_query = reactive("")
-    results = reactive([])
-    selected_index = reactive(0)
+    search_query: reactive[str] = reactive("")
+    results: reactive[list[str]] = reactive([])
+    selected_index: reactive[int] = reactive(0)
 
     class Selected(Message):
         """Sent when user selects a history item."""

@@ -65,5 +65,5 @@ class HelpScreen(ModalScreen):
         if event.button.id == "close_btn":
             self.dismiss()
 
-    def action_dismiss(self):
-        self.dismiss()
+    async def action_dismiss(self, result: object = None) -> None:
+        self.dismiss(result)

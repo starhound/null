@@ -95,11 +95,11 @@ class ProviderConfigScreen(ModalScreen):
         },
     }
 
-    def __init__(self, provider: str, current_config: dict):
+    def __init__(self, provider: str, current_config: dict[str, Any]):
         super().__init__()
         self.provider = provider
         self.current_config = current_config
-        self.inputs = {}
+        self.inputs: dict[str, Input] = {}
         self._spinner_index = 0
         self._spinner_timer: Timer | None = None
 
@@ -241,6 +241,6 @@ class ProviderConfigScreen(ModalScreen):
         await asyncio.sleep(0.5)
         self.dismiss(result)
 
-    def action_dismiss(self):
+    async def action_dismiss(self, result: object = None) -> None:
         if not self.is_connecting:
             self.dismiss(None)

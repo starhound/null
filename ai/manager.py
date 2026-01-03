@@ -167,10 +167,11 @@ class AIManager:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Collect successful results
-        models_by_provider = {}
+        models_by_provider: dict[str, list[str]] = {}
         for result in results:
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 continue
+            # result is now tuple[str, list[str], str | None]
             provider_name, models, _error = result
             if models:  # Only include providers with models
                 models_by_provider[provider_name] = models

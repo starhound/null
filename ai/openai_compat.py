@@ -65,10 +65,10 @@ class OpenAICompatibleProvider(LLMProvider):
             try:
                 stream = await self.client.chat.completions.create(
                     **params, stream_options={"include_usage": True}
-                )
+                )  # type: ignore[call-overload]
             except Exception:
                 # Fallback without stream_options
-                stream = await self.client.chat.completions.create(**params)
+                stream = await self.client.chat.completions.create(**params)  # type: ignore[call-overload]
 
             async for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content:
@@ -103,10 +103,10 @@ class OpenAICompatibleProvider(LLMProvider):
             try:
                 stream = await self.client.chat.completions.create(
                     **params, stream_options={"include_usage": True}
-                )
+                )  # type: ignore[call-overload]
             except Exception:
                 # Some servers (LM Studio, etc.) don't support stream_options
-                stream = await self.client.chat.completions.create(**params)
+                stream = await self.client.chat.completions.create(**params)  # type: ignore[call-overload]
 
             # Track tool calls being built up across chunks
             current_tool_calls: dict[int, dict[str, Any]] = {}

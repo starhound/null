@@ -101,5 +101,5 @@ class MCPServerConfigScreen(ModalScreen):
         else:
             self.dismiss(None)
 
-    def action_dismiss(self):
+    async def action_dismiss(self, result: object = None) -> None:
         self.dismiss(None)

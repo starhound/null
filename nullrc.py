@@ -159,7 +159,7 @@ class NullrcManager:
         if not project_root:
             return []
 
-        files = []
+        files: list[Path] = []
         for pattern in project_config.context_files:
             if "*" in pattern:
                 # Glob pattern

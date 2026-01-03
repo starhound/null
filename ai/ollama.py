@@ -83,7 +83,7 @@ class OllamaProvider(LLMProvider):
 
         try:
             async with self.client.stream("POST", url, json=payload) as response:
-                collected_tool_calls = []
+                collected_tool_calls: list[ToolCallData] = []
 
                 async for line in response.aiter_lines():
                     if not line:

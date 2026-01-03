@@ -21,9 +21,9 @@ class SSHSession:
         self.key_path = key_path
         self.tunnel = tunnel
         self._conn: asyncssh.SSHClientConnection | None = None
-        self._stdin = None
-        self._stdout = None
-        self._stderr = None
+        self._stdin: asyncssh.SSHWriter[bytes] | None = None
+        self._stdout: asyncssh.SSHReader[bytes] | None = None
+        self._stderr: asyncssh.SSHReader[bytes] | None = None
 
     async def connect(self):
         """Establish SSH connection."""
@@ -48,7 +48,8 @@ class SSHSession:
             # Ensure tunnel is connected
             await self.tunnel.connect()
             # Connect via tunnel
-            self._conn = await self.tunnel._conn.connect_ssh(**connect_kwargs)
+            if self.tunnel._conn is not None:
+                self._conn = await self.tunnel._conn.connect_ssh(**connect_kwargs)
         else:
             # Direct connection
             self._conn = await asyncssh.connect(**connect_kwargs)
@@ -59,20 +60,28 @@ class SSHSession:
         cols: int = 80,
         lines: int = 24,
         input_handler: Callable[[str], None] | None = None,
-    ):
+    ) -> tuple[asyncssh.SSHWriter[bytes], asyncssh.SSHReader[bytes], asyncssh.SSHReader[bytes]]:
         """Start an interactive shell."""
         if not self._conn:
             await self.connect()
 
-        self._stdin, self._stdout, self._stderr = await self._conn.open_session(
+        if self._conn is None:
+            raise RuntimeError("SSH connection not established")
+
+        stdin, stdout, stderr = await self._conn.open_session(
             term_type=term_type, term_size=(cols, lines)
         )
-        return self._stdin, self._stdout, self._stderr
+        self._stdin = stdin
+        self._stdout = stdout
+        self._stderr = stderr
+        return stdin, stdout, stderr
 
     async def run_command(self, command: str) -> asyncssh.SSHCompletedProcess:
         """Run a single command and return result."""
         if not self._conn:
             await self.connect()
+        if self._conn is None:
+            raise RuntimeError("SSH connection not established")
         return await self._conn.run(command)
 
     def close(self):
@@ -86,5 +95,9 @@ class SSHSession:
             # need the channel/session object.
             # self._conn.open_session returns (stdin, stdout, stderr)
             # stdout is a SSHReader, which has a .channel property
-            if isinstance(self._stdout, asyncssh.SSHReader):
-                self._stdout.channel.change_terminal_size(cols, lines)
+            if self._stdout is not None:
+                channel = getattr(self._stdout, "channel", None)
+                if channel is not None:
+                    change_size = getattr(channel, "change_terminal_size", None)
+                    if change_size is not None:
+                        change_size(cols, lines)

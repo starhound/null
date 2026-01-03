@@ -63,11 +63,13 @@ class SecurityManager:
     def encrypt(self, data: str) -> str:
         if not data:
             return ""
+        assert self._fernet is not None, "Fernet not initialized"
         return self._fernet.encrypt(data.encode()).decode()
 
     def decrypt(self, token: str) -> str:
         if not token:
             return ""
+        assert self._fernet is not None, "Fernet not initialized"
         try:
             return self._fernet.decrypt(token.encode()).decode()
         except Exception:

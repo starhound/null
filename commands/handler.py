@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -23,11 +23,7 @@ class CommandInfo:
     name: str
     description: str
     shortcut: str = ""
-    subcommands: list[tuple[str, str]] = None  # [(subcommand, description), ...]
-
-    def __post_init__(self):
-        if self.subcommands is None:
-            self.subcommands = []
+    subcommands: list[tuple[str, str]] = field(default_factory=list)
 
 
 class SlashCommandHandler:

@@ -21,9 +21,9 @@ class SSHScreen(Screen):
     def compose(self) -> ComposeResult:
         yield SSHTerminal(self.session, id="ssh-term")
 
-    def action_detach(self):
+    def action_detach(self) -> None:
         """Detach from session and return to main app."""
         # Clean up connection
         self.session.close()
         self.app.pop_screen()
-        self.app.push_message(f"Disconnected from {self.alias}")
+        self.notify(f"Disconnected from {self.alias}")
