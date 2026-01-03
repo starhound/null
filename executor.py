@@ -260,11 +260,26 @@ class ExecutionEngine:
                             line.rstrip(b"\r").decode("utf-8", errors="replace") + "\n"
                         )
                         callback(decoded)
-                    # Also output partial lines (for progress indicators etc)
-                    if buffer and b"\r" in buffer:
-                        decoded = buffer.decode("utf-8", errors="replace")
-                        callback(decoded)
-                        buffer = b""
+                    # Output partial lines for:
+                    # - Progress indicators (contain \r)
+                    # - Interactive prompts (password:, continue?, etc.)
+                    if buffer:
+                        # Check for interactive prompt patterns
+                        lower_buf = buffer.lower()
+                        is_prompt = (
+                            b"\r" in buffer
+                            or b"password" in lower_buf
+                            or b"passphrase" in lower_buf
+                            or b"[y/n]" in lower_buf
+                            or b"(yes/no)" in lower_buf
+                            or b"continue?" in lower_buf
+                            or buffer.rstrip().endswith(b":")
+                            or buffer.rstrip().endswith(b"?")
+                        )
+                        if is_prompt:
+                            decoded = buffer.decode("utf-8", errors="replace")
+                            callback(decoded)
+                            buffer = b""
 
                 except OSError as e:
                     if e.errno == 5:  # EIO - PTY closed
