@@ -1,7 +1,9 @@
 """Selection list screens."""
 
 from collections.abc import Callable
+from typing import ClassVar
 
+from textual.binding import BindingType
 from textual.containers import VerticalScroll
 from textual.message import Message
 from textual.reactive import reactive
@@ -23,7 +25,7 @@ from .base import (
 class ThemeSelectionScreen(ModalScreen):
     """Screen to select a theme with live preview on highlight."""
 
-    BINDINGS = [Binding("escape", "dismiss", "Close")]
+    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "dismiss", "Close")]
 
     def __init__(self, title: str, items: list[str]):
         super().__init__()
@@ -89,7 +91,7 @@ class ThemeSelectionScreen(ModalScreen):
 class SelectionListScreen(ModalScreen):
     """Generic screen to select an item from a list."""
 
-    BINDINGS = [Binding("escape", "dismiss", "Close")]
+    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "dismiss", "Close")]
 
     def __init__(self, title: str, items: list[str]):
         super().__init__()
@@ -146,8 +148,8 @@ class ModelItem(Static):
 class ModelListScreen(ModalScreen):
     """Screen to select an AI model with collapsible provider sections."""
 
-    BINDINGS = [Binding("escape", "dismiss", "Close")]
-    SPINNER_FRAMES = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "dismiss", "Close")]
+    SPINNER_FRAMES: ClassVar[list[str]] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
     is_loading = reactive(True)
     search_query = reactive("")

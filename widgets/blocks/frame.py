@@ -1,5 +1,7 @@
 """Block frame widget with chat/agent mode styling."""
 
+from typing import Any, ClassVar
+
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.reactive import reactive
@@ -76,7 +78,7 @@ class BlockFrame(Container):
     mode = reactive("chat")  # "chat" or "agent"
 
     # Box drawing characters for each mode
-    CHARS = {
+    CHARS: ClassVar[dict[str, Any]] = {
         "chat": {
             "tl": "┌",
             "tr": "┐",

@@ -66,7 +66,7 @@ class BlockHeader(Static):
 
     def compose(self) -> ComposeResult:
         if self.block.type == BlockType.COMMAND:
-            icon = "❯"
+            icon = ">"
             icon_class = "prompt-symbol prompt-symbol-cli"
             text_class = "header-text-cli"
             display_text = self.block.content_input
@@ -274,8 +274,8 @@ class BlockBody(Static):
             if line.startswith("┄") or line.startswith("─"):
                 result.append(line, style="dim")
             # Style command prompts (bold green)
-            elif line.startswith("❯ "):
-                result.append("❯ ", style="bold green")
+            elif line.startswith("> "):
+                result.append("> ", style="bold green")
                 result.append(line[2:], style="bold")
             elif line.startswith("$ "):
                 result.append("$ ", style="bold green")

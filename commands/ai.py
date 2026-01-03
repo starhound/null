@@ -170,9 +170,9 @@ class AICommands(CommandMixin):
         prompts = pm.list_prompts()
 
         lines = []
-        for key, name, desc, is_user in prompts:
+        for prompt_key, _name, desc, is_user in prompts:
             source = "[user]" if is_user else "[built-in]"
-            lines.append(f"  {key:15} {source:10} {desc[:40]}")
+            lines.append(f"  {prompt_key:15} {source:10} {desc[:40]}")
 
         await self.show_output("/prompts list", "\n".join(lines))
 

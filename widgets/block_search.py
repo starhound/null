@@ -1,7 +1,9 @@
 """Block content search widget (Ctrl+F)."""
 
+from typing import ClassVar
+
 from textual.app import ComposeResult
-from textual.binding import Binding
+from textual.binding import Binding, BindingType
 from textual.containers import Vertical
 from textual.message import Message
 from textual.reactive import reactive
@@ -11,7 +13,7 @@ from textual.widgets import Input, Label, Static
 class BlockSearch(Static, can_focus=True):
     """Overlay widget for searching within block content."""
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("up", "select_prev", "Previous", show=False),
         Binding("down", "select_next", "Next", show=False),
         Binding("escape", "cancel", "Cancel", show=False),
@@ -259,7 +261,7 @@ class BlockSearch(Static, can_focus=True):
     def _select_current(self):
         """Select the currently highlighted result and jump to it."""
         if self.results and 0 <= self.selected_index < len(self.results):
-            result = self.results[self.selected_index]
+            self.results[self.selected_index]
             self._scroll_to_current()
             # Keep search open to allow F3 navigation
         else:

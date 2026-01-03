@@ -1,5 +1,9 @@
 """Help screen."""
 
+from typing import ClassVar
+
+from textual.binding import BindingType
+
 from .base import (
     Binding,
     Button,
@@ -14,7 +18,7 @@ from .base import (
 class HelpScreen(ModalScreen):
     """Screen to show available commands."""
 
-    BINDINGS = [Binding("escape", "dismiss", "Close")]
+    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "dismiss", "Close")]
 
     def compose(self) -> ComposeResult:
         with Container(id="help-container"):

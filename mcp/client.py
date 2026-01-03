@@ -177,9 +177,9 @@ class MCPClient:
 
         try:
             return await asyncio.wait_for(future, timeout=30.0)
-        except TimeoutError:
+        except TimeoutError as e:
             self._pending_requests.pop(request_id, None)
-            raise Exception(f"Request timeout: {method}")
+            raise Exception(f"Request timeout: {method}") from e
 
     async def _send_notification(self, method: str, params: dict[str, Any]):
         """Send a notification (no response expected)."""

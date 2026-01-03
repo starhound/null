@@ -136,7 +136,7 @@ To use this prompt:
             return BUILTIN_PROMPTS[key]
         return self._user_prompts.get(key)
 
-    def get_prompt_content(self, key: str, provider: str = None) -> str:
+    def get_prompt_content(self, key: str, provider: str | None = None) -> str:
         """Get prompt content, with optional provider-specific overrides."""
         prompt = self.get_prompt(key)
         if not prompt:

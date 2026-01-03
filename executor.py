@@ -8,6 +8,17 @@ import struct
 import termios
 from collections.abc import Callable
 
+
+def _waitpid_nohang(pid: int) -> tuple[int, int]:
+    """Wrapper for os.waitpid with WNOHANG to use in executor."""
+    return os.waitpid(pid, os.WNOHANG)
+
+
+def _waitpid_blocking(pid: int) -> tuple[int, int]:
+    """Wrapper for os.waitpid (blocking) to use in executor."""
+    return os.waitpid(pid, 0)
+
+
 # Alternate screen buffer sequences (apps like vim)
 ALTERNATE_SCREEN_ENTER = [
     b"\x1b[?1049h",  # Most common (xterm) - vim, nano, less
@@ -184,7 +195,9 @@ class ExecutionEngine:
                     if not readable:
                         # No data available, check if process exited
                         try:
-                            result = os.waitpid(pid, os.WNOHANG)
+                            result = await loop.run_in_executor(
+                                None, _waitpid_nohang, pid
+                            )
                             if result[0] != 0:
                                 break
                         except ChildProcessError:
@@ -278,13 +291,13 @@ class ExecutionEngine:
                     pass
                 callback("\n[Cancelled]\n")
                 try:
-                    os.waitpid(pid, 0)
+                    await loop.run_in_executor(None, _waitpid_blocking, pid)
                 except ChildProcessError:
                     pass
                 return -1
 
             try:
-                _, status = os.waitpid(pid, 0)
+                _, status = await loop.run_in_executor(None, _waitpid_blocking, pid)
                 if os.WIFEXITED(status):
                     return os.WEXITSTATUS(status)
                 elif os.WIFSIGNALED(status):

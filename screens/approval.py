@@ -1,8 +1,10 @@
 """Tool approval screen for agent mode."""
 
 import json
+from typing import ClassVar
 
 from rich.syntax import Syntax
+from textual.binding import BindingType
 
 from .base import (
     Binding,
@@ -49,7 +51,7 @@ class ToolApprovalScreen(ModalScreen):
     - Cancel: Stop the entire agent loop
     """
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("escape", "cancel", "Cancel"),
         Binding("enter", "approve", "Approve"),
         Binding("a", "approve_all", "Approve All"),

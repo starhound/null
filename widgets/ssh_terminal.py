@@ -55,7 +55,7 @@ class SSHTerminal(Widget):
     async def _start_ssh(self):
         """Connect and start receiving data."""
         try:
-            stdin, stdout, stderr = await self.session.start_shell(
+            stdin, stdout, _stderr = await self.session.start_shell(
                 cols=self.size.width, lines=self.size.height
             )
             self._stdin = stdin

@@ -1,5 +1,7 @@
+from typing import ClassVar
+
 from textual.app import ComposeResult
-from textual.binding import Binding
+from textual.binding import Binding, BindingType
 from textual.containers import Vertical
 from textual.message import Message
 from textual.reactive import reactive
@@ -9,7 +11,7 @@ from textual.widgets import Input, Label, Static
 class HistorySearch(Static, can_focus=True):
     """Overlay widget for searching command history (Ctrl+R style)."""
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("up", "select_prev", "Previous", show=False),
         Binding("down", "select_next", "Next", show=False),
         Binding("escape", "cancel", "Cancel", show=False),

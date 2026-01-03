@@ -22,10 +22,10 @@ class CohereProvider(LLMProvider):
                 import cohere
 
                 self._client = cohere.AsyncClientV2(api_key=self.api_key)
-            except ImportError:
+            except ImportError as e:
                 raise ImportError(
                     "cohere package required. Install with: pip install cohere"
-                )
+                ) from e
         return self._client
 
     def supports_tools(self) -> bool:

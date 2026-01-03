@@ -1,8 +1,10 @@
 """Main application module for Null terminal."""
 
 from pathlib import Path
+from typing import ClassVar
 
 from textual.app import App, ComposeResult
+from textual.binding import BindingType
 from textual.containers import Container
 from textual.widgets import Footer, Label, TextArea
 
@@ -35,7 +37,7 @@ class NullApp(App):
 
     CSS_PATH = "styles/main.tcss"
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         ("escape", "cancel_operation", "Cancel"),
         ("escape", "cancel_operation", "Cancel"),
         # ("ctrl+c", "smart_quit", "Quit"),  # Handled in on_key to allow terminal capture
@@ -331,19 +333,6 @@ class NullApp(App):
                     Config.set("ai.provider", provider_name)
                     self.notify(f"Provider switched to {provider_name}")
 
-                    provider_config = {
-                        "provider": provider_name,
-                        "api_key": result.get("api_key")
-                        or Config.get(f"ai.{provider_name}.api_key"),
-                        "endpoint": result.get("endpoint")
-                        or Config.get(f"ai.{provider_name}.endpoint"),
-                        "region": result.get("region")
-                        or Config.get(f"ai.{provider_name}.region"),
-                        "model": result.get("model")
-                        or Config.get(f"ai.{provider_name}.model"),
-                        "api_version": Config.get(f"ai.{provider_name}.api_version"),
-                    }
-
                     try:
                         # Refresh config loading
                         self.config = Config.load_all()
@@ -431,7 +420,7 @@ class NullApp(App):
         # Format: "key - description" for display
         display_items = []
         key_map = {}
-        for key, name, desc, is_user in prompts_list:
+        for key, name, _desc, is_user in prompts_list:
             prefix = "[user] " if is_user else ""
             display = f"{prefix}{name}"
             display_items.append(display)
@@ -625,16 +614,21 @@ class NullApp(App):
             self.notify("Copied to clipboard")
         except ImportError:
             # Fallback: try to use xclip/xsel on Linux or pbcopy on macOS
+            import asyncio
             import subprocess
             import sys
 
             try:
                 if sys.platform == "darwin":
-                    subprocess.run(
-                        ["pbcopy"], input=message.content.encode(), check=True
+                    await asyncio.to_thread(
+                        subprocess.run,
+                        ["pbcopy"],
+                        input=message.content.encode(),
+                        check=True,
                     )
                 else:
-                    subprocess.run(
+                    await asyncio.to_thread(
+                        subprocess.run,
                         ["xclip", "-selection", "clipboard"],
                         input=message.content.encode(),
                         check=True,
@@ -683,51 +677,8 @@ class NullApp(App):
 
         self.notify(f"Running {language} code...")
 
-        # Execute the code
-        output, exit_code = await execute_code(code, language)
-
-        # Create a system block to show the output
-        result_title = f"Code Execution ({language})"
-        # ... (rest of method)
-
-    async def on_stop_button_pressed(self, message):
-        """Handle stop button click from blocks."""
-        from widgets.blocks.parts import StopButton
-
-        if not isinstance(message, StopButton.Pressed):
-            return
-
-        block_id = message.block_id
-        self.notify(f"Stopping block {block_id[:8]}...")
-
-        # Case 1: Active AI Worker
-        # We generally only have one active AI worker at a time in this architecture
-        if self._active_worker and self._active_worker.is_running:
-            # We assume the stop button pressed corresponds to the active worker
-            # In a multi-worker future, we'd need to map block_id -> worker
-            self._ai_cancelled = True
-            self._active_worker.cancel()
-
-            # Update the AI block state
-            block = next((b for b in self.blocks if b.id == block_id), None)
-            if block:
-                block.is_running = False
-                widget = self._find_widget_for_block(block_id)
-                if widget:
-                    widget.set_loading(False)
-
-            self.notify("AI generation stopped", severity="warning")
-            return
-
-        # Case 2: CLI Process
-        # Check if it's a known process
-        if self.process_manager.is_running(block_id):
-            self.process_manager.stop(block_id)
-            self.notify("Process stopped", severity="warning")
-            return
-
-        # Fallback
-        self.notify("No active process found for this block", severity="warning")
+        # Execute the code (output and exit_code unused - showing result handled elsewhere)
+        await execute_code(code, language)
 
     async def on_code_block_widget_save_code_requested(self, message):
         """Handle save code button click from code blocks."""

@@ -1,9 +1,10 @@
 """Command palette widget for quick action access."""
 
 from dataclasses import dataclass
+from typing import ClassVar
 
 from textual.app import ComposeResult
-from textual.binding import Binding
+from textual.binding import Binding, BindingType
 from textual.containers import Vertical
 from textual.message import Message
 from textual.reactive import reactive
@@ -92,7 +93,7 @@ class PaletteItem(Static):
 class CommandPalette(Static, can_focus=True):
     """Command palette overlay for quick action access (Ctrl+P)."""
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("up", "select_prev", "Previous", show=False),
         Binding("down", "select_next", "Next", show=False),
         Binding("escape", "close", "Close", show=False),

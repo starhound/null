@@ -313,10 +313,10 @@ class StorageManager:
         alias: str,
         hostname: str,
         port: int = 22,
-        username: str = None,
-        key_path: str = None,
-        password: str = None,
-        jump_host: str = None,
+        username: str | None = None,
+        key_path: str | None = None,
+        password: str | None = None,
+        jump_host: str | None = None,
     ):
         """Add or update an SSH host config."""
         cursor = self.conn.cursor()

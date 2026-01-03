@@ -5,6 +5,7 @@ import os
 import re
 import subprocess
 import tempfile
+from typing import ClassVar
 
 from textual import on
 from textual.app import ComposeResult
@@ -39,7 +40,7 @@ class CodeBlockWidget(Static):
             super().__init__()
 
     # Map of language aliases to canonical names
-    LANGUAGE_ALIASES = {
+    LANGUAGE_ALIASES: ClassVar[dict[str, str]] = {
         "py": "python",
         "python3": "python",
         "sh": "bash",
@@ -51,7 +52,15 @@ class CodeBlockWidget(Static):
     }
 
     # Languages that can be executed
-    EXECUTABLE_LANGUAGES = {"bash", "python", "sh", "shell", "zsh", "py", "python3"}
+    EXECUTABLE_LANGUAGES: ClassVar[set[str]] = {
+        "bash",
+        "python",
+        "sh",
+        "shell",
+        "zsh",
+        "py",
+        "python3",
+    }
 
     def __init__(self, code: str, language: str = ""):
         super().__init__()

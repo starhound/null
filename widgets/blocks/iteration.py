@@ -1,5 +1,7 @@
 """Iteration widget for agent mode think -> tool -> response cycles."""
 
+from typing import ClassVar
+
 from rich.markdown import Markdown
 from textual.app import ComposeResult
 from textual.containers import Container
@@ -14,7 +16,7 @@ from models import AgentIteration, ToolCallState
 class IterationHeader(Static):
     """Header showing iteration number and status."""
 
-    SPINNER_FRAMES = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+    SPINNER_FRAMES: ClassVar[list[str]] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
     def __init__(self, iteration: AgentIteration):
         super().__init__()
@@ -147,7 +149,7 @@ class ThinkingSection(Static):
 class ToolCallItem(Static):
     """Compact display of a single tool call within an iteration."""
 
-    SPINNER_FRAMES = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+    SPINNER_FRAMES: ClassVar[list[str]] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
     def __init__(self, tool_call: ToolCallState):
         super().__init__()

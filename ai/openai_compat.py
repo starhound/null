@@ -10,7 +10,7 @@ from .base import LLMProvider, Message, StreamChunk, TokenUsage, ToolCallData
 
 class OpenAICompatibleProvider(LLMProvider):
     def __init__(
-        self, api_key: str, base_url: str = None, model: str = "gpt-3.5-turbo"
+        self, api_key: str, base_url: str | None = None, model: str = "gpt-3.5-turbo"
     ):
         # Short connect timeout (3s) to fail fast if server isn't available
         # Longer read timeout (120s) for model generation

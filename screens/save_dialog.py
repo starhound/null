@@ -1,5 +1,9 @@
 """Save file dialog screen."""
 
+from typing import ClassVar
+
+from textual.binding import BindingType
+
 from .base import (
     Binding,
     Button,
@@ -15,7 +19,7 @@ from .base import (
 class SaveFileDialog(ModalScreen):
     """Dialog to prompt for a filename and save content."""
 
-    BINDINGS = [Binding("escape", "cancel", "Cancel")]
+    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "cancel", "Cancel")]
 
     def __init__(self, suggested_name: str = "code.txt", content: str = ""):
         super().__init__()

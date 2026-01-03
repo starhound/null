@@ -1,6 +1,7 @@
 """Tool accordion widget for agent mode tool calls."""
 
 import json
+from typing import ClassVar
 
 from rich.markdown import Markdown
 from rich.syntax import Syntax
@@ -15,7 +16,7 @@ from textual.widgets import Label, Static
 class ToolHeader(Static):
     """Header line for a tool call item."""
 
-    SPINNER_FRAMES = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+    SPINNER_FRAMES: ClassVar[list[str]] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
     def __init__(
         self,

@@ -1,4 +1,5 @@
 from textual.app import ComposeResult
+from textual.widgets import Label
 
 from models import BlockState
 
@@ -74,7 +75,7 @@ class CommandBlock(BaseBlockWidget):
         # Revert header icon
         try:
             icon_lbl = self.header.query_one(".prompt-symbol", Label)
-            icon_lbl.update("❯")
+            icon_lbl.update(">")
             icon_lbl.remove_class("prompt-symbol-tui")
         except Exception:
             pass

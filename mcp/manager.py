@@ -140,8 +140,8 @@ class MCPManager:
         self,
         name: str,
         command: str,
-        args: list[str] = None,
-        env: dict[str, str] = None,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
     ) -> MCPServerConfig:
         """Add a new MCP server."""
         return self.config.add_server(name, command, args, env)
@@ -150,7 +150,8 @@ class MCPManager:
         """Remove an MCP server."""
         # Disconnect first if connected
         if name in self.clients:
-            asyncio.create_task(self.disconnect_server(name))
+            # Store task reference to prevent garbage collection
+            self._disconnect_task = asyncio.create_task(self.disconnect_server(name))
         return self.config.remove_server(name)
 
     def toggle_server(self, name: str) -> bool | None:

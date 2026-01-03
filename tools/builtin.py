@@ -58,21 +58,24 @@ async def read_file(path: str, max_lines: int | None = None) -> str:
         if not os.path.isfile(expanded):
             return f"[Not a file: {path}]"
 
-        with open(expanded, encoding="utf-8", errors="replace") as f:
-            if max_lines:
-                lines = []
-                for i, line in enumerate(f):
-                    if i >= max_lines:
-                        lines.append(f"\n... (truncated at {max_lines} lines)")
-                        break
-                    lines.append(line)
-                return "".join(lines)
-            else:
-                content = f.read()
-                # Truncate very large files
-                if len(content) > 50000:
-                    return content[:50000] + "\n... (truncated at 50000 chars)"
-                return content
+        def _read_file_sync():
+            with open(expanded, encoding="utf-8", errors="replace") as f:
+                if max_lines:
+                    lines = []
+                    for i, line in enumerate(f):
+                        if i >= max_lines:
+                            lines.append(f"\n... (truncated at {max_lines} lines)")
+                            break
+                        lines.append(line)
+                    return "".join(lines)
+                else:
+                    content = f.read()
+                    # Truncate very large files
+                    if len(content) > 50000:
+                        return content[:50000] + "\n... (truncated at 50000 chars)"
+                    return content
+
+        return await asyncio.to_thread(_read_file_sync)
 
     except Exception as e:
         return f"[Error reading file: {e!s}]"
@@ -85,13 +88,16 @@ async def write_file(path: str, content: str) -> str:
         if not os.path.isabs(expanded):
             expanded = os.path.abspath(expanded)
 
-        # Create parent directories if needed
-        os.makedirs(os.path.dirname(expanded), exist_ok=True)
+        def _write_file_sync():
+            # Create parent directories if needed
+            os.makedirs(os.path.dirname(expanded), exist_ok=True)
 
-        with open(expanded, "w", encoding="utf-8") as f:
-            f.write(content)
+            with open(expanded, "w", encoding="utf-8") as f:
+                f.write(content)
 
-        return f"[Successfully wrote {len(content)} bytes to {path}]"
+            return f"[Successfully wrote {len(content)} bytes to {path}]"
+
+        return await asyncio.to_thread(_write_file_sync)
 
     except Exception as e:
         return f"[Error writing file: {e!s}]"

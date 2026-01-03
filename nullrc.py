@@ -3,6 +3,7 @@
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from typing import ClassVar
 
 
 @dataclass
@@ -50,7 +51,7 @@ class ProjectConfig:
 class NullrcManager:
     """Manages .nullrc files in project directories."""
 
-    NULLRC_NAMES = [".nullrc", ".nullrc.json", "nullrc.json"]
+    NULLRC_NAMES: ClassVar[list[str]] = [".nullrc", ".nullrc.json", "nullrc.json"]
 
     def __init__(self):
         self._cache: dict[str, ProjectConfig] = {}

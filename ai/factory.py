@@ -1,6 +1,6 @@
 """AI provider factory."""
 
-from typing import Any
+from typing import Any, ClassVar
 
 from .anthropic import AnthropicProvider
 from .azure import AzureProvider
@@ -16,7 +16,7 @@ class AIFactory:
     """Factory for creating AI provider instances."""
 
     # Provider metadata for UI display
-    PROVIDERS = {
+    PROVIDERS: ClassVar[dict[str, dict[str, Any]]] = {
         "ollama": {
             "name": "Ollama",
             "description": "Local models via Ollama",
@@ -155,7 +155,9 @@ class AIFactory:
     def get_provider(config: dict[str, Any]) -> LLMProvider:
         """Create a provider instance from config."""
         provider_name = config.get("provider", "ollama")
-        get = lambda k, d: AIFactory._get_or_default(config, k, d)
+
+        def get(k: str, d: Any) -> Any:
+            return AIFactory._get_or_default(config, k, d)
 
         # =====================================================================
         # Local / Self-hosted

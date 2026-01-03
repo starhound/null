@@ -14,7 +14,7 @@ class GoogleVertexProvider(LLMProvider):
         project_id: str,
         location: str = "us-central1",
         model: str = "gemini-2.0-flash",
-        api_key: str = None,
+        api_key: str | None = None,
     ):
         self.project_id = project_id.strip() if project_id else ""
         self.location = location
@@ -38,11 +38,11 @@ class GoogleVertexProvider(LLMProvider):
                         vertexai=True, project=self.project_id, location=self.location
                     )
 
-            except ImportError:
+            except ImportError as e:
                 raise ImportError(
                     "google-genai package required. "
                     "Install with: pip install google-genai"
-                )
+                ) from e
         return self._client
 
     def _build_contents(
@@ -121,21 +121,8 @@ class GoogleVertexProvider(LLMProvider):
             # Convert tools (Reuse our helper, it produces valid JSON schema for Tools)
             google_tools = self._convert_tools(tools)
 
-            # With new SDK, we pass tools in config
-            # Create Tool objects? Or just pass dicts?
-            # SDK usually accepts dicts matching the schema.
-            # However, the top level tool structure is usually:
-            # tools=[Tool(function_declarations=[...])] or just list of FunctionDeclaration
-
-            # Let's try passing dictionary structure matching the API
-            tool_obj = {
-                "function_declarations": [t for tool in google_tools for t in [tool]]
-            }
-            # Wait, our _convert_tools returns list of definitions.
-            # We need to wrap them
-
-            # New SDK format might be different.
-            # safe bet: pass list of tools in config
+            # With new SDK, we pass tools in config as Tool objects
+            # The types.Tool wraps function_declarations for proper SDK format
 
             # Construct config
             contents, sys_prompt = self._build_contents(prompt, messages, system_prompt)

@@ -20,7 +20,7 @@ class SSHAddScreen(ModalScreen):
         max-height: 90%;
         background: $surface;
         border: thick $primary;
-        padding: 0 1; 
+        padding: 0 1;
         /* Removed vertical padding to let content drive height */
     }
 
@@ -41,7 +41,7 @@ class SSHAddScreen(ModalScreen):
         color: $text-muted;
         height: 1;
     }
-    
+
     /* Inputs */
     #ssh-form Input {
         margin: 0;
@@ -51,7 +51,7 @@ class SSHAddScreen(ModalScreen):
         padding: 0 1;
         min-height: 1;
     }
-    
+
     /* Creds row grid */
     #creds-row {
         height: auto;
@@ -59,7 +59,7 @@ class SSHAddScreen(ModalScreen):
         grid-gutter: 1;
         margin-top: 0;
     }
-    
+
     #creds-row Vertical {
         height: auto;
         width: 100%;

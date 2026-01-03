@@ -159,7 +159,7 @@ class InputHandler:
         if block.content_output:
             # Add visual separator between command chains
             block.content_output += f"\n{self.COMMAND_SEPARATOR}\n\n"
-        block.content_output += f"❯ {cmd}\n"
+        block.content_output += f"> {cmd}\n"
         widget.update_output()
         widget.scroll_visible()
 

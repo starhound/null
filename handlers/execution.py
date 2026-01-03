@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from app import NullApp
+    from models import AgentIteration
 
 from ai.base import TokenUsage, calculate_cost
 from models import BlockState
@@ -1005,7 +1006,7 @@ class ExecutionHandler:
 
         executor = ExecutionEngine()
 
-        # Start command execution
+        # Start command execution and keep reference to prevent GC
         exec_task = asyncio.create_task(
             executor.run_command_and_get_rc(
                 block.content_input,
@@ -1014,6 +1015,7 @@ class ExecutionHandler:
                 raw_callback=raw_callback,
             )
         )
+        self._current_exec_task = exec_task  # Store reference to prevent GC
 
         # Wait briefly for process to start, then register it
         await asyncio.sleep(0.01)
@@ -1071,7 +1073,7 @@ class ExecutionHandler:
 
         executor = ExecutionEngine()
 
-        # Start execution with full TUI support
+        # Start execution with full TUI support and keep reference to prevent GC
         exec_task = asyncio.create_task(
             executor.run_command_and_get_rc(
                 cmd,
@@ -1080,6 +1082,7 @@ class ExecutionHandler:
                 raw_callback=raw_callback,
             )
         )
+        self._current_exec_task = exec_task  # Store reference to prevent GC
 
         # Wait briefly for process to start to register it
         await asyncio.sleep(0.01)

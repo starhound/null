@@ -40,7 +40,7 @@ class Config:
                 "agent_mode": agent_mode,
                 "active_prompt": sm.get_config("ai.active_prompt", "default"),
                 "prompts": {
-                    "default": """You are an autonomous AI agent running in a Linux terminal. 
+                    "default": """You are an autonomous AI agent running in a Linux terminal.
 You have access to a tool to execute shell commands. use it to answer the user's request.
 To execute a command, you MUST output a markdown code block with the language 'bash' or 'sh'.
 Example:
@@ -50,7 +50,7 @@ ls -la
 """,
                     "pirate": "You are a salty pirate styling your answers with nautical slang. You are helpful but gritty.",
                     "concise": "You are a minimal command-line tool. Output only the requested command or brief explanation.",
-                    "agent": """You are an autonomous AI agent running in a Linux terminal. 
+                    "agent": """You are an autonomous AI agent running in a Linux terminal.
 You have access to a tool to execute shell commands. use it to answer the user's request.
 
 To execute a command, you MUST output a markdown code block with the language 'bash' or 'sh'.
@@ -59,8 +59,8 @@ Example:
 ls -la
 ```
 
-The system will execute the code block and provide you with the output. 
-Use this to explore the system, check files, and perform tasks. 
+The system will execute the code block and provide you with the output.
+Use this to explore the system, check files, and perform tasks.
 Do not assume standard output; check it by running commands.
 """,
                 },

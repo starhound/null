@@ -111,7 +111,7 @@ class StatusBar(Static):
             indicator.remove_class("mode-cli", "mode-ai", "mode-agent")
 
             if self.mode == "CLI":
-                indicator.update("❯ CLI")
+                indicator.update("> CLI")
                 indicator.add_class("mode-cli")
             else:
                 if self.agent_mode:

@@ -233,9 +233,9 @@ class CommandSuggester(Static):
             prompt = f"""Given the terminal history and current partial input '{text}', suggest the complete single line command the user intends to type.
             History:
             {context_str}
-            
+
             Current Input: {text}
-            
+
             Reply ONLY with the suggested command itself, no reasoning.
             """
 

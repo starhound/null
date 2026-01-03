@@ -1,5 +1,9 @@
 """Providers management screen."""
 
+from typing import ClassVar
+
+from textual.binding import BindingType
+
 from ai.factory import AIFactory
 from config import Config
 
@@ -71,7 +75,7 @@ class ProviderRow(Horizontal):
 class ProvidersScreen(ModalScreen):
     """Screen to manage AI providers."""
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("escape", "dismiss", "Close"),
         Binding("up", "focus_prev", "Previous", show=False),
         Binding("down", "focus_next", "Next", show=False),

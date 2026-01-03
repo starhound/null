@@ -3,7 +3,7 @@
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 
 @dataclass
@@ -38,7 +38,7 @@ class MCPServerConfig:
 class MCPConfig:
     """Manages MCP configuration from ~/.null/mcp.json"""
 
-    DEFAULT_CONFIG = {"mcpServers": {}}
+    DEFAULT_CONFIG: ClassVar[dict[str, Any]] = {"mcpServers": {}}
 
     def __init__(self):
         self.config_path = Path.home() / ".null" / "mcp.json"
@@ -80,8 +80,8 @@ class MCPConfig:
         self,
         name: str,
         command: str,
-        args: list[str] = None,
-        env: dict[str, str] = None,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
     ) -> MCPServerConfig:
         """Add a new MCP server configuration."""
         server = MCPServerConfig(

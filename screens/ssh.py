@@ -1,4 +1,7 @@
+from typing import ClassVar
+
 from textual.app import ComposeResult
+from textual.binding import BindingType
 from textual.screen import Screen
 
 from utils.ssh_client import SSHSession
@@ -8,7 +11,7 @@ from widgets.ssh_terminal import SSHTerminal
 class SSHScreen(Screen):
     """Screen for interactive SSH session."""
 
-    BINDINGS = [("ctrl+d", "detach", "Detach Session")]
+    BINDINGS: ClassVar[list[BindingType]] = [("ctrl+d", "detach", "Detach Session")]
 
     def __init__(self, session: SSHSession, alias: str):
         super().__init__()

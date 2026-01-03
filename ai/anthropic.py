@@ -22,10 +22,10 @@ class AnthropicProvider(LLMProvider):
                 import anthropic
 
                 self._client = anthropic.AsyncAnthropic(api_key=self.api_key)
-            except ImportError:
+            except ImportError as e:
                 raise ImportError(
                     "anthropic package required. Install with: pip install anthropic"
-                )
+                ) from e
         return self._client
 
     def supports_tools(self) -> bool:

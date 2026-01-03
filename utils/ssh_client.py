@@ -9,9 +9,9 @@ class SSHSession:
         self,
         hostname: str,
         port: int = 22,
-        username: str = None,
-        password: str = None,
-        key_path: str = None,
+        username: str | None = None,
+        password: str | None = None,
+        key_path: str | None = None,
         tunnel: Optional["SSHSession"] = None,
     ):
         self.hostname = hostname

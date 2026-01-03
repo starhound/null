@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 from textual.reactive import reactive
@@ -11,7 +13,7 @@ from utils.text import make_links_clickable
 class ThinkingWidget(Static):
     """Animated widget for AI response with peek preview and expand toggle."""
 
-    SPINNER_FRAMES = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+    SPINNER_FRAMES: ClassVar[list[str]] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
     thinking_text = reactive("")
     is_loading = reactive(True)
@@ -208,7 +210,7 @@ class ThinkingWidget(Static):
             try:
                 content = self.query_one("#peek-content", Static)
                 content.update(f"[ERROR] {e}")
-            except:
+            except Exception:
                 pass
 
     def force_render(self):

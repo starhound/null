@@ -1,5 +1,8 @@
 """Provider configuration screen."""
 
+from typing import Any, ClassVar
+
+from textual.binding import BindingType
 from textual.reactive import reactive
 from textual.timer import Timer
 
@@ -9,13 +12,13 @@ from .base import Binding, Button, ComposeResult, Container, Input, Label, Modal
 class ProviderConfigScreen(ModalScreen):
     """Screen to configure a provider with connection validation."""
 
-    BINDINGS = [Binding("escape", "dismiss", "Close")]
-    SPINNER_FRAMES = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "dismiss", "Close")]
+    SPINNER_FRAMES: ClassVar[list[str]] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
     is_connecting = reactive(False)
 
     # Provider-specific field configurations
-    PROVIDER_FIELDS = {
+    PROVIDER_FIELDS: ClassVar[dict[str, Any]] = {
         # Local providers
         "ollama": {
             "endpoint": ("Endpoint URL", "http://localhost:11434", False),

@@ -171,7 +171,7 @@ class AIManager:
         for result in results:
             if isinstance(result, Exception):
                 continue
-            provider_name, models, error = result
+            provider_name, models, _error = result
             if models:  # Only include providers with models
                 models_by_provider[provider_name] = models
 

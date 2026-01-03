@@ -1,4 +1,7 @@
+from typing import ClassVar
+
 from textual.app import ComposeResult
+from textual.binding import BindingType
 from textual.containers import Container, Vertical, VerticalScroll
 from textual.widgets import (
     Button,
@@ -13,7 +16,7 @@ from .base import Binding, ModalScreen
 class ToolsScreen(ModalScreen):
     """Screen to list active MCP servers and tools."""
 
-    BINDINGS = [Binding("escape", "dismiss", "Close")]
+    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "dismiss", "Close")]
 
     def compose(self) -> ComposeResult:
         with Container(id="tools-container"):
@@ -23,10 +26,6 @@ class ToolsScreen(ModalScreen):
                 yield Label("Loading...", id="tools-loading")
 
             yield Button("Close", variant="default", id="close_btn")
-
-    async def on_mount(self):
-        """Load tools on mount."""
-        self.run_worker(self._load_tools())
 
     async def _load_tools(self):
         """Fetch tools from MCP manager."""
@@ -129,8 +128,8 @@ class ToolsScreen(ModalScreen):
         except Exception as e:
             self.notify(f"Error loading tools: {e}", severity="error")
 
-    # Override on_mount to call the refactored version
     async def on_mount(self):
+        """Load tools on mount."""
         self.run_worker(self._load_tools_refactored())
 
     def on_button_pressed(self, event: Button.Pressed):

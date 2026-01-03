@@ -1,5 +1,9 @@
 """Settings configuration screen."""
 
+from typing import ClassVar
+
+from textual.binding import BindingType
+
 from .base import (
     Binding,
     Button,
@@ -22,7 +26,7 @@ from .base import (
 class ConfigScreen(ModalScreen):
     """Settings configuration screen with tabbed sections."""
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("escape", "cancel", "Cancel"),
         Binding("ctrl+s", "save", "Save"),
     ]
@@ -314,7 +318,7 @@ class ConfigScreen(ModalScreen):
 
         # Autocomplete Provider override (optional)
         # Re-use providers list
-        ac_providers = [("Default (Same as Chat)", "")] + providers
+        ac_providers = [("Default (Same as Chat)", ""), *providers]
         yield from self._setting_row(
             "ai.autocomplete_provider",
             "Autocomplete Provider",

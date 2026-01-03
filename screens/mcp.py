@@ -1,14 +1,18 @@
 """MCP server configuration screen."""
 
+from typing import ClassVar
+
+from textual.binding import BindingType
+
 from .base import Binding, Button, ComposeResult, Container, Input, Label, ModalScreen
 
 
 class MCPServerConfigScreen(ModalScreen):
     """Screen to add/edit an MCP server configuration."""
 
-    BINDINGS = [Binding("escape", "dismiss", "Close")]
+    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "dismiss", "Close")]
 
-    def __init__(self, name: str = "", current_config: dict = None):
+    def __init__(self, name: str = "", current_config: dict | None = None):
         super().__init__()
         self.server_name = name
         self.current_config = current_config or {}

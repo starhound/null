@@ -1,7 +1,8 @@
 import re
 from pathlib import Path
+from typing import ClassVar
 
-from textual.binding import Binding
+from textual.binding import Binding, BindingType
 from textual.events import Click
 from textual.message import Message
 from textual.widgets import TextArea
@@ -18,7 +19,7 @@ class InputController(TextArea):
     Supports Shift+Enter for newlines, Enter to submit.
     """
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("enter", "submit", "Submit", priority=True),
         Binding("shift+enter", "newline", "New Line", priority=True),
         Binding("ctrl+shift+c", "copy_selection", "Copy", priority=True),

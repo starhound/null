@@ -74,12 +74,12 @@ class MCPCommands(CommandMixin):
 
         lines = []
         for tool in tools:
-            desc = (
+            desc_text = (
                 tool.description[:40] + "..."
                 if len(tool.description) > 40
                 else tool.description
             )
-            lines.append(f"  {tool.name:25} {tool.server_name:15} {desc}")
+            lines.append(f"  {tool.name:25} {tool.server_name:15} {desc_text}")
         await self.show_output("/mcp tools", "\n".join(lines))
 
     async def _mcp_add(self):
