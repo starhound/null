@@ -127,6 +127,7 @@ class ThinkingSection(Static):
         height: 1;
         padding: 0 2;
         color: $text-muted;
+        layout: horizontal;
     }
     ThinkingSection .thinking-toggle:hover {
         background: $surface-lighten-1 15%;
@@ -196,13 +197,17 @@ class ThinkingSection(Static):
             pass
 
     def on_click(self, event: Click) -> None:
-        # Toggle on header click
-        if event.y == 0:
+        # Toggle on header click - use first line detection
+        # The toggle container is the first row (height=1)
+        if event.y <= 0:
             self.collapsed = not self.collapsed
             event.stop()
 
     def update_content(self, content: str) -> None:
         """Update the thinking content."""
+        # Don't clear existing content with empty string
+        if not content and self.content:
+            return
         self.content = content
         try:
             static = self.query_one("#content", Static)

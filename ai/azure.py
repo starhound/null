@@ -1,17 +1,51 @@
-from typing import AsyncGenerator, List, Optional
-import os
+from typing import AsyncGenerator, List, Optional, Dict, Any
+import json
+import httpx
 from openai import AsyncAzureOpenAI
-from .base import LLMProvider, Message
+from .base import LLMProvider, Message, StreamChunk, ToolCallData, TokenUsage
+
 
 class AzureProvider(LLMProvider):
+    """Azure OpenAI provider with full tool calling support."""
+
     def __init__(self, endpoint: str, api_key: str, api_version: str, model: str):
         self.client = AsyncAzureOpenAI(
             azure_endpoint=endpoint,
             api_key=api_key,
-            api_version=api_version
+            api_version=api_version,
+            timeout=httpx.Timeout(120.0, connect=3.0)
         )
         self.deployment_name = model  # In Azure, model usually refers to deployment name
         self.model = model
+
+    def supports_tools(self) -> bool:
+        """Azure OpenAI deployments support tool calling."""
+        return True
+
+    def _build_messages(
+        self,
+        prompt: str,
+        messages: List[Message],
+        system_prompt: Optional[str]
+    ) -> List[Dict[str, Any]]:
+        """Build the messages array for the API call."""
+        if not system_prompt:
+            system_prompt = "You are a helpful AI assistant integrated into a terminal."
+
+        chat_messages: List[Dict[str, Any]] = [{"role": "system", "content": system_prompt}]
+
+        for msg in messages:
+            msg_dict: Dict[str, Any] = {"role": msg["role"]}
+            if "content" in msg:
+                msg_dict["content"] = msg["content"]
+            if "tool_calls" in msg:
+                msg_dict["tool_calls"] = msg["tool_calls"]
+            if "tool_call_id" in msg:
+                msg_dict["tool_call_id"] = msg["tool_call_id"]
+            chat_messages.append(msg_dict)
+
+        chat_messages.append({"role": "user", "content": prompt})
+        return chat_messages
 
     async def generate(
         self,
@@ -20,18 +54,7 @@ class AzureProvider(LLMProvider):
         system_prompt: Optional[str] = None
     ) -> AsyncGenerator[str, None]:
         """Generate response using Azure OpenAI with proper message format."""
-        if not system_prompt:
-            system_prompt = "You are a helpful AI assistant integrated into a terminal."
-
-        # Build messages array with system prompt first
-        chat_messages = [{"role": "system", "content": system_prompt}]
-
-        # Add conversation history
-        for msg in messages:
-            chat_messages.append({"role": msg["role"], "content": msg["content"]})
-
-        # Add current user prompt
-        chat_messages.append({"role": "user", "content": prompt})
+        chat_messages = self._build_messages(prompt, messages, system_prompt)
 
         try:
             stream = await self.client.chat.completions.create(
@@ -45,13 +68,123 @@ class AzureProvider(LLMProvider):
         except Exception as e:
             yield f"Error: {str(e)}"
 
+    async def generate_with_tools(
+        self,
+        prompt: str,
+        messages: List[Message],
+        tools: List[Dict[str, Any]],
+        system_prompt: Optional[str] = None
+    ) -> AsyncGenerator[StreamChunk, None]:
+        """Generate response with tool calling support."""
+        chat_messages = self._build_messages(prompt, messages, system_prompt)
+
+        try:
+            # Prepare API call parameters
+            params: Dict[str, Any] = {
+                "model": self.deployment_name,
+                "messages": chat_messages,
+                "stream": True,
+            }
+
+            # Only add tools if provided
+            if tools:
+                params["tools"] = tools
+                params["tool_choice"] = "auto"
+
+            # Try with stream_options first (for usage tracking)
+            try:
+                stream = await self.client.chat.completions.create(
+                    **params,
+                    stream_options={"include_usage": True}
+                )
+            except Exception:
+                # Some Azure deployments may not support stream_options
+                stream = await self.client.chat.completions.create(**params)
+
+            # Track tool calls being built up across chunks
+            current_tool_calls: Dict[int, Dict[str, Any]] = {}
+            text_buffer = ""
+            usage_data: Optional[TokenUsage] = None
+
+            async for chunk in stream:
+                # Check for usage data (comes in final chunk)
+                if hasattr(chunk, 'usage') and chunk.usage:
+                    usage_data = TokenUsage(
+                        input_tokens=chunk.usage.prompt_tokens or 0,
+                        output_tokens=chunk.usage.completion_tokens or 0
+                    )
+
+                if not chunk.choices:
+                    continue
+
+                delta = chunk.choices[0].delta
+
+                # Handle text content
+                if delta.content:
+                    text_buffer += delta.content
+                    yield StreamChunk(text=delta.content)
+
+                # Handle tool calls
+                if delta.tool_calls:
+                    for tc in delta.tool_calls:
+                        idx = tc.index
+                        if idx not in current_tool_calls:
+                            current_tool_calls[idx] = {
+                                "id": tc.id or "",
+                                "name": "",
+                                "arguments": ""
+                            }
+
+                        if tc.id:
+                            current_tool_calls[idx]["id"] = tc.id
+                        if tc.function:
+                            if tc.function.name:
+                                current_tool_calls[idx]["name"] = tc.function.name
+                            if tc.function.arguments:
+                                current_tool_calls[idx]["arguments"] += tc.function.arguments
+
+                # Check if this is the final chunk
+                if chunk.choices[0].finish_reason:
+                    tool_calls = []
+                    for tc_data in current_tool_calls.values():
+                        try:
+                            args = json.loads(tc_data["arguments"]) if tc_data["arguments"] else {}
+                        except json.JSONDecodeError:
+                            args = {}
+
+                        tool_calls.append(ToolCallData(
+                            id=tc_data["id"],
+                            name=tc_data["name"],
+                            arguments=args
+                        ))
+
+                    yield StreamChunk(
+                        text="",
+                        tool_calls=tool_calls,
+                        is_complete=True,
+                        usage=usage_data
+                    )
+
+        except Exception as e:
+            yield StreamChunk(text=f"Error: {str(e)}", is_complete=True)
+
     async def list_models(self) -> List[str]:
-        # Azure doesn't easily list deployments via standard list_models in the same way,
-        # but we can try to list models if permissible.
-        # Often in Azure you just have specific deployments.
-        return [self.deployment_name] 
+        """Return available Azure deployments.
+
+        Azure doesn't easily list deployments via standard API.
+        Returns the configured deployment name.
+        """
+        return [self.deployment_name]
 
     async def validate_connection(self) -> bool:
-        # A bit tricky without a simple ping, but let's assume if client init worked it's okay-ish
-        # or try a dummy completion.
-        return True
+        """Validate connection by attempting a simple API call."""
+        try:
+            # Try to make a minimal request to validate connection
+            await self.client.chat.completions.create(
+                model=self.deployment_name,
+                messages=[{"role": "user", "content": "Hi"}],
+                max_tokens=1
+            )
+            return True
+        except Exception:
+            return False

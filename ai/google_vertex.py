@@ -136,10 +136,22 @@ class GoogleVertexProvider(LLMProvider):
             # Construct config
             contents, sys_prompt = self._build_contents(prompt, messages, system_prompt)
             
+            # Enable thinking for Gemini 2.5 models
+            thinking_config = None
+            if "2.5" in self.model or "2.5" in str(self.model):
+                try:
+                    thinking_config = types.ThinkingConfig(
+                        include_thoughts=True
+                    )
+                except Exception:
+                    # ThinkingConfig may not be available in older SDK versions
+                    pass
+            
             config = types.GenerateContentConfig(
                 temperature=0.7,
                 system_instruction=sys_prompt if sys_prompt else None,
-                tools=[types.Tool(function_declarations=google_tools)]
+                tools=[types.Tool(function_declarations=google_tools)],
+                thinking_config=thinking_config
             )
 
             # Use client.aio for async operations
@@ -151,6 +163,7 @@ class GoogleVertexProvider(LLMProvider):
 
             async for chunk in response:
                 text_content = ""
+                thinking_content = ""
                 tool_calls = []
                 
                 # Check for candidates / parts
@@ -159,7 +172,21 @@ class GoogleVertexProvider(LLMProvider):
                     for cand in chunk.candidates:
                         if cand.content and cand.content.parts:
                             for part in cand.content.parts:
-                                if part.text:
+                                # Check for thinking/thought content (Gemini 2.5 native thinking)
+                                is_thought = False
+                                if hasattr(part, 'thought') and part.thought:
+                                    if isinstance(part.thought, bool):
+                                        # It's a flag, content is in text
+                                        if part.text:
+                                            thinking_content += part.text
+                                        is_thought = True
+                                    else:
+                                        # It's likely the content itself
+                                        thinking_content += str(part.thought)
+                                        is_thought = True
+                                
+                                # Only add to main text if it wasn't a thought
+                                if part.text and not is_thought:
                                     text_content += part.text
                                 
                                 # Check for function call
@@ -190,8 +217,14 @@ class GoogleVertexProvider(LLMProvider):
                         output_tokens=chunk.usage_metadata.candidates_token_count
                     )
 
+                # Include thinking content with <think> tags if present
+                combined_text = ""
+                if thinking_content:
+                    combined_text = f"<think>{thinking_content}</think>\n"
+                combined_text += text_content
+
                 yield StreamChunk(
-                    text=text_content,
+                    text=combined_text,
                     tool_calls=tool_calls,
                     usage=usage
                 )
@@ -260,12 +293,19 @@ class GoogleVertexProvider(LLMProvider):
             models = []
             # V2 SDK paging list - using aio
             async for model in await client.aio.models.list(config={"page_size": 100}):
-                if "generateContent" in model.supported_generation_methods:
-                     name = model.name.replace("models/", "")
-                     models.append(name)
-            return models
-        except Exception:
+                name = model.name.replace("models/", "")
+                # Filter for Gemini generation models (skip embedding models)
+                if name.startswith("gemini"):
+                    models.append(name)
+            return sorted(models, reverse=True)  # Newest first
+        except Exception as e:
+            # Log the error for debugging
+            import sys
+            print(f"[GoogleVertexProvider] list_models failed: {e}", file=sys.stderr)
+            # Return common models as fallback
             return [
+                "gemini-2.5-pro",
+                "gemini-2.5-flash",
                 "gemini-2.0-flash",
                 "gemini-2.0-flash-lite",
                 "gemini-1.5-pro",

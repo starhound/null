@@ -56,8 +56,9 @@ class ExecutionWidget(Static):
 
     def on_click(self, event: Click):
         """Handle clicks."""
-        # Toggle on header click (but not on copy button)
-        if event.y == 0 and "copy-btn" not in str(event.target.classes):
+        # Toggle on header click (first row)
+        # The copy button has its own handler via @on(Click, "#copy-btn")
+        if event.y == 0:
             self.is_expanded = not self.is_expanded
             event.stop()
 

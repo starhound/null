@@ -230,6 +230,7 @@ NATIVE_THINKING_MODELS = [
     'o1-mini',
     'o3',
     'o3-mini',
+    'gemini-2.5',  # Gemini 2.5 has native thinking
 ]
 
 # Provider/model combinations that work well with JSON structured output
