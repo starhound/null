@@ -73,9 +73,13 @@ class ThinkingWidget(Static):
         if self.is_loading:
             self._spinner_timer = self.set_interval(0.08, self._animate_spinner)
             self._show_header(True)
+            self.remove_class("hidden")
         else:
-            self._show_header(False)
-            if self.thinking_text:
+            # Hide completely if no thinking content
+            if not self.thinking_text:
+                self.add_class("hidden")
+            else:
+                self._show_header(False)
                 self.call_later(self._init_complete_state)
 
     def _show_header(self, show: bool):
@@ -164,16 +168,18 @@ class ThinkingWidget(Static):
             peek = self.query_one("#peek-window", VerticalScroll)
             content = self.query_one("#peek-content", Static)
 
-            # Remove empty state when we have content
+            # Show/hide widget based on content
             if new_text:
+                self.remove_class("hidden")
                 if "empty" in peek.classes:
                     peek.remove_class("empty")
                 # Check for reasoning patterns in new content
                 self._check_for_reasoning(new_text)
-            
-            # DEBUG: Show what we're receiving
-            debug_info = f"[DEBUG] Chars: {len(new_text) if new_text else 0}"
-            
+            elif not self.is_loading:
+                # Hide if no content and not loading
+                self.add_class("hidden")
+                return
+
             # Throttle rendering for performance
             current_len = len(new_text) if new_text else 0
             delta = current_len - self._last_rendered_len
@@ -184,7 +190,7 @@ class ThinkingWidget(Static):
             from rich.markdown import Markdown
             # Make plain URLs clickable before rendering
             linkified_text = make_links_clickable(new_text) if new_text else ""
-            
+
             content.update(Markdown(linkified_text, code_theme="monokai"))
 
             # Auto-scroll to bottom to follow content
@@ -243,3 +249,6 @@ class ThinkingWidget(Static):
     def stop_loading(self):
         """Call when generation is complete."""
         self.is_loading = False
+        # Hide if no thinking content was generated
+        if not self.thinking_text:
+            self.add_class("hidden")

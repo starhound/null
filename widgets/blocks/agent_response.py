@@ -1,27 +1,26 @@
-"""AI Response block widget for chat mode (simple Q&A)."""
+"""Agent Response block widget for structured think → tool → response flow."""
 
 from textual.app import ComposeResult
 from textual import on
 
-from models import BlockState
+from models import BlockState, AgentIteration, ToolCallState
 from .base import BaseBlockWidget
 from .parts import BlockHeader, BlockMeta, BlockFooter
-from .thinking import ThinkingWidget
 from .execution import ExecutionWidget
 from .response import ResponseWidget
 from .actions import ActionBar, ActionButton
-from .tool_accordion import ToolAccordion
+from .iteration_container import IterationContainer
 
 
-class AIResponseBlock(BaseBlockWidget):
-    """Block widget for simple chat mode AI responses.
+class AgentResponseBlock(BaseBlockWidget):
+    """Block widget for agent mode responses with structured iterations.
 
-    Chat mode: Simple Q&A without structured iterations
-    - Optional thinking (for models that include <think> tags)
-    - Optional tool accordion (for single-shot tool calls)
-    - Response content
+    Agent mode displays:
+    - Iterations (each with thinking, tool calls, response fragments)
+    - Final response
+    - Execution output (for backwards compatibility)
 
-    For agent mode with structured iterations, use AgentResponseBlock.
+    This is distinct from AIResponseBlock which handles simple chat mode.
     """
 
     def __init__(self, block: BlockState):
@@ -30,9 +29,11 @@ class AIResponseBlock(BaseBlockWidget):
         # Create sub-widgets
         self.header = BlockHeader(block)
         self.meta_widget = BlockMeta(block)
-        self.thinking_widget = ThinkingWidget(block)
         self.exec_widget = ExecutionWidget(block)
-        self.tool_accordion = ToolAccordion(classes="empty")
+        self.iteration_container = IterationContainer(
+            show_thinking=True,
+            classes="" if block.iterations else "empty"
+        )
         self.response_widget = ResponseWidget(block)
 
         # Create action bar with meta info
@@ -46,8 +47,8 @@ class AIResponseBlock(BaseBlockWidget):
 
         self.footer_widget = BlockFooter(block)
 
-        # Apply chat mode class
-        self.add_class("mode-chat")
+        # Apply agent mode class
+        self.add_class("mode-agent")
 
     def _build_meta_text(self) -> str:
         """Build the metadata text for the action bar."""
@@ -71,69 +72,30 @@ class AIResponseBlock(BaseBlockWidget):
     def compose(self) -> ComposeResult:
         yield self.header
         yield self.meta_widget
-        yield self.thinking_widget
         yield self.exec_widget
-        yield self.tool_accordion
+        yield self.iteration_container
         yield self.response_widget
         yield self.action_bar
         if self.footer_widget._has_content():
             yield self.footer_widget
 
     def update_output(self, new_content: str = ""):
-        """Update the AI response display."""
+        """Update the response display."""
         full_text = self.block.content_output or ""
 
-        # Split Reasoning vs Final Answer for models that use <think> tags
-        reasoning = ""
-        final_answer = full_text
+        # In agent mode, thinking is extracted per-iteration
+        # so we just display the final response directly
+        if self.response_widget:
+            self.response_widget.content_text = full_text
+            # Simple mode if no execution output
+            exec_out = getattr(self.block, 'content_exec_output', '')
+            is_simple = not exec_out and not self.block.iterations
+            self.response_widget.set_simple(is_simple)
 
-        lower_text = full_text.lower()
-        if "<think>" in lower_text:
-            if "</think>" in lower_text:
-                # Completed reasoning
-                parts = full_text.split("</think>", 1)
-                reasoning_raw = parts[0]
-                final_answer = parts[1].strip()
-
-                if "<think>" in reasoning_raw:
-                    reasoning = reasoning_raw.split("<think>", 1)[1].strip()
-                else:
-                    reasoning = reasoning_raw
-            else:
-                # Still streaming reasoning
-                final_answer = ""
-                parts = full_text.split("<think>", 1)
-                if len(parts) > 1:
-                    reasoning = parts[1].strip()
-                else:
-                    reasoning = full_text
-
-        # Update widgets
-        if self.thinking_widget:
-            self.thinking_widget.thinking_text = reasoning
-
+        # Update exec output widget
         exec_out = getattr(self.block, 'content_exec_output', '')
         if self.exec_widget:
             self.exec_widget.exec_output = exec_out
-
-        # Check if we have tool calls
-        has_tools = bool(self.block.tool_calls) or "empty" not in self.tool_accordion.classes
-
-        if self.response_widget:
-            self.response_widget.content_text = final_answer
-
-            # Simple mode conditions:
-            # - No reasoning AND no execution output
-            # - OR we have tools and minimal response (tool result is the answer)
-            is_minimal_response = len(final_answer.strip()) < 50
-            is_simple = (not reasoning) and (not exec_out) and not (has_tools and is_minimal_response)
-
-            # If we have tools and very little text response, use simple mode
-            # to de-emphasize the text (tool result is the answer)
-            if has_tools and is_minimal_response and final_answer.strip():
-                is_simple = True
-
-            self.response_widget.set_simple(is_simple)
 
     def update_metadata(self):
         """Refresh the metadata widget and action bar."""
@@ -169,40 +131,60 @@ class AIResponseBlock(BaseBlockWidget):
         if self.footer_widget._has_content():
             self.mount(self.footer_widget)
 
-        if self.thinking_widget:
-            if not loading:
-                self.thinking_widget.stop_loading()
-                self.thinking_widget.force_render()
+    # Iteration management methods
+    def add_iteration(self, iteration: AgentIteration):
+        """Add a new iteration to the container."""
+        self.block.iterations.append(iteration)
+        return self.iteration_container.add_iteration(iteration)
 
-    def add_tool_call(
+    def update_iteration(
         self,
-        tool_id: str,
-        tool_name: str,
-        arguments: str = "",
-        status: str = "running"
-    ):
-        """Add a tool call to the accordion (for chat mode tool calls)."""
-        return self.tool_accordion.add_tool(
-            tool_id=tool_id,
-            tool_name=tool_name,
-            arguments=arguments,
-            status=status
-        )
-
-    def update_tool_call(
-        self,
-        tool_id: str,
+        iteration_id: str,
         status: str | None = None,
-        output: str | None = None,
+        thinking: str | None = None,
+        response: str | None = None,
         duration: float | None = None
     ):
-        """Update an existing tool call in the accordion."""
-        self.tool_accordion.update_tool(
-            tool_id=tool_id,
+        """Update an existing iteration."""
+        self.iteration_container.update_iteration(
+            iteration_id=iteration_id,
             status=status,
-            output=output,
+            thinking=thinking,
+            response=response,
             duration=duration
         )
+
+    def remove_iteration(self, iteration_id: str) -> None:
+        """Remove a specific iteration."""
+        self.iteration_container.remove_iteration(iteration_id)
+        self.block.iterations = [i for i in self.block.iterations if i.id != iteration_id]
+
+    def add_iteration_tool_call(
+        self,
+        iteration_id: str,
+        tool_call: ToolCallState
+    ):
+        """Add a tool call to a specific iteration."""
+        self.iteration_container.add_tool_call(iteration_id, tool_call)
+
+    def update_iteration_tool_call(
+        self,
+        iteration_id: str,
+        tool_id: str,
+        status: str | None = None,
+        duration: float | None = None
+    ):
+        """Update a tool call within an iteration."""
+        self.iteration_container.update_tool_call(
+            iteration_id=iteration_id,
+            tool_id=tool_id,
+            status=status,
+            duration=duration
+        )
+
+    def get_current_iteration(self):
+        """Get the most recently added iteration widget."""
+        return self.iteration_container.get_current_iteration()
 
     # Action button handlers
     @on(ActionButton.Pressed)

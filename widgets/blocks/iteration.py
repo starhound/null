@@ -283,8 +283,11 @@ class IterationWidget(Static):
                 pass
 
     def add_tool_call(self, tool_call: ToolCallState) -> ToolCallItem:
-        """Add a tool call to this iteration."""
-        self.iteration.tool_calls.append(tool_call)
+        """Add a tool call UI widget to this iteration.
+
+        Note: This only creates the UI widget. The data model
+        (iteration.tool_calls) should be updated by the caller.
+        """
         widget = ToolCallItem(tool_call)
         self._tool_widgets[tool_call.id] = widget
         try:

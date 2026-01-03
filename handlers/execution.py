@@ -83,11 +83,13 @@ class ExecutionHandler:
             if widget:
                 widget.update_metadata()
 
-            # Check if provider supports tools and if agent mode is enabled
+            # Determine execution path based on block type
+            from models import BlockType
+            is_agent_block = block_state.type == BlockType.AGENT_RESPONSE
             use_tools = self.app.ai_provider.supports_tools()
-            agent_mode = self.app.config.get("ai", {}).get("agent_mode", False)
 
-            if use_tools and agent_mode:
+            if is_agent_block:
+                # Agent mode: structured iterations with tool use
                 # If using default prompt in agent mode, switch to specialized agent prompt
                 # because default prompt forbids elaboration which contradicts agent reasoning
                 if active_key == "default":
@@ -98,11 +100,13 @@ class ExecutionHandler:
                     context_info.messages, system_prompt, max_tokens
                 )
             elif use_tools:
+                # Chat mode with tools
                 await self._execute_with_tools(
                     prompt, block_state, widget,
                     context_info.messages, system_prompt, max_tokens
                 )
             else:
+                # Chat mode without tools
                 await self._execute_without_tools(
                     prompt, block_state, widget,
                     context_info.messages, system_prompt, max_tokens
@@ -275,7 +279,7 @@ class ExecutionHandler:
         """
         from tools import ToolCall, ToolResult
         from models import AgentIteration, ToolCallState
-        from widgets.blocks import AIResponseBlock
+        from widgets.blocks import AgentResponseBlock
         from ai.thinking import get_thinking_strategy
         from config import Config
         import time
@@ -305,7 +309,7 @@ class ExecutionHandler:
         current_messages = list(messages)
         iteration_num = 0
         total_usage: Optional[TokenUsage] = None
-        has_iteration_ui = isinstance(widget, AIResponseBlock)
+        has_iteration_ui = isinstance(widget, AgentResponseBlock)
 
         while iteration_num < max_iterations:
             iteration_num += 1

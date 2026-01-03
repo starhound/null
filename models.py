@@ -9,7 +9,8 @@ import json
 
 class BlockType(Enum):
     COMMAND = "command"
-    AI_RESPONSE = "ai"
+    AI_RESPONSE = "ai"           # Chat mode - simple Q&A
+    AGENT_RESPONSE = "agent"     # Agent mode - structured iterations with tool use
     AI_QUERY = "ai_query"
     SYSTEM_MSG = "system"
     TOOL_CALL = "tool_call"
@@ -210,6 +211,48 @@ def export_to_markdown(blocks: List[BlockState]) -> str:
                 lines.append("")
                 lines.append("**Executed:**")
                 lines.append(block.content_exec_output.rstrip())
+            if block.metadata:
+                meta_parts = []
+                if "model" in block.metadata:
+                    meta_parts.append(f"Model: {block.metadata['model']}")
+                if "tokens" in block.metadata:
+                    meta_parts.append(f"Tokens: {block.metadata['tokens']}")
+                if meta_parts:
+                    lines.append("")
+                    lines.append(f"*{' | '.join(meta_parts)}*")
+            lines.append("")
+
+        elif block.type == BlockType.AGENT_RESPONSE:
+            lines.append(f"## Agent Session [{ts}]")
+            lines.append("")
+            lines.append(f"**User:** {block.content_input}")
+            lines.append("")
+
+            # Export iterations
+            for iteration in block.iterations:
+                lines.append(f"### Iteration {iteration.iteration_number}")
+                if iteration.thinking:
+                    lines.append("")
+                    lines.append("**Thinking:**")
+                    lines.append(iteration.thinking.rstrip())
+                for tc in iteration.tool_calls:
+                    lines.append("")
+                    lines.append(f"**Tool:** {tc.tool_name}")
+                    if tc.arguments:
+                        lines.append("```json")
+                        lines.append(tc.arguments)
+                        lines.append("```")
+                    if tc.output:
+                        lines.append(f"**Result ({tc.status}):**")
+                        lines.append("```")
+                        lines.append(tc.output[:1000].rstrip())
+                        lines.append("```")
+                lines.append("")
+
+            if block.content_output:
+                lines.append("**Final Response:**")
+                lines.append("")
+                lines.append(block.content_output.rstrip())
             if block.metadata:
                 meta_parts = []
                 if "model" in block.metadata:

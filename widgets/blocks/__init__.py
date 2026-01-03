@@ -5,6 +5,7 @@ from models import BlockState, BlockType
 from .base import BaseBlockWidget
 from .command import CommandBlock
 from .ai_response import AIResponseBlock
+from .agent_response import AgentResponseBlock
 from .system import SystemBlock
 from .tool_call import ToolCallBlock
 from .parts import BlockHeader, BlockMeta, BlockBody, BlockFooter, StopButton
@@ -31,6 +32,8 @@ def create_block(block: BlockState) -> BaseBlockWidget:
         return CommandBlock(block)
     elif block.type == BlockType.AI_RESPONSE:
         return AIResponseBlock(block)
+    elif block.type == BlockType.AGENT_RESPONSE:
+        return AgentResponseBlock(block)
     elif block.type == BlockType.SYSTEM_MSG:
         return SystemBlock(block)
     elif block.type == BlockType.TOOL_CALL:
@@ -57,6 +60,7 @@ __all__ = [
     'BlockWidget',
     'CommandBlock',
     'AIResponseBlock',
+    'AgentResponseBlock',
     'SystemBlock',
     'ToolCallBlock',
     'TerminalBlock',

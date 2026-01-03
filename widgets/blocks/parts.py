@@ -81,6 +81,11 @@ class BlockHeader(Static):
             icon_class = "prompt-symbol prompt-symbol-response"
             text_class = "header-text-ai"
             display_text = self.block.content_input if self.block.content_input else ""
+        elif self.block.type == BlockType.AGENT_RESPONSE:
+            icon = "⚙"
+            icon_class = "prompt-symbol prompt-symbol-agent"
+            text_class = "header-text-agent"
+            display_text = self.block.content_input if self.block.content_input else ""
         elif self.block.type == BlockType.SYSTEM_MSG:
             icon = "◈"
             icon_class = "prompt-symbol prompt-symbol-system"

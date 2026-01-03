@@ -53,16 +53,27 @@ class InputHandler:
             self.app.action_select_provider()
             return
 
-        # Create AI block
+        # Determine block type based on agent mode setting
+        ai_config = self.app.config.get("ai", {})
+        agent_mode = ai_config.get("agent_mode", False)
+        use_tools = self.app.ai_provider.supports_tools()
+
+        # Use AGENT_RESPONSE for agent mode with tool-supporting providers
+        if agent_mode and use_tools:
+            block_type = BlockType.AGENT_RESPONSE
+        else:
+            block_type = BlockType.AI_RESPONSE
+
+        # Create AI/Agent block
         block = BlockState(
-            type=BlockType.AI_RESPONSE,
+            type=block_type,
             content_input=text,
             content_output=""
         )
         self.app.blocks.append(block)
         input_ctrl.value = ""
 
-        # Mount widget
+        # Mount widget - BlockWidget factory creates correct widget type
         history_vp = self.app.query_one("#history", HistoryViewport)
         block_widget = BlockWidget(block)
         await history_vp.mount(block_widget)

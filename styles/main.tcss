@@ -269,6 +269,10 @@ ThinkingWidget {
     background: transparent;
 }
 
+ThinkingWidget.hidden {
+    display: none;
+}
+
 ThinkingWidget .thinking-header {
     layout: horizontal;
     height: 1;
@@ -698,6 +702,16 @@ BlockHeader .prompt-symbol-response {
 BlockHeader .prompt-symbol-system {
     color: $secondary;
     text-style: bold;
+}
+
+BlockHeader .prompt-symbol-agent {
+    color: $secondary;
+    text-style: bold;
+}
+
+BlockHeader .header-text-agent {
+    color: $text;
+    width: 1fr;
 }
 
 BlockHeader .header-text {
@@ -2045,54 +2059,239 @@ ToolOutput .tool-result {
     width: 100%;
 }
 
-/* --- AIResponseBlock: Chat vs Agent Mode --- */
+/* ==========================================================================
+   AIResponseBlock (Chat Mode) - Subtle, Conversational Styling
+   ========================================================================== */
 
-/* Chat mode - subtle styling */
-AIResponseBlock.mode-chat {
+AIResponseBlock {
+    border: round $primary 40%;
+    background: transparent;
+}
+
+AIResponseBlock:focus-within {
     border: round $primary 60%;
+    background: $primary 3%;
 }
 
-AIResponseBlock.mode-chat BlockHeader {
-    border-bottom: dashed $primary 30%;
+AIResponseBlock BlockHeader {
+    border-bottom: dashed $primary 25%;
+    color: $primary;
 }
 
-AIResponseBlock.mode-chat .block-mode-tag {
+AIResponseBlock BlockHeader .prompt-symbol {
+    color: $primary;
+}
+
+AIResponseBlock BlockHeader .header-text {
     color: $text-muted;
+    text-style: italic;
 }
 
-/* Agent mode - bold styling */
-AIResponseBlock.mode-agent {
-    border: double $accent;
+AIResponseBlock BlockMeta {
+    border-top: dashed $primary 20%;
 }
 
-AIResponseBlock.mode-agent:focus-within {
-    border: double $accent;
-    background: $accent 5%;
+AIResponseBlock ThinkingWidget .spinner {
+    color: $primary 80%;
 }
 
-AIResponseBlock.mode-agent BlockHeader {
-    color: $accent;
-    border-bottom: solid $accent 60%;
+AIResponseBlock ThinkingWidget .peek-window {
+    border: round $primary 40%;
 }
 
-AIResponseBlock.mode-agent .block-mode-tag {
-    color: $accent;
+AIResponseBlock ToolAccordion {
+    margin: 0 1;
+}
+
+AIResponseBlock ToolAccordionItem:hover {
+    background: $primary 5%;
+}
+
+AIResponseBlock ToolHeader .tool-icon.expanded {
+    color: $primary;
+}
+
+AIResponseBlock ToolOutput {
+    border-left: solid $primary 30%;
+}
+
+AIResponseBlock ResponseWidget .response-container {
+    border: round $primary 30%;
+}
+
+AIResponseBlock ResponseWidget .response-header {
+    border-bottom: dashed $primary 25%;
+    color: $primary 70%;
+}
+
+AIResponseBlock ResponseWidget .response-icon {
+    color: $primary;
+}
+
+AIResponseBlock ResponseWidget .response-title {
+    color: $primary;
+}
+
+AIResponseBlock ActionBar {
+    border-top: dashed $primary 20%;
+}
+
+AIResponseBlock ActionButton:hover {
+    color: $primary;
+    background: $primary 10%;
+}
+
+/* ==========================================================================
+   AgentResponseBlock - Bold, Active Styling with Secondary Theme
+   ========================================================================== */
+
+AgentResponseBlock {
+    border: double $secondary;
+    background: $secondary 2%;
+}
+
+AgentResponseBlock:focus-within {
+    border: double $secondary;
+    background: $secondary 8%;
+}
+
+AgentResponseBlock BlockHeader {
+    color: $secondary;
+    border-bottom: solid $secondary 50%;
+    background: $secondary 5%;
+}
+
+AgentResponseBlock BlockHeader .prompt-symbol {
+    color: $secondary;
     text-style: bold;
 }
 
-/* Mode tag in header */
-.block-mode-tag {
-    width: auto;
-    margin-right: 1;
+AgentResponseBlock BlockHeader .header-text {
+    color: $text;
+}
+
+AgentResponseBlock BlockHeader .timestamp {
+    color: $secondary 60%;
+}
+
+AgentResponseBlock BlockMeta {
+    border-top: solid $secondary 30%;
+    background: $secondary 3%;
+}
+
+/* Agent Iterations - Structured Workflow Display */
+AgentResponseBlock IterationContainer {
+    background: transparent;
+    border-top: solid $secondary 20%;
+    padding-top: 1;
+    margin: 1 0;
+}
+
+AgentResponseBlock IterationHeader {
+    background: $secondary 5%;
+    border-bottom: solid $secondary 30%;
+}
+
+AgentResponseBlock IterationHeader .iter-label {
+    color: $secondary;
     text-style: bold;
 }
 
-.block-mode-tag-chat {
-    color: $text-muted;
+AgentResponseBlock IterationHeader .iter-status.thinking {
+    color: $secondary;
 }
 
-.block-mode-tag-agent {
-    color: $accent;
+AgentResponseBlock IterationHeader .iter-status.executing {
+    color: $warning;
+}
+
+AgentResponseBlock IterationHeader .iter-status.complete {
+    color: $success;
+}
+
+AgentResponseBlock ThinkingSection .thinking-icon.expanded {
+    color: $secondary;
+}
+
+AgentResponseBlock ThinkingSection .thinking-toggle:hover {
+    background: $secondary 10%;
+}
+
+AgentResponseBlock ThinkingSection .thinking-content {
+    border-left: solid $secondary 50%;
+    background: $secondary 2%;
+}
+
+AgentResponseBlock ToolCallItem .tool-name {
+    color: $secondary;
+}
+
+AgentResponseBlock IterationSeparator {
+    color: $secondary 50%;
+    border-top: dashed $secondary 30%;
+}
+
+/* Agent Response Widget */
+AgentResponseBlock ResponseWidget .response-container {
+    border: solid $secondary 60%;
+    background: $secondary 3%;
+}
+
+AgentResponseBlock ResponseWidget .response-header {
+    border-bottom: solid $secondary 40%;
+    color: $secondary;
+    background: $secondary 5%;
+}
+
+AgentResponseBlock ResponseWidget .response-icon {
+    color: $secondary;
+    text-style: bold;
+}
+
+AgentResponseBlock ResponseWidget .response-title {
+    color: $secondary;
+    text-style: bold;
+}
+
+/* Agent Action Bar */
+AgentResponseBlock ActionBar {
+    border-top: solid $secondary 30%;
+    background: $secondary 2%;
+}
+
+AgentResponseBlock ActionButton:hover {
+    color: $secondary;
+    background: $secondary 15%;
+    text-style: bold;
+}
+
+AgentResponseBlock ActionBar .action-meta {
+    color: $secondary 70%;
+}
+
+/* Agent Execution Widget */
+AgentResponseBlock ExecutionWidget #exec-container {
+    background: $secondary 5%;
+    border: solid $secondary 40%;
+}
+
+AgentResponseBlock ExecutionWidget .exec-header {
+    border-bottom: solid $secondary 30%;
+    background: $secondary 3%;
+}
+
+AgentResponseBlock ExecutionWidget .exec-title {
+    color: $secondary 80%;
+    text-style: bold;
+}
+
+AgentResponseBlock ExecutionWidget .toggle-icon {
+    color: $secondary;
+}
+
+AgentResponseBlock ExecutionWidget .exec-header:hover {
+    background: $secondary 8%;
+    color: $secondary;
 }
 
 /* ==========================================================================
