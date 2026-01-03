@@ -1,5 +1,6 @@
 """Widgets package for Null terminal."""
 
+from .app_header import AppHeader
 from .block_search import BlockSearch
 
 # Import block widgets from the blocks subpackage
@@ -29,6 +30,7 @@ from .suggester import CommandItem, CommandSuggester
 
 __all__ = [
     "AIResponseBlock",
+    "AppHeader",
     "BaseBlockWidget",
     "BlockBody",
     "BlockFooter",

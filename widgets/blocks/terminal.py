@@ -9,14 +9,17 @@ from textual.message import Message
 from textual.strip import Strip
 from textual.widget import Widget
 
+# Refresh debounce interval: 16ms = ~60 FPS
+_REFRESH_DEBOUNCE_MS = 16 / 1000  # Convert to seconds for set_timer
+
 
 class TerminalBlock(Widget):
     """Widget that renders a pyte terminal screen for TUI apps."""
 
     DEFAULT_CSS = """
     TerminalBlock {
-        height: auto;
-        min-height: 24;
+        height: 24;
+        max-height: 40;
         background: #1a1b26;
         color: #a9b1d6;
         border: solid $primary 40%;
@@ -53,6 +56,8 @@ class TerminalBlock(Widget):
         self.pyte_screen = pyte.Screen(cols, rows)
         self.pyte_stream = pyte.Stream(self.pyte_screen)
         self._refresh_scheduled = False
+        # Line render cache: maps line number -> (content_hash, Strip)
+        self._line_cache: dict[int, tuple[int, Strip]] = {}
 
     def feed(self, data: bytes) -> None:
         """Feed raw terminal data to the pyte emulator."""
@@ -64,13 +69,14 @@ class TerminalBlock(Widget):
             pass
 
     def _schedule_refresh(self) -> None:
-        """Schedule a refresh, avoiding too many rapid refreshes."""
-        if not self._refresh_scheduled:
-            self._refresh_scheduled = True
-            self.call_after_refresh(self._do_refresh)
+        """Schedule a refresh with 16ms debouncing (~60 FPS)."""
+        if self._refresh_scheduled:
+            return
+        self._refresh_scheduled = True
+        self.set_timer(_REFRESH_DEBOUNCE_MS, self._do_refresh)
 
     def _do_refresh(self) -> None:
-        """Perform the actual refresh."""
+        """Perform the actual refresh and reset the scheduled flag."""
         self._refresh_scheduled = False
         self.refresh()
 
@@ -79,12 +85,41 @@ class TerminalBlock(Widget):
         self._cols = cols
         self._rows = rows
         self.pyte_screen.resize(rows, cols)
+        self._line_cache.clear()  # Invalidate cache on resize
         self.refresh()
 
     def on_resize(self, event) -> None:
-        """Handle widget resize events."""
-        if event.size.width > 0:
-            self.resize_terminal(event.size.width, self._rows)
+        """Handle widget resize events and notify process of new dimensions."""
+        new_cols = event.size.width
+        new_rows = event.size.height
+
+        if new_cols <= 0 or new_rows <= 0:
+            return
+
+        # Only resize if dimensions actually changed
+        if new_cols == self._cols and new_rows == self._rows:
+            return
+
+        # Update internal dimensions
+        self._cols = new_cols
+        self._rows = new_rows
+
+        # Resize the pyte screen
+        self.pyte_screen.resize(new_rows, new_cols)
+
+        # Clear the line cache since dimensions changed
+        self._line_cache.clear()
+
+        # Notify the process of the new PTY size via SIGWINCH
+        if self.block_id:
+            try:
+                app = self.app
+                if hasattr(app, "process_manager"):
+                    app.process_manager.resize_pty(self.block_id, new_cols, new_rows)
+            except Exception:
+                pass
+
+        self.refresh()
 
     def on_key(self, event: Key) -> None:
         """Forward key events to the process."""
@@ -206,8 +241,22 @@ class TerminalBlock(Widget):
 
         return None
 
+    def _compute_line_hash(self, line_data: dict, width: int) -> int:
+        """Compute a hash for a line's content to detect changes."""
+        # Build a tuple of character data and attributes for hashing
+        line_repr = []
+        for x in range(min(width, self._cols)):
+            char = line_data.get(x)
+            if char:
+                line_repr.append(
+                    (char.data, char.fg, char.bg, char.bold, char.italics, char.reverse, char.underscore)
+                )
+            else:
+                line_repr.append((" ", "default", "default", False, False, False, False))
+        return hash((tuple(line_repr), width))
+
     def render_line(self, y: int) -> Strip:
-        """Render a single line of the terminal."""
+        """Render a single line of the terminal with caching."""
         width = self.size.width
         if width <= 0:
             return Strip.blank(1)
@@ -215,9 +264,18 @@ class TerminalBlock(Widget):
         if y >= self.pyte_screen.lines:
             return Strip.blank(width)
 
-        segments = []
         line_data = self.pyte_screen.buffer[y]
 
+        # Check cache
+        line_hash = self._compute_line_hash(line_data, width)
+        cached = self._line_cache.get(y)
+        if cached is not None:
+            cached_hash, cached_strip = cached
+            if cached_hash == line_hash:
+                return cached_strip
+
+        # Build the strip
+        segments = []
         current_style = RichStyle.parse("default on default")
         text_accumulator = ""
 
@@ -262,7 +320,12 @@ class TerminalBlock(Widget):
         if total_len < width:
             segments.append(Segment(" " * (width - total_len)))
 
-        return Strip(segments, width)
+        strip = Strip(segments, width)
+
+        # Cache the result
+        self._line_cache[y] = (line_hash, strip)
+
+        return strip
 
     def get_content_height(self, container: Size, viewport: Size, width: int) -> int:
         """Return the height of the terminal content."""
@@ -271,4 +334,5 @@ class TerminalBlock(Widget):
     def clear(self) -> None:
         """Clear the terminal screen."""
         self.pyte_screen.reset()
+        self._line_cache.clear()  # Invalidate cache on reset
         self.refresh()

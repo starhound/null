@@ -1,6 +1,7 @@
 """Settings management using JSON config file."""
 
 import json
+import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Optional
@@ -34,12 +35,23 @@ class EditorSettings:
 class TerminalSettings:
     """Terminal behavior settings."""
 
-    shell: str = ""  # Empty = use $SHELL
+    # Existing fields with env defaults
+    shell: str = field(default_factory=lambda: os.environ.get("SHELL", "/bin/bash"))
     scrollback_lines: int = 10000
     clear_on_exit: bool = False
     confirm_on_exit: bool = True
     auto_save_session: bool = True
     auto_save_interval: int = 30  # seconds
+
+    # New settings
+    cursor_style: str = "block"  # block, beam, underline
+    cursor_blink: bool = True
+    bold_is_bright: bool = True
+
+    # Environment-derived (read-only hints)
+    term_type: str = field(default_factory=lambda: os.environ.get("TERM", "xterm-256color"))
+    colorterm: str = field(default_factory=lambda: os.environ.get("COLORTERM", "truecolor"))
+    lang: str = field(default_factory=lambda: os.environ.get("LANG", "en_US.UTF-8"))
 
 
 @dataclass

@@ -10,8 +10,8 @@
 
 /* Text aliases - use theme's foreground */
 $text: $foreground;
-$text-muted: $foreground 60%;
-$text-dim: $foreground 40%;
+$text-muted: $foreground 70%;
+$text-dim: $foreground 50%;
 
 /* Lighter surface variants (derived from theme) */
 $surface-light: $surface;
@@ -59,7 +59,7 @@ ModalScreen {
 
 HistoryViewport {
     height: 1fr;
-    padding: 1 0 0 1;
+    padding: 1 1 0 2;
     margin: 0;
     background: $background;
     scrollbar-size-vertical: 1;
@@ -78,10 +78,10 @@ HistoryViewport {
     height: auto;
     min-height: 4;
     width: 100%;
-    margin-top: 1;
+    margin-top: 0;
     padding: 1 2;
     background: $background;
-    border-top: solid $panel;
+    border-top: solid $text-dim;
 }
 
 #input-container:focus-within {
@@ -89,7 +89,7 @@ HistoryViewport {
 }
 
 #input-container.ai-mode {
-    border-top: solid $warning 60%;
+    border-top: solid $warning 50%;
 }
 
 #input-container.ai-mode:focus-within {
@@ -143,7 +143,7 @@ CommandSuggester {
     height: auto;
     max-height: 12;
     background: $surface;
-    border: round $panel;
+    border: solid $panel;
     display: none;
     padding: 0 1;
     overflow-y: auto;
@@ -174,6 +174,90 @@ CommandSuggester ListView > ListItem.--highlight {
     background: $primary;
     color: $text;
     text-style: bold;
+}
+
+/* --- Select Widget (Dropdowns) --- */
+
+/* Global Select styles - apply to all modals unless overridden */
+Select {
+    height: auto;
+    min-height: 1;
+    border: tall $text-dim;
+    padding: 0;
+    background: $panel;
+}
+
+Select:focus {
+    border: tall $accent;
+}
+
+/* Current selection display */
+SelectCurrent {
+    height: 1;
+    padding: 0 1;
+    color: $text;
+    background: $panel;
+}
+
+SelectCurrent:hover {
+    background: $surface;
+}
+
+/* Label showing current value */
+SelectCurrent #label {
+    color: $text;
+}
+
+/* Ensure selected value is clearly visible */
+SelectCurrent.-has-value #label {
+    color: $text;
+    text-style: bold;
+}
+
+/* Dropdown arrow indicator */
+SelectCurrent .arrow {
+    color: $text-muted;
+}
+
+Select:focus SelectCurrent .arrow {
+    color: $accent;
+}
+
+/* Dropdown overlay (the list that appears) */
+SelectOverlay {
+    border: tall $text-dim;
+    background: $panel;
+    padding: 0;
+}
+
+SelectOverlay:focus {
+    border: tall $accent;
+}
+
+/* Options in the dropdown */
+SelectOverlay > OptionList {
+    background: $panel;
+    padding: 0;
+}
+
+SelectOverlay > OptionList > .option-list--option {
+    padding: 0 1;
+    color: $text;
+}
+
+SelectOverlay > OptionList > .option-list--option-highlighted {
+    background: $primary;
+    color: $text;
+    text-style: bold;
+}
+
+SelectOverlay > OptionList > .option-list--option-hover-highlighted {
+    background: $primary;
+    color: $text;
+}
+
+SelectOverlay > OptionList > .option-list--option-disabled {
+    color: $text-dim;
 }
 
 /* --- Status Bar --- */
@@ -287,7 +371,10 @@ ThinkingWidget .thinking-header {
 
 ThinkingWidget .spinner {
     color: $primary;
+    width: 2;
     min-width: 2;
+    max-width: 2;
+    text-align: center;
 }
 
 ThinkingWidget .spinner.complete {
@@ -314,12 +401,13 @@ ThinkingWidget .peek-window {
     height: auto;
     min-height: 3;
     max-height: 10;
-    margin: 0 2;
+    margin: 0 2 0 3;
     padding: 1 2;
-    background: transparent;
+    background: $panel 20%;
     color: $text;
     scrollbar-size: 0 0;
-    border: round $primary 60%;
+    border: none;
+    border-left: solid $primary 40%;
 }
 
 ThinkingWidget .peek-window.expanded {
@@ -345,15 +433,16 @@ ThinkingWidget .peek-window.empty {
 
 .code-block-container {
     margin: 1 0;
-    border: round $accent 60%;
-    background: transparent;
+    border: none;
+    border-left: thick $accent 60%;
+    background: $panel 20%;
 }
 
 .code-block-header {
     height: 1;
     padding: 0 2;
     background: transparent;
-    border-bottom: dashed $accent 40%;
+    border-bottom: none;
 }
 
 .code-lang-label {
@@ -528,11 +617,11 @@ BaseBlockWidget {
     layout: vertical;
     height: auto;
     min-height: 0;
-    background: $surface;
+    background: transparent;
     color: $text;
-    margin: 1 0;
+    margin: 1 0 1 1;
     padding: 0;
-    border: round $panel;
+    border: none;
 }
 
 /* --- Block Types --- */
@@ -543,26 +632,27 @@ CommandBlock {
     min-height: 0;
     background: transparent;
     color: $text;
-    margin: 1 0;
+    margin: 1 0 1 1;
     padding: 0;
-    border: round $success;
+    border: none;
+    border-left: thick $success 70%;
 }
 
 CommandBlock:focus-within {
-    border: round $success;
-    background: $success 5%;
+    border-left: thick $success;
+    background: $success 3%;
 }
 
 CommandBlock BlockHeader {
     background: transparent;
-    padding: 0 2;
+    padding: 0 2 0 2;
     color: $success;
-    border-bottom: dashed $success 40%;
+    border-bottom: none;
 }
 
 CommandBlock BlockBody {
     background: transparent;
-    padding: 1 3;
+    padding: 0 3 1 3;
 }
 
 AIResponseBlock {
@@ -571,36 +661,37 @@ AIResponseBlock {
     min-height: 0;
     background: transparent;
     color: $text;
-    margin: 1 0;
+    margin: 1 0 1 1;
     padding: 0;
-    border: round $primary;
+    border: none;
+    border-left: thick $primary 50%;
 }
 
 AIResponseBlock:focus-within {
-    border: round $primary;
-    background: $primary 5%;
+    border-left: thick $primary;
+    background: $primary 2%;
 }
 
 AIResponseBlock BlockHeader {
     background: transparent;
-    padding: 0 2;
+    padding: 0 2 0 2;
     color: $primary;
-    border-bottom: dashed $primary 40%;
+    border-bottom: none;
 }
 
 AIResponseBlock BlockBody {
     background: transparent;
-    padding: 1 3;
+    padding: 0 3 1 3;
 }
 
 AIResponseBlock BlockMeta {
     height: auto;
     min-height: 1;
     background: transparent;
-    padding: 0 3;
+    padding: 1 3 0 3;
     margin: 0;
-    color: $text-muted;
-    border-top: dashed $primary 30%;
+    color: $text-dim;
+    border-top: none;
 }
 
 SystemBlock {
@@ -609,26 +700,27 @@ SystemBlock {
     min-height: 0;
     background: transparent;
     color: $text;
-    margin: 1 0;
+    margin: 1 0 1 1;
     padding: 0;
-    border: round $secondary;
+    border: none;
+    border-left: thick $secondary 60%;
 }
 
 SystemBlock:focus-within {
-    border: round $secondary;
-    background: $secondary 5%;
+    border-left: thick $secondary;
+    background: $secondary 3%;
 }
 
 SystemBlock BlockHeader {
     background: transparent;
-    padding: 0 2;
+    padding: 0 2 0 2;
     color: $secondary;
-    border-bottom: dashed $secondary 40%;
+    border-bottom: none;
 }
 
 SystemBlock BlockBody {
     background: transparent;
-    padding: 1 3;
+    padding: 0 3 1 3;
 }
 
 ToolCallBlock {
@@ -637,33 +729,34 @@ ToolCallBlock {
     min-height: 0;
     background: transparent;
     color: $text;
-    margin: 1 0;
+    margin: 1 0 1 1;
     padding: 0;
-    border: round $accent;
+    border: none;
+    border-left: thick $accent 60%;
 }
 
 ToolCallBlock:focus-within {
-    border: round $accent;
-    background: $accent 5%;
+    border-left: thick $accent;
+    background: $accent 3%;
 }
 
 ToolCallBlock BlockHeader {
     background: transparent;
-    padding: 0 2;
+    padding: 0 2 0 2;
     color: $accent;
-    border-bottom: dashed $accent 40%;
+    border-bottom: none;
 }
 
 ToolCallBlock BlockBody {
     background: transparent;
-    padding: 1 3;
+    padding: 0 3 1 3;
 }
 
 ToolCallBlock BlockMeta {
     background: transparent;
-    padding: 0 3;
-    color: $text-muted;
-    border-top: dashed $accent 30%;
+    padding: 1 3 0 3;
+    color: $text-dim;
+    border-top: none;
 }
 
 /* --- Block Parts: Header --- */
@@ -740,6 +833,8 @@ BlockHeader .header-text-system {
 BlockHeader .timestamp {
     color: $text-muted;
     text-style: dim;
+    width: 6;
+    text-align: right;
 }
 
 /* --- Block Parts: Meta --- */
@@ -849,7 +944,7 @@ HelpScreen #help-container {
     height: auto;
     max-height: 80%;
     background: $surface;
-    border: round $primary;
+    border: solid $panel;
     padding: 1 2;
 }
 
@@ -897,7 +992,7 @@ CommandPalette {
     max-height: 50%;
     margin-top: 3;
     background: $surface;
-    border: round $primary;
+    border: solid $panel;
     padding: 0;
     display: none !important;
 }
@@ -1012,7 +1107,7 @@ SelectionListScreen #selection-container {
     height: auto;
     max-height: 60%;
     background: $surface;
-    border: round $primary;
+    border: solid $panel;
     padding: 1 2;
     layout: vertical;
 }
@@ -1068,7 +1163,7 @@ ModelListScreen #model-selection-container {
     height: auto;
     max-height: 80%;
     background: $surface;
-    border: round $primary;
+    border: solid $panel;
     padding: 1 2;
     layout: vertical;
 }
@@ -1081,13 +1176,13 @@ ModelListScreen #model-title {
 
 ModelListScreen #model-search {
     margin-bottom: 1;
-    border: round $primary 50%;
+    border: solid $panel;
     background: $panel;
     height: 3;
 }
 
 ModelListScreen #model-search:focus {
-    border: round $primary;
+    border: solid $primary;
 }
 
 ModelListScreen #loading-indicator {
@@ -1175,7 +1270,7 @@ ProviderConfigScreen #config-container {
     min-width: 40;
     height: auto;
     background: $surface;
-    border: round $primary;
+    border: solid $panel;
     padding: 1 2;
     layout: vertical;
 }
@@ -1263,7 +1358,7 @@ ConfigScreen #config-outer {
     height: 90%;
     min-height: 30;
     background: $surface;
-    border: round $panel;
+    border: solid $panel;
     padding: 1 2;
     layout: vertical;
 }
@@ -1363,19 +1458,10 @@ ConfigScreen Input {
     background: $panel;
 }
 
+/* Select widget - inherits global styles, only override specifics */
 ConfigScreen Select {
-    height: auto;
-    min-height: 1;
-    border: none;
-    padding: 0;
-    margin: 0;
-    background: $panel;
     width: 100%;
-}
-
-ConfigScreen SelectCurrent {
-    height: 1;
-    padding: 0 1;
+    margin: 0;
 }
 
 ConfigScreen SelectOverlay {
@@ -1451,7 +1537,7 @@ ProvidersScreen #providers-container {
     height: auto;
     max-height: 80%;
     background: $surface;
-    border: round $primary;
+    border: solid $panel;
     padding: 1 2;
     layout: vertical;
 }
@@ -1603,7 +1689,7 @@ ToolsScreen #tools-container {
     width: 70%;
     height: 80%;
     background: $surface;
-    border: round $primary;
+    border: solid $panel;
     padding: 1 2;
 }
 
@@ -1699,12 +1785,13 @@ ExecutionWidget .hidden {
 }
 
 ExecutionWidget #exec-container {
-    background: $panel;
+    background: transparent;
     layout: vertical;
     width: 100%;
     height: auto;
-    border: round $panel;
-    margin: 0 1;
+    border: none;
+    border-left: solid $text-dim;
+    margin: 0 2;
 }
 
 ExecutionWidget .exec-header {
@@ -1714,7 +1801,7 @@ ExecutionWidget .exec-header {
     padding: 0 1;
     background: transparent;
     color: $text-muted;
-    border-bottom: dashed $panel;
+    border-bottom: none;
 }
 
 ExecutionWidget .exec-header:hover {
@@ -1736,8 +1823,10 @@ ExecutionWidget .exec-icon {
 
 ExecutionWidget .toggle-icon {
     width: 2;
+    min-width: 2;
+    max-width: 2;
     color: $warning;
-    content-align: center middle;
+    text-align: center;
 }
 
 ExecutionWidget .exec-count {
@@ -1767,7 +1856,7 @@ ExecutionWidget .exec-scroll {
     max-height: 20;
     overflow-y: auto;
     padding: 0 1;
-    background: $panel;
+    background: transparent;
 }
 
 ExecutionWidget #exec-container.collapsed .exec-scroll {
@@ -1801,7 +1890,8 @@ ResponseWidget.hidden {
 
 ResponseWidget .response-container {
     background: transparent;
-    border: round $success 60%;
+    border: none;
+    border-left: thick $success 50%;
     layout: vertical;
     width: 100%;
     height: auto;
@@ -1815,7 +1905,7 @@ ResponseWidget .response-header {
     padding: 0 1;
     background: transparent;
     color: $success;
-    border-bottom: dashed $success 40%;
+    border-bottom: none;
 }
 
 ResponseWidget .response-icon {
@@ -1863,7 +1953,8 @@ ActionBar {
     layout: horizontal;
     align: left middle;
     background: transparent;
-    border-top: dashed $panel;
+    border-top: none;
+    margin-top: 1;
 }
 
 ActionBar .action-spacer {
@@ -1880,8 +1971,9 @@ ActionButton {
     height: 1;
     padding: 0 1;
     margin: 0 1 0 0;
-    color: $text-muted;
+    color: $text;
     background: transparent;
+    text-style: dim;
 }
 
 ActionButton:hover {
@@ -1891,7 +1983,8 @@ ActionButton:hover {
 }
 
 ActionButton.-disabled {
-    color: $text-dim;
+    color: $text-muted;
+    text-style: dim;
 }
 
 /* --- BlockFrame: Chat/Agent mode container --- */
@@ -1969,25 +2062,35 @@ ToolAccordion.empty {
 ToolAccordionItem {
     width: 100%;
     height: auto;
-    border-bottom: solid $panel;
-    padding: 0;
+    border-bottom: none;
+    padding: 0 0 1 0;
+    margin-bottom: 0;
 }
 
 ToolAccordionItem:hover {
-    background: $panel 30%;
+    background: transparent;
 }
 
 /* Tool Header */
 ToolHeader {
     width: 100%;
     height: 1;
-    padding: 0 1;
+    padding: 0 2;
     layout: horizontal;
+    border-left: solid $text-dim;
+}
+
+ToolHeader:hover {
+    border-left: solid $accent;
+    background: $panel 15%;
 }
 
 ToolHeader .tool-icon {
     width: 2;
+    min-width: 2;
+    max-width: 2;
     color: $text-muted;
+    text-align: center;
 }
 
 ToolHeader .tool-icon.expanded {
@@ -2023,7 +2126,8 @@ ToolHeader .tool-status.error {
 ToolHeader .tool-duration {
     color: $text-muted;
     text-style: dim;
-    margin-left: 1;
+    width: 8;
+    text-align: right;
 }
 
 ToolHeader .tool-spacer {
@@ -2063,20 +2167,7 @@ ToolOutput .tool-result {
    AIResponseBlock (Chat Mode) - Subtle, Conversational Styling
    ========================================================================== */
 
-AIResponseBlock {
-    border: round $primary 40%;
-    background: transparent;
-}
-
-AIResponseBlock:focus-within {
-    border: round $primary 60%;
-    background: $primary 3%;
-}
-
-AIResponseBlock BlockHeader {
-    border-bottom: dashed $primary 25%;
-    color: $primary;
-}
+/* Styles defined earlier in Block Types section */
 
 AIResponseBlock BlockHeader .prompt-symbol {
     color: $primary;
@@ -2087,16 +2178,13 @@ AIResponseBlock BlockHeader .header-text {
     text-style: italic;
 }
 
-AIResponseBlock BlockMeta {
-    border-top: dashed $primary 20%;
-}
-
 AIResponseBlock ThinkingWidget .spinner {
     color: $primary 80%;
 }
 
 AIResponseBlock ThinkingWidget .peek-window {
-    border: round $primary 40%;
+    border: none;
+    border-left: solid $primary 40%;
 }
 
 AIResponseBlock ToolAccordion {
@@ -2104,7 +2192,7 @@ AIResponseBlock ToolAccordion {
 }
 
 AIResponseBlock ToolAccordionItem:hover {
-    background: $primary 5%;
+    background: $primary 3%;
 }
 
 AIResponseBlock ToolHeader .tool-icon.expanded {
@@ -2116,11 +2204,12 @@ AIResponseBlock ToolOutput {
 }
 
 AIResponseBlock ResponseWidget .response-container {
-    border: round $primary 30%;
+    border: none;
+    border-left: thick $primary 30%;
 }
 
 AIResponseBlock ResponseWidget .response-header {
-    border-bottom: dashed $primary 25%;
+    border-bottom: none;
     color: $primary 70%;
 }
 
@@ -2133,12 +2222,12 @@ AIResponseBlock ResponseWidget .response-title {
 }
 
 AIResponseBlock ActionBar {
-    border-top: dashed $primary 20%;
+    border-top: none;
 }
 
 AIResponseBlock ActionButton:hover {
     color: $primary;
-    background: $primary 10%;
+    background: $primary 8%;
 }
 
 /* ==========================================================================
@@ -2146,19 +2235,22 @@ AIResponseBlock ActionButton:hover {
    ========================================================================== */
 
 AgentResponseBlock {
-    border: double $secondary;
+    border: none;
+    border-left: wide $secondary;
     background: $secondary 2%;
+    margin: 1 0 1 1;
 }
 
 AgentResponseBlock:focus-within {
-    border: double $secondary;
-    background: $secondary 8%;
+    border-left: wide $secondary;
+    background: $secondary 5%;
 }
 
 AgentResponseBlock BlockHeader {
     color: $secondary;
-    border-bottom: solid $secondary 50%;
-    background: $secondary 5%;
+    border-bottom: none;
+    background: $secondary 3%;
+    padding: 0 2 0 2;
 }
 
 AgentResponseBlock BlockHeader .prompt-symbol {
@@ -2175,21 +2267,21 @@ AgentResponseBlock BlockHeader .timestamp {
 }
 
 AgentResponseBlock BlockMeta {
-    border-top: solid $secondary 30%;
-    background: $secondary 3%;
+    border-top: none;
+    background: transparent;
 }
 
 /* Agent Iterations - Structured Workflow Display */
 AgentResponseBlock IterationContainer {
     background: transparent;
-    border-top: solid $secondary 20%;
+    border-top: none;
     padding-top: 1;
     margin: 1 0;
 }
 
 AgentResponseBlock IterationHeader {
-    background: $secondary 5%;
-    border-bottom: solid $secondary 30%;
+    background: $secondary 3%;
+    border-bottom: none;
 }
 
 AgentResponseBlock IterationHeader .iter-label {
@@ -2228,19 +2320,20 @@ AgentResponseBlock ToolCallItem .tool-name {
 
 AgentResponseBlock IterationSeparator {
     color: $secondary 50%;
-    border-top: dashed $secondary 30%;
+    border-top: none;
 }
 
 /* Agent Response Widget */
 AgentResponseBlock ResponseWidget .response-container {
-    border: solid $secondary 60%;
-    background: $secondary 3%;
+    border: none;
+    border-left: thick $secondary 50%;
+    background: $secondary 2%;
 }
 
 AgentResponseBlock ResponseWidget .response-header {
-    border-bottom: solid $secondary 40%;
+    border-bottom: none;
     color: $secondary;
-    background: $secondary 5%;
+    background: transparent;
 }
 
 AgentResponseBlock ResponseWidget .response-icon {
@@ -2255,8 +2348,8 @@ AgentResponseBlock ResponseWidget .response-title {
 
 /* Agent Action Bar */
 AgentResponseBlock ActionBar {
-    border-top: solid $secondary 30%;
-    background: $secondary 2%;
+    border-top: none;
+    background: transparent;
 }
 
 AgentResponseBlock ActionButton:hover {
@@ -2271,13 +2364,14 @@ AgentResponseBlock ActionBar .action-meta {
 
 /* Agent Execution Widget */
 AgentResponseBlock ExecutionWidget #exec-container {
-    background: $secondary 5%;
-    border: solid $secondary 40%;
+    background: transparent;
+    border: none;
+    border-left: solid $secondary 40%;
 }
 
 AgentResponseBlock ExecutionWidget .exec-header {
-    border-bottom: solid $secondary 30%;
-    background: $secondary 3%;
+    border-bottom: none;
+    background: transparent;
 }
 
 AgentResponseBlock ExecutionWidget .exec-title {
@@ -2324,14 +2418,17 @@ IterationWidget {
 IterationHeader {
     width: 100%;
     height: 1;
-    padding: 0 1;
+    padding: 0 2;
     layout: horizontal;
     background: transparent;
 }
 
 IterationHeader .iter-status {
     width: 2;
+    min-width: 2;
+    max-width: 2;
     color: $text-muted;
+    text-align: center;
 }
 
 IterationHeader .iter-status.pending {
@@ -2363,7 +2460,8 @@ IterationHeader .iter-label {
 IterationHeader .iter-duration {
     color: $text-muted;
     text-style: dim;
-    margin-left: 1;
+    width: 8;
+    text-align: right;
 }
 
 /* --- ThinkingSection --- */
@@ -2390,7 +2488,10 @@ ThinkingSection .thinking-toggle:hover {
 
 ThinkingSection .thinking-icon {
     width: 2;
+    min-width: 2;
+    max-width: 2;
     color: $text-muted;
+    text-align: center;
 }
 
 ThinkingSection .thinking-icon.expanded {
@@ -2434,7 +2535,10 @@ ToolCallItem .tool-row {
 
 ToolCallItem .tool-icon {
     width: 2;
+    min-width: 2;
+    max-width: 2;
     color: $text-muted;
+    text-align: center;
 }
 
 ToolCallItem .tool-icon.pending {
@@ -2462,7 +2566,8 @@ ToolCallItem .tool-name {
 ToolCallItem .tool-duration {
     color: $text-muted;
     text-style: dim;
-    margin-left: 1;
+    width: 8;
+    text-align: right;
 }
 
 /* Container for tool calls within iteration */
@@ -2489,7 +2594,7 @@ IterationSeparator {
     width: 100%;
     height: 1;
     padding: 0 1;
-    color: $accent 40%;
+    color: $text-dim;
     text-style: dim;
     text-align: center;
     background: transparent;
@@ -2538,7 +2643,8 @@ ToolApprovalScreen ToolPreview {
     height: auto;
     padding: 1;
     background: $panel;
-    border: round $accent 40%;
+    border: none;
+    border-left: thick $accent 50%;
     margin-bottom: 1;
 }
 
@@ -2586,4 +2692,46 @@ ToolApprovalScreen #approval-hint {
     color: $text-muted;
     text-style: dim;
     margin-top: 1;
+}
+
+/* ----- Confirm Dialog ----- */
+
+ConfirmDialog {
+    align: center middle;
+}
+
+ConfirmDialog #confirm-dialog {
+    width: 50;
+    max-width: 80%;
+    height: auto;
+    background: $surface;
+    border: double $warning;
+    padding: 1 2;
+}
+
+ConfirmDialog #confirm-content {
+    width: 100%;
+    height: auto;
+}
+
+ConfirmDialog #confirm-title {
+    text-align: center;
+    text-style: bold;
+    color: $warning;
+    margin-bottom: 1;
+}
+
+ConfirmDialog #confirm-message {
+    text-align: center;
+    margin-bottom: 1;
+}
+
+ConfirmDialog #confirm-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+ConfirmDialog #confirm-buttons Button {
+    margin: 0 1;
 }

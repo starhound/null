@@ -224,6 +224,10 @@ class TerminalAdapter:
         """Set terminal font. Returns True if successful."""
         return False
 
+    def set_font_size(self, size: int) -> bool:
+        """Set terminal font size. Returns True if successful."""
+        return False
+
     def get_font(self) -> tuple | None:
         """Get current font (family, size) if possible."""
         return None
@@ -242,6 +246,18 @@ class KittyAdapter(TerminalAdapter):
             # Kitty uses @ commands via socket
             cmd = ["kitty", "@", "set-font-size", str(size)]
             result = subprocess.run(cmd, capture_output=True, timeout=2)
+            return result.returncode == 0
+        except Exception:
+            return False
+
+    def set_font_size(self, size: int) -> bool:
+        """Set font size using kitty @ command."""
+        try:
+            result = subprocess.run(
+                ["kitty", "@", "set-font-size", str(size)],
+                capture_output=True,
+                timeout=2,
+            )
             return result.returncode == 0
         except Exception:
             return False
@@ -266,6 +282,53 @@ class WezTermAdapter(TerminalAdapter):
         # For now, return False - would need more complex config editing
         return False
 
+    def set_font_size(self, size: int) -> bool:
+        """WezTerm font changes require config file modification.
+
+        WezTerm doesn't support runtime font size changes via commands.
+        Could potentially use OSC sequences but not widely supported.
+        """
+        return False
+
+
+class WindowsTerminalAdapter(TerminalAdapter):
+    """Adapter for Windows Terminal (via WSL or native)."""
+
+    def set_cursor_style(self, style: str, blink: bool = True) -> bool:
+        """Set cursor style via ANSI DECSCUSR sequence.
+
+        Windows Terminal supports:
+        - Block: steady=2, blink=1
+        - Underline: steady=4, blink=3
+        - Beam/Bar: steady=6, blink=5
+
+        Args:
+            style: Cursor style - "block", "underline", "beam", or "bar"
+            blink: Whether the cursor should blink
+
+        Returns:
+            True if the sequence was written successfully, False otherwise
+        """
+        codes = {
+            ("block", True): 1,
+            ("block", False): 2,
+            ("underline", True): 3,
+            ("underline", False): 4,
+            ("beam", True): 5,
+            ("beam", False): 6,
+            ("bar", True): 5,  # alias for beam
+            ("bar", False): 6,
+        }
+        code = codes.get((style.lower(), blink), 1)
+        try:
+            import sys
+
+            sys.stdout.write(f"\x1b[{code} q")
+            sys.stdout.flush()
+            return True
+        except Exception:
+            return False
+
 
 class GenericAdapter(TerminalAdapter):
     """Generic adapter for unsupported terminals."""
@@ -281,5 +344,81 @@ def get_terminal_adapter() -> TerminalAdapter:
         return KittyAdapter(info)
     elif info.type == TerminalType.WEZTERM:
         return WezTermAdapter(info)
+    elif info.type == TerminalType.WINDOWS_TERMINAL:
+        return WindowsTerminalAdapter(info)
     else:
         return GenericAdapter(info)
+
+
+def apply_appearance_settings(font_size: int | None = None) -> bool:
+    """Apply appearance settings to the terminal if supported.
+
+    Gets the terminal adapter and applies font size if the terminal
+    supports font changes.
+
+    Args:
+        font_size: The font size to apply, or None to skip font changes.
+
+    Returns:
+        True if all requested settings were applied successfully,
+        False if any setting failed or was not supported.
+    """
+    adapter = get_terminal_adapter()
+    success = True
+
+    if font_size is not None:
+        if adapter.info.supports_font_change:
+            if not adapter.set_font_size(font_size):
+                success = False
+        else:
+            # Terminal doesn't support font changes
+            success = False
+
+    return success
+
+
+def apply_cursor_settings(style: str, blink: bool = True) -> bool:
+    """Apply cursor style settings via ANSI DECSCUSR sequence.
+
+    This function works across all terminals that support DECSCUSR
+    (most modern terminals do, including Windows Terminal, iTerm2,
+    Kitty, WezTerm, GNOME Terminal, Konsole, and others).
+
+    The DECSCUSR (DEC Set Cursor Style) sequence uses the format:
+    ESC [ Ps SP q
+
+    Where Ps is:
+    - 0: Default cursor shape configured by the terminal
+    - 1: Blinking block
+    - 2: Steady block
+    - 3: Blinking underline
+    - 4: Steady underline
+    - 5: Blinking bar (beam)
+    - 6: Steady bar (beam)
+
+    Args:
+        style: Cursor style - "block", "underline", "beam", or "bar"
+        blink: Whether the cursor should blink (default: True)
+
+    Returns:
+        True if the sequence was written successfully, False otherwise
+    """
+    codes = {
+        ("block", True): 1,
+        ("block", False): 2,
+        ("underline", True): 3,
+        ("underline", False): 4,
+        ("beam", True): 5,
+        ("beam", False): 6,
+        ("bar", True): 5,  # alias for beam
+        ("bar", False): 6,
+    }
+    code = codes.get((style.lower(), blink), 1)
+    try:
+        import sys
+
+        sys.stdout.write(f"\x1b[{code} q")
+        sys.stdout.flush()
+        return True
+    except Exception:
+        return False

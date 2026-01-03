@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 from ai.base import Message, TokenUsage, calculate_cost
 from models import BlockState
+from settings import get_settings
 from widgets import BaseBlockWidget
 
 
@@ -959,7 +960,8 @@ class ExecutionHandler:
             pass
 
         widget.set_loading(False)
-        self.app._auto_save()
+        if get_settings().terminal.auto_save_session:
+            self.app._auto_save()
 
     def run_agent_command(
         self, command: str, ai_block: BlockState, ai_widget: BaseBlockWidget
@@ -1070,7 +1072,8 @@ class ExecutionHandler:
             self.app.process_manager.unregister(block.id)
 
         widget.set_exit_code(exit_code)
-        self.app._auto_save()
+        if get_settings().terminal.auto_save_session:
+            self.app._auto_save()
 
     async def execute_cli_append(
         self, cmd: str, block: BlockState, widget: BaseBlockWidget
@@ -1139,7 +1142,8 @@ class ExecutionHandler:
             block.content_output += f"[exit: {exit_code}]\n"
             widget.update_output()
 
-        self.app._auto_save()
+        if get_settings().terminal.auto_save_session:
+            self.app._auto_save()
 
     async def regenerate_ai(self, block: BlockState, widget: BaseBlockWidget):
         """Regenerate an AI response block."""

@@ -140,6 +140,32 @@ class ProcessManager:
         except Exception:
             return False
 
+    def resize_pty(self, block_id: str, cols: int, rows: int) -> bool:
+        """Resize PTY and send SIGWINCH to process.
+
+        Args:
+            block_id: The block ID of the process
+            cols: New column count
+            rows: New row count
+
+        Returns:
+            True if resize was successful, False otherwise
+        """
+        info = self._processes.get(block_id)
+        if info and info.master_fd:
+            import fcntl
+            import struct
+            import termios
+
+            try:
+                winsize = struct.pack("HHHH", rows, cols, 0, 0)
+                fcntl.ioctl(info.master_fd, termios.TIOCSWINSZ, winsize)
+                os.kill(info.pid, signal.SIGWINCH)
+                return True
+            except Exception:
+                return False
+        return False
+
     def stop_all(self, force: bool = False) -> int:
         """Stop all running processes.
 

@@ -1,4 +1,5 @@
 import asyncio
+import codecs
 import fcntl
 import os
 import pty
@@ -52,6 +53,8 @@ class ExecutionEngine:
         self._cancelled = False
         self._in_tui_mode = False
         self._detection_buffer = b""
+        # Incremental UTF-8 decoder to handle multibyte chars split across reads
+        self._decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
 
     @property
     def pid(self) -> int | None:
@@ -127,6 +130,8 @@ class ExecutionEngine:
         self._cancelled = False
         self._in_tui_mode = False
         self._detection_buffer = b""
+        # Reset decoder for new command
+        self._decoder.reset()
 
         # Build environment with color support
         env = os.environ.copy()
@@ -256,9 +261,8 @@ class ExecutionEngine:
                     buffer += data
                     while b"\n" in buffer:
                         line, buffer = buffer.split(b"\n", 1)
-                        decoded = (
-                            line.rstrip(b"\r").decode("utf-8", errors="replace") + "\n"
-                        )
+                        # Use incremental decoder to handle multibyte chars
+                        decoded = self._decoder.decode(line.rstrip(b"\r")) + "\n"
                         callback(decoded)
                     # Output partial lines for:
                     # - Progress indicators (contain \r)
@@ -277,7 +281,7 @@ class ExecutionEngine:
                             or buffer.rstrip().endswith(b"?")
                         )
                         if is_prompt:
-                            decoded = buffer.decode("utf-8", errors="replace")
+                            decoded = self._decoder.decode(buffer)
                             callback(decoded)
                             buffer = b""
 
@@ -286,9 +290,9 @@ class ExecutionEngine:
                         break
                     await asyncio.sleep(0.01)
 
-            # Output any remaining buffer
+            # Output any remaining buffer (finalize decoder)
             if buffer:
-                callback(buffer.decode("utf-8", errors="replace"))
+                callback(self._decoder.decode(buffer, final=True))
 
             # Wait for process to finish and get exit code
             if self._cancelled:

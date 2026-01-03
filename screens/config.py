@@ -152,6 +152,13 @@ class ConfigScreen(ModalScreen):
             Input(value=str(s.font_size), type="integer", id="font_size"),
         )
 
+        # Attempt to apply font size via terminal adapter if supported
+        if term_info.supports_font_change:
+            from utils.terminal import get_terminal_adapter
+
+            adapter = get_terminal_adapter()
+            adapter.set_font_size(s.font_size)
+
         yield from self._setting_row(
             "appearance.line_height",
             "Line Height",
@@ -258,6 +265,33 @@ class ConfigScreen(ModalScreen):
             "Clear on Exit",
             "Clear session when exiting",
             Switch(value=s.clear_on_exit, id="clear_on_exit"),
+        )
+
+        yield Static("Cursor Settings", classes="settings-header")
+
+        yield from self._setting_row(
+            "terminal.cursor_style",
+            "Cursor Style",
+            "Terminal cursor appearance",
+            Select(
+                [("Block", "block"), ("Beam", "beam"), ("Underline", "underline")],
+                value=s.cursor_style,
+                id="cursor_style",
+            ),
+        )
+
+        yield from self._setting_row(
+            "terminal.cursor_blink",
+            "Cursor Blink",
+            "Enable cursor blinking",
+            Switch(value=s.cursor_blink, id="cursor_blink"),
+        )
+
+        yield from self._setting_row(
+            "terminal.bold_is_bright",
+            "Bold is Bright",
+            "Render bold text as bright colors",
+            Switch(value=s.bold_is_bright, id="bold_is_bright"),
         )
 
     def _ai_settings(self) -> ComposeResult:
@@ -399,6 +433,9 @@ class ConfigScreen(ModalScreen):
             confirm_on_exit=get_val(self.controls.get("terminal.confirm_on_exit"))
             or False,
             clear_on_exit=get_val(self.controls.get("terminal.clear_on_exit")) or False,
+            cursor_style=get_val(self.controls.get("terminal.cursor_style")) or "block",
+            cursor_blink=get_val(self.controls.get("terminal.cursor_blink")) or True,
+            bold_is_bright=get_val(self.controls.get("terminal.bold_is_bright")) or True,
         )
 
         ai = AISettings(
@@ -444,6 +481,17 @@ class ConfigScreen(ModalScreen):
         # Apply theme immediately
         try:
             self.app.theme = new_settings.appearance.theme
+        except Exception:
+            pass
+
+        # Apply cursor settings immediately
+        try:
+            from utils.terminal import apply_cursor_settings
+
+            apply_cursor_settings(
+                style=new_settings.terminal.cursor_style,
+                blink=new_settings.terminal.cursor_blink
+            )
         except Exception:
             pass
 

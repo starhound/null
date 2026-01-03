@@ -17,9 +17,11 @@ from managers import ProcessManager
 # from executor import ExecutionEngine  # Removed global import
 from mcp import MCPManager
 from models import BlockState, BlockType
-from screens import HelpScreen, ModelListScreen
+from screens import ConfirmDialog, HelpScreen, ModelListScreen
+from settings import get_settings
 from themes import get_all_themes
 from widgets import (
+    AppHeader,
     BaseBlockWidget,
     BlockSearch,
     BlockWidget,
@@ -105,6 +107,7 @@ class NullApp(App):
         self.input_handler = InputHandler(self)
 
     def compose(self) -> ComposeResult:
+        yield AppHeader(id="app-header")
         yield CommandSuggester(id="suggester")
         yield CommandPalette(id="command-palette")
         yield HistoryViewport(id="history")
@@ -155,8 +158,21 @@ class NullApp(App):
         # Register process manager callback
         self.process_manager.on_change(self._update_process_count)
 
+        # Apply cursor settings from config
+        self._apply_cursor_settings()
+
         # Auto-focus the input prompt
         self.query_one("#input", InputController).focus()
+
+    def _apply_cursor_settings(self):
+        """Apply cursor style and blink settings from config."""
+        from utils.terminal import apply_cursor_settings
+
+        settings = get_settings()
+        apply_cursor_settings(
+            style=settings.terminal.cursor_style,
+            blink=settings.terminal.cursor_blink
+        )
 
     async def on_key(self, event) -> None:
         """Handle global key events."""
@@ -272,7 +288,37 @@ class NullApp(App):
         if self.is_busy():
             self.action_cancel_operation()
         else:
-            self.exit()
+            self._do_quit()
+
+    def _do_quit(self):
+        """Handle quit with confirm_on_exit and clear_on_exit settings."""
+        settings = get_settings()
+
+        if settings.terminal.confirm_on_exit:
+            # Show confirmation dialog
+            def on_confirm(confirmed: bool):
+                if confirmed:
+                    self._perform_exit(settings.terminal.clear_on_exit)
+
+            self.push_screen(
+                ConfirmDialog(
+                    title="Confirm Exit",
+                    message="Are you sure you want to quit?"
+                ),
+                on_confirm
+            )
+        else:
+            self._perform_exit(settings.terminal.clear_on_exit)
+
+    def _perform_exit(self, clear_session: bool):
+        """Perform the actual exit, optionally clearing the session."""
+        if clear_session:
+            try:
+                # Clear the saved session
+                Config._get_storage().save_current_session([])
+            except Exception:
+                pass
+        self.exit()
 
     def is_busy(self) -> bool:
         """Check if any operation is currently running."""
@@ -387,6 +433,7 @@ class NullApp(App):
                     self.ai_provider.model = str(model_name)
 
                 self._update_status_bar()
+                self._update_header(provider_name, str(model_name), connected=True)
 
         # Show screen immediately with async fetch
         self.push_screen(
@@ -797,6 +844,16 @@ class NullApp(App):
         except Exception:
             pass
 
+    def _update_header(
+        self, provider: str, model: str = "", connected: bool = True
+    ) -> None:
+        """Update the app header with provider/model info and connectivity icon."""
+        try:
+            header = self.query_one("#app-header", AppHeader)
+            header.set_provider(provider, model, connected)
+        except Exception:
+            pass
+
     async def _check_provider_health(self):
         """Check if AI provider is connected."""
         try:
@@ -806,12 +863,15 @@ class NullApp(App):
             if self.ai_manager:
                 self.ai_provider = self.ai_manager.get_active_provider()
 
-            # Update provider status
+            # Update provider status and header
             if self.ai_provider:
                 provider_name = Config.get("ai.provider") or "Provider"
+                model_name = getattr(self.ai_provider, "model", "") or ""
                 status_bar.set_provider(str(provider_name), "connected")
+                self._update_header(str(provider_name), model_name, connected=True)
             else:
                 status_bar.set_provider("No Provider", "disconnected")
+                self._update_header("No Provider", "", connected=False)
 
             # Update MCP status
             active_mcp = 0
@@ -829,6 +889,7 @@ class NullApp(App):
                 self.query_one(
                     "#status-bar", StatusBar
                 ).provider_status = "disconnected"
+                self._update_header("Error", "", connected=False)
             except Exception:
                 pass
 
