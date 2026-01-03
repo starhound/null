@@ -15,6 +15,14 @@ from .terminal import TerminalBlock
 from .actions import ActionBar, ActionButton
 from .tool_accordion import ToolAccordion, ToolAccordionItem
 from .frame import BlockFrame, FrameSeparator
+from .iteration import (
+    IterationWidget,
+    IterationHeader,
+    ThinkingSection,
+    ToolCallItem,
+    IterationSeparator
+)
+from .iteration_container import IterationContainer
 
 
 def create_block(block: BlockState) -> BaseBlockWidget:
@@ -69,4 +77,10 @@ __all__ = [
     'ToolAccordionItem',
     'BlockFrame',
     'FrameSeparator',
+    'IterationWidget',
+    'IterationHeader',
+    'ThinkingSection',
+    'ToolCallItem',
+    'IterationSeparator',
+    'IterationContainer',
 ]

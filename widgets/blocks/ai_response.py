@@ -4,7 +4,7 @@ from textual.app import ComposeResult
 from textual.reactive import reactive
 from textual import on
 
-from models import BlockState
+from models import BlockState, AgentIteration, ToolCallState
 from .base import BaseBlockWidget
 from .parts import BlockHeader, BlockMeta, BlockFooter
 from .thinking import ThinkingWidget
@@ -12,6 +12,7 @@ from .execution import ExecutionWidget
 from .response import ResponseWidget
 from .actions import ActionBar, ActionButton
 from .tool_accordion import ToolAccordion
+from .iteration_container import IterationContainer
 
 
 class AIResponseBlock(BaseBlockWidget):
@@ -35,6 +36,10 @@ class AIResponseBlock(BaseBlockWidget):
         self.thinking_widget = ThinkingWidget(block)
         self.exec_widget = ExecutionWidget(block)
         self.tool_accordion = ToolAccordion(classes="empty")
+        self.iteration_container = IterationContainer(
+            show_thinking=True,
+            classes="empty" if not block.iterations else ""
+        )
         self.response_widget = ResponseWidget(block)
 
         # Create action bar with meta info
@@ -56,8 +61,9 @@ class AIResponseBlock(BaseBlockWidget):
         has_thinking = bool(self.block.content_thinking)
         has_exec = bool(getattr(self.block, 'content_exec_output', ''))
         has_tool_calls = bool(self.block.metadata.get('tool_calls'))
+        has_iterations = bool(self.block.iterations)
 
-        self.is_agent_mode = has_thinking or has_exec or has_tool_calls
+        self.is_agent_mode = has_thinking or has_exec or has_tool_calls or has_iterations
 
     def _apply_mode_class(self) -> None:
         """Apply the appropriate CSS class for the current mode."""
@@ -92,6 +98,7 @@ class AIResponseBlock(BaseBlockWidget):
         yield self.meta_widget
         yield self.thinking_widget
         yield self.exec_widget
+        yield self.iteration_container
         yield self.tool_accordion
         yield self.response_widget
         yield self.action_bar
@@ -236,6 +243,64 @@ class AIResponseBlock(BaseBlockWidget):
             output=output,
             duration=duration
         )
+
+    # Iteration management methods for structured agent mode
+    def add_iteration(self, iteration: AgentIteration):
+        """Add a new iteration to the container (for structured agent mode)."""
+        # Switch to agent mode if not already
+        if not self.is_agent_mode:
+            self.is_agent_mode = True
+            self._apply_mode_class()
+
+        # Add to block state
+        self.block.iterations.append(iteration)
+
+        # Add to container
+        return self.iteration_container.add_iteration(iteration)
+
+    def update_iteration(
+        self,
+        iteration_id: str,
+        status: str | None = None,
+        thinking: str | None = None,
+        response: str | None = None,
+        duration: float | None = None
+    ):
+        """Update an existing iteration."""
+        self.iteration_container.update_iteration(
+            iteration_id=iteration_id,
+            status=status,
+            thinking=thinking,
+            response=response,
+            duration=duration
+        )
+
+    def add_iteration_tool_call(
+        self,
+        iteration_id: str,
+        tool_call: ToolCallState
+    ):
+        """Add a tool call to a specific iteration."""
+        self.iteration_container.add_tool_call(iteration_id, tool_call)
+
+    def update_iteration_tool_call(
+        self,
+        iteration_id: str,
+        tool_id: str,
+        status: str | None = None,
+        duration: float | None = None
+    ):
+        """Update a tool call within an iteration."""
+        self.iteration_container.update_tool_call(
+            iteration_id=iteration_id,
+            tool_id=tool_id,
+            status=status,
+            duration=duration
+        )
+
+    def get_current_iteration(self):
+        """Get the most recently added iteration widget."""
+        return self.iteration_container.get_current_iteration()
 
     # Action button handlers
     @on(ActionButton.Pressed)

@@ -11,13 +11,13 @@ class GoogleVertexProvider(LLMProvider):
         self,
         project_id: str,
         location: str = "us-central1",
-        model: str = "gemini-1.5-flash",
+        model: str = "gemini-2.0-flash",
         api_key: str = None
     ):
-        self.project_id = project_id
+        self.project_id = project_id.strip() if project_id else ""
         self.location = location
-        self.model = model
-        self.api_key = api_key
+        self.model = model.strip() if model else "gemini-2.0-flash"
+        self.api_key = api_key.strip() if api_key else None
         self._client = None
 
     def _get_client(self):
@@ -130,19 +130,15 @@ class GoogleVertexProvider(LLMProvider):
         except Exception:
             # Return common models as fallback
             return [
-                "gemini-1.5-flash",
-                "gemini-1.5-flash-8b",
+                "gemini-2.0-flash",
+                "gemini-2.0-flash-lite",
                 "gemini-1.5-pro",
-                "gemini-1.0-pro",
-                "gemini-2.0-flash-exp",
+                "gemini-1.5-flash",
             ]
 
     async def validate_connection(self) -> bool:
         """Check if Gemini API is reachable."""
-        try:
-            client = self._get_client()
-            # Quick test with minimal tokens
-            response = await client.generate_content_async("Hi", stream=False)
-            return response is not None
-        except Exception:
-            return False
+        client = self._get_client()
+        # Quick test with minimal tokens
+        response = await client.generate_content_async("Hi", stream=False)
+        return response is not None

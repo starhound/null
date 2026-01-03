@@ -2094,3 +2094,268 @@ AIResponseBlock.mode-agent .block-mode-tag {
 .block-mode-tag-agent {
     color: $accent;
 }
+
+/* ==========================================================================
+   Agent Iterations - Structured Think -> Tool -> Response Flow
+   ========================================================================== */
+
+/* --- IterationContainer --- */
+IterationContainer {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0 0 1 0;
+    background: transparent;
+}
+
+IterationContainer.empty {
+    display: none;
+}
+
+/* --- IterationWidget --- */
+IterationWidget {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin-bottom: 1;
+    border-bottom: solid $surface-lighten-1;
+}
+
+/* --- IterationHeader --- */
+IterationHeader {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    layout: horizontal;
+}
+
+IterationHeader .iter-status {
+    width: 2;
+    color: $text-muted;
+}
+
+IterationHeader .iter-status.pending {
+    color: $text-muted;
+}
+
+IterationHeader .iter-status.thinking {
+    color: $warning;
+}
+
+IterationHeader .iter-status.executing {
+    color: $accent;
+}
+
+IterationHeader .iter-status.waiting_approval {
+    color: $primary;
+}
+
+IterationHeader .iter-status.complete {
+    color: $success;
+}
+
+IterationHeader .iter-label {
+    color: $text;
+    text-style: bold;
+}
+
+IterationHeader .iter-duration {
+    color: $text-muted;
+    text-style: dim;
+    margin-left: 1;
+}
+
+/* --- ThinkingSection --- */
+ThinkingSection {
+    width: 100%;
+    height: auto;
+    padding: 0;
+}
+
+ThinkingSection .thinking-toggle {
+    width: 100%;
+    height: 1;
+    padding: 0 2;
+    color: $text-muted;
+    layout: horizontal;
+}
+
+ThinkingSection .thinking-toggle:hover {
+    background: $surface-lighten-1 15%;
+}
+
+ThinkingSection .thinking-icon {
+    width: 2;
+    color: $text-muted;
+}
+
+ThinkingSection .thinking-icon.expanded {
+    color: $accent;
+}
+
+ThinkingSection .thinking-title {
+    color: $text-muted;
+    text-style: italic;
+}
+
+ThinkingSection .thinking-content {
+    width: 100%;
+    height: auto;
+    max-height: 15;
+    padding: 0 3;
+    background: $surface-darken-1;
+    border-left: solid $surface-lighten-1;
+    margin-left: 2;
+    display: none;
+}
+
+ThinkingSection .thinking-content.visible {
+    display: block;
+}
+
+/* --- ToolCallItem (in iterations) --- */
+ToolCallItem {
+    width: 100%;
+    height: auto;
+    padding: 0 2;
+}
+
+ToolCallItem .tool-row {
+    width: 100%;
+    height: 1;
+    layout: horizontal;
+}
+
+ToolCallItem .tool-icon {
+    width: 2;
+    color: $text-muted;
+}
+
+ToolCallItem .tool-icon.pending {
+    color: $text-muted;
+}
+
+ToolCallItem .tool-icon.running {
+    color: $warning;
+}
+
+ToolCallItem .tool-icon.success {
+    color: $success;
+}
+
+ToolCallItem .tool-icon.error {
+    color: $error;
+}
+
+ToolCallItem .tool-name {
+    color: $text;
+}
+
+ToolCallItem .tool-duration {
+    color: $text-muted;
+    text-style: dim;
+    margin-left: 1;
+}
+
+/* --- IterationSeparator --- */
+IterationSeparator {
+    width: 100%;
+    height: 1;
+    padding: 0 2;
+    color: $text-muted;
+    text-style: dim;
+    text-align: center;
+}
+
+/* ==========================================================================
+   Tool Approval Screen
+   ========================================================================== */
+
+ToolApprovalScreen {
+    align: center middle;
+}
+
+ToolApprovalScreen #approval-container {
+    width: 80;
+    max-width: 90%;
+    height: auto;
+    max-height: 80%;
+    background: $surface;
+    border: double $warning;
+    padding: 1 2;
+}
+
+ToolApprovalScreen #approval-title {
+    text-align: center;
+    text-style: bold;
+    color: $warning;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen #approval-subtitle {
+    text-align: center;
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen #tools-scroll {
+    width: 100%;
+    height: auto;
+    max-height: 20;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen ToolPreview {
+    width: 100%;
+    height: auto;
+    padding: 1;
+    background: $surface-darken-1;
+    border: solid $surface-lighten-1;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen ToolPreview .tool-name {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen ToolPreview .tool-args {
+    width: 100%;
+    height: auto;
+    max-height: 10;
+}
+
+ToolApprovalScreen #approval-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+    layout: horizontal;
+}
+
+ToolApprovalScreen #approval-buttons Button {
+    margin: 0 1;
+}
+
+ToolApprovalScreen #approve {
+    background: $success;
+}
+
+ToolApprovalScreen #approve-all {
+    background: $primary;
+}
+
+ToolApprovalScreen #reject {
+    background: $warning;
+}
+
+ToolApprovalScreen #cancel {
+    background: $error;
+}
+
+ToolApprovalScreen #approval-hint {
+    text-align: center;
+    color: $text-muted;
+    text-style: dim;
+    margin-top: 1;
+}

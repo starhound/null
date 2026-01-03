@@ -33,6 +33,7 @@ class ProviderConfigScreen(ModalScreen):
         },
         "google": {
             "api_key": ("API Key (Gemini)", "AI...", True),
+            "model": ("Model Name", "gemini-2.0-flash", False),
             "project_id": ("Project ID (optional)", "my-project", False),
         },
         "azure": {

@@ -154,6 +154,8 @@ KNOWN_MODEL_CONTEXTS = {
     "gemini-1.5-flash-8b": 1000000,
     "gemini-1.0-pro": 32768,
     "gemini-2.0-flash": 1000000,
+    "gemini-flash": 1000000,
+    "gemini-pro": 2000000,
     # Mistral
     "mistral-large": 128000,
     "mistral-medium": 32768,

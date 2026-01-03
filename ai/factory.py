@@ -192,7 +192,7 @@ class AIFactory:
                 project_id=config.get("project_id", ""),
                 location=get("location", "us-central1"),
                 api_key=config.get("api_key", ""),
-                model=get("model", "gemini-1.5-flash")
+                model=get("model", "gemini-2.0-flash")
             )
 
         elif provider_name == "azure":

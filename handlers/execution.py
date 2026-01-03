@@ -263,42 +263,92 @@ class ExecutionHandler:
         system_prompt: str,
         max_tokens: int
     ):
-        """Execute AI with full agent loop - automatically execute tools until completion."""
-        from tools import ToolCall
-        from models import BlockType
-        from widgets import BlockWidget
+        """Execute AI with structured think → tool → think flow.
+
+        This uses model-specific thinking strategies and creates discrete
+        iterations for each think → action cycle.
+        """
+        from tools import ToolCall, ToolResult
+        from models import AgentIteration, ToolCallState
+        from widgets.blocks import AIResponseBlock
+        from ai.thinking import get_thinking_strategy
+        from config import Config
+        import time
 
         registry = self._get_tool_registry()
         tools = registry.get_all_tools_schema()
 
+        # Get thinking strategy for this provider/model
+        provider_name = Config.get("ai.provider") or ""
+        model_name = self.app.ai_provider.model if self.app.ai_provider else ""
+        strategy = get_thinking_strategy(provider_name, model_name)
+
+        # Enhance system prompt with thinking instructions if needed
+        enhanced_prompt = system_prompt
+        if strategy.requires_prompting:
+            prompt_addition = strategy.get_prompt_addition()
+            if prompt_addition:
+                enhanced_prompt = system_prompt + "\n\n" + prompt_addition
+
+        # Agent settings
+        ai_config = self.app.config.get("ai", {})
+        max_iterations = ai_config.get("agent_max_iterations", 10)
+        approval_mode = ai_config.get("agent_approval_mode", "auto")  # auto, per_tool, per_iteration
+        auto_approve_all = False  # Set to True when user chooses "Approve All"
+
         full_response = ""
         current_messages = list(messages)
-        iteration = 0
-        max_iterations = 10  # Agent mode allows more iterations
+        iteration_num = 0
         total_usage: Optional[TokenUsage] = None
+        has_iteration_ui = isinstance(widget, AIResponseBlock)
 
-        while iteration < max_iterations:
-            iteration += 1
+        while iteration_num < max_iterations:
+            iteration_num += 1
             pending_tool_calls = []
-            iteration_text = ""
+            raw_response = ""
+            iteration_start = time.time()
+
+            # Create iteration state
+            iteration = AgentIteration(
+                iteration_number=iteration_num,
+                status="thinking"
+            )
+
+            # Add iteration to UI if widget supports it
+            if has_iteration_ui:
+                widget.add_iteration(iteration)
 
             # Stream AI response
             async for chunk in self.app.ai_provider.generate_with_tools(
-                prompt if iteration == 1 else "",
+                prompt if iteration_num == 1 else "",
                 current_messages,
                 tools,
-                system_prompt=system_prompt
+                system_prompt=enhanced_prompt
             ):
                 if self.app._ai_cancelled:
                     full_response += "\n\n[Cancelled]"
                     block_state.content_output = full_response
                     widget.update_output(full_response)
+                    iteration.status = "complete"
+                    if has_iteration_ui:
+                        widget.update_iteration(iteration.id, status="complete")
                     break
 
                 # Handle text content
                 if chunk.text:
-                    iteration_text += chunk.text
-                    full_response += chunk.text
+                    raw_response += chunk.text
+
+                    # Extract thinking using strategy
+                    thinking, remaining = strategy.extract_thinking(raw_response)
+
+                    # Update iteration thinking
+                    if thinking:
+                        iteration.thinking = thinking
+                        if has_iteration_ui:
+                            widget.update_iteration(iteration.id, thinking=thinking)
+
+                    # Update main response (non-thinking content)
+                    full_response = remaining if thinking else raw_response
                     block_state.content_output = full_response
                     widget.update_output(full_response)
 
@@ -306,7 +356,7 @@ class ExecutionHandler:
                 if chunk.tool_calls:
                     pending_tool_calls.extend(chunk.tool_calls)
 
-                # Track token usage from completed chunks
+                # Track token usage
                 if chunk.is_complete and chunk.usage:
                     if total_usage is None:
                         total_usage = chunk.usage
@@ -322,21 +372,72 @@ class ExecutionHandler:
 
             # If no tool calls, we're done - AI provided final response
             if not pending_tool_calls:
-                if iteration > 1:
-                    # Add final completion message to output
-                    full_response += f"\n\n*Agent completed after {iteration} iterations*"
-                    block_state.content_output = full_response
-                    widget.update_output(full_response)
+                iteration.status = "complete"
+                iteration.duration = time.time() - iteration_start
+                if has_iteration_ui:
+                    widget.update_iteration(
+                        iteration.id,
+                        status="complete",
+                        duration=iteration.duration
+                    )
                 break
 
-            # Show that we're executing tools
-            if iteration == 1:
-                self.app.notify(f"Agent mode: Executing {len(pending_tool_calls)} tool(s)...", severity="information")
+            # Check if approval is needed
+            if approval_mode != "auto" and not auto_approve_all:
+                iteration.status = "waiting_approval"
+                if has_iteration_ui:
+                    widget.update_iteration(iteration.id, status="waiting_approval")
+
+                # Request approval for tool calls
+                approval_result = await self._request_tool_approval(
+                    pending_tool_calls,
+                    iteration_num
+                )
+
+                if approval_result == "cancel":
+                    # User cancelled the entire agent loop
+                    full_response += "\n\n[Agent cancelled by user]"
+                    block_state.content_output = full_response
+                    widget.update_output(full_response)
+                    iteration.status = "complete"
+                    if has_iteration_ui:
+                        widget.update_iteration(iteration.id, status="complete")
+                    break
+
+                elif approval_result == "reject":
+                    # Skip these tools but continue
+                    iteration.status = "complete"
+                    iteration.duration = time.time() - iteration_start
+                    if has_iteration_ui:
+                        widget.update_iteration(
+                            iteration.id,
+                            status="complete",
+                            duration=iteration.duration
+                        )
+                    # Don't break - continue to next iteration without executing tools
+                    prompt = ""
+                    continue
+
+                elif approval_result == "approve-all":
+                    # Don't ask again
+                    auto_approve_all = True
+
+                # If "approve" or "approve-all", continue to execute
+
+            # Update iteration status to executing
+            iteration.status = "executing"
+            if has_iteration_ui:
+                widget.update_iteration(iteration.id, status="executing")
 
             # Add assistant message with tool calls to conversation
+            assistant_content = raw_response
+            thinking, remaining = strategy.extract_thinking(raw_response)
+            if remaining:
+                assistant_content = remaining
+
             assistant_msg = {
                 "role": "assistant",
-                "content": iteration_text,
+                "content": assistant_content,
                 "tool_calls": [
                     {
                         "id": tc.id,
@@ -351,16 +452,26 @@ class ExecutionHandler:
             }
             current_messages.append(assistant_msg)
 
-            # Execute all tool calls and collect results
-            tool_results = await self._execute_agent_tools(
-                pending_tool_calls, registry, block_state, widget
+            # Execute tool calls within this iteration
+            tool_results = await self._execute_iteration_tools(
+                pending_tool_calls,
+                registry,
+                iteration,
+                block_state,
+                widget,
+                has_iteration_ui
             )
 
             if not tool_results:
-                # Tool execution failed or was cancelled
-                full_response += "\n\n*Tool execution failed or cancelled*"
-                block_state.content_output = full_response
-                widget.update_output(full_response)
+                # Tool execution failed or cancelled
+                iteration.status = "complete"
+                iteration.duration = time.time() - iteration_start
+                if has_iteration_ui:
+                    widget.update_iteration(
+                        iteration.id,
+                        status="complete",
+                        duration=iteration.duration
+                    )
                 break
 
             # Add tool results to conversation
@@ -371,16 +482,173 @@ class ExecutionHandler:
                     "content": result.content
                 })
 
+            # Mark iteration complete
+            iteration.status = "complete"
+            iteration.duration = time.time() - iteration_start
+            if has_iteration_ui:
+                widget.update_iteration(
+                    iteration.id,
+                    status="complete",
+                    duration=iteration.duration
+                )
+
             # Clear prompt for next iteration
             prompt = ""
 
         # Check if we hit max iterations
-        if iteration >= max_iterations:
+        if iteration_num >= max_iterations:
             full_response += f"\n\n*Warning: Reached maximum iterations ({max_iterations})*"
             block_state.content_output = full_response
             widget.update_output(full_response)
 
         self._finalize_response(block_state, widget, full_response, messages, max_tokens, total_usage)
+
+    async def _execute_iteration_tools(
+        self,
+        tool_calls: List,
+        registry,
+        iteration: "AgentIteration",
+        block_state: BlockState,
+        widget: BaseBlockWidget,
+        has_iteration_ui: bool
+    ) -> List:
+        """Execute tools within a specific iteration.
+
+        This creates tool call states within the iteration and updates
+        both the iteration UI and the execution log.
+        """
+        from tools import ToolCall, ToolResult
+        from models import ToolCallState
+        import time
+
+        results = []
+
+        for tc in tool_calls:
+            tool_call = ToolCall(id=tc.id, name=tc.name, arguments=tc.arguments)
+            start_time = time.time()
+
+            # Create tool call state
+            tool_state = ToolCallState(
+                id=tc.id,
+                tool_name=tc.name,
+                arguments=json.dumps(tc.arguments, indent=2) if isinstance(tc.arguments, dict) else str(tc.arguments),
+                status="running"
+            )
+
+            # Add to iteration
+            iteration.tool_calls.append(tool_state)
+
+            # Update UI
+            if has_iteration_ui:
+                widget.add_iteration_tool_call(iteration.id, tool_state)
+
+            # Also add to block's tool_calls for backwards compatibility
+            block_state.tool_calls.append(tool_state)
+
+            # Show in exec output for non-iteration-aware displays
+            tool_display = f"\n\n**Tool: {tc.name}**\n```json\n{json.dumps(tc.arguments, indent=2)}\n```"
+            block_state.content_exec_output += tool_display
+            widget.update_output()
+
+            try:
+                # Execute the tool
+                result = await registry.execute_tool(tool_call)
+                results.append(result)
+
+                duration = time.time() - start_time
+
+                # Format result preview
+                content_preview = result.content
+                if len(result.content) > 2000:
+                    content_preview = result.content[:2000] + f"\n... ({len(result.content)} chars total)"
+
+                # Update tool state
+                tool_state.status = "error" if result.is_error else "success"
+                tool_state.output = result.content
+                tool_state.duration = duration
+
+                # Update iteration UI
+                if has_iteration_ui:
+                    widget.update_iteration_tool_call(
+                        iteration.id,
+                        tc.id,
+                        status=tool_state.status,
+                        duration=duration
+                    )
+
+                # Show result in exec output
+                if result.is_error:
+                    result_display = f"\n**Error ({duration:.1f}s):**\n```\n{content_preview}\n```"
+                else:
+                    result_display = f"\n**Result ({duration:.1f}s):**\n```\n{content_preview}\n```"
+
+                block_state.content_exec_output += result_display
+                widget.update_output()
+
+            except Exception as e:
+                duration = time.time() - start_time
+                error_result = ToolResult(
+                    tool_call_id=tc.id,
+                    content=f"Error: {str(e)}",
+                    is_error=True
+                )
+                results.append(error_result)
+
+                # Update tool state
+                tool_state.status = "error"
+                tool_state.output = str(e)
+                tool_state.duration = duration
+
+                # Update UI
+                if has_iteration_ui:
+                    widget.update_iteration_tool_call(
+                        iteration.id,
+                        tc.id,
+                        status="error",
+                        duration=duration
+                    )
+
+                block_state.content_exec_output += f"\n**System Error ({duration:.1f}s):**\n```\n{str(e)}\n```"
+                widget.update_output()
+
+        return results
+
+    async def _request_tool_approval(
+        self,
+        tool_calls: List,
+        iteration_number: int
+    ) -> str:
+        """Request user approval for tool execution.
+
+        Args:
+            tool_calls: List of pending tool calls
+            iteration_number: Current iteration number
+
+        Returns:
+            One of: "approve", "approve-all", "reject", "cancel"
+        """
+        from screens import ToolApprovalScreen
+        import asyncio
+
+        # Build tool call data for the approval screen
+        tool_data = [
+            {
+                "name": tc.name,
+                "arguments": tc.arguments
+            }
+            for tc in tool_calls
+        ]
+
+        # Create and push the approval screen
+        screen = ToolApprovalScreen(
+            tool_calls=tool_data,
+            iteration_number=iteration_number
+        )
+
+        # Wait for user decision
+        result = await self.app.push_screen_wait(screen)
+
+        return result or "cancel"
 
     async def _execute_agent_tools(
         self,

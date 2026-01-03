@@ -53,6 +53,56 @@ class ToolCallState:
 
 
 @dataclass
+class AgentIteration:
+    """Represents one think → action cycle in agent mode.
+
+    Each iteration contains:
+    - thinking: The model's reasoning for this cycle
+    - tool_calls: Tools executed during this iteration
+    - response_fragment: Any text response generated
+    - status: Current state of the iteration
+    """
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    iteration_number: int = 0
+    thinking: str = ""
+    tool_calls: List[ToolCallState] = field(default_factory=list)
+    response_fragment: str = ""
+    status: str = "pending"  # pending, thinking, executing, waiting_approval, complete
+    timestamp: datetime = field(default_factory=datetime.now)
+    duration: float = 0.0
+
+    def to_dict(self) -> dict:
+        """Serialize iteration to dictionary."""
+        return {
+            "id": self.id,
+            "iteration_number": self.iteration_number,
+            "thinking": self.thinking,
+            "tool_calls": [tc.to_dict() for tc in self.tool_calls],
+            "response_fragment": self.response_fragment,
+            "status": self.status,
+            "timestamp": self.timestamp.isoformat(),
+            "duration": self.duration
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "AgentIteration":
+        """Deserialize iteration from dictionary."""
+        tool_calls_data = data.get("tool_calls", [])
+        tool_calls = [ToolCallState.from_dict(tc) for tc in tool_calls_data]
+
+        return cls(
+            id=data.get("id", str(uuid.uuid4())),
+            iteration_number=data.get("iteration_number", 0),
+            thinking=data.get("thinking", ""),
+            tool_calls=tool_calls,
+            response_fragment=data.get("response_fragment", ""),
+            status=data.get("status", "pending"),
+            timestamp=datetime.fromisoformat(data["timestamp"]) if "timestamp" in data else datetime.now(),
+            duration=data.get("duration", 0.0)
+        )
+
+
+@dataclass
 class BlockState:
     type: BlockType
     content_input: str
@@ -65,6 +115,7 @@ class BlockState:
     content_thinking: str = ""
     content_exec_output: str = ""
     tool_calls: List["ToolCallState"] = field(default_factory=list)
+    iterations: List["AgentIteration"] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """Serialize block to dictionary."""
@@ -79,7 +130,8 @@ class BlockState:
             "exit_code": self.exit_code,
             "is_running": self.is_running,
             "metadata": self.metadata,
-            "tool_calls": [tc.to_dict() for tc in self.tool_calls]
+            "tool_calls": [tc.to_dict() for tc in self.tool_calls],
+            "iterations": [it.to_dict() for it in self.iterations]
         }
 
     @classmethod
@@ -87,6 +139,9 @@ class BlockState:
         """Deserialize block from dictionary."""
         tool_calls_data = data.get("tool_calls", [])
         tool_calls = [ToolCallState.from_dict(tc) for tc in tool_calls_data]
+
+        iterations_data = data.get("iterations", [])
+        iterations = [AgentIteration.from_dict(it) for it in iterations_data]
 
         return cls(
             id=data.get("id", str(uuid.uuid4())),
@@ -99,7 +154,8 @@ class BlockState:
             exit_code=data.get("exit_code"),
             is_running=data.get("is_running", False),
             metadata=data.get("metadata", {}),
-            tool_calls=tool_calls
+            tool_calls=tool_calls,
+            iterations=iterations
         )
 
 
