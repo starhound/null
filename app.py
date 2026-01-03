@@ -662,6 +662,15 @@ class NullApp(App):
             # In a multi-worker future, we'd need to map block_id -> worker
             self._ai_cancelled = True
             self._active_worker.cancel()
+
+            # Update the AI block state
+            block = next((b for b in self.blocks if b.id == block_id), None)
+            if block:
+                block.is_running = False
+                widget = self._find_widget_for_block(block_id)
+                if widget:
+                    widget.set_loading(False)
+
             self.notify("AI generation stopped", severity="warning")
             return
 
@@ -671,28 +680,9 @@ class NullApp(App):
             self.process_manager.stop(block_id)
             self.notify("Process stopped", severity="warning")
             return
-            
+
         # Fallback
         self.notify("No active process found for this block", severity="warning")
-        if exit_code != 0:
-            result_title += f" [exit: {exit_code}]"
-
-        # Format output as code block
-        formatted_output = f"```\n{output.rstrip()}\n```" if output else "*(no output)*"
-
-        block = BlockState(
-            type=BlockType.SYSTEM_MSG,
-            content_input=result_title,
-            content_output=formatted_output,
-            exit_code=exit_code,
-            is_running=False
-        )
-        self.blocks.append(block)
-        history_vp = self.query_one("#history", HistoryViewport)
-        block_widget = BlockWidget(block)
-        await history_vp.mount(block_widget)
-        block_widget.scroll_visible()
-        self._auto_save()
 
     async def on_code_block_widget_save_code_requested(self, message):
         """Handle save code button click from code blocks."""
