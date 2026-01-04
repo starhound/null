@@ -2839,9 +2839,10 @@ ToolApprovalScreen #approval-hint {
     margin-top: 1;
 }
 
-/* ----- Confirm Dialog ----- */
+/* ----- Confirm Dialog / Disclaimer Dialog ----- */
 
-ConfirmDialog {
+ConfirmDialog,
+DisclaimerScreen {
     align: center middle;
 }
 
@@ -2869,6 +2870,7 @@ ConfirmDialog #confirm-title {
 ConfirmDialog #confirm-message {
     text-align: center;
     margin-bottom: 1;
+    width: 100%;
 }
 
 ConfirmDialog #confirm-buttons {
@@ -2878,5 +2880,43 @@ ConfirmDialog #confirm-buttons {
 }
 
 ConfirmDialog #confirm-buttons Button {
+    margin: 0 1;
+}
+
+/* ----- Disclaimer Screen ----- */
+
+DisclaimerScreen #disclaimer-dialog {
+    width: 80;
+    max-width: 90%;
+    height: auto;
+    background: $surface;
+    border: double $warning;
+    padding: 2 3;
+}
+
+DisclaimerScreen #disclaimer-content {
+    width: 100%;
+    height: auto;
+}
+
+DisclaimerScreen #disclaimer-title {
+    text-align: center;
+    text-style: bold;
+    color: $warning;
+    margin-bottom: 1;
+}
+
+DisclaimerScreen #disclaimer-message {
+    margin-bottom: 1;
+    width: 100%;
+}
+
+DisclaimerScreen #disclaimer-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+DisclaimerScreen #disclaimer-buttons Button {
     margin: 0 1;
 }

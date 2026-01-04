@@ -3,6 +3,7 @@
 from .approval import ToolApprovalScreen
 from .config import ConfigScreen
 from .confirm import ConfirmDialog
+from .disclaimer import DisclaimerScreen
 from .help import HelpScreen
 from .mcp import MCPServerConfigScreen
 from .provider import ProviderConfigScreen
@@ -14,6 +15,7 @@ from .tools import ToolsScreen
 __all__ = [
     "ConfigScreen",
     "ConfirmDialog",
+    "DisclaimerScreen",
     "HelpScreen",
     "MCPServerConfigScreen",
     "ModelListScreen",

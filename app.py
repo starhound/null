@@ -131,7 +131,20 @@ class NullApp(App):
 
     async def on_mount(self):
         """Load previous session on startup."""
+        # Check for first-run disclaimer
         storage = Config._get_storage()
+        if not storage.get_config("disclaimer_accepted"):
+            from screens import DisclaimerScreen
+
+            def on_disclaimer_accepted(accepted: bool):
+                if accepted:
+                    storage.set_config("disclaimer_accepted", "true")
+                else:
+                    # User didn't accept - exit the app
+                    self.exit()
+
+            self.push_screen(DisclaimerScreen(), on_disclaimer_accepted)
+
         saved_blocks = storage.load_session()
 
         if saved_blocks:
@@ -178,8 +191,7 @@ class NullApp(App):
 
         settings = get_settings()
         apply_cursor_settings(
-            style=settings.terminal.cursor_style,
-            blink=settings.terminal.cursor_blink
+            style=settings.terminal.cursor_style, blink=settings.terminal.cursor_blink
         )
 
     async def on_key(self, event) -> None:
@@ -256,7 +268,9 @@ class NullApp(App):
         focused = self.screen.focused
         if focused is not None and hasattr(focused, "block_id"):  # TerminalBlock
             target_block_id = getattr(focused, "block_id", None)
-        elif focused is not None and hasattr(focused, "block"):  # CommandBlock/BlockWidget
+        elif focused is not None and hasattr(
+            focused, "block"
+        ):  # CommandBlock/BlockWidget
             block = getattr(focused, "block", None)
             if block:
                 target_block_id = block.id
@@ -310,10 +324,9 @@ class NullApp(App):
 
             self.push_screen(
                 ConfirmDialog(
-                    title="Confirm Exit",
-                    message="Are you sure you want to quit?"
+                    title="Confirm Exit", message="Are you sure you want to quit?"
                 ),
-                on_confirm
+                on_confirm,
             )
         else:
             self._perform_exit(settings.terminal.clear_on_exit)
@@ -330,7 +343,9 @@ class NullApp(App):
 
     def is_busy(self) -> bool:
         """Check if any operation is currently running."""
-        worker_active = self._active_worker is not None and not self._active_worker.is_finished
+        worker_active = (
+            self._active_worker is not None and not self._active_worker.is_finished
+        )
         return self.process_manager.get_count() > 0 or worker_active
 
     def action_quick_export(self):
@@ -430,6 +445,7 @@ class NullApp(App):
                     Config.set("ai.provider", provider_name)
                     # Also sync to JSON settings
                     from settings import SettingsManager
+
                     SettingsManager().set("ai", "provider", provider_name)
                     self.notify(f"Switched provider to {provider_name}")
 
