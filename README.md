@@ -29,10 +29,10 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
 
 ## 🚀 Quick Start
 
-### Install via pip
+### Install via pipx
 
 ```bash
-pip install null-terminal
+pipx install null-terminal
 null
 ```
 
