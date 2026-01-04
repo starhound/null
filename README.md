@@ -24,6 +24,7 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
 -   **Input Modes**: Switch between shell and AI modes with ease.
 -   **Context Awareness**: Smartly manages files and conversation history.
 -   **Local Tool Use**: AI can run commands, read files, and analyze code directly.
+-   **MCP Support**: Connect to Model Context Protocol servers for extended tool capabilities.
 -   **Chain of Thought**: Visualize the reasoning process of advanced models (e.g., DeepSeek R1).
 -   **Cyber-Noir Aesthetics**: Beautiful, customizable themes and animations.
 
