@@ -4,7 +4,7 @@
 > **"Shell in the Void."**
 
 > [!NOTE]
-> Null Terminal is under active development. Features and APIs may change.
+> Null Terminal is under active development and not yet officially released. Features and APIs may change.
 
 Null is a next-generation TUI (Terminal User Interface) designed for the modern AI-integrated workflow. Built on [Textual](https://textual.textualize.io/), it blends the raw power of the command line with the intelligence of LLMs, all wrapped in a sleek, cyber-noir aesthetic.
 
