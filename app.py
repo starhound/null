@@ -10,7 +10,7 @@ from textual.widgets import Footer, Label, TextArea
 
 from ai.factory import AIFactory
 from ai.manager import AIManager
-from config import Config
+from config import Config, get_settings
 from handlers import ExecutionHandler, InputHandler, SlashCommandHandler
 from managers import ProcessManager
 
@@ -18,7 +18,6 @@ from managers import ProcessManager
 from mcp import MCPManager
 from models import BlockState, BlockType
 from screens import ConfirmDialog, HelpScreen, ModelListScreen
-from settings import get_settings
 from themes import get_all_themes
 from widgets import (
     AppHeader,
@@ -77,7 +76,7 @@ class NullApp(App):
         self.blocks = []
 
         # Initialize Storage
-        from storage import StorageManager
+        from config import StorageManager
 
         self.storage = StorageManager()
 
@@ -444,7 +443,7 @@ class NullApp(App):
                 if provider_name != current_provider:
                     Config.set("ai.provider", provider_name)
                     # Also sync to JSON settings
-                    from settings import SettingsManager
+                    from config import SettingsManager
 
                     SettingsManager().set("ai", "provider", provider_name)
                     self.notify(f"Switched provider to {provider_name}")

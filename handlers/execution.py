@@ -12,8 +12,8 @@ if TYPE_CHECKING:
     from tools import ToolRegistry
 
 from ai.base import Message, TokenUsage, calculate_cost
+from config import get_settings
 from models import BlockState
-from settings import get_settings
 from widgets import BaseBlockWidget
 
 

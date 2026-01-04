@@ -97,7 +97,7 @@ class AICommands(CommandMixin):
 
                 Config.set("ai.provider", provider_name)
                 # Also sync to JSON settings
-                from settings import SettingsManager
+                from config import SettingsManager
                 SettingsManager().set("ai", "provider", provider_name)
                 self.notify(f"Provider switched to {provider_name}")
 

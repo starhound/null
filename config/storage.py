@@ -1,3 +1,5 @@
+"""Storage management using SQLite with encryption for sensitive data."""
+
 import os
 import sqlite3
 from datetime import datetime
@@ -13,6 +15,8 @@ KEYRING_SERVICE_NAME = "null-terminal-encryption-key"
 
 
 class SecurityManager:
+    """Manages encryption/decryption of sensitive configuration values."""
+
     def __init__(self):
         self._fernet: Fernet | None = None
         self._init_key()
@@ -61,12 +65,14 @@ class SecurityManager:
         self._fernet = Fernet(key.encode())
 
     def encrypt(self, data: str) -> str:
+        """Encrypt a string value."""
         if not data:
             return ""
         assert self._fernet is not None, "Fernet not initialized"
         return self._fernet.encrypt(data.encode()).decode()
 
     def decrypt(self, token: str) -> str:
+        """Decrypt an encrypted token."""
         if not token:
             return ""
         assert self._fernet is not None, "Fernet not initialized"
@@ -77,6 +83,8 @@ class SecurityManager:
 
 
 class StorageManager:
+    """Manages SQLite database for configuration, history, and SSH hosts."""
+
     def __init__(self):
         self.db_path = DB_PATH
         self.security = SecurityManager()
@@ -133,6 +141,7 @@ class StorageManager:
         self.conn.commit()
 
     def get_config(self, key: str, default: Any = None) -> Any:
+        """Get a configuration value, decrypting if sensitive."""
         cursor = self.conn.cursor()
         cursor.execute("SELECT value, is_sensitive FROM config WHERE key = ?", (key,))
         row = cursor.fetchone()
@@ -144,6 +153,7 @@ class StorageManager:
         return default
 
     def set_config(self, key: str, value: str, is_sensitive: bool = False):
+        """Set a configuration value, encrypting if sensitive."""
         cursor = self.conn.cursor()
         stored_val = value
         if is_sensitive:
@@ -171,6 +181,7 @@ class StorageManager:
         self.conn.commit()
 
     def add_history(self, command: str, exit_code: int = 0):
+        """Add a command to history."""
         if not command.strip():
             return
         cursor = self.conn.cursor()
@@ -181,6 +192,7 @@ class StorageManager:
         self.conn.commit()
 
     def get_last_history(self, limit: int = 50) -> list[str]:
+        """Get recent command history."""
         cursor = self.conn.cursor()
         cursor.execute("SELECT command FROM history ORDER BY id DESC LIMIT ?", (limit,))
         # Return reversed so latest is last in list (for easy up/cycling)
@@ -365,4 +377,5 @@ class StorageManager:
         self.conn.commit()
 
     def close(self):
+        """Close the database connection."""
         self.conn.close()

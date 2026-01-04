@@ -192,9 +192,9 @@ class CoreCommands(CommandMixin):
             /nullify window - Open new window with Null Terminal profile
         """
         from utils.terminal import (
+            TerminalType,
             activate_null_profile,
             get_terminal_info,
-            TerminalType,
         )
 
         info = get_terminal_info()

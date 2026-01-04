@@ -1,4 +1,4 @@
-"""Settings management using JSON config file."""
+"""Settings management for TUI/appearance options using JSON config file."""
 
 import json
 import os

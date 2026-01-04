@@ -61,7 +61,7 @@ class InputController(TextArea):
     def _apply_cursor_settings(self) -> None:
         """Apply cursor settings from config."""
         try:
-            from settings import get_settings
+            from config import get_settings
 
             settings = get_settings()
             self.cursor_blink = settings.terminal.cursor_blink

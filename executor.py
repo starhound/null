@@ -9,7 +9,7 @@ import struct
 import termios
 from collections.abc import Callable
 
-from settings import get_settings
+from config import get_settings
 
 
 def _waitpid_nohang(pid: int) -> tuple[int, int]:

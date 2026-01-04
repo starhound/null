@@ -9,7 +9,7 @@ from textual.message import Message
 from textual.strip import Strip
 from textual.widget import Widget
 
-from settings import get_settings
+from config import get_settings
 
 # Refresh debounce interval: 16ms = ~60 FPS
 _REFRESH_DEBOUNCE_MS = 16 / 1000  # Convert to seconds for set_timer

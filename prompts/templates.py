@@ -1,7 +1,14 @@
-"""Built-in prompt templates for Null terminal."""
+"""Built-in prompt templates for Null terminal.
 
-# Default system prompt - focused on terminal/CLI context
-DEFAULT_PROMPT = """You are an AI assistant in a terminal. Be concise.
+Loads prompts from static/ directory with fallback to inline constants.
+"""
+
+from pathlib import Path
+
+STATIC_DIR = Path(__file__).parent / "static"
+
+# Fallback prompts (used if static files are missing)
+_FALLBACK_DEFAULT = """You are an AI assistant in a terminal. Be concise.
 
 ## CRITICAL: Tool Behavior
 - Call ONE tool, then STOP. Do not call multiple tools.
@@ -16,24 +23,15 @@ DEFAULT_PROMPT = """You are an AI assistant in a terminal. Be concise.
 - Maximum 2-3 sentences if text response needed
 - Use code blocks for commands/code only"""
 
-# Concise mode - minimal output
-CONCISE_PROMPT = """You are a terse AI assistant in a terminal.
+_FALLBACK_CONCISE = """You are a terse AI assistant in a terminal.
 
 Rules:
 - Maximum 3 sentences of explanation
 - Always use code blocks for commands/code
 - No pleasantries or filler words
-- Just give the answer
+- Just give the answer"""
 
-Example:
-User: how do I find large files?
-Assistant: Find files over 100MB:
-```bash
-find . -size +100M -type f
-```"""
-
-# Agent mode - for autonomous task execution
-AGENT_PROMPT = """You are an AI agent that executes commands in the terminal.
+_FALLBACK_AGENT = """You are an AI agent that executes commands in the terminal.
 
 ## Core Responsibilities
 1. **Analyze**: capabilities and constraints before acting
@@ -42,28 +40,12 @@ AGENT_PROMPT = """You are an AI agent that executes commands in the terminal.
 4. **Iterate**: refine commands based on feedback
 5. **Report**: provide a final clear answer
 
-## Reasoning & Output Format
-- **Thought Process**: If you need to plan or reason, do so FIRST.
-- **Tool Calls**: Execute tools immediately after reasoning.
-- **Final Answer**: When the task is done, provide the final output clearly.
-
-## Tool Usage Rules
-- Use `run_command` for shell operations
-- Wait for the result after EACH tool call
-- Do not hallucinate tool outputs
-- If a command fails, analyze the error and try a fix
-
-## Safety
-- Confirm destructive actions (rm, overwrite)
-- Use non-destructive checks (ls, cat) first
-
 ## Final Output
 - You MUST provide a final answer when the task is complete.
 - Start your final answer with "## Result" or "## Answer".
 - Summarize what was done and the outcome."""
 
-# Code helper - focused on programming
-CODE_PROMPT = """You are a programming assistant in a terminal environment.
+_FALLBACK_CODE = """You are a programming assistant in a terminal environment.
 
 ## Focus Areas
 - Code review and suggestions
@@ -71,57 +53,101 @@ CODE_PROMPT = """You are a programming assistant in a terminal environment.
 - Best practices and patterns
 - Documentation and explanation
 
-## Response Format
-1. Identify the issue/question
-2. Provide solution with code
-3. Explain key points briefly
-
 Always use proper markdown code blocks with language identifiers."""
 
-# DevOps/Sysadmin mode
-DEVOPS_PROMPT = """You are a DevOps and system administration assistant.
+_FALLBACK_DEVOPS = """You are a DevOps and system administration assistant.
 
 ## Expertise
 - Linux/Unix system administration
 - Docker, Kubernetes, containers
 - CI/CD pipelines
 - Cloud infrastructure (AWS, GCP, Azure)
-- Monitoring and logging
-- Security best practices
-
-## Guidelines
-- Prefer standard tools (grep, awk, sed, jq)
-- Consider security implications
-- Suggest automation where applicable
-- Use environment variables for secrets
 
 Always use ```bash for commands and explain any destructive operations."""
 
-# Built-in prompts registry
-BUILTIN_PROMPTS = {
+# Fallback registry
+_FALLBACKS = {
+    "default": _FALLBACK_DEFAULT,
+    "concise": _FALLBACK_CONCISE,
+    "agent": _FALLBACK_AGENT,
+    "code": _FALLBACK_CODE,
+    "devops": _FALLBACK_DEVOPS,
+}
+
+# Prompt metadata
+_PROMPT_META = {
     "default": {
         "name": "Default",
         "description": "Balanced assistant for terminal use",
-        "content": DEFAULT_PROMPT,
     },
     "concise": {
         "name": "Concise",
         "description": "Minimal, terse responses",
-        "content": CONCISE_PROMPT,
     },
     "agent": {
         "name": "Agent",
         "description": "Autonomous task execution mode",
-        "content": AGENT_PROMPT,
     },
     "code": {
         "name": "Code Helper",
         "description": "Programming and code review focus",
-        "content": CODE_PROMPT,
     },
     "devops": {
         "name": "DevOps",
         "description": "System admin and infrastructure",
-        "content": DEVOPS_PROMPT,
     },
 }
+
+
+def _load_prompt_file(name: str) -> str | None:
+    """Load a prompt from static directory.
+
+    Args:
+        name: The prompt name (without extension).
+
+    Returns:
+        The prompt content, or None if file doesn't exist.
+    """
+    filepath = STATIC_DIR / f"{name}.md"
+    if filepath.exists():
+        try:
+            return filepath.read_text(encoding="utf-8")
+        except Exception:
+            pass
+    return None
+
+
+def _load_builtin_prompts() -> dict:
+    """Load all built-in prompts from static directory with fallbacks.
+
+    Returns:
+        Dictionary mapping prompt keys to prompt data (name, description, content).
+    """
+    prompts = {}
+
+    for key, meta in _PROMPT_META.items():
+        # Try loading from file first
+        content = _load_prompt_file(key)
+
+        # Fall back to inline constant
+        if content is None:
+            content = _FALLBACKS.get(key, "")
+
+        prompts[key] = {
+            "name": meta["name"],
+            "description": meta["description"],
+            "content": content,
+        }
+
+    return prompts
+
+
+# Load on module import (cached)
+BUILTIN_PROMPTS = _load_builtin_prompts()
+
+# Convenience accessors for backward compatibility
+DEFAULT_PROMPT = BUILTIN_PROMPTS.get("default", {}).get("content", "")
+CONCISE_PROMPT = BUILTIN_PROMPTS.get("concise", {}).get("content", "")
+AGENT_PROMPT = BUILTIN_PROMPTS.get("agent", {}).get("content", "")
+CODE_PROMPT = BUILTIN_PROMPTS.get("code", {}).get("content", "")
+DEVOPS_PROMPT = BUILTIN_PROMPTS.get("devops", {}).get("content", "")

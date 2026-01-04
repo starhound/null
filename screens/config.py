@@ -33,8 +33,7 @@ class ConfigScreen(ModalScreen):
 
     def __init__(self):
         super().__init__()
-        from config import Config
-        from settings import get_settings
+        from config import Config, get_settings
 
         self.settings = get_settings()
         self.controls = {}
@@ -364,7 +363,7 @@ class ConfigScreen(ModalScreen):
 
     def _collect_values(self):
         """Collect all control values into settings structure."""
-        from settings import (
+        from config import (
             AISettings,
             AppearanceSettings,
             EditorSettings,
@@ -469,8 +468,7 @@ class ConfigScreen(ModalScreen):
 
     def action_save(self):
         """Save settings and close."""
-        from config import Config
-        from settings import save_settings
+        from config import Config, save_settings
 
         new_settings = self._collect_values()
         save_settings(new_settings)
@@ -517,9 +515,9 @@ class ConfigScreen(ModalScreen):
         # Sync font and cursor settings to host terminal's config file
         try:
             from utils.terminal import (
+                TerminalType,
                 get_terminal_info,
                 sync_terminal_config,
-                TerminalType,
             )
 
             if sync_terminal_config(
@@ -554,7 +552,7 @@ class ConfigScreen(ModalScreen):
 
     def _reset_to_defaults(self):
         """Reset all settings to defaults."""
-        from settings import Settings, save_settings
+        from config import Settings, save_settings
 
         default_settings = Settings()
         save_settings(default_settings)
