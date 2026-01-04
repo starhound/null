@@ -1,154 +1,28 @@
-"""Custom themes for Null terminal."""
+"""Theme management for Null terminal.
+
+Loads themes from:
+1. styles/themes/*.json (built-in themes, shipped with app)
+2. ~/.null/themes/*.json (user custom themes)
+
+On first run, built-in themes are copied to ~/.null/themes/ for easy customization.
+"""
 
 import json
 from pathlib import Path
 
 from textual.theme import Theme
 
-# =============================================================================
-# Cyber Noir - The signature Null Terminal aesthetic
-# Deep darkness with neon accents, layered visual depth, and dramatic contrast
-# =============================================================================
-NULL_DARK = Theme(
-    name="null-dark",
-    dark=True,
-    # Neon accent palette
-    primary="#00D4FF",  # Electric cyan - AI responses, primary actions
-    secondary="#BD00FF",  # Vivid magenta - agent mode, system
-    accent="#00FF88",  # Matrix green - CLI, success states
-    # Text with high clarity
-    foreground="#E0E6F0",  # Bright silver-blue
-    # Layered dark backgrounds (deepest to elevated)
-    background="#08090D",  # Near-black void
-    surface="#0E1018",  # Slightly raised
-    panel="#151822",  # Card/panel surfaces
-    # Semantic colors with neon intensity
-    success="#00FF88",  # Neon green
-    warning="#FFB800",  # Electric amber
-    error="#FF3366",  # Hot pink-red
-    boost="#00FFCC",  # Teal glow
-    luminosity_spread=0.18,  # Dramatic variation for depth
-    text_alpha=0.95,
-    variables={
-        "block-cursor-background": "#00D4FF",
-        "block-cursor-foreground": "#08090D",
-        "input-cursor-background": "#00D4FF",
-        "input-cursor-foreground": "#08090D",
-        # Noir-specific layering colors
-        "noir-void": "#000000",
-        "noir-deep": "#08090D",
-        "noir-shadow": "#0E1018",
-        "noir-surface": "#151822",
-        "noir-elevated": "#1C2030",
-        "noir-highlight": "#252A3A",
-        # Glow intensities for focus states
-        "glow-cyan": "#00D4FF",
-        "glow-magenta": "#BD00FF",
-        "glow-green": "#00FF88",
-    },
-)
+# Directory containing built-in theme JSON files
+BUILTIN_THEMES_DIR = Path(__file__).parent / "styles" / "themes"
 
-# Warmer variant with orange/amber accents (Claude-like)
-NULL_WARM = Theme(
-    name="null-warm",
-    dark=True,
-    primary="#F59E0B",  # Amber - primary accent
-    secondary="#EC4899",  # Pink - secondary accent
-    accent="#FB923C",  # Orange - highlights
-    foreground="#E7E5E4",  # Stone 200 - main text
-    background="#0C0A09",  # Stone 950 - deep warm black
-    surface="#1C1917",  # Stone 900 - elevated surface
-    panel="#292524",  # Stone 800 - panel background
-    success="#4ADE80",  # Green 400 - success
-    warning="#FACC15",  # Yellow 400 - warnings
-    error="#FB7185",  # Rose 400 - errors
-    boost="#2DD4BF",  # Teal - special highlights
-    luminosity_spread=0.10,
-    text_alpha=0.90,
-    variables={
-        "block-cursor-background": "#F59E0B",
-        "block-cursor-foreground": "#0C0A09",
-    },
-)
-
-# Minimal monochrome with subtle blue tints
-NULL_MONO = Theme(
-    name="null-mono",
-    dark=True,
-    primary="#94A3B8",  # Slate 400 - subtle primary
-    secondary="#64748B",  # Slate 500 - secondary
-    accent="#7DD3FC",  # Sky 300 - rare highlights
-    foreground="#CBD5E1",  # Slate 300 - main text
-    background="#020617",  # Slate 950 - deepest black
-    surface="#0F172A",  # Slate 900 - surface
-    panel="#1E293B",  # Slate 800 - panels
-    success="#86EFAC",  # Green 300
-    warning="#FDE047",  # Yellow 300
-    error="#FCA5A5",  # Red 300
-    boost="#67E8F9",  # Cyan 300
-    luminosity_spread=0.08,  # Very subtle variation
-    text_alpha=0.88,  # Softer text
-)
-
-# Light theme option
-NULL_LIGHT = Theme(
-    name="null-light",
-    dark=False,
-    primary="#2563EB",  # Blue 600
-    secondary="#7C3AED",  # Violet 600
-    accent="#0891B2",  # Cyan 600
-    foreground="#1E293B",  # Slate 800 - dark text
-    background="#F8FAFC",  # Slate 50 - off-white
-    surface="#FFFFFF",  # Pure white cards
-    panel="#F1F5F9",  # Slate 100 - panels
-    success="#059669",  # Emerald 600
-    warning="#D97706",  # Amber 600
-    error="#DC2626",  # Red 600
-    boost="#0D9488",  # Teal 600
-    luminosity_spread=0.15,
-    text_alpha=0.95,
-)
+# User themes directory
+USER_THEMES_DIR = Path.home() / ".null" / "themes"
 
 
-# Built-in themes
-BUILTIN_THEMES = {
-    "null-dark": NULL_DARK,
-    "null-warm": NULL_WARM,
-    "null-mono": NULL_MONO,
-    "null-light": NULL_LIGHT,
-}
-
-
-def load_user_themes() -> dict[str, Theme]:
-    """Load custom themes from ~/.null/themes/*.json"""
-    themes: dict[str, Theme] = {}
-    themes_dir = Path.home() / ".null" / "themes"
-
-    if not themes_dir.exists():
-        # Create directory with example theme
-        themes_dir.mkdir(parents=True, exist_ok=True)
-        _create_example_theme(themes_dir)
-        return themes
-
-    for theme_file in themes_dir.glob("*.json"):
-        try:
-            theme = _load_theme_file(theme_file)
-            if theme:
-                themes[theme.name] = theme
-        except Exception:
-            pass  # Skip invalid theme files
-
-    return themes
-
-
-def _load_theme_file(path: Path) -> Theme | None:
-    """Load a single theme from a JSON file."""
+def _load_theme_from_dict(data: dict, name_fallback: str = "") -> Theme | None:
+    """Create a Theme from a dictionary."""
     try:
-        with open(path) as f:
-            data = json.load(f)
-
-        # Required fields
-        name = data.get("name", path.stem)
+        name = data.get("name", name_fallback)
         primary = data.get("primary")
         if not primary:
             return None
@@ -175,10 +49,76 @@ def _load_theme_file(path: Path) -> Theme | None:
         return None
 
 
-def _create_example_theme(themes_dir: Path):
-    """Create an example theme file for users."""
+def _load_theme_file(path: Path) -> tuple[Theme | None, dict | None]:
+    """Load a theme from a JSON file.
+
+    Returns: (Theme object, raw dict data)
+    """
+    try:
+        with open(path) as f:
+            data = json.load(f)
+        theme = _load_theme_from_dict(data, path.stem)
+        return theme, data
+    except Exception:
+        return None, None
+
+
+def _load_builtin_themes() -> dict[str, Theme]:
+    """Load built-in themes from styles/themes/*.json"""
+    themes: dict[str, Theme] = {}
+
+    if not BUILTIN_THEMES_DIR.exists():
+        return themes
+
+    for theme_file in BUILTIN_THEMES_DIR.glob("*.json"):
+        theme, _ = _load_theme_file(theme_file)
+        if theme:
+            themes[theme.name] = theme
+
+    return themes
+
+
+def _ensure_user_themes_dir() -> None:
+    """Create user themes directory and copy built-in themes if needed."""
+    if not USER_THEMES_DIR.exists():
+        USER_THEMES_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Check if we need to copy built-in themes
+    marker_file = USER_THEMES_DIR / ".initialized"
+    if marker_file.exists():
+        return
+
+    # Copy built-in themes to user directory for customization
+    if BUILTIN_THEMES_DIR.exists():
+        for theme_file in BUILTIN_THEMES_DIR.glob("*.json"):
+            dest = USER_THEMES_DIR / theme_file.name
+            if not dest.exists():
+                try:
+                    # Read and rewrite to ensure consistent formatting
+                    with open(theme_file) as f:
+                        data = json.load(f)
+                    # Add a hint that this is a copy
+                    data["_note"] = "Copy of built-in theme. Edit freely!"
+                    with open(dest, "w") as f:
+                        json.dump(data, f, indent=2)
+                except Exception:
+                    pass
+
+    # Create example custom theme
+    _create_example_theme(USER_THEMES_DIR)
+
+    # Mark as initialized
+    try:
+        marker_file.write_text("initialized")
+    except Exception:
+        pass
+
+
+def _create_example_theme(themes_dir: Path) -> None:
+    """Create an example custom theme file for users."""
     example = {
-        "name": "example-custom",
+        "name": "my-custom-theme",
+        "description": "Example custom theme - rename and edit!",
         "dark": True,
         "primary": "#FF6B6B",
         "secondary": "#4ECDC4",
@@ -190,12 +130,16 @@ def _create_example_theme(themes_dir: Path):
         "success": "#95E1A3",
         "warning": "#FFE66D",
         "error": "#FF6B6B",
+        "boost": "#4ECDC4",
         "luminosity_spread": 0.12,
         "text_alpha": 0.92,
-        "_comment": "This is an example theme. Edit or copy to create your own!",
+        "variables": {
+            "block-cursor-background": "#FF6B6B",
+            "block-cursor-foreground": "#1A1A2E"
+        }
     }
 
-    example_path = themes_dir / "example-custom.json.example"
+    example_path = themes_dir / "my-custom-theme.json.example"
     try:
         with open(example_path, "w") as f:
             json.dump(example, f, indent=2)
@@ -203,12 +147,73 @@ def _create_example_theme(themes_dir: Path):
         pass
 
 
+def load_user_themes() -> dict[str, Theme]:
+    """Load custom themes from ~/.null/themes/*.json"""
+    themes: dict[str, Theme] = {}
+
+    _ensure_user_themes_dir()
+
+    for theme_file in USER_THEMES_DIR.glob("*.json"):
+        # Skip example files
+        if theme_file.name.endswith(".example"):
+            continue
+        theme, _ = _load_theme_file(theme_file)
+        if theme:
+            themes[theme.name] = theme
+
+    return themes
+
+
+def get_builtin_themes() -> dict[str, Theme]:
+    """Get only built-in themes."""
+    return _load_builtin_themes()
+
+
 def get_all_themes() -> dict[str, Theme]:
-    """Get all themes (built-in + user)."""
-    themes = dict(BUILTIN_THEMES)
+    """Get all themes (built-in + user).
+
+    User themes override built-in themes with the same name.
+    """
+    # Start with built-in themes
+    themes = _load_builtin_themes()
+
+    # User themes override built-in
     themes.update(load_user_themes())
+
+    return themes
+
+
+# Fallback themes if JSON files are missing
+_FALLBACK_NULL_DARK = Theme(
+    name="null-dark",
+    dark=True,
+    primary="#00D4FF",
+    secondary="#BD00FF",
+    accent="#00FF88",
+    foreground="#E0E6F0",
+    background="#08090D",
+    surface="#0E1018",
+    panel="#151822",
+    success="#00FF88",
+    warning="#FFB800",
+    error="#FF3366",
+    boost="#00FFCC",
+    luminosity_spread=0.18,
+    text_alpha=0.95,
+)
+
+
+def get_all_themes_with_fallback() -> dict[str, Theme]:
+    """Get all themes with fallback if no themes found."""
+    themes = get_all_themes()
+
+    # Ensure at least null-dark exists
+    if not themes:
+        themes["null-dark"] = _FALLBACK_NULL_DARK
+
     return themes
 
 
 # For backwards compatibility
+BUILTIN_THEMES = get_builtin_themes() or {"null-dark": _FALLBACK_NULL_DARK}
 THEMES = BUILTIN_THEMES

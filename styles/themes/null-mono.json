@@ -1,0 +1,19 @@
+{
+  "name": "null-mono",
+  "description": "Minimal monochrome with subtle blue tints",
+  "dark": true,
+  "primary": "#94A3B8",
+  "secondary": "#64748B",
+  "accent": "#7DD3FC",
+  "foreground": "#CBD5E1",
+  "background": "#020617",
+  "surface": "#0F172A",
+  "panel": "#1E293B",
+  "success": "#86EFAC",
+  "warning": "#FDE047",
+  "error": "#FCA5A5",
+  "boost": "#67E8F9",
+  "luminosity_spread": 0.08,
+  "text_alpha": 0.88,
+  "variables": {}
+}

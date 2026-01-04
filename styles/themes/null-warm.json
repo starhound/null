@@ -1,0 +1,22 @@
+{
+  "name": "null-warm",
+  "description": "Warm variant with orange/amber accents",
+  "dark": true,
+  "primary": "#F59E0B",
+  "secondary": "#EC4899",
+  "accent": "#FB923C",
+  "foreground": "#E7E5E4",
+  "background": "#0C0A09",
+  "surface": "#1C1917",
+  "panel": "#292524",
+  "success": "#4ADE80",
+  "warning": "#FACC15",
+  "error": "#FB7185",
+  "boost": "#2DD4BF",
+  "luminosity_spread": 0.10,
+  "text_alpha": 0.90,
+  "variables": {
+    "block-cursor-background": "#F59E0B",
+    "block-cursor-foreground": "#0C0A09"
+  }
+}

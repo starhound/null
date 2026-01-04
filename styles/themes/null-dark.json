@@ -1,0 +1,33 @@
+{
+  "name": "null-dark",
+  "description": "Cyber Noir - Deep darkness with neon accents",
+  "dark": true,
+  "primary": "#00D4FF",
+  "secondary": "#BD00FF",
+  "accent": "#00FF88",
+  "foreground": "#E0E6F0",
+  "background": "#08090D",
+  "surface": "#0E1018",
+  "panel": "#151822",
+  "success": "#00FF88",
+  "warning": "#FFB800",
+  "error": "#FF3366",
+  "boost": "#00FFCC",
+  "luminosity_spread": 0.18,
+  "text_alpha": 0.95,
+  "variables": {
+    "block-cursor-background": "#00D4FF",
+    "block-cursor-foreground": "#08090D",
+    "input-cursor-background": "#00D4FF",
+    "input-cursor-foreground": "#08090D",
+    "noir-void": "#000000",
+    "noir-deep": "#08090D",
+    "noir-shadow": "#0E1018",
+    "noir-surface": "#151822",
+    "noir-elevated": "#1C2030",
+    "noir-highlight": "#252A3A",
+    "glow-cyan": "#00D4FF",
+    "glow-magenta": "#BD00FF",
+    "glow-green": "#00FF88"
+  }
+}
