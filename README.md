@@ -29,18 +29,31 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
 
 ## 🚀 Quick Start
 
-1.  **Install dependencies**:
-    ```bash
-    uv sync
-    ```
+### Install via pip
 
-2.  **Run the terminal**:
-    ```bash
-    uv run main.py
-    ```
+```bash
+pip install null-terminal
+null
+```
 
-3.  **Configure**:
-    Type `/settings` to configure your AI provider, or press `F3` to change theme.
+### Run with Docker
+
+```bash
+docker run -it ghcr.io/starhound/null:latest
+```
+
+### From Source (Development)
+
+```bash
+git clone https://github.com/starhound/null.git
+cd null
+uv sync
+uv run main.py
+```
+
+### Configure
+
+Type `/settings` to configure your AI provider, or press `F3` to change theme.
 
 ## 🎬 Demo
 
