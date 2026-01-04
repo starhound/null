@@ -11,7 +11,7 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
 
 ## 📖 Documentation
 
--   [**User Guide**](docs/USER_GUIDE.md): Keybindings, commands, and configuration.
+-   [**User Guide**](docs/user/README.md): Comprehensive guide with commands, shortcuts, and configuration.
 -   [**Architecture**](docs/ARCHITECTURE.md): System design, event loops, and state management.
 -   [**Development**](docs/DEVELOPMENT.md): Setup, contributing, and extending the codebase.
 
@@ -23,6 +23,8 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
 -   **Local Tool Use**: AI can run commands, read files, and analyze code directly.
 -   **Chain of Thought**: Visualize the reasoning process of advanced models (e.g., DeepSeek R1).
 -   **Cyber-Noir Aesthetics**: Beautiful, customizable themes and animations.
+
+## D
 
 ## 🚀 Quick Start
 
@@ -37,15 +39,27 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
     ```
 
 3.  **Configure**:
-    Press `F3` or type `/settings` to configure your AI provider and theme.
+    Type `/settings` to configure your AI provider, or press `F3` to change theme.
+
+## 🎬 Demo
+
+<p align="center">
+  <img src="docs/demo.gif" alt="Null Terminal Demo" width="700">
+</p>
 
 ## ⌨️ Key Controls
 
--   `Ctrl+P`: Focus Prompt
--   `F1`: Help
--   `F2`: Model Selection
--   `F3`: Settings
--   `Ctrl+D`: Quit
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Space` | Toggle AI/CLI mode |
+| `Ctrl+P` | Command palette |
+| `Ctrl+C` | Cancel or quit |
+| `F1` | Help screen |
+| `F2` | Select model |
+| `F3` | Change theme |
+| `F4` | Select provider |
+
+See [full shortcut reference](docs/user/shortcuts.md) for more.
 
 ---
 
