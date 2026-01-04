@@ -169,9 +169,13 @@ class AIFactory:
             )
 
         elif provider_name == "lm_studio":
+            endpoint = get("endpoint", "http://localhost:1234/v1")
+            # Ensure /v1 suffix for OpenAI-compatible API
+            if endpoint and not endpoint.rstrip("/").endswith("/v1"):
+                endpoint = endpoint.rstrip("/") + "/v1"
             return OpenAICompatibleProvider(
                 api_key="lm-studio",
-                base_url=get("endpoint", "http://localhost:1234/v1"),
+                base_url=endpoint,
                 model=get("model", "local-model"),
             )
 
@@ -301,9 +305,13 @@ class AIFactory:
             )
 
         elif provider_name == "llama_cpp":
+            endpoint = get("endpoint", "http://localhost:8000/v1")
+            # Ensure /v1 suffix for OpenAI-compatible API
+            if endpoint and not endpoint.rstrip("/").endswith("/v1"):
+                endpoint = endpoint.rstrip("/") + "/v1"
             return OpenAICompatibleProvider(
                 api_key="token-not-needed",
-                base_url=get("endpoint", "http://localhost:8000/v1"),
+                base_url=endpoint,
                 model=get("model", "default"),
             )
 

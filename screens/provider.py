@@ -120,11 +120,15 @@ class ProviderConfigScreen(ModalScreen):
 
             for field_key, (label, placeholder, is_password) in fields.items():
                 yield Label(label, classes="input-label")
+                # Use current config value if set, otherwise use placeholder as default
+                # This ensures local providers have their endpoints saved properly
+                current_value = self.current_config.get(field_key, "")
+                initial_value = current_value if current_value else placeholder
                 inp = Input(
                     placeholder=placeholder,
                     password=is_password,
                     id=field_key,
-                    value=self.current_config.get(field_key, ""),
+                    value=initial_value if not is_password else current_value,
                 )
                 self.inputs[field_key] = inp
                 yield inp
