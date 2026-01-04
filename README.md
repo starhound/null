@@ -27,8 +27,6 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
 -   **Chain of Thought**: Visualize the reasoning process of advanced models (e.g., DeepSeek R1).
 -   **Cyber-Noir Aesthetics**: Beautiful, customizable themes and animations.
 
-## D
-
 ## 🚀 Quick Start
 
 1.  **Install dependencies**:
