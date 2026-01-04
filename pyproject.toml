@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "A next-generation AI-integrated TUI terminal emulator."
 readme = "README.md"
 requires-python = ">=3.12"
-license = { text = "MIT" }
+license = { text = "Apache-2.0" }
 authors = [
     { name = "Starhound", email = "starhound@lostsouls.org" }
 ]
@@ -13,7 +13,7 @@ classifiers = [
     "Environment :: Console",
     "Environment :: Console :: Curses",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.12",
     "Topic :: Terminals",
