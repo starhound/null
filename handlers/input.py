@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import NullApp
 
-from config import Config
+from config import Config, get_settings
 from models import BlockState, BlockType
 from widgets import BaseBlockWidget, CommandSuggester, HistoryViewport, InputController
 from widgets.blocks import create_block
@@ -20,6 +20,7 @@ class InputHandler:
 
     def __init__(self, app: NullApp):
         self.app = app
+        self.old_cwd: str | None = None
 
     async def handle_submission(self, value: str):
         """Process submitted input."""
@@ -44,6 +45,26 @@ class InputHandler:
         else:
             await self._handle_cli_input(value, input_ctrl)
 
+    def _trim_history(self):
+        """Ensure history size doesn't exceed maximum blocks."""
+        try:
+            max_blocks = get_settings().terminal.max_history_blocks
+            if len(self.app.blocks) >= max_blocks:
+                excess = len(self.app.blocks) - max_blocks + 1
+                if excess > 0:
+                    removed_ids = {b.id for b in self.app.blocks[:excess]}
+                    del self.app.blocks[:excess]
+
+                    history_vp = self.app.query_one("#history", HistoryViewport)
+                    for widget in list(history_vp.children):
+                        if (
+                            isinstance(widget, BaseBlockWidget)
+                            and widget.block.id in removed_ids
+                        ):
+                            widget.remove()
+        except Exception:
+            pass
+
     async def _handle_ai_input(self, text: str, input_ctrl: InputController):
         """Handle AI mode input."""
         # Switching to AI mode ends CLI session
@@ -56,6 +77,8 @@ class InputHandler:
             )
             self.app.action_select_provider()
             return
+
+        self._trim_history()
 
         # Determine block type based on agent mode setting
         ai_config = self.app.config.get("ai", {})
@@ -174,6 +197,8 @@ class InputHandler:
 
     async def _create_cli_block(self, cmd: str):
         """Create a new CLI block."""
+        self._trim_history()
+
         block = BlockState(type=BlockType.COMMAND, content_input=cmd)
         self.app.blocks.append(block)
 
@@ -233,9 +258,13 @@ class InputHandler:
                     path_arg = str(Path.home()) + path_arg[1:]
             # Handle - (previous directory)
             if path_arg == "-":
-                self.app.notify("cd - not supported", severity="warning")
-                return
-            target = Path(path_arg)
+                if self.old_cwd:
+                    target = Path(self.old_cwd)
+                else:
+                    self.app.notify("cd: OLDPWD not set", severity="error")
+                    return
+            else:
+                target = Path(path_arg)
 
         try:
             if not target.is_absolute():
@@ -252,7 +281,9 @@ class InputHandler:
                 self.app.notify(f"cd: not a directory: {parts[1]}", severity="error")
                 return
 
+            current_cwd = str(Path.cwd())
             os.chdir(target)
+            self.old_cwd = current_cwd
             self.app._update_prompt()
         except PermissionError:
             self.app.notify(

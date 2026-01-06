@@ -21,7 +21,9 @@ class AnthropicProvider(LLMProvider):
             try:
                 import anthropic
 
-                self._client = anthropic.AsyncAnthropic(api_key=self.api_key)
+                self._client = anthropic.AsyncAnthropic(
+                    api_key=self.api_key, timeout=60.0
+                )
             except ImportError as e:
                 raise ImportError(
                     "anthropic package required. Install with: pip install anthropic"
@@ -39,7 +41,7 @@ class AnthropicProvider(LLMProvider):
         api_messages = []
 
         for msg in messages:
-            role = msg["role"]
+            role = msg.get("role", "user")
             # Anthropic uses 'user' and 'assistant' only in messages
             if role == "system":
                 continue  # System handled separately
@@ -48,7 +50,7 @@ class AnthropicProvider(LLMProvider):
 
             # Handle content
             if msg.get("content"):
-                msg_dict["content"] = msg["content"]
+                msg_dict["content"] = msg.get("content")
             elif "tool_calls" in msg:
                 # Convert tool calls to Anthropic format
                 content = []

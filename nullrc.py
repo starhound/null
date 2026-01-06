@@ -123,9 +123,9 @@ class NullrcManager:
             "context_files": ["README.md", "package.json", "pyproject.toml"],
             "ignore_patterns": ["node_modules", ".git", "__pycache__", "*.pyc"],
             "aliases": {
-                "test": "npm test",
-                "build": "npm run build",
-                "lint": "npm run lint",
+                "test": "uv run pytest",
+                "build": "uv build",
+                "lint": "uv run ruff check .",
             },
             "env": {},
             "on_start": [],

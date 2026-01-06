@@ -38,6 +38,7 @@ class TerminalSettings:
     # Existing fields with env defaults
     shell: str = field(default_factory=lambda: os.environ.get("SHELL", "/bin/bash"))
     scrollback_lines: int = 10000
+    max_history_blocks: int = 100
     clear_on_exit: bool = False
     confirm_on_exit: bool = True
     auto_save_session: bool = True
@@ -154,6 +155,12 @@ class SettingsManager:
             data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
             return Settings.from_dict(data)
         except Exception:
+            try:
+                if CONFIG_PATH.exists():
+                    backup_path = CONFIG_PATH.with_suffix(".json.bak")
+                    CONFIG_PATH.rename(backup_path)
+            except Exception:
+                pass
             return Settings()
 
     def _create_with_terminal_defaults(self) -> Settings:

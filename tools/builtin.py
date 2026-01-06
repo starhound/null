@@ -45,8 +45,20 @@ async def run_command(command: str, working_dir: str | None = None) -> str:
         return f"[Error executing command: {e!s}]"
 
 
+def _is_safe_path(path: str) -> bool:
+    try:
+        target = os.path.realpath(os.path.expanduser(path))
+        cwd = os.path.realpath(os.getcwd())
+        return target.startswith(cwd)
+    except Exception:
+        return False
+
+
 async def read_file(path: str, max_lines: int | None = None) -> str:
     """Read a file and return its contents."""
+    if not _is_safe_path(path):
+        return f"[Security Error: Access to path '{path}' is restricted. Only files within the project directory can be accessed.]"
+
     try:
         expanded = os.path.expanduser(path)
         if not os.path.isabs(expanded):
@@ -83,6 +95,9 @@ async def read_file(path: str, max_lines: int | None = None) -> str:
 
 async def write_file(path: str, content: str) -> str:
     """Write content to a file."""
+    if not _is_safe_path(path):
+        return f"[Security Error: Access to path '{path}' is restricted. Only files within the project directory can be modified.]"
+
     try:
         expanded = os.path.expanduser(path)
         if not os.path.isabs(expanded):
@@ -105,6 +120,9 @@ async def write_file(path: str, content: str) -> str:
 
 async def list_directory(path: str = ".", show_hidden: bool = False) -> str:
     """List contents of a directory."""
+    if not _is_safe_path(path):
+        return f"[Security Error: Access to path '{path}' is restricted. Only directories within the project directory can be listed.]"
+
     try:
         expanded = os.path.expanduser(path)
         if not os.path.isabs(expanded):

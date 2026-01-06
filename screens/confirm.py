@@ -39,6 +39,9 @@ class ConfirmDialog(ModalScreen[bool]):
                     yield Button("Yes", id="confirm-yes", variant="primary")
                     yield Button("No", id="confirm-no", variant="default")
 
+    def on_mount(self) -> None:
+        self.query_one("#confirm-yes", Button).focus()
+
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "confirm-yes":
             self.dismiss(True)

@@ -1,6 +1,6 @@
 """Settings configuration screen."""
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from textual.binding import BindingType
 
@@ -43,6 +43,12 @@ class ConfigScreen(ModalScreen):
         sqlite_provider = Config.get("ai.provider")
         if sqlite_provider and sqlite_provider != self.settings.ai.provider:
             self.settings.ai.provider = sqlite_provider
+
+    def on_mount(self) -> None:
+        self.query_one("#theme", Select).focus()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        self.action_save()
 
     def compose(self) -> ComposeResult:
         with Container(id="config-outer"):
@@ -371,46 +377,140 @@ class ConfigScreen(ModalScreen):
             TerminalSettings,
         )
 
-        def get_val(control):
+        def get_val(control: Any) -> Any:
             if control is None:
                 return None
-            if isinstance(control, Switch):
-                return control.value
-            elif isinstance(control, Select):
-                return control.value
-            elif isinstance(control, Input):
-                val = control.value
+
+            val = getattr(control, "value", None)
+
+            if val.__class__.__name__ == "NoSelection":
+                return None
+
+            if isinstance(control, Input):
                 if control.type == "integer":
                     try:
-                        return int(val)
-                    except ValueError:
-                        return 0
+                        return max(1, int(str(val)))
+                    except (ValueError, TypeError):
+                        return 1
                 elif control.type == "number":
                     try:
-                        return float(val)
-                    except ValueError:
+                        return max(0.0, float(str(val)))
+                    except (ValueError, TypeError):
                         return 0.0
-                return val
-            return None
+            return val
 
-        def get_bool(control, default: bool) -> bool:
-            """Get boolean value from control, with proper default handling."""
+        def get_bool(control: Any, default: bool) -> bool:
             val = get_val(control)
-            return val if val is not None else default
+            return bool(val) if val is not None else default
 
-        # Preserve font settings if controls aren't shown (terminal doesn't support)
         appearance = AppearanceSettings(
-            theme=get_val(self.controls.get("appearance.theme")) or "null-dark",
-            font_family=get_val(self.controls.get("appearance.font_family"))
-            or self.settings.appearance.font_family,
-            font_size=get_val(self.controls.get("appearance.font_size"))
-            or self.settings.appearance.font_size,
-            line_height=self.settings.appearance.line_height,  # Not editable
+            theme=str(get_val(self.controls.get("appearance.theme")) or "null-dark"),
+            font_family=str(
+                get_val(self.controls.get("appearance.font_family"))
+                or self.settings.appearance.font_family
+            ),
+            font_size=int(
+                get_val(self.controls.get("appearance.font_size"))
+                or self.settings.appearance.font_size
+            ),
+            line_height=self.settings.appearance.line_height,
             show_timestamps=get_bool(
                 self.controls.get("appearance.show_timestamps"), True
             ),
             show_line_numbers=get_bool(
                 self.controls.get("appearance.show_line_numbers"), True
+            ),
+        )
+
+        editor = EditorSettings(
+            tab_size=int(get_val(self.controls.get("editor.tab_size")) or 4),
+            word_wrap=get_bool(self.controls.get("editor.word_wrap"), True),
+            auto_indent=get_bool(self.controls.get("editor.auto_indent"), True),
+            vim_mode=get_bool(self.controls.get("editor.vim_mode"), False),
+        )
+
+        terminal = TerminalSettings(
+            shell=str(get_val(self.controls.get("terminal.shell")) or ""),
+            scrollback_lines=int(
+                get_val(self.controls.get("terminal.scrollback_lines")) or 10000
+            ),
+            auto_save_session=get_bool(
+                self.controls.get("terminal.auto_save_session"), True
+            ),
+            auto_save_interval=int(
+                get_val(self.controls.get("terminal.auto_save_interval")) or 30
+            ),
+            confirm_on_exit=get_bool(
+                self.controls.get("terminal.confirm_on_exit"), True
+            ),
+            clear_on_exit=get_bool(self.controls.get("terminal.clear_on_exit"), False),
+            cursor_style=str(
+                get_val(self.controls.get("terminal.cursor_style")) or "block"
+            ),
+            cursor_blink=get_bool(self.controls.get("terminal.cursor_blink"), True),
+            bold_is_bright=get_bool(self.controls.get("terminal.bold_is_bright"), True),
+        )
+
+        ai = AISettings(
+            provider=str(get_val(self.controls.get("ai.provider")) or "ollama"),
+            context_window=int(get_val(self.controls.get("ai.context_window")) or 4000),
+            max_tokens=int(get_val(self.controls.get("ai.max_tokens")) or 2048),
+            temperature=float(get_val(self.controls.get("ai.temperature")) or 0.7),
+            stream_responses=get_bool(self.controls.get("ai.stream_responses"), True),
+            autocomplete_enabled=get_bool(
+                self.controls.get("ai.autocomplete_enabled"), False
+            ),
+            autocomplete_provider=str(
+                get_val(self.controls.get("ai.autocomplete_provider")) or ""
+            ),
+            autocomplete_model=str(
+                get_val(self.controls.get("ai.autocomplete_model")) or ""
+            ),
+        )
+
+        editor = EditorSettings(
+            tab_size=int(get_val(self.controls.get("editor.tab_size")) or 4),
+            word_wrap=get_bool(self.controls.get("editor.word_wrap"), True),
+            auto_indent=get_bool(self.controls.get("editor.auto_indent"), True),
+            vim_mode=get_bool(self.controls.get("editor.vim_mode"), False),
+        )
+
+        terminal = TerminalSettings(
+            shell=str(get_val(self.controls.get("terminal.shell")) or ""),
+            scrollback_lines=int(
+                get_val(self.controls.get("terminal.scrollback_lines")) or 10000
+            ),
+            auto_save_session=get_bool(
+                self.controls.get("terminal.auto_save_session"), True
+            ),
+            auto_save_interval=int(
+                get_val(self.controls.get("terminal.auto_save_interval")) or 30
+            ),
+            confirm_on_exit=get_bool(
+                self.controls.get("terminal.confirm_on_exit"), True
+            ),
+            clear_on_exit=get_bool(self.controls.get("terminal.clear_on_exit"), False),
+            cursor_style=str(
+                get_val(self.controls.get("terminal.cursor_style")) or "block"
+            ),
+            cursor_blink=get_bool(self.controls.get("terminal.cursor_blink"), True),
+            bold_is_bright=get_bool(self.controls.get("terminal.bold_is_bright"), True),
+        )
+
+        ai = AISettings(
+            provider=str(get_val(self.controls.get("ai.provider")) or "ollama"),
+            context_window=int(get_val(self.controls.get("ai.context_window")) or 4000),
+            max_tokens=int(get_val(self.controls.get("ai.max_tokens")) or 2048),
+            temperature=float(get_val(self.controls.get("ai.temperature")) or 0.7),
+            stream_responses=get_bool(self.controls.get("ai.stream_responses"), True),
+            autocomplete_enabled=get_bool(
+                self.controls.get("ai.autocomplete_enabled"), False
+            ),
+            autocomplete_provider=str(
+                get_val(self.controls.get("ai.autocomplete_provider")) or ""
+            ),
+            autocomplete_model=str(
+                get_val(self.controls.get("ai.autocomplete_model")) or ""
             ),
         )
 
@@ -444,9 +544,7 @@ class ConfigScreen(ModalScreen):
             context_window=get_val(self.controls.get("ai.context_window")) or 4000,
             max_tokens=get_val(self.controls.get("ai.max_tokens")) or 2048,
             temperature=get_val(self.controls.get("ai.temperature")) or 0.7,
-            stream_responses=get_bool(
-                self.controls.get("ai.stream_responses"), True
-            ),
+            stream_responses=get_bool(self.controls.get("ai.stream_responses"), True),
             autocomplete_enabled=get_bool(
                 self.controls.get("ai.autocomplete_enabled"), False
             ),
@@ -493,7 +591,7 @@ class ConfigScreen(ModalScreen):
 
             apply_cursor_settings(
                 style=new_settings.terminal.cursor_style,
-                blink=new_settings.terminal.cursor_blink
+                blink=new_settings.terminal.cursor_blink,
             )
         except Exception:
             pass

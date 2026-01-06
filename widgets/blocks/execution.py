@@ -30,10 +30,10 @@ class ExecutionWidget(Static):
         with Container(id="exec-container", classes="hidden collapsed"):
             # Header is clickable to toggle
             with Static(classes="exec-header", id="exec-header"):
-                yield Label("▶", classes="toggle-icon", id="toggle-icon")
-                yield Label("⚡ Execution Log", classes="exec-title")
+                yield Label("󰅂", classes="toggle-icon", id="toggle-icon")
+                yield Label("󱐋 Execution Log", classes="exec-title")
                 yield Label("", classes="exec-count", id="exec-count")
-                yield Static("copy", classes="copy-btn", id="copy-btn")
+                yield Static("󰆏 copy", classes="copy-btn", id="copy-btn")
 
             # Content container
             with Container(classes="exec-scroll", id="exec-scroll"):
@@ -47,10 +47,10 @@ class ExecutionWidget(Static):
 
             if expanded:
                 container.remove_class("collapsed")
-                icon.update("▼")
+                icon.update("󰅀")
             else:
                 container.add_class("collapsed")
-                icon.update("▶")
+                icon.update("󰅂")
         except Exception:
             pass
 

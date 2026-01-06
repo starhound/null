@@ -177,6 +177,9 @@ class ModelListScreen(ModalScreen):
         self._start_spinner()
         self.set_timer(0.1, self._start_loading)
 
+    def on_unmount(self) -> None:
+        self._stop_spinner()
+
     def on_input_changed(self, event: Input.Changed):
         """Handle search input changes."""
         if event.input.id == "model-search":

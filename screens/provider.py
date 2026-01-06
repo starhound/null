@@ -140,6 +140,17 @@ class ProviderConfigScreen(ModalScreen):
                 yield Button("Save & Connect", variant="default", id="save")
                 yield Button("Cancel", variant="default", id="cancel")
 
+    def on_mount(self) -> None:
+        if self.inputs:
+            first_key = list(self.inputs.keys())[0]
+            self.inputs[first_key].focus()
+
+    def on_unmount(self) -> None:
+        self._stop_spinner()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        self.query_one("#save", Button).press()
+
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "save":
             if not self.is_connecting:

@@ -6,6 +6,7 @@ from .block_search import BlockSearch
 # Import block widgets from the blocks subpackage
 from .blocks import (
     AIResponseBlock,
+    AgentResponseBlock,
     BaseBlockWidget,
     BlockBody,
     BlockFooter,
@@ -30,6 +31,7 @@ from .suggester import CommandItem, CommandSuggester
 
 __all__ = [
     "AIResponseBlock",
+    "AgentResponseBlock",
     "AppHeader",
     "BaseBlockWidget",
     "BlockBody",

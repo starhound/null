@@ -13,7 +13,7 @@ from utils.text import make_links_clickable
 class ThinkingWidget(Static):
     """Animated widget for AI response with peek preview and expand toggle."""
 
-    SPINNER_FRAMES: ClassVar[list[str]] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+    SPINNER_FRAMES: ClassVar[list[str]] = ["󱐋", "󱐌", "󱐍", "󱐎", "󱐏", "󱐐"]
 
     thinking_text = reactive("")
     is_loading = reactive(True)
@@ -66,7 +66,7 @@ class ThinkingWidget(Static):
         with Static(classes=header_classes, id="thinking-header"):
             yield Label(self.SPINNER_FRAMES[0], classes="spinner", id="spinner")
             yield Label("Generating...", classes="thinking-label", id="status-label")
-            yield Label("expand", classes="toggle-hint", id="toggle-hint")
+            yield Label("󰅂 expand", classes="toggle-hint", id="toggle-hint")
 
         with VerticalScroll(classes="peek-window empty", id="peek-window"):
             yield Static("", classes="peek-content", id="peek-content")

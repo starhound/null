@@ -18,20 +18,6 @@ _REFRESH_DEBOUNCE_MS = 16 / 1000  # Convert to seconds for set_timer
 class TerminalBlock(Widget):
     """Widget that renders a pyte terminal screen for TUI apps."""
 
-    DEFAULT_CSS = """
-    TerminalBlock {
-        height: 24;
-        max-height: 40;
-        background: #1a1b26;
-        color: #a9b1d6;
-        border: solid $primary 40%;
-        overflow: hidden;
-    }
-    TerminalBlock:focus {
-        border: double $accent;
-    }
-    """
-
     can_focus = True
 
     class InputRequested(Message):
@@ -261,7 +247,9 @@ class TerminalBlock(Widget):
             pass
         return color
 
-    def _compute_line_hash(self, line_data: dict, width: int, bold_is_bright: bool) -> int:
+    def _compute_line_hash(
+        self, line_data: dict, width: int, bold_is_bright: bool
+    ) -> int:
         """Compute a hash for a line's content to detect changes."""
         # Build a tuple of character data and attributes for hashing
         line_repr = []
@@ -269,10 +257,20 @@ class TerminalBlock(Widget):
             char = line_data.get(x)
             if char:
                 line_repr.append(
-                    (char.data, char.fg, char.bg, char.bold, char.italics, char.reverse, char.underscore)
+                    (
+                        char.data,
+                        char.fg,
+                        char.bg,
+                        char.bold,
+                        char.italics,
+                        char.reverse,
+                        char.underscore,
+                    )
                 )
             else:
-                line_repr.append((" ", "default", "default", False, False, False, False))
+                line_repr.append(
+                    (" ", "default", "default", False, False, False, False)
+                )
         return hash((tuple(line_repr), width, bold_is_bright))
 
     def render_line(self, y: int) -> Strip:

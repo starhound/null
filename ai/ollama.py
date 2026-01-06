@@ -29,9 +29,10 @@ class OllamaProvider(LLMProvider):
             chat_messages.append({"role": "system", "content": system_prompt})
 
         for msg in messages:
-            msg_dict: dict[str, Any] = {"role": msg["role"]}
-            if "content" in msg:
-                msg_dict["content"] = msg["content"]
+            msg_role = msg.get("role", "user")
+            msg_dict: dict[str, Any] = {"role": msg_role}
+            if msg.get("content"):
+                msg_dict["content"] = msg.get("content")
             if "tool_calls" in msg:
                 msg_dict["tool_calls"] = msg["tool_calls"]
             chat_messages.append(msg_dict)
@@ -157,5 +158,5 @@ class OllamaProvider(LLMProvider):
         except httpx.HTTPError:
             return False
 
-    async def close(self):
+    async def close(self) -> None:
         await self.client.aclose()

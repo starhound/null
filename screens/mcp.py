@@ -73,6 +73,15 @@ class MCPServerConfigScreen(ModalScreen):
                 yield Button("Save", variant="default", id="save")
                 yield Button("Cancel", variant="default", id="cancel")
 
+    def on_mount(self) -> None:
+        if self.is_edit:
+            self.query_one("#command", Input).focus()
+        else:
+            self.query_one("#name", Input).focus()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        self.query_one("#save", Button).press()
+
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "save":
             name = self.query_one("#name", Input).value.strip()
@@ -87,14 +96,23 @@ class MCPServerConfigScreen(ModalScreen):
                 self.notify("Command is required", severity="error")
                 return
 
-            args = args_str.split() if args_str else []
+            import shlex
+
+            args = shlex.split(args_str) if args_str else []
 
             env = {}
             if env_str:
-                for pair in env_str.split():
-                    if "=" in pair:
-                        key, value = pair.split("=", 1)
-                        env[key] = value
+                try:
+                    pairs = shlex.split(env_str)
+                    for pair in pairs:
+                        if "=" in pair:
+                            key, value = pair.split("=", 1)
+                            env[key] = value
+                except Exception:
+                    for pair in env_str.split():
+                        if "=" in pair:
+                            key, value = pair.split("=", 1)
+                            env[key] = value
 
             result = {"name": name, "command": command, "args": args, "env": env}
             self.dismiss(result)

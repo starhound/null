@@ -83,10 +83,10 @@ class StatusBar(Static):
             indicator.remove_class("mcp-active", "mcp-inactive")
 
             if self.mcp_count > 0:
-                indicator.update(f"MCP: {self.mcp_count}")
+                indicator.update(f"󱔗 MCP: {self.mcp_count}")
                 indicator.add_class("mcp-active")
             else:
-                indicator.update("MCP: 0")
+                indicator.update("󱔗 MCP: 0")
                 indicator.add_class("mcp-inactive")
         except Exception:
             pass
@@ -97,10 +97,10 @@ class StatusBar(Static):
             indicator.remove_class("process-active", "process-inactive")
 
             if self.process_count > 0:
-                indicator.update(f"PROC: {self.process_count}")
+                indicator.update(f"󰄬 PROC: {self.process_count}")
                 indicator.add_class("process-active")
             else:
-                indicator.update("PROC: 0")
+                indicator.update("󰅖 PROC: 0")
                 indicator.add_class("process-inactive")
         except Exception:
             pass
@@ -111,11 +111,11 @@ class StatusBar(Static):
             indicator.remove_class("mode-cli", "mode-ai", "mode-agent")
 
             if self.mode == "CLI":
-                indicator.update("> CLI")
+                indicator.update(" CLI")
                 indicator.add_class("mode-cli")
             else:
                 if self.agent_mode:
-                    indicator.update("◆ AGENT")
+                    indicator.update("⚙ AGENT")
                     indicator.add_class("mode-agent")
                 else:
                     indicator.update("◆ AI")
@@ -143,7 +143,7 @@ class StatusBar(Static):
                 limit_str = str(limit_tokens)
 
             # Always show context usage
-            indicator.update(f"ctx: ~{tokens:,} / {limit_str}")
+            indicator.update(f"󰈙 ctx: ~{tokens:,} / {limit_str}")
 
             if pct < 50:
                 indicator.add_class("context-low")
@@ -168,10 +168,10 @@ class StatusBar(Static):
                 return
 
             if self.provider_status == "connected":
-                indicator.update(f"{name} ●")
+                indicator.update(f"{name} 󰄬")
                 indicator.add_class("provider-connected")
             elif self.provider_status == "disconnected":
-                indicator.update(f"{name} ○")
+                indicator.update(f"{name} 󰅖")
                 indicator.add_class("provider-disconnected")
             else:
                 indicator.update(name)
@@ -213,8 +213,7 @@ class StatusBar(Static):
             else:
                 cost_str = "$0"
 
-            # Display format: "Tokens: 1.2k / $0.02"
-            indicator.update(f"tok: {token_str} / {cost_str}")
+            indicator.update(f"󱓞 tok: {token_str} / {cost_str}")
 
         except Exception:
             pass

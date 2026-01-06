@@ -294,6 +294,9 @@ class LLMProvider(ABC):
         """Check if the provider is reachable."""
         pass
 
+    async def close(self) -> None:
+        pass
+
     def get_model_info(self) -> ModelInfo:
         """Get model information including context limits."""
         context_size = get_model_context_size(self.model)

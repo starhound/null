@@ -102,6 +102,7 @@ class InputController(TextArea):
         # Check if suggester is visible and has selection
         try:
             from widgets.suggester import CommandSuggester
+
             suggester = cast(CommandSuggester, self.app.query_one("CommandSuggester"))
             if suggester.display and self.text.startswith("/"):
                 complete = suggester.get_selected()
@@ -277,9 +278,12 @@ class InputController(TextArea):
     async def on_key(self, event):
         # Handle navigation keys manually to support both Suggester and History
         from widgets.suggester import CommandSuggester
+
         if event.key == "up":
             if self.text.startswith("/"):
-                suggester = cast(CommandSuggester, self.app.query_one("CommandSuggester"))
+                suggester = cast(
+                    CommandSuggester, self.app.query_one("CommandSuggester")
+                )
                 if suggester.display:
                     suggester.select_prev()
                     event.stop()
@@ -291,7 +295,9 @@ class InputController(TextArea):
 
         elif event.key == "down":
             if self.text.startswith("/"):
-                suggester = cast(CommandSuggester, self.app.query_one("CommandSuggester"))
+                suggester = cast(
+                    CommandSuggester, self.app.query_one("CommandSuggester")
+                )
                 if suggester.display:
                     suggester.select_next()
                     event.stop()
@@ -304,7 +310,9 @@ class InputController(TextArea):
         elif event.key == "tab":
             # First check slash commands
             if self.text.startswith("/"):
-                suggester = cast(CommandSuggester, self.app.query_one("CommandSuggester"))
+                suggester = cast(
+                    CommandSuggester, self.app.query_one("CommandSuggester")
+                )
                 if suggester.display:
                     complete = suggester.get_selected()
                     if complete:
@@ -332,16 +340,16 @@ class InputController(TextArea):
                 suggester.display = False
                 event.stop()
 
-    def on_click(self, event: Click) -> None:
+    async def on_click(self, event: Click) -> None:
         """Handle mouse clicks - right-click to paste."""
         # Right-click (button 3) to paste from clipboard
         if event.button == 3:
             event.stop()
-            self._paste_from_clipboard()
+            await self._paste_from_clipboard()
             return
         # Let parent handle other clicks (left-click for positioning, etc.)
 
-    def _paste_from_clipboard(self) -> None:
+    async def _paste_from_clipboard(self) -> None:
         """Paste content from clipboard at cursor position."""
         try:
             if pyperclip:
@@ -350,17 +358,20 @@ class InputController(TextArea):
                     self.insert(content)
             else:
                 # Fallback to xclip on Linux
-                import subprocess
+                import asyncio
 
                 try:
-                    result = subprocess.run(
-                        ["xclip", "-selection", "clipboard", "-o"],
-                        capture_output=True,
-                        text=True,
-                        timeout=1,
+                    process = await asyncio.create_subprocess_exec(
+                        "xclip",
+                        "-selection",
+                        "clipboard",
+                        "-o",
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
                     )
-                    if result.returncode == 0 and result.stdout:
-                        self.insert(result.stdout)
+                    stdout, _ = await process.communicate()
+                    if process.returncode == 0 and stdout:
+                        self.insert(stdout.decode("utf-8", errors="replace"))
                 except FileNotFoundError:
                     self.notify(
                         "Install pyperclip for clipboard support", severity="warning"
@@ -372,9 +383,11 @@ class InputController(TextArea):
         """Copy selected text to clipboard (Ctrl+Shift+C)."""
         selected = self.selected_text
         if selected:
-            self._copy_to_clipboard(selected)
+            # We run it in a worker or as a task because action methods should be fast
+            # and _copy_to_clipboard is now async
+            self.app.run_worker(self._copy_to_clipboard(selected))
 
-    def _copy_to_clipboard(self, text: str) -> None:
+    async def _copy_to_clipboard(self, text: str) -> None:
         """Copy text to system clipboard."""
         try:
             # Try OSC 52 first (works over SSH, in supporting terminals)
@@ -388,22 +401,29 @@ class InputController(TextArea):
                 pyperclip.copy(text)
             else:
                 # Fallback to xclip on Linux
-                import subprocess
+                import asyncio
 
                 try:
-                    process = subprocess.Popen(
-                        ["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE
+                    process = await asyncio.create_subprocess_exec(
+                        "xclip",
+                        "-selection",
+                        "clipboard",
+                        stdin=asyncio.subprocess.PIPE,
+                        stdout=asyncio.subprocess.DEVNULL,
+                        stderr=asyncio.subprocess.DEVNULL,
                     )
-                    process.communicate(text.encode("utf-8"), timeout=1)
+                    await process.communicate(text.encode("utf-8"))
                 except FileNotFoundError:
                     pass
         except Exception:
             pass
 
-    def on_text_area_selection_changed(self, event: TextArea.SelectionChanged) -> None:
+    async def on_text_area_selection_changed(
+        self, event: TextArea.SelectionChanged
+    ) -> None:
         """Auto-copy text when selection is made (copy-on-highlight)."""
         # Only copy if there's an actual selection (not just cursor movement)
         if event.selection.start != event.selection.end:
             selected = self.selected_text
             if selected:
-                self._copy_to_clipboard(selected)
+                await self._copy_to_clipboard(selected)

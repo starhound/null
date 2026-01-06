@@ -18,7 +18,7 @@ class ResponseWidget(Static):
     def compose(self) -> ComposeResult:
         with Container(classes="response-container"):
             with Static(classes="response-header"):
-                yield Label("◆", classes="response-icon")
+                yield Label("󱜙", classes="response-icon")
                 yield Label("Final Answer", classes="response-title")
 
             yield Static(id="response-content")

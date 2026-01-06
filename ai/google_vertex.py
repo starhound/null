@@ -28,14 +28,18 @@ class GoogleVertexProvider(LLMProvider):
             try:
                 from google import genai
 
+                from google.genai import Client
+
                 if self.api_key:
-                    self._client = genai.Client(api_key=self.api_key)
+                    self._client = Client(
+                        api_key=self.api_key, http_options={"timeout": 60}
+                    )
                 else:
-                    # TODO: Support ADC / Vertex AI with new SDK if needed
-                    # For now assuming API key is primary method
-                    # (Vertex AI usually uses vertexai lib, checking if genai supports it)
-                    self._client = genai.Client(
-                        vertexai=True, project=self.project_id, location=self.location
+                    self._client = Client(
+                        vertexai=True,
+                        project=self.project_id,
+                        location=self.location,
+                        http_options={"timeout": 60},
                     )
 
             except ImportError as e:
@@ -52,14 +56,15 @@ class GoogleVertexProvider(LLMProvider):
         contents = []
 
         for msg in messages:
-            role = "model" if msg["role"] == "assistant" else "user"
+            msg_role = msg.get("role", "user")
+            role = "model" if msg_role == "assistant" else "user"
             content_part = msg.get("content", "")
 
             # Helper to create part dict
             parts = []
 
             # Handle tool roles to avoid confusion
-            if msg["role"] == "tool":
+            if msg_role == "tool":
                 content_part = f"Tool Result: {content_part}"
 
             if content_part:

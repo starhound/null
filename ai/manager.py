@@ -17,7 +17,17 @@ class AIManager:
         # Pre-load the active provider
         self.get_active_provider()
 
-    def get_provider(self, name: str, force_refresh: bool = False) -> LLMProvider | None:
+    async def close_all(self) -> None:
+        for provider in self._providers.values():
+            try:
+                await provider.close()
+            except Exception:
+                pass
+        self._providers.clear()
+
+    def get_provider(
+        self, name: str, force_refresh: bool = False
+    ) -> LLMProvider | None:
         """Get or create a provider instance.
 
         Args:

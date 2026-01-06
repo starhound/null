@@ -118,6 +118,12 @@ class SSHAddScreen(ModalScreen):
                 yield Button("Cancel", variant="error", id="cancel")
                 yield Button("Save", variant="success", id="save")
 
+    def on_mount(self) -> None:
+        self.query_one("#alias", Input).focus()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        self._save_host()
+
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "cancel":
             self.dismiss()
@@ -143,16 +149,18 @@ class SSHAddScreen(ModalScreen):
             self.notify("Port must be a number", severity="error")
             return
 
-        app: NullApp = self.app  # type: ignore[assignment]
-        app.storage.add_ssh_host(
-            alias=alias,
-            hostname=hostname,
-            port=port,
-            username=username or None,
-            key_path=key_path or None,
-            password=password or None,
-            jump_host=jump_host or None,
-        )
-
-        self.notify(f"Saved SSH host: {alias}")
-        self.dismiss(True)
+        try:
+            app: NullApp = self.app  # type: ignore[assignment]
+            app.storage.add_ssh_host(
+                alias=alias,
+                hostname=hostname,
+                port=port,
+                username=username or None,
+                key_path=key_path or None,
+                password=password or None,
+                jump_host=jump_host or None,
+            )
+            self.notify(f"Saved SSH host: {alias}")
+            self.dismiss(True)
+        except Exception as e:
+            self.notify(f"Failed to save SSH host: {e!s}", severity="error")

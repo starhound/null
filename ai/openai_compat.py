@@ -1,6 +1,6 @@
 import json
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import Any, cast
 
 import httpx
 import openai
@@ -35,9 +35,9 @@ class OpenAICompatibleProvider(LLMProvider):
         chat_messages = [{"role": "system", "content": system_prompt}]
 
         for msg in messages:
-            msg_dict: dict[str, Any] = {"role": msg["role"]}
-            if "content" in msg:
-                msg_dict["content"] = msg["content"]
+            msg_dict: dict[str, Any] = {"role": msg.get("role", "user")}
+            if msg.get("content"):
+                msg_dict["content"] = msg.get("content")
             if "tool_calls" in msg:
                 msg_dict["tool_calls"] = msg["tool_calls"]
             if "tool_call_id" in msg:
@@ -157,11 +157,16 @@ class OpenAICompatibleProvider(LLMProvider):
                     tool_calls = []
                     for tc_data in current_tool_calls.values():
                         try:
-                            args = (
-                                json.loads(tc_data["arguments"])
-                                if tc_data["arguments"]
-                                else {}
-                            )
+                            arg_str = tc_data["arguments"] or "{}"
+                            # Cleanup potential markdown code blocks
+                            if arg_str.startswith("```json"):
+                                arg_str = arg_str[7:]
+                            if arg_str.startswith("```"):
+                                arg_str = arg_str[3:]
+                            if arg_str.endswith("```"):
+                                arg_str = arg_str[:-3]
+
+                            args = json.loads(arg_str.strip())
                         except json.JSONDecodeError:
                             args = {}
 
@@ -197,7 +202,8 @@ class OpenAICompatibleProvider(LLMProvider):
                         models.append(m["id"])
             # Some servers return list directly
             elif isinstance(models_response, list):
-                for m in models_response:
+                for m_item in models_response:
+                    m = cast(Any, m_item)
                     if hasattr(m, "id"):
                         models.append(m.id)
                     elif isinstance(m, dict) and "id" in m:

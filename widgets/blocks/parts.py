@@ -19,20 +19,6 @@ class StopButton(Label):
             super().__init__()
             self.block_id = block_id
 
-    DEFAULT_CSS = """
-    StopButton {
-        width: auto;
-        height: 1;
-        padding: 0 1;
-        color: $error;
-        text-style: bold;
-    }
-    StopButton:hover {
-        background: $error 15%;
-        text-style: bold underline;
-    }
-    """
-
     def __init__(self, block_id: str):
         super().__init__("Stop", id="stop-btn", classes="stop-action")
         self._block_id = block_id
@@ -66,17 +52,17 @@ class BlockHeader(Static):
 
     def compose(self) -> ComposeResult:
         if self.block.type == BlockType.COMMAND:
-            icon = ">"
+            icon = ""
             icon_class = "prompt-symbol prompt-symbol-cli"
             text_class = "header-text-cli"
             display_text = self.block.content_input
         elif self.block.type == BlockType.AI_QUERY:
-            icon = "◇"
+            icon = ""
             icon_class = "prompt-symbol prompt-symbol-query"
             text_class = "header-text-ai"
             display_text = self.block.content_input
         elif self.block.type == BlockType.AI_RESPONSE:
-            icon = "◆"
+            icon = "󱚣"
             icon_class = "prompt-symbol prompt-symbol-response"
             text_class = "header-text-ai"
             display_text = self.block.content_input if self.block.content_input else ""
@@ -303,7 +289,7 @@ class BlockFooter(Static):
 
     def compose(self) -> ComposeResult:
         if self.block.exit_code is not None and self.block.exit_code != 0:
-            yield Label(f"Exit Code: {self.block.exit_code}", classes="exit-error")
+            yield Label(f"󱇯 Exit Code: {self.block.exit_code}", classes="exit-error")
         elif self.block.is_running:
-            yield Label("Running...", classes="running-spinner")
+            yield Label("󱑠 Running...", classes="running-spinner")
             yield StopButton(self.block.id)

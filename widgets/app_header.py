@@ -10,53 +10,6 @@ from textual.widgets import Label, Static
 class AppHeader(Static):
     """Custom header showing provider/model, app title, and clock."""
 
-    DEFAULT_CSS = """
-    AppHeader {
-        dock: top;
-        width: 100%;
-        height: 1;
-        layout: grid;
-        grid-size: 3 1;
-        grid-columns: 1fr auto 1fr;
-        background: $panel;
-        color: $text;
-    }
-
-    AppHeader .header-left {
-        column-span: 1;
-        width: 100%;
-        height: 1;
-        padding: 0 0 0 1;
-    }
-
-    AppHeader .header-icon {
-        color: $success;
-        text-style: bold;
-    }
-
-    AppHeader.-disconnected .header-icon {
-        color: $warning;
-    }
-
-    AppHeader .header-title {
-        column-span: 1;
-        width: 100%;
-        height: 1;
-        text-align: center;
-        text-style: bold;
-        color: $text;
-    }
-
-    AppHeader .header-right {
-        column-span: 1;
-        width: 100%;
-        height: 1;
-        text-align: right;
-        padding: 0 1 0 0;
-        color: $text-muted;
-    }
-    """
-
     # Reactive properties
     provider_text: reactive[str] = reactive("", layout=True)
     connected: reactive[bool] = reactive(True)
@@ -72,7 +25,7 @@ class AppHeader(Static):
         self._title = title
 
     def compose(self) -> ComposeResult:
-        yield Label("● ", classes="header-left header-icon")
+        yield Label("󰄬 ", classes="header-left header-icon")
         yield Label(self._title, classes="header-title")
         yield Label(self._get_time(), classes="header-right", id="header-clock")
 
@@ -96,7 +49,7 @@ class AppHeader(Static):
         """Update the left label with icon and provider text."""
         try:
             left_label = self.query_one(".header-left", Label)
-            icon = "●" if self.connected else "○"
+            icon = "󰄬" if self.connected else "󰅖"
             if self.provider_text:
                 left_label.update(f"{icon} {self.provider_text}")
             else:

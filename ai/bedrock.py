@@ -13,8 +13,15 @@ class BedrockProvider(LLMProvider):
     """AWS Bedrock provider with tool calling support for Claude models."""
 
     def __init__(self, region_name: str, model: str = "anthropic.claude-v2"):
-        self.client = boto3.client("bedrock-runtime", region_name=region_name)
-        self.bedrock = boto3.client("bedrock", region_name=region_name)
+        from botocore.config import Config
+
+        config = Config(
+            connect_timeout=60, read_timeout=60, retries={"max_attempts": 2}
+        )
+        self.client = boto3.client(
+            "bedrock-runtime", region_name=region_name, config=config
+        )
+        self.bedrock = boto3.client("bedrock", region_name=region_name, config=config)
         self.model = model
         self._executor = ThreadPoolExecutor(max_workers=2)
 
@@ -68,7 +75,7 @@ class BedrockProvider(LLMProvider):
         claude_messages = []
 
         for msg in messages:
-            role = msg["role"]
+            role = msg.get("role", "user")
             if role == "system":
                 continue  # System handled separately
 
@@ -143,7 +150,7 @@ class BedrockProvider(LLMProvider):
             # Build context string for Llama
             context_parts = []
             for msg in messages:
-                if msg["role"] == "user":
+                if msg.get("role") == "user":
                     context_parts.append(f"User: {msg.get('content', '')}")
                 else:
                     context_parts.append(f"Assistant: {msg.get('content', '')}")

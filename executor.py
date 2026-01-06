@@ -8,6 +8,7 @@ import signal
 import struct
 import termios
 from collections.abc import Callable
+from typing import Literal
 
 from config import get_settings
 
@@ -49,7 +50,7 @@ TUI_EXIT_INDICATORS = [
 class ExecutionEngine:
     """Engine for executing shell commands with PTY support for proper colors."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._pid: int | None = None
         self._master_fd: int | None = None
         self._cancelled = False
@@ -73,7 +74,7 @@ class ExecutionEngine:
         """Check if currently in TUI (alternate screen) mode."""
         return self._in_tui_mode
 
-    def _detect_screen_mode(self, data: bytes) -> str | None:
+    def _detect_screen_mode(self, data: bytes) -> Literal["enter", "exit"] | None:
         """Detect if data contains TUI mode switch sequences.
 
         Detects both:
@@ -115,6 +116,7 @@ class ExecutionEngine:
         callback: Callable[[str], None],
         mode_callback: Callable[[str, bytes], None] | None = None,
         raw_callback: Callable[[bytes], None] | None = None,
+        ready_event: asyncio.Event | None = None,
     ) -> int:
         """
         Runs command in a PTY, calls callback with output, returns exit code.
@@ -181,6 +183,8 @@ class ExecutionEngine:
             # Parent process
             os.close(slave_fd)
             self._pid = pid
+            if ready_event:
+                ready_event.set()
 
             # Make master non-blocking for async reading
             flags = fcntl.fcntl(master_fd, fcntl.F_GETFL)
@@ -341,7 +345,7 @@ class ExecutionEngine:
                     pass
                 self._master_fd = None
 
-    def cancel(self):
+    def cancel(self) -> None:
         """Cancel the currently running process."""
         self._cancelled = True
         if self._pid:

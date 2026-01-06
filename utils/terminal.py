@@ -4,6 +4,7 @@ Detects the current terminal emulator and provides adapters for
 terminal-specific features like font control.
 """
 
+import asyncio
 import json
 import os
 import re
@@ -224,11 +225,11 @@ class TerminalAdapter:
     def __init__(self, terminal_info: TerminalInfo):
         self.info = terminal_info
 
-    def set_font(self, family: str, size: int) -> bool:
+    async def set_font(self, family: str, size: int) -> bool:
         """Set terminal font. Returns True if successful."""
         return False
 
-    def set_font_size(self, size: int) -> bool:
+    async def set_font_size(self, size: int) -> bool:
         """Set terminal font size. Returns True if successful."""
         return False
 
@@ -236,7 +237,7 @@ class TerminalAdapter:
         """Get current font (family, size) if possible."""
         return None
 
-    def set_opacity(self, opacity: float) -> bool:
+    async def set_opacity(self, opacity: float) -> bool:
         """Set terminal opacity (0.0 - 1.0). Returns True if successful."""
         return False
 
@@ -244,35 +245,41 @@ class TerminalAdapter:
 class KittyAdapter(TerminalAdapter):
     """Adapter for Kitty terminal."""
 
-    def set_font(self, family: str, size: int) -> bool:
+    async def set_font(self, family: str, size: int) -> bool:
         """Set font using Kitty remote control."""
         try:
             # Kitty uses @ commands via socket
             cmd = ["kitty", "@", "set-font-size", str(size)]
-            result = subprocess.run(cmd, capture_output=True, timeout=2)
-            return result.returncode == 0
+            process = await asyncio.create_subprocess_exec(
+                *cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+            await process.wait()
+            return process.returncode == 0
         except Exception:
             return False
 
-    def set_font_size(self, size: int) -> bool:
+    async def set_font_size(self, size: int) -> bool:
         """Set font size using kitty @ command."""
         try:
-            result = subprocess.run(
-                ["kitty", "@", "set-font-size", str(size)],
-                capture_output=True,
-                timeout=2,
+            cmd = ["kitty", "@", "set-font-size", str(size)]
+            process = await asyncio.create_subprocess_exec(
+                *cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
-            return result.returncode == 0
+            await process.wait()
+            return process.returncode == 0
         except Exception:
             return False
 
-    def set_opacity(self, opacity: float) -> bool:
+    async def set_opacity(self, opacity: float) -> bool:
         """Set opacity using Kitty remote control."""
         try:
             # Convert to percentage
             cmd = ["kitty", "@", "set-background-opacity", str(opacity)]
-            result = subprocess.run(cmd, capture_output=True, timeout=2)
-            return result.returncode == 0
+            process = await asyncio.create_subprocess_exec(
+                *cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+            await process.wait()
+            return process.returncode == 0
         except Exception:
             return False
 
@@ -280,13 +287,13 @@ class KittyAdapter(TerminalAdapter):
 class WezTermAdapter(TerminalAdapter):
     """Adapter for WezTerm terminal."""
 
-    def set_font(self, family: str, size: int) -> bool:
+    async def set_font(self, family: str, size: int) -> bool:
         """WezTerm requires lua config changes or cli."""
         # WezTerm can be controlled via CLI in some cases
         # For now, return False - would need more complex config editing
         return False
 
-    def set_font_size(self, size: int) -> bool:
+    async def set_font_size(self, size: int) -> bool:
         """WezTerm font changes require config file modification.
 
         WezTerm doesn't support runtime font size changes via commands.
@@ -354,7 +361,7 @@ def get_terminal_adapter() -> TerminalAdapter:
         return GenericAdapter(info)
 
 
-def apply_appearance_settings(font_size: int | None = None) -> bool:
+async def apply_appearance_settings(font_size: int | None = None) -> bool:
     """Apply appearance settings to the terminal if supported.
 
     Gets the terminal adapter and applies font size if the terminal
@@ -372,7 +379,7 @@ def apply_appearance_settings(font_size: int | None = None) -> bool:
 
     if font_size is not None:
         if adapter.info.supports_font_change:
-            if not adapter.set_font_size(font_size):
+            if not await adapter.set_font_size(font_size):
                 success = False
         else:
             # Terminal doesn't support font changes
@@ -647,7 +654,9 @@ class WindowsTerminalConfigAdapter(TerminalConfigAdapter):
                     "emptyBox": "block",
                     "underscore": "underline",
                 }
-                config.cursor_style = shape_map.get(cursor_shape, cursor_shape)
+                mapped_style = shape_map.get(cursor_shape, cursor_shape)
+                if mapped_style:
+                    config.cursor_style = str(mapped_style)
 
             # Opacity
             config.opacity = float(source.get("opacity", 1.0))
@@ -939,7 +948,7 @@ class AlacrittyConfigAdapter(TerminalConfigAdapter):
                     config.font_family = font_match.group(1)
 
                 size_match = re.search(
-                    r'\[font\].*?size\s*=\s*([\d.]+)', content, re.DOTALL
+                    r"\[font\].*?size\s*=\s*([\d.]+)", content, re.DOTALL
                 )
                 if size_match:
                     config.font_size = float(size_match.group(1))
@@ -969,7 +978,7 @@ class AlacrittyConfigAdapter(TerminalConfigAdapter):
                 if font_match:
                     config.font_family = font_match.group(1).strip()
 
-                size_match = re.search(r'size:\s*([\d.]+)', content)
+                size_match = re.search(r"size:\s*([\d.]+)", content)
                 if size_match:
                     config.font_size = float(size_match.group(1))
 
@@ -1005,21 +1014,21 @@ class AlacrittyConfigAdapter(TerminalConfigAdapter):
                         content += f'\n[font.normal]\nfamily = "{config.font_family}"\n'
 
                 if config.font_size > 0:
-                    if re.search(r'\[font\].*?size\s*=', content, re.DOTALL):
+                    if re.search(r"\[font\].*?size\s*=", content, re.DOTALL):
                         content = re.sub(
-                            r'(\[font\].*?size\s*=\s*)[\d.]+',
-                            f'\\g<1>{config.font_size}',
+                            r"(\[font\].*?size\s*=\s*)[\d.]+",
+                            f"\\g<1>{config.font_size}",
                             content,
                             flags=re.DOTALL,
                         )
                     elif "[font]" in content:
                         content = re.sub(
-                            r'(\[font\])',
-                            f'\\1\nsize = {config.font_size}',
+                            r"(\[font\])",
+                            f"\\1\nsize = {config.font_size}",
                             content,
                         )
                     else:
-                        content += f'\n[font]\nsize = {config.font_size}\n'
+                        content += f"\n[font]\nsize = {config.font_size}\n"
 
             with open(self.config_path, "w", encoding="utf-8") as f:
                 f.write(content)

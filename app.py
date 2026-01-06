@@ -1,7 +1,12 @@
 """Main application module for Null terminal."""
 
+import asyncio
+from datetime import datetime
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar, TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from textual.worker import Worker
 
 from textual.app import App, ComposeResult
 from textual.binding import BindingType
@@ -12,7 +17,7 @@ from ai.factory import AIFactory
 from ai.manager import AIManager
 from config import Config, get_settings
 from handlers import ExecutionHandler, InputHandler, SlashCommandHandler
-from managers import ProcessManager
+from managers import ProcessManager, BranchManager
 
 # from executor import ExecutionEngine  # Removed global import
 from mcp import MCPManager
@@ -23,7 +28,7 @@ from widgets import (
     AppHeader,
     BaseBlockWidget,
     BlockSearch,
-    BlockWidget,
+    create_block,
     CommandPalette,
     CommandSuggester,
     HistorySearch,
@@ -31,6 +36,9 @@ from widgets import (
     InputController,
     StatusBar,
 )
+
+# For backwards compatibility
+BlockWidget = create_block
 
 
 class NullApp(App):
@@ -54,7 +62,6 @@ class NullApp(App):
         ("f4", "select_provider", "Select Provider"),
         ("ctrl+space", "toggle_ai_mode", "Toggle AI Mode"),
         ("ctrl+t", "toggle_ai_mode", "Toggle AI Mode"),
-        ("ctrl+b", "toggle_ai_mode", "Toggle AI Mode"),
     ]
 
     def __init__(self):
@@ -82,14 +89,15 @@ class NullApp(App):
 
         # self.executor removed - executor is now per-process
         self.process_manager = ProcessManager()
+        self.branch_manager = BranchManager()
 
         # CLI session tracking
-        self.current_cli_block = None
-        self.current_cli_widget = None
+        self.current_cli_block: BlockState | None = None
+        self.current_cli_widget: BaseBlockWidget | None = None
 
         # AI state
         self._ai_cancelled = False
-        self._active_worker = None
+        self._active_worker: Worker | None = None
 
         # AI Manager
         self.ai_manager = AIManager()
@@ -124,6 +132,17 @@ class NullApp(App):
         yield StatusBar(id="status-bar")
         yield Footer()
 
+    async def push_screen_wait(self, screen) -> Any:
+        """Push a screen and wait for it to be dismissed with a result."""
+        future: asyncio.Future[Any] = asyncio.Future()
+
+        def on_dismiss(result: Any) -> None:
+            if not future.done():
+                future.set_result(result)
+
+        self.push_screen(screen, on_dismiss)
+        return await future
+
     # -------------------------------------------------------------------------
     # Lifecycle
     # -------------------------------------------------------------------------
@@ -135,7 +154,7 @@ class NullApp(App):
         if not storage.get_config("disclaimer_accepted"):
             from screens import DisclaimerScreen
 
-            def on_disclaimer_accepted(accepted: bool):
+            def on_disclaimer_accepted(accepted: bool | None):
                 if accepted:
                     storage.set_config("disclaimer_accepted", "true")
                 else:
@@ -317,9 +336,9 @@ class NullApp(App):
 
         if settings.terminal.confirm_on_exit:
             # Show confirmation dialog
-            def on_confirm(confirmed: bool):
+            async def on_confirm(confirmed: bool | None):
                 if confirmed:
-                    self._perform_exit(settings.terminal.clear_on_exit)
+                    await self._perform_exit(settings.terminal.clear_on_exit)
 
             self.push_screen(
                 ConfirmDialog(
@@ -328,10 +347,13 @@ class NullApp(App):
                 on_confirm,
             )
         else:
-            self._perform_exit(settings.terminal.clear_on_exit)
+            self.run_worker(self._perform_exit(settings.terminal.clear_on_exit))
 
-    def _perform_exit(self, clear_session: bool):
+    async def _perform_exit(self, clear_session: bool):
         """Perform the actual exit, optionally clearing the session."""
+        if hasattr(self, "ai_manager"):
+            await self.ai_manager.close_all()
+
         if clear_session:
             try:
                 # Clear the saved session
@@ -722,25 +744,25 @@ class NullApp(App):
             self.notify("Block not found", severity="error")
             return
 
-        # Find the index of this block
+        # Create a fork point
+        branch_name = f"fork-{block.id[:4]}-{datetime.now().strftime('%H%M')}"
         try:
-            block_index = self.blocks.index(block)
-        except ValueError:
-            self.notify("Block not found in history", severity="error")
-            return
+            self.branch_manager.fork(branch_name, self.blocks, block.id)
+            self.notify(f"Created branch: {branch_name}")
 
-        # Create a fork point - truncate history to this block
-        # This keeps all blocks up to and including this one
-        forked_blocks = self.blocks[: block_index + 1]
+            # Switch UI to the new branch (for now, we just truncate the view)
+            # In a full implementation, we'd clear history and re-mount blocks from branch
+            self.blocks = list(self.branch_manager.branches[branch_name])
 
-        # Store fork point metadata
-        self.notify(
-            f"Forked at block {block.id[:8]} - {len(forked_blocks)} blocks in history"
-        )
+            # Refresh view
+            history_vp = self.query_one("#history", HistoryViewport)
+            await history_vp.query(BaseBlockWidget).remove()
+            for b in self.blocks:
+                await history_vp.mount(create_block(b))
+            history_vp.scroll_end()
 
-        # TODO: Implement full fork functionality with branch management
-        # For now, just notify the user that forking is ready
-        # Future: save current branch, create new branch from fork point
+        except Exception as e:
+            self.notify(f"Fork failed: {e}", severity="error")
 
     async def on_code_block_widget_run_code_requested(self, message):
         """Handle run code button click from code blocks."""
@@ -959,8 +981,8 @@ class NullApp(App):
         try:
             Config._get_storage().save_current_session(self.blocks)
             self._update_status_bar()
-        except Exception:
-            pass
+        except Exception as e:
+            self.log(f"Auto-save failed: {e}")
 
 
 if __name__ == "__main__":
