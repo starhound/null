@@ -227,3 +227,18 @@ class CoreCommands(CommandMixin):
             self.notify("Configuration reloaded")
         except Exception as e:
             self.notify(f"Reload failed: {e}", severity="error")
+
+    async def cmd_git(self, args: list[str]):
+        from utils.git import get_git_status
+
+        status = await get_git_status()
+
+        if not status.is_repo:
+            self.notify("Not a git repository", severity="warning")
+            return
+
+        lines = [
+            f"  Branch: {status.branch}",
+            f"  Dirty:  {'Yes' if status.is_dirty else 'No'}",
+        ]
+        await self.show_output("/git status", "\n".join(lines))

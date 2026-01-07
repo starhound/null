@@ -50,6 +50,10 @@ class SlashCommandHandler:
                 self._core.cmd_status,
                 CommandInfo("status", "Show current status"),
             ),
+            "git": (
+                self._core.cmd_git,
+                CommandInfo("git", "Show git status"),
+            ),
             "clear": (
                 self._core.cmd_clear,
                 CommandInfo("clear", "Clear history and context", "Ctrl+L"),
@@ -133,6 +137,10 @@ class SlashCommandHandler:
             "compact": (
                 self._ai.cmd_compact,
                 CommandInfo("compact", "Summarize context to save tokens"),
+            ),
+            "context": (
+                self._ai.cmd_context,
+                CommandInfo("context", "Inspect context messages"),
             ),
             # Session commands
             "session": (

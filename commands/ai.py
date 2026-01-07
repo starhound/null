@@ -98,6 +98,7 @@ class AICommands(CommandMixin):
                 Config.set("ai.provider", provider_name)
                 # Also sync to JSON settings
                 from config import SettingsManager
+
                 SettingsManager().set("ai", "provider", provider_name)
                 self.notify(f"Provider switched to {provider_name}")
 
@@ -296,3 +297,8 @@ Be brief but preserve essential context. Output only the summary."""
 
         except Exception as e:
             self.notify(f"Compact failed: {e}", severity="error")
+
+    async def cmd_context(self, args: list[str]):
+        from screens.context import ContextScreen
+
+        self.app.push_screen(ContextScreen())

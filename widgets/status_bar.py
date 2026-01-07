@@ -14,6 +14,8 @@ class StatusBar(Static):
     provider_status = reactive("unknown")
     mcp_count = reactive(0)
     process_count = reactive(0)
+    git_branch = reactive("")
+    git_dirty = reactive(False)
     # Token usage tracking
     session_input_tokens = reactive(0)
     session_output_tokens = reactive(0)
@@ -21,6 +23,8 @@ class StatusBar(Static):
 
     def compose(self) -> ComposeResult:
         yield Label("", id="mode-indicator", classes="status-section")
+        yield Label("|", classes="status-sep")
+        yield Label("", id="git-indicator", classes="status-section")
         yield Label("|", classes="status-sep")
         yield Label("", id="provider-indicator", classes="status-section")
         yield Label("|", classes="status-sep")
@@ -68,6 +72,12 @@ class StatusBar(Static):
     def watch_process_count(self, count: int):
         self._update_process_display()
 
+    def watch_git_branch(self, branch: str):
+        self._update_git_display()
+
+    def watch_git_dirty(self, dirty: bool):
+        self._update_git_display()
+
     def watch_session_input_tokens(self, tokens: int):
         self._update_token_display()
 
@@ -102,6 +112,26 @@ class StatusBar(Static):
             else:
                 indicator.update("󰅖 PROC: 0")
                 indicator.add_class("process-inactive")
+        except Exception:
+            pass
+
+    def _update_git_display(self):
+        try:
+            indicator = self.query_one("#git-indicator", Label)
+            indicator.remove_class("git-dirty", "git-clean")
+
+            if not self.git_branch:
+                indicator.update("")
+                return
+
+            icon = "±" if self.git_dirty else ""
+            text = f"{icon} {self.git_branch}"
+            indicator.update(text)
+
+            if self.git_dirty:
+                indicator.add_class("git-dirty")
+            else:
+                indicator.add_class("git-clean")
         except Exception:
             pass
 
@@ -243,6 +273,10 @@ class StatusBar(Static):
     def set_process_count(self, count: int):
         """Set number of active processes."""
         self.process_count = count
+
+    def set_git_status(self, branch: str, is_dirty: bool):
+        self.git_branch = branch
+        self.git_dirty = is_dirty
 
     def add_token_usage(self, input_tokens: int, output_tokens: int, cost: float):
         """Add token usage from a completed request."""
