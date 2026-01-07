@@ -27,6 +27,10 @@ class MCPCommands(CommandMixin):
             await self._mcp_list()
         elif subcommand == "tools":
             await self._mcp_tools()
+        elif subcommand == "resources":
+            await self._mcp_resources()
+        elif subcommand == "read" and len(args) >= 2:
+            await self._mcp_read(args[1])
         elif subcommand == "add":
             await self._mcp_add()
         elif subcommand == "edit" and len(args) >= 2:
@@ -81,6 +85,27 @@ class MCPCommands(CommandMixin):
             )
             lines.append(f"  {tool.name:25} {tool.server_name:15} {desc_text}")
         await self.show_output("/mcp tools", "\n".join(lines))
+
+    async def _mcp_resources(self):
+        resources = self.app.mcp_manager.get_all_resources()
+        if not resources:
+            self.notify("No MCP resources available", severity="warning")
+            return
+
+        lines = []
+        for res in resources:
+            lines.append(f"  {res.name:30} {res.uri}")
+            if res.description:
+                lines.append(f"    {res.description}")
+
+        await self.show_output("/mcp resources", "\n".join(lines))
+
+    async def _mcp_read(self, uri: str):
+        try:
+            content = await self.app.mcp_manager.read_resource(uri)
+            await self.show_output(f"/mcp read {uri}", content)
+        except Exception as e:
+            self.notify(f"Error reading resource: {e}", severity="error")
 
     async def _mcp_add(self):
         """Add a new MCP server."""

@@ -26,6 +26,7 @@ class InputController(TextArea):
         Binding("enter", "submit", "Submit", priority=True),
         Binding("shift+enter", "newline", "New Line", priority=True),
         Binding("ctrl+shift+c", "copy_selection", "Copy", priority=True),
+        Binding("ctrl+u", "clear_to_start", "Clear Line", priority=True),
     ]
 
     class Submitted(Message):
@@ -126,6 +127,11 @@ class InputController(TextArea):
     def action_newline(self):
         """Handle Shift+Enter - insert newline."""
         self.insert("\n")
+
+    def action_clear_to_start(self):
+        cursor_row, cursor_col = self.cursor_location
+        if cursor_col > 0:
+            self.delete(start=(cursor_row, 0), end=(cursor_row, cursor_col))
 
     def add_to_history(self, command: str):
         if command and (not self.cmd_history or self.cmd_history[-1] != command):

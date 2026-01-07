@@ -170,6 +170,7 @@ class CommandPalette(Static, can_focus=True):
             ("Select Model", "Choose AI model", "F2"),
             ("Change Theme", "Select UI theme", "F3"),
             ("Select Provider", "Choose AI provider", "F4"),
+            ("Toggle File Tree", "Show/Hide file sidebar", "Ctrl+\\"),
             ("Cancel Operation", "Cancel running operation", "Escape"),
         ]
 

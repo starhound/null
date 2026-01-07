@@ -1,67 +1,38 @@
-from textual.containers import VerticalScroll
+from textual.widgets import ListView, ListItem
+from textual.widget import Widget
 
 
-class HistoryViewport(VerticalScroll):
-    """Scrollable container for blocks."""
+class HistoryViewport(ListView):
+    """Scrollable container for blocks using ListView."""
+
+    DEFAULT_CSS = """
+    HistoryViewport {
+        height: 1fr;
+        width: 1fr;
+    }
+    HistoryViewport > ListItem {
+        height: auto;
+        padding: 0;
+        margin: 0;
+        background: transparent;
+    }
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._auto_scroll = True
-        self._pending_scroll = False
+
+    async def add_block(self, widget: Widget):
+        await self.mount(ListItem(widget))
+        if self._auto_scroll:
+            self.scroll_end(animate=False)
 
     def on_mount(self):
-        """Initial scroll to bottom."""
-        self.call_later(self._do_scroll_end)
-
-    def _do_scroll_end(self):
-        """Perform scroll to end after layout."""
-        if self._auto_scroll:
-            self.scroll_end(animate=False)
-
-    def _is_at_bottom(self) -> bool:
-        """Check if currently scrolled to bottom (with tolerance)."""
-        # Allow some tolerance for rounding errors
-        return self.scroll_y >= self.max_scroll_y - 5
-
-    def on_mouse_scroll_up(self, event) -> None:
-        """User scrolled up with mouse wheel."""
-        self._auto_scroll = False
-
-    def on_mouse_scroll_down(self, event) -> None:
-        """User scrolled down with mouse wheel."""
-        # Re-enable auto-scroll if we reach bottom
-        self.call_later(self._check_at_bottom)
+        self.call_later(self.scroll_end, animate=False)
 
     def on_key(self, event) -> None:
-        """Handle keyboard scrolling."""
-        if event.key in ("up", "pageup", "home"):
+        if event.key in ("pageup", "home"):
             self._auto_scroll = False
         elif event.key in ("down", "pagedown", "end"):
-            self.call_later(self._check_at_bottom)
-
-    def _check_at_bottom(self):
-        """Check if at bottom and re-enable auto-scroll."""
-        if self._is_at_bottom():
-            self._auto_scroll = True
-
-    def on_resize(self, event) -> None:
-        """Handle resize events."""
-        if self._auto_scroll:
-            self.call_later(self._do_scroll_end)
-
-    def watch_virtual_size(self, virtual_size) -> None:
-        """Called when content size changes."""
-        if self._auto_scroll and not self._pending_scroll:
-            self._pending_scroll = True
-            self.call_later(self._delayed_scroll)
-
-    def _delayed_scroll(self):
-        """Delayed scroll to allow layout to complete."""
-        self._pending_scroll = False
-        if self._auto_scroll:
-            self.scroll_end(animate=False)
-
-    def scroll_to_bottom(self):
-        """Force scroll to bottom and enable auto-scroll."""
-        self._auto_scroll = True
-        self.scroll_end(animate=False)
+            if self.index == len(self.children) - 1:
+                self._auto_scroll = True

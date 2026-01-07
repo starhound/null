@@ -54,6 +54,10 @@ class SlashCommandHandler:
                 self._core.cmd_clear,
                 CommandInfo("clear", "Clear history and context", "Ctrl+L"),
             ),
+            "reload": (
+                self._core.cmd_reload,
+                CommandInfo("reload", "Reload configuration and themes"),
+            ),
             "quit": (
                 self._core.cmd_quit,
                 CommandInfo("quit", "Exit application", "Ctrl+C"),
@@ -169,6 +173,8 @@ class SlashCommandHandler:
                         ("add", "Add a new MCP server"),
                         ("remove <name>", "Remove an MCP server"),
                         ("tools", "Show available MCP tools"),
+                        ("resources", "List available MCP resources"),
+                        ("read <uri>", "Read an MCP resource"),
                         ("connect <name>", "Connect to a server"),
                     ],
                 ),

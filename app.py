@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 
 from textual.app import App, ComposeResult
 from textual.binding import BindingType
-from textual.containers import Container
-from textual.widgets import Footer, Label, TextArea
+from textual.containers import Container, Horizontal
+from textual.widgets import Footer, Label, TextArea, DirectoryTree
 
 from ai.factory import AIFactory
 from ai.manager import AIManager
@@ -62,6 +62,7 @@ class NullApp(App):
         ("f4", "select_provider", "Select Provider"),
         ("ctrl+space", "toggle_ai_mode", "Toggle AI Mode"),
         ("ctrl+t", "toggle_ai_mode", "Toggle AI Mode"),
+        ("ctrl+backslash", "toggle_file_tree", "Files"),
     ]
 
     def __init__(self):
@@ -117,7 +118,12 @@ class NullApp(App):
         yield AppHeader(id="app-header")
         yield CommandSuggester(id="suggester")
         yield CommandPalette(id="command-palette")
-        yield HistoryViewport(id="history")
+
+        with Horizontal(id="main-area"):
+            tree = DirectoryTree(".", id="file-tree")
+            tree.display = False
+            yield tree
+            yield HistoryViewport(id="history")
 
         # History search replaces input container when active
         yield HistorySearch(id="history-search")
@@ -171,7 +177,7 @@ class NullApp(App):
             for block in self.blocks:
                 block.is_running = False
                 block_widget = BlockWidget(block)
-                await history_vp.mount(block_widget)
+                await history_vp.add_block(block_widget)
             history_vp.scroll_end(animate=False)
             self.notify(f"Restored {len(saved_blocks)} blocks from previous session")
 
@@ -448,6 +454,17 @@ class NullApp(App):
         self.push_screen(
             SelectionListScreen("Select Provider", providers), on_provider_selected
         )
+
+    def action_toggle_file_tree(self):
+        try:
+            tree = self.query_one("#file-tree", DirectoryTree)
+            tree.display = not tree.display
+            if tree.display:
+                tree.focus()
+            else:
+                self.query_one("#input", InputController).focus()
+        except Exception:
+            pass
 
     def action_select_model(self):
         """Select an AI model from ALL providers."""
@@ -983,6 +1000,19 @@ class NullApp(App):
             self._update_status_bar()
         except Exception as e:
             self.log(f"Auto-save failed: {e}")
+
+    def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected):
+        try:
+            path = str(event.path)
+            input_ctrl = self.query_one("#input", InputController)
+            current = input_ctrl.value
+            if current and not current.endswith(" "):
+                input_ctrl.value += f" {path}"
+            else:
+                input_ctrl.value += path
+            input_ctrl.focus()
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

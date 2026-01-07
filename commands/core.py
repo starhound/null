@@ -213,3 +213,17 @@ class CoreCommands(CommandMixin):
             self.notify(f"Opening new {action} with Null Terminal profile...")
         else:
             self.notify("Failed to activate Null Terminal profile", severity="error")
+
+    async def cmd_reload(self, args: list[str]):
+        try:
+            from themes import get_all_themes
+
+            for theme in get_all_themes().values():
+                self.app.register_theme(theme)
+
+            self.app.mcp_manager.reload_config()
+            await self.app.mcp_manager.initialize()
+
+            self.notify("Configuration reloaded")
+        except Exception as e:
+            self.notify(f"Reload failed: {e}", severity="error")

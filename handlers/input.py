@@ -99,7 +99,7 @@ class InputHandler:
         # Mount widget - create_block factory creates correct widget type
         history_vp = self.app.query_one("#history", HistoryViewport)
         block_widget: BaseBlockWidget = create_block(block)
-        await history_vp.mount(block_widget)
+        await history_vp.add_block(block_widget)
         block_widget.scroll_visible()
 
         # Run AI worker
@@ -209,7 +209,7 @@ class InputHandler:
         history_vp = self.app.query_one("#history", HistoryViewport)
         block_widget: BaseBlockWidget = create_block(block)
         self.app.current_cli_widget = block_widget
-        await history_vp.mount(block_widget)
+        await history_vp.add_block(block_widget)
         block_widget.scroll_visible()
 
         # Execute command
