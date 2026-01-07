@@ -102,7 +102,7 @@ class ThinkingWidget(Static):
             spinner = self.query_one("#spinner", Label)
             status = self.query_one("#status-label", Label)
             spinner.add_class("complete")
-            spinner.update("✓")
+            spinner.update("󰄬")
             status.update("Response complete")
             # Force render the content
             if self.thinking_text:
@@ -141,7 +141,7 @@ class ThinkingWidget(Static):
                 status.update(label)
             else:
                 spinner.add_class("complete")
-                spinner.update("✓")
+                spinner.update("󰄬")
                 label = (
                     "Thought complete"
                     if self._detected_reasoning

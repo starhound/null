@@ -172,7 +172,7 @@ class ToolCallItem(Static):
         icons = {
             "pending": "○",
             "running": self.SPINNER_FRAMES[0],
-            "success": "✓",
+            "success": "󰄬",
             "error": "✗",
         }
         return icons.get(self.tool_call.status, "○")

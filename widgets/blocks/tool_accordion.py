@@ -55,8 +55,8 @@ class ToolHeader(Static):
         icons = {
             "pending": "○",
             "running": self.SPINNER_FRAMES[0],
-            "success": "[✓]",
-            "error": "[✗]",
+            "success": "󰄬",
+            "error": "✗",
         }
         return icons.get(self.status, "○")
 
