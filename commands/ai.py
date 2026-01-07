@@ -144,12 +144,16 @@ class AICommands(CommandMixin):
     async def cmd_prompts(self, args: list[str]):
         """Select or manage system prompts."""
         if not args:
-            self.app.action_select_prompt()
+            from screens.prompts import PromptEditorScreen
+
+            self.app.push_screen(PromptEditorScreen())
             return
 
         subcommand = args[0]
 
-        if subcommand == "list":
+        if subcommand == "select":
+            self.app.action_select_prompt()
+        elif subcommand == "list":
             await self._prompts_list()
         elif subcommand == "reload":
             from prompts import get_prompt_manager

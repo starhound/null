@@ -60,6 +60,8 @@ Toggle with `/agent` command.
 | `/help` | Show help |
 | `/clear` | Clear history |
 | `/export` | Export conversation |
+| `/todo` | Open task dashboard |
+| `/prompts` | Manage system prompts |
 
 ## Documentation
 
@@ -81,3 +83,4 @@ Toggle with `/agent` command.
 | `~/.null/mcp.json` | MCP server configs |
 | `~/.null/themes/` | Custom themes |
 | `~/.null/prompts/` | Custom system prompts |
+| `~/.null/todos.json` | Task list |

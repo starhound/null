@@ -10,6 +10,8 @@ All commands are prefixed with `/` and executed from the input prompt.
 | `/status` | Display session status (provider, model, tokens, cost) |
 | `/clear` | Clear history and context |
 | `/quit` or `/exit` | Exit the application |
+| `/git` | Show git status |
+| `/reload` | Reload configuration and themes |
 
 ## AI Commands
 
@@ -24,12 +26,13 @@ All commands are prefixed with `/` and executed from the input prompt.
 | `/provider <name>` | Switch to specific provider |
 | `/providers` | Open providers management screen |
 | `/compact` | Summarize conversation to reduce tokens |
+| `/context` | Inspect current AI context messages |
 
 ## Prompt/Persona Commands
 
 | Command | Description |
 |---------|-------------|
-| `/prompts` | Open prompt selector |
+| `/prompts` | Open prompt editor |
 | `/prompts list` | List available prompts |
 | `/prompts show <key>` | Show prompt content |
 | `/prompts dir` | Show prompts directory path |
@@ -71,7 +74,18 @@ Add custom prompts in `~/.null/prompts/` as `.txt` or `.md` files.
 | `/mcp enable <name>` | Enable MCP server |
 | `/mcp disable <name>` | Disable MCP server |
 | `/mcp reconnect [name]` | Reconnect to server(s) |
-| `/tools-ui` | Open MCP tools browser |
+| `/tools` | Browse available MCP tools |
+| `/tools-ui` | (Deprecated) Same as `/tools` |
+
+## Task Management
+
+| Command | Description |
+|---------|-------------|
+| `/todo` | Open task dashboard |
+| `/todo add <task>` | Add a new task |
+| `/todo list` | List tasks in chat |
+| `/todo done <id>` | Mark task as done |
+| `/todo del <id>` | Delete task |
 
 ## Configuration Commands
 

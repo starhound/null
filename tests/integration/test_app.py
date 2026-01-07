@@ -29,11 +29,11 @@ class TestAppInitialization:
         pilot, app = running_app
 
         # Core widgets should exist
-        assert app.query_one("#app-header", AppHeader)
-        assert app.query_one("#history", HistoryViewport)
-        assert app.query_one("#input", InputController)
-        assert app.query_one("#status-bar", StatusBar)
-        assert app.query_one(Footer)
+        assert app.query_one("#app-header", AppHeader) is not None
+        assert app.query_one("#history", HistoryViewport) is not None
+        assert app.query_one("#input", InputController) is not None
+        assert app.query_one("#status-bar", StatusBar) is not None
+        assert app.query_one(Footer) is not None
 
     @pytest.mark.asyncio
     async def test_app_has_optional_widgets(self, running_app):

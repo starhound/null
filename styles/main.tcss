@@ -3113,3 +3113,142 @@ FrameSeparator {
 FrameSeparator.agent {
     background: $accent 30%;
 }
+
+/* ==========================================================================
+   Prompt Editor Screen
+   ========================================================================== */
+
+PromptEditorScreen {
+    align: center middle;
+    /* Use transparent background to inherit overlay dimming if desired, 
+       but here we set a specific void background */
+    background: $layer-void 90%;
+}
+
+PromptEditorScreen #editor-container {
+    width: 90%;
+    height: 90%;
+    background: $layer-base;
+    border: double $secondary $border-normal;
+    layout: horizontal;
+}
+
+/* Sidebar */
+PromptEditorScreen #sidebar {
+    width: 30%;
+    height: 100%;
+    border-right: solid $secondary $border-dim;
+    layout: vertical;
+}
+
+PromptEditorScreen #sidebar-title {
+    text-style: bold;
+    color: $secondary;
+    padding: 1;
+    text-align: center;
+    background: $layer-raised 30%;
+}
+
+PromptEditorScreen ListView {
+    height: 1fr;
+    background: $layer-raised 10%;
+}
+
+PromptEditorScreen PromptListItem {
+    padding: 1 2;
+    color: $text-muted;
+}
+
+PromptEditorScreen PromptListItem:hover {
+    background: $layer-raised 30%;
+    color: $text-bright;
+}
+
+PromptEditorScreen PromptListItem.--highlight {
+    background: $secondary 20%;
+    color: $text-bright;
+    text-style: bold;
+}
+
+PromptEditorScreen #sidebar-buttons {
+    height: auto;
+    padding: 1;
+    layout: horizontal;
+    align: center middle;
+    background: $layer-raised 20%;
+}
+
+PromptEditorScreen Button {
+    min-width: 8;
+    margin: 0 1;
+    border: none;
+}
+
+PromptEditorScreen #new-btn {
+    background: $success 20%;
+    color: $success;
+}
+PromptEditorScreen #new-btn:hover {
+    background: $success;
+    color: $layer-void;
+}
+
+/* Main Content */
+PromptEditorScreen #main-content {
+    width: 70%;
+    height: 100%;
+    layout: vertical;
+    padding: 1 2;
+}
+
+PromptEditorScreen .field-label {
+    color: $secondary;
+    text-style: bold;
+    margin-top: 1;
+}
+
+PromptEditorScreen Input {
+    background: $layer-raised 10%;
+    border: none;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+PromptEditorScreen TextArea {
+    height: 1fr;
+    background: $layer-raised 10%;
+    border: solid $secondary $border-dim;
+    margin-top: 1;
+}
+
+PromptEditorScreen TextArea:focus {
+    border: solid $secondary $border-normal;
+}
+
+PromptEditorScreen #footer-buttons {
+    height: 3;
+    margin-top: 1;
+    layout: horizontal;
+    align: right middle;
+}
+
+PromptEditorScreen #save-btn {
+    background: $success;
+    color: $layer-void;
+    margin-left: 2;
+}
+
+PromptEditorScreen #delete-btn {
+    background: $error;
+    color: $text-bright;
+    margin-right: 1; 
+}
+
+PromptEditorScreen .spacer {
+    width: 1fr;
+}
+
+PromptEditorScreen #close-btn {
+    background: $layer-raised;
+    color: $text-muted;
+}

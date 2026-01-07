@@ -14,6 +14,10 @@ from .config import ConfigCommands
 from .core import CoreCommands
 from .mcp import MCPCommands
 from .session import SessionCommands
+from .todo import TodoCommands
+
+if TYPE_CHECKING:
+    from app import NullApp
 
 
 @dataclass
@@ -38,6 +42,7 @@ class SlashCommandHandler:
         self._session = SessionCommands(app)
         self._mcp = MCPCommands(app)
         self._config = ConfigCommands(app)
+        self._todo = TodoCommands(app)
 
         # Build command routing table with descriptions
         self._command_registry: dict[str, tuple[Callable, CommandInfo]] = {
@@ -190,6 +195,10 @@ class SlashCommandHandler:
             "tools": (
                 self._mcp.cmd_tools_ui,
                 CommandInfo("tools", "Browse available MCP tools"),
+            ),
+            "todo": (
+                self._todo.cmd_todo,
+                CommandInfo("todo", "Manage tasks (add/list/done/del)"),
             ),
             # Config commands
             "config": (self._config.cmd_config, CommandInfo("config", "Open settings")),
