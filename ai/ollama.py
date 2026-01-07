@@ -139,6 +139,20 @@ class OllamaProvider(LLMProvider):
                 text=f"Error: Could not connect to Ollama. {e!s}", is_complete=True
             )
 
+    async def embed_text(self, text: str) -> list[float] | None:
+        """Get vector embedding for text using Ollama /api/embeddings."""
+        url = f"{self.endpoint}/api/embeddings"
+        payload = {"model": self.model, "prompt": text}
+
+        try:
+            response = await self.client.post(url, json=payload)
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("embedding")
+        except Exception:
+            pass
+        return None
+
     async def list_models(self) -> list[str]:
         url = f"{self.endpoint}/api/tags"
         try:

@@ -67,6 +67,7 @@ class CommandSuggester(Static):
         """Apply the current selection to the input."""
         try:
             from widgets.input import InputController
+
             input_ctrl = cast(InputController, self.app.query_one("#input"))
             complete = self.get_selected()
             if complete:
@@ -82,66 +83,22 @@ class CommandSuggester(Static):
 
     @property
     def commands_data(self):
-        """Command definitions with dynamic provider list."""
-        from ai.factory import AIFactory
+        """Command definitions dynamic from handler."""
+        # Try to get commands from app handler first
+        try:
+            handler = getattr(self.app, "command_handler", None)
+            if handler:
+                data = {}
+                for cmd in handler.get_all_commands():
+                    # Extract subcommands names for args
+                    args = [sub[0].split()[0] for sub in cmd.subcommands]
+                    data[f"/{cmd.name}"] = {"desc": cmd.description, "args": args}
+                return data
+        except Exception:
+            pass
 
-        providers = AIFactory.list_providers()
-
-        return {
-            "/help": {"desc": "Show help screen", "args": []},
-            "/config": {"desc": "Open settings", "args": []},
-            "/settings": {"desc": "Open settings", "args": []},
-            "/provider": {"desc": "Select AI provider", "args": providers},
-            "/providers": {"desc": "Manage all AI providers", "args": []},
-            "/model": {"desc": "Select AI model", "args": []},
-            "/theme": {
-                "desc": "Change UI theme",
-                "args": [
-                    "null-dark",
-                    "null-warm",
-                    "null-mono",
-                    "null-light",
-                    "dracula",
-                    "nord",
-                    "monokai",
-                ],
-            },
-            "/ai": {"desc": "Toggle AI Mode", "args": []},
-            "/chat": {"desc": "Toggle AI Mode", "args": []},
-            "/agent": {"desc": "Toggle agent mode", "args": []},
-            "/prompts": {
-                "desc": "Manage system prompts",
-                "args": ["list", "reload", "show", "dir"],
-            },
-            "/export": {"desc": "Export conversation", "args": ["md", "json"]},
-            "/session": {
-                "desc": "Manage sessions",
-                "args": ["save", "load", "list", "new"],
-            },
-            "/mcp": {
-                "desc": "Manage MCP servers",
-                "args": [
-                    "list",
-                    "tools",
-                    "add",
-                    "edit",
-                    "remove",
-                    "enable",
-                    "disable",
-                    "reconnect",
-                ],
-            },
-            "/tools": {"desc": "Browse available MCP tools", "args": []},
-            "/status": {"desc": "Show current status", "args": []},
-            "/clear": {"desc": "Clear history", "args": []},
-            "/compact": {"desc": "Summarize context", "args": []},
-            "/ssh": {"desc": "Connect to SSH host", "args": []},
-            "/ssh-add": {"desc": "Add new SSH host", "args": []},
-            "/ssh-list": {"desc": "List SSH hosts", "args": []},
-            "/ssh-del": {"desc": "Delete SSH host", "args": []},
-            "/nullify": {"desc": "Open Null Terminal profile", "args": ["window"]},
-            "/quit": {"desc": "Exit application", "args": []},
-        }
+        # Fallback if handler not ready (shouldn't happen in runtime)
+        return {}
 
     def compose(self) -> ComposeResult:
         lv = ListView(id="suggestions")

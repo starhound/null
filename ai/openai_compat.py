@@ -186,6 +186,40 @@ class OpenAICompatibleProvider(LLMProvider):
         except Exception as e:
             yield StreamChunk(text=f"Error: {e!s}", is_complete=True)
 
+    async def embed_text(self, text: str) -> list[float] | None:
+        """Get vector embedding for text using OpenAI compatible API."""
+        try:
+            # We assume "text-embedding-3-small" or fallback to model default if specific embedding model not set
+            # But usually we need a dedicated embedding model.
+            # For now, let's try using the current model or a standard one.
+            # Ideally config should specify embedding model.
+            # Let's default to text-embedding-3-small if available, or just fail if user hasn't configured one.
+            # Actually, `client.embeddings.create` requires a model.
+            model = "text-embedding-3-small"
+
+            # If using local provider (like LM Studio), they might need a specific model loaded.
+            # We'll use self.model if it looks like an embedding model, otherwise default.
+            if "embed" in self.model:
+                model = self.model
+
+            response = await self.client.embeddings.create(input=text, model=model)
+            return response.data[0].embedding
+        except Exception:
+            return None
+
+    async def embed_text(self, text: str) -> list[float] | None:
+        """Get vector embedding for text using OpenAI compatible API."""
+        try:
+            # Default to standard OpenAI embedding model unless current model name implies embedding capability
+            model = "text-embedding-3-small"
+            if "embed" in self.model:
+                model = self.model
+
+            response = await self.client.embeddings.create(input=text, model=model)
+            return response.data[0].embedding
+        except Exception:
+            return None
+
     async def list_models(self) -> list[str]:
         try:
             models_response = await self.client.models.list()

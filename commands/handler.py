@@ -13,6 +13,7 @@ from .ai import AICommands
 from .config import ConfigCommands
 from .core import CoreCommands
 from .mcp import MCPCommands
+from .rag import RAGCommands
 from .session import SessionCommands
 from .todo import TodoCommands
 
@@ -39,6 +40,7 @@ class SlashCommandHandler:
         # Initialize command modules
         self._core = CoreCommands(app)
         self._ai = AICommands(app)
+        self._rag = RAGCommands(app)
         self._session = SessionCommands(app)
         self._mcp = MCPCommands(app)
         self._config = ConfigCommands(app)
@@ -146,6 +148,20 @@ class SlashCommandHandler:
             "context": (
                 self._ai.cmd_context,
                 CommandInfo("context", "Inspect context messages"),
+            ),
+            # RAG commands
+            "index": (
+                self._rag.cmd_index,
+                CommandInfo(
+                    "index",
+                    "Manage knowledge base (build/status/search)",
+                    subcommands=[
+                        ("status", "Show index statistics"),
+                        ("build [path]", "Index a directory"),
+                        ("search <query>", "Search the index"),
+                        ("clear", "Clear the index"),
+                    ],
+                ),
             ),
             # Session commands
             "session": (

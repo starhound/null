@@ -43,6 +43,16 @@ class CLIExecutor:
         def update_callback(line: str):
             block.content_output += line
             widget.update_output()
+            # Ensure history scrolls when new content arrives
+            if hasattr(self.app, "query_one"):
+                try:
+                    from widgets.history import HistoryViewport
+
+                    history = self.app.query_one(HistoryViewport)
+                    if history._auto_scroll:
+                        history.scroll_end(animate=False)
+                except Exception:
+                    pass
 
         buffer = UIBuffer(self.app, update_callback)
 

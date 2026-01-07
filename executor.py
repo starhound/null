@@ -186,7 +186,7 @@ class ExecutionEngine:
             if ready_event:
                 ready_event.set()
 
-            # Make master non-blocking for async reading
+            # Make master non-blocking
             flags = fcntl.fcntl(master_fd, fcntl.F_GETFL)
             fcntl.fcntl(master_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
@@ -198,106 +198,103 @@ class ExecutionEngine:
                 if self._cancelled:
                     break
 
-                try:
-                    # Run select in executor to avoid blocking the event loop
-                    readable = await loop.run_in_executor(
-                        None, lambda: select.select([master_fd], [], [], 0.05)[0]
-                    )
-
-                    if not readable:
-                        # No data available, check if process exited
-                        try:
-                            result = await loop.run_in_executor(
-                                None, _waitpid_nohang, pid
-                            )
-                            if result[0] != 0:
-                                break
-                        except ChildProcessError:
-                            break
-                        continue
-
-                    # Read available data
+                # Optimistic read loop - drain the buffer before yielding
+                # This significantly improves throughput for large outputs (cat, ls -R)
+                data_read = False
+                while True:
                     try:
-                        data = os.read(master_fd, 4096)
-                    except BlockingIOError:
-                        await asyncio.sleep(0.01)
-                        continue
-                    except OSError as e:
-                        if e.errno == 5:  # EIO - PTY closed
+                        # Non-blocking read attempt
+                        chunk = os.read(master_fd, 65536)  # Read up to 64KB
+                        if not chunk:
+                            # EOF detected during read loop
+                            data = b""
                             break
-                        await asyncio.sleep(0.01)
-                        continue
 
-                    if not data:
-                        # EOF
-                        break
+                        data_read = True
 
-                    # Check for TUI mode changes using rolling buffer
-                    # Combine buffer with new data
-                    check_data = self._detection_buffer + data
-                    mode_change = self._detect_screen_mode(check_data)
+                        # --- Processing Logic (Inline for speed) ---
+                        # Check for TUI mode changes
+                        check_data = self._detection_buffer + chunk
+                        mode_change = self._detect_screen_mode(check_data)
 
-                    # Keep last 50 bytes for next check (enough for ANSI sequences)
-                    if len(check_data) > 50:
-                        self._detection_buffer = check_data[-50:]
-                    else:
-                        self._detection_buffer = check_data
+                        if len(check_data) > 50:
+                            self._detection_buffer = check_data[-50:]
+                        else:
+                            self._detection_buffer = check_data
 
-                    if mode_change == "enter" and not self._in_tui_mode:
-                        self._in_tui_mode = True
-                        if mode_callback:
-                            mode_callback("enter", data)
-                        if raw_callback:
-                            raw_callback(data)
-                        buffer = b""
-                        continue
-                    elif mode_change == "exit" and self._in_tui_mode:
-                        self._in_tui_mode = False
-                        if mode_callback:
-                            mode_callback("exit", data)
-                        buffer = b""
-                        continue
-
-                    # In TUI mode, send raw bytes to raw_callback
-                    if self._in_tui_mode:
-                        if raw_callback:
-                            raw_callback(data)
-                        continue
-
-                    # Normal line-by-line processing
-                    buffer += data
-                    while b"\n" in buffer:
-                        line, buffer = buffer.split(b"\n", 1)
-                        # Use incremental decoder to handle multibyte chars
-                        decoded = self._decoder.decode(line.rstrip(b"\r")) + "\n"
-                        callback(decoded)
-                    # Output partial lines for:
-                    # - Progress indicators (contain \r)
-                    # - Interactive prompts (password:, continue?, etc.)
-                    if buffer:
-                        # Check for interactive prompt patterns
-                        lower_buf = buffer.lower()
-                        is_prompt = (
-                            b"\r" in buffer
-                            or b"password" in lower_buf
-                            or b"passphrase" in lower_buf
-                            or b"[y/n]" in lower_buf
-                            or b"(yes/no)" in lower_buf
-                            or b"continue?" in lower_buf
-                            or buffer.rstrip().endswith(b":")
-                            or buffer.rstrip().endswith(b"?")
-                        )
-                        if is_prompt:
-                            decoded = self._decoder.decode(buffer)
-                            callback(decoded)
+                        if mode_change == "enter" and not self._in_tui_mode:
+                            self._in_tui_mode = True
+                            if mode_callback:
+                                mode_callback("enter", chunk)
+                            if raw_callback:
+                                raw_callback(chunk)
                             buffer = b""
+                            continue
+                        elif mode_change == "exit" and self._in_tui_mode:
+                            self._in_tui_mode = False
+                            if mode_callback:
+                                mode_callback("exit", chunk)
+                            buffer = b""
+                            continue
 
-                except OSError as e:
-                    if e.errno == 5:  # EIO - PTY closed
+                        if self._in_tui_mode:
+                            if raw_callback:
+                                raw_callback(chunk)
+                            continue
+
+                        # Normal line buffering
+                        buffer += chunk
+                        while b"\n" in buffer:
+                            line, buffer = buffer.split(b"\n", 1)
+                            decoded = self._decoder.decode(line.rstrip(b"\r")) + "\n"
+                            callback(decoded)
+
+                        # Partial flush check happens after the burst
+
+                    except BlockingIOError:
+                        # No more data currently available
                         break
-                    await asyncio.sleep(0.01)
+                    except OSError:
+                        # PTY closed or error
+                        data = b""
+                        break
 
-            # Output any remaining buffer (finalize decoder)
+                # After draining the buffer, check if we need to flush partials
+                if data_read and buffer:
+                    # Partial flush logic for prompts
+                    lower_buf = buffer.lower()
+                    is_prompt = (
+                        b"\r" in buffer
+                        or b"password" in lower_buf
+                        or b"passphrase" in lower_buf
+                        or b"[y/n]" in lower_buf
+                        or b"(yes/no)" in lower_buf
+                        or b"continue?" in lower_buf
+                        or buffer.rstrip().endswith(b":")
+                        or buffer.rstrip().endswith(b"?")
+                    )
+                    if is_prompt:
+                        decoded = self._decoder.decode(buffer)
+                        callback(decoded)
+                        buffer = b""
+
+                # Now check for exit or sleep
+                if not data_read:
+                    # No data was read in this cycle, check if process died
+                    try:
+                        pid_result = os.waitpid(pid, os.WNOHANG)
+                        if pid_result[0] != 0:
+                            break
+                    except ChildProcessError:
+                        break
+
+                    # Wait for data availability (yield to loop)
+                    await asyncio.sleep(0.01)
+                else:
+                    # We read data, so we yield briefly to let UI update, then loop back immediately
+                    await asyncio.sleep(0)
+
+            # Output any remaining buffer
             if buffer:
                 callback(self._decoder.decode(buffer, final=True))
 

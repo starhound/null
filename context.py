@@ -81,6 +81,11 @@ class ContextManager:
                         {"role": "assistant", "content": block.content_output}
                     )
 
+            elif block.type == BlockType.SYSTEM_MSG:
+                # Include system messages (RAG results, tool output)
+                content = f"[{block.content_input}]\n{block.content_output}"
+                all_messages.append({"role": "user", "content": content})
+
         # Now trim from the beginning if we exceed the limit
         total_chars = sum(len(m["content"]) for m in all_messages)
 

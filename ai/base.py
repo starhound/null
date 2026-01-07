@@ -248,46 +248,16 @@ def get_model_context_size(model_name: str) -> int:
 class LLMProvider(ABC):
     model: str = ""
 
-    @abstractmethod
-    def generate(
-        self, prompt: str, messages: list[Message], system_prompt: str | None = None
-    ) -> AsyncGenerator[str, None]:
-        """Stream text response from the LLM (legacy interface).
+    async def embed_text(self, text: str) -> list[float] | None:
+        """Get vector embedding for text.
 
         Args:
-            prompt: Current user prompt
-            messages: Conversation history as message array
-            system_prompt: System prompt (always separate from messages)
+            text: Text to embed
+
+        Returns:
+            List of floats representing the vector, or None if not supported/failed
         """
-        ...
-
-    async def generate_with_tools(
-        self,
-        prompt: str,
-        messages: list[Message],
-        tools: list[dict[str, Any]],
-        system_prompt: str | None = None,
-    ) -> AsyncGenerator[StreamChunk, None]:
-        """Stream response with tool calling support.
-
-        Args:
-            prompt: Current user prompt
-            messages: Conversation history as message array
-            tools: Available tools in OpenAI format
-            system_prompt: System prompt (always separate from messages)
-
-        Yields:
-            StreamChunk with text and/or tool_calls
-        """
-        # Default implementation: fall back to regular generate (no tools)
-        gen = self.generate(prompt, messages, system_prompt)
-        async for text in gen:
-            yield StreamChunk(text=text)
-
-    @abstractmethod
-    async def list_models(self) -> list[str]:
-        """Return a list of available model names."""
-        pass
+        return None
 
     @abstractmethod
     async def validate_connection(self) -> bool:
@@ -307,3 +277,7 @@ class LLMProvider(ABC):
     def supports_tools(self) -> bool:
         """Check if this provider supports tool calling."""
         return False  # Override in subclasses that support tools
+
+    async def list_models(self) -> list[str]:
+        """List available models."""
+        return []
