@@ -6,6 +6,8 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
+from commands.todo import TodoManager
+
 
 @dataclass
 class BuiltinTool:
@@ -116,6 +118,48 @@ async def write_file(path: str, content: str) -> str:
 
     except Exception as e:
         return f"[Error writing file: {e!s}]"
+
+
+async def todo_list() -> str:
+    manager = TodoManager()
+    todos = manager.load()
+
+    if not todos:
+        return "No tasks found."
+
+    lines = []
+    for t in todos:
+        icon = (
+            "☐"
+            if t["status"] == "pending"
+            else ("🔄" if t["status"] == "in_progress" else "✅")
+        )
+        lines.append(f"{t['id']} {icon} [{t['status']}] {t['content']}")
+
+    return "\n".join(lines)
+
+
+async def todo_add(content: str) -> str:
+    manager = TodoManager()
+    item = manager.add(content)
+    return f"Added task {item['id']}: {item['content']}"
+
+
+async def todo_update(todo_id: str, status: str) -> str:
+    if status not in ("pending", "in_progress", "done"):
+        return f"Invalid status '{status}'. Must be: pending, in_progress, or done"
+
+    manager = TodoManager()
+    if manager.update_status(todo_id, status):
+        return f"Updated task {todo_id} to '{status}'"
+    return f"Task {todo_id} not found"
+
+
+async def todo_delete(todo_id: str) -> str:
+    manager = TodoManager()
+    if manager.delete(todo_id):
+        return f"Deleted task {todo_id}"
+    return f"Task {todo_id} not found"
 
 
 async def list_directory(path: str = ".", show_hidden: bool = False) -> str:
@@ -229,6 +273,70 @@ BUILTIN_TOOLS: list[BuiltinTool] = [
             "required": [],
         },
         handler=list_directory,
+        requires_approval=False,
+    ),
+    BuiltinTool(
+        name="todo_list",
+        description="List all tasks in the todo list with their IDs, status, and content.",
+        input_schema={
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+        handler=todo_list,
+        requires_approval=False,
+    ),
+    BuiltinTool(
+        name="todo_add",
+        description="Add a new task to the todo list.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "description": "The task description",
+                },
+            },
+            "required": ["content"],
+        },
+        handler=todo_add,
+        requires_approval=False,
+    ),
+    BuiltinTool(
+        name="todo_update",
+        description="Update the status of an existing task. Status can be: pending, in_progress, or done.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "todo_id": {
+                    "type": "string",
+                    "description": "The task ID (8 character string)",
+                },
+                "status": {
+                    "type": "string",
+                    "enum": ["pending", "in_progress", "done"],
+                    "description": "The new status for the task",
+                },
+            },
+            "required": ["todo_id", "status"],
+        },
+        handler=todo_update,
+        requires_approval=False,
+    ),
+    BuiltinTool(
+        name="todo_delete",
+        description="Delete a task from the todo list.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "todo_id": {
+                    "type": "string",
+                    "description": "The task ID to delete",
+                },
+            },
+            "required": ["todo_id"],
+        },
+        handler=todo_delete,
         requires_approval=False,
     ),
 ]

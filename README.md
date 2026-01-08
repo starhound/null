@@ -17,6 +17,7 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
 -   **Multi-Provider Support**: Seamlessly switch between Ollama, OpenAI, Anthropic, Bedrock, and more.
 -   **Local RAG / Knowledge Base**: Index your local codebase with `/index build` and chat with it using semantic search.
 -   **Autonomous Agents**: Toggle `/agent` mode to let the AI execute multi-step tasks, run shell commands, and edit files autonomously.
+-   **Local RLLM Training**: Train LLMs from scratch using the "Chat with Code" engine directly in the terminal.
 -   **Context Inspector**: View exactly what the AI sees with `/context`.
 
 ### 🛠️ Developer Workflow Tools
@@ -33,25 +34,23 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
 -   **Block-Based Interface**: Distinct visual blocks for Commands, AI Responses, and System messages.
 -   **Smart Autocomplete**: Context-aware suggestions for commands and arguments.
 -   **High-Performance PTY**: Low-latency execution for standard shell commands.
+-   **Cross-Platform Installer**: Native Windows installer (EXE) and standard pipx support for Linux/Mac.
 -   **Interactive TUI Mode**: Full support for running interactive applications like `vim`, `htop`, and `ssh` directly inside blocks.
 
 ## 🚀 Quick Start
 
 ### 1. Installation
 
-**Via pipx (Recommended):**
+See [**Installation Guide**](docs/user/installation.md) for detailed instructions for Windows, Linux, and Mac.
+
+**Via pipx (Linux/Mac):**
 ```bash
 pipx install null-terminal
 null
 ```
 
-**From Source:**
-```bash
-git clone https://github.com/starhound/null.git
-cd null
-uv sync
-uv run main.py
-```
+**Windows:**
+Download the latest installer from releases or run from source.
 
 ### 2. Configuration
 On first run, type `/settings` to configure your AI provider (e.g., Ollama URL or OpenAI API Key).
@@ -81,6 +80,9 @@ On first run, type `/settings` to configure your AI provider (e.g., Ollama URL o
 ## 📖 Documentation
 
 -   [**User Guide**](docs/user/README.md): Detailed usage instructions.
+-   [**Installation**](docs/user/installation.md): Setup for all platforms.
+-   [**SSH Guide**](docs/user/ssh.md): Managing remote connections.
+-   [**RLLM Training**](docs/user/training.md): Training models from scratch.
 -   [**Commands Reference**](docs/user/commands.md): List of all slash commands.
 -   [**Architecture**](docs/ARCHITECTURE.md): System design for contributors.
 

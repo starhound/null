@@ -113,6 +113,25 @@ pip install .
 
 This creates a `null` (or `null-terminal`) command in your environment:
 
-```bash
 null
 ```
+
+### Packaging for Windows
+
+We use **PyInstaller** to freeze the application and **Inno Setup** to create the installer.
+
+1.  **Install Requirements:**
+    ```bash
+    pip install pyinstaller
+    ```
+    *Note: You also need Inno Setup installed (iscc).*
+
+2.  **Build Executable:**
+    ```bash
+    pyinstaller null.spec
+    ```
+    This creates `dist/null.exe`.
+
+3.  **Create Installer:**
+    Compile the `installer/setup.iss` script (if available) or use the Inno Setup Compiler on the generated files.
+
