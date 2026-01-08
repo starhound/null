@@ -777,11 +777,10 @@ class NullApp(App):
             # In a full implementation, we'd clear history and re-mount blocks from branch
             self.blocks = list(self.branch_manager.branches[branch_name])
 
-            # Refresh view
             history_vp = self.query_one("#history", HistoryViewport)
             await history_vp.query(BaseBlockWidget).remove()
             for b in self.blocks:
-                await history_vp.mount(create_block(b))
+                await history_vp.add_block(create_block(b))
             history_vp.scroll_end()
 
         except Exception as e:
@@ -982,7 +981,7 @@ class NullApp(App):
         )
         history_vp = self.query_one("#history", HistoryViewport)
         block_widget = BlockWidget(block)
-        await history_vp.mount(block_widget)
+        await history_vp.add_block(block_widget)
         block_widget.scroll_visible()
 
     def _do_export(self, format: str = "md"):

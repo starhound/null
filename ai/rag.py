@@ -201,7 +201,6 @@ class RAGManager:
 
                 chunks = await asyncio.to_thread(self.chunker.split_text, content)
 
-                # Embedding
                 for i, chunk_text in enumerate(chunks):
                     vector = await provider.embed_text(chunk_text)
                     if vector:
@@ -216,7 +215,7 @@ class RAGManager:
                     else:
                         embedding_errors += 1
 
-                    await asyncio.sleep(0)
+                    await asyncio.sleep(0.001)
 
                 files_indexed += 1
 
@@ -242,9 +241,13 @@ class RAGManager:
             except Exception:
                 continue
 
-        # Save remaining chunks
         if chunks_to_add:
             await asyncio.to_thread(self.store.add, chunks_to_add)
+
+        if status_callback and embedding_errors > 0:
+            status_callback(
+                f"Warning: {embedding_errors} embedding failures - check provider supports embeddings"
+            )
 
         return files_indexed
 

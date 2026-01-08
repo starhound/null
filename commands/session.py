@@ -97,10 +97,9 @@ class SessionCommands(CommandMixin):
                     for block in self.app.blocks:
                         block.is_running = False
                         block_widget = create_block(block)
-                        await history.mount(block_widget)
+                        await history.add_block(block_widget)
 
-                    if hasattr(history, "scroll_end"):
-                        history.scroll_end(animate=False)
+                    history.scroll_end(animate=False)
                 except Exception:
                     pass
 

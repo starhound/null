@@ -25,6 +25,8 @@ class MCPCommands(CommandMixin):
 
         if subcommand == "list":
             await self._mcp_list()
+        elif subcommand == "catalog":
+            await self._mcp_catalog()
         elif subcommand == "tools":
             await self._mcp_tools()
         elif subcommand == "resources":
@@ -45,16 +47,16 @@ class MCPCommands(CommandMixin):
             await self._mcp_reconnect(args[1] if len(args) >= 2 else None)
         else:
             self.notify(
-                "Usage: /mcp [list|tools|add|edit|remove|enable|disable|reconnect]",
+                "Usage: /mcp [list|catalog|tools|add|edit|remove|enable|disable|reconnect]",
                 severity="warning",
             )
 
     async def _mcp_list(self):
-        """List MCP servers."""
         status = self.app.mcp_manager.get_status()
         if not status:
             self.notify(
-                "No MCP servers configured. Edit ~/.null/mcp.json", severity="warning"
+                "No MCP servers configured. Use /mcp catalog or /mcp add",
+                severity="warning",
             )
             return
 
@@ -68,6 +70,50 @@ class MCPCommands(CommandMixin):
             tools = info["tools"]
             lines.append(f"  {name:20} {state:12} {tools} tools")
         await self.show_output("/mcp list", "\n".join(lines))
+
+    async def _mcp_catalog(self):
+        from screens import MCPCatalogScreen
+
+        def on_catalog_result(result):
+            if not result:
+                return
+
+            action = result.get("action")
+
+            if action == "custom":
+                self.app.run_worker(self._mcp_add())
+            elif action == "install":
+                entry = result.get("entry")
+                if entry:
+                    self._install_from_catalog(entry)
+
+        self.app.push_screen(MCPCatalogScreen(), on_catalog_result)
+
+    def _install_from_catalog(self, entry):
+        from mcp.catalog import CatalogEntry
+        from screens import MCPServerConfigScreen
+
+        if not isinstance(entry, CatalogEntry):
+            return
+
+        prefilled = {
+            "command": entry.command,
+            "args": entry.args,
+            "env": {k: "" for k in entry.env_keys},
+        }
+
+        def on_config_result(result):
+            if result:
+                name = result["name"]
+                self.app.mcp_manager.add_server(
+                    name, result["command"], result["args"], result["env"]
+                )
+                self.notify(f"Added MCP server: {name}")
+                self.app.run_worker(self.app._connect_new_mcp_server(name))
+
+        self.app.push_screen(
+            MCPServerConfigScreen(entry.name, prefilled), on_config_result
+        )
 
     async def _mcp_tools(self):
         """List available MCP tools."""

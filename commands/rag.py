@@ -68,14 +68,24 @@ class RAGCommands(CommandMixin):
             self.notify("No AI provider connected", severity="error")
             return
 
-        self.notify(f"Indexing {path}...")
+        self.notify(f"Indexing {path} in background...")
 
-        count = await self.rag.index_directory(
-            path, provider, status_callback=lambda msg: self.app.notify(msg)
-        )
+        async def do_index():
+            count = await self.rag.index_directory(
+                path, provider, status_callback=lambda msg: self.app.notify(msg)
+            )
+            stats = self.rag.get_stats()
+            if stats["total_chunks"] == 0:
+                self.app.notify(
+                    "No content indexed - embeddings may have failed",
+                    severity="warning",
+                )
+            else:
+                self.app.notify(
+                    f"Indexed {count} files, {stats['total_chunks']} chunks."
+                )
 
-        self.notify(f"Indexed {count} files.")
-        await self._show_status()
+        self.app.run_worker(do_index())
 
     async def _search_index(self, query: str):
         provider = self.app.ai_provider

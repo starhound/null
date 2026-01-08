@@ -7,6 +7,7 @@ from .azure import AzureProvider
 from .base import LLMProvider
 from .bedrock import BedrockProvider
 from .cohere import CohereProvider
+from .google_ai import GoogleAIProvider
 from .google_vertex import GoogleVertexProvider
 from .ollama import OllamaProvider
 from .openai_compat import OpenAICompatibleProvider
@@ -36,9 +37,15 @@ class AIFactory:
             "requires_endpoint": False,
         },
         "google": {
-            "name": "Google AI",
-            "description": "Gemini 1.5, Gemini 2.0",
+            "name": "Google AI Studio",
+            "description": "Gemini via API key",
             "requires_api_key": True,
+            "requires_endpoint": False,
+        },
+        "google_vertex": {
+            "name": "Google Vertex AI",
+            "description": "Gemini via GCP project",
+            "requires_api_key": False,
             "requires_endpoint": False,
         },
         "azure": {
@@ -143,6 +150,36 @@ class AIFactory:
             "requires_api_key": True,
             "requires_endpoint": True,
         },
+        "cerebras": {
+            "name": "Cerebras",
+            "description": "Ultra-fast inference",
+            "requires_api_key": True,
+            "requires_endpoint": False,
+        },
+        "sambanova": {
+            "name": "SambaNova",
+            "description": "Fast inference (Llama, etc.)",
+            "requires_api_key": True,
+            "requires_endpoint": False,
+        },
+        "lepton": {
+            "name": "Lepton AI",
+            "description": "Serverless AI inference",
+            "requires_api_key": True,
+            "requires_endpoint": False,
+        },
+        "anyscale": {
+            "name": "Anyscale",
+            "description": "Scalable open models",
+            "requires_api_key": True,
+            "requires_endpoint": False,
+        },
+        "vllm": {
+            "name": "vLLM Server",
+            "description": "Local vLLM (OpenAI format)",
+            "requires_api_key": False,
+            "requires_endpoint": True,
+        },
     }
 
     @staticmethod
@@ -194,10 +231,15 @@ class AIFactory:
             )
 
         elif provider_name == "google":
+            return GoogleAIProvider(
+                api_key=config.get("api_key", ""),
+                model=get("model", "gemini-2.0-flash"),
+            )
+
+        elif provider_name == "google_vertex":
             return GoogleVertexProvider(
                 project_id=config.get("project_id", ""),
                 location=get("location", "us-central1"),
-                api_key=config.get("api_key", ""),
                 model=get("model", "gemini-2.0-flash"),
             )
 
@@ -306,7 +348,6 @@ class AIFactory:
 
         elif provider_name == "llama_cpp":
             endpoint = get("endpoint", "http://localhost:8000/v1")
-            # Ensure /v1 suffix for OpenAI-compatible API
             if endpoint and not endpoint.rstrip("/").endswith("/v1"):
                 endpoint = endpoint.rstrip("/") + "/v1"
             return OpenAICompatibleProvider(
@@ -315,9 +356,44 @@ class AIFactory:
                 model=get("model", "default"),
             )
 
-        # =====================================================================
-        # Native SDK Providers
-        # =====================================================================
+        elif provider_name == "cerebras":
+            return OpenAICompatibleProvider(
+                api_key=config.get("api_key", ""),
+                base_url="https://api.cerebras.ai/v1",
+                model=get("model", "llama-3.3-70b"),
+            )
+
+        elif provider_name == "sambanova":
+            return OpenAICompatibleProvider(
+                api_key=config.get("api_key", ""),
+                base_url="https://api.sambanova.ai/v1",
+                model=get("model", "Meta-Llama-3.3-70B-Instruct"),
+            )
+
+        elif provider_name == "lepton":
+            return OpenAICompatibleProvider(
+                api_key=config.get("api_key", ""),
+                base_url="https://llama3-1-405b.lepton.run/api/v1",
+                model=get("model", "llama3-1-405b"),
+            )
+
+        elif provider_name == "anyscale":
+            return OpenAICompatibleProvider(
+                api_key=config.get("api_key", ""),
+                base_url="https://api.endpoints.anyscale.com/v1",
+                model=get("model", "meta-llama/Meta-Llama-3.1-70B-Instruct"),
+            )
+
+        elif provider_name == "vllm":
+            endpoint = get("endpoint", "http://localhost:8000/v1")
+            if endpoint and not endpoint.rstrip("/").endswith("/v1"):
+                endpoint = endpoint.rstrip("/") + "/v1"
+            return OpenAICompatibleProvider(
+                api_key="token-not-needed",
+                base_url=endpoint,
+                model=get("model", "default"),
+            )
+
         elif provider_name == "cohere":
             return CohereProvider(
                 api_key=config.get("api_key", ""), model=get("model", "command-r-plus")

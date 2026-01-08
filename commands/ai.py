@@ -534,11 +534,11 @@ Be brief but preserve essential context. Output only the summary."""
             self.app.blocks.append(summary_block)
 
             try:
-                from widgets import BlockWidget
+                from widgets import BlockWidget, HistoryViewport
 
                 block_widget = BlockWidget(summary_block)
-                history = self.app.query_one("#history")
-                await history.mount(block_widget)
+                history = self.app.query_one("#history", HistoryViewport)
+                await history.add_block(block_widget)
             except Exception:
                 pass
 

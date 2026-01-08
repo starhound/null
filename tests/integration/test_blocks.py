@@ -121,7 +121,7 @@ class TestSystemMessages:
         block.is_running = False
         app.blocks.append(block)
         widget = BlockWidget(block)
-        await history.mount(widget)
+        await history.add_block(widget)
         await pilot.pause()
 
         # Block should be in history
@@ -171,7 +171,7 @@ class TestBlockDisplay:
         app.blocks.append(block)
 
         widget = BlockWidget(block)
-        await history.mount(widget)
+        await history.add_block(widget)
         await pilot.pause()
 
         # Widget should be mounted
@@ -191,7 +191,7 @@ class TestBlockDisplay:
         app.blocks.append(block)
 
         widget = CommandBlock(block)
-        await history.mount(widget)
+        await history.add_block(widget)
         await pilot.pause()
 
         # Block should be in running state

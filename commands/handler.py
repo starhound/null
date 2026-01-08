@@ -216,7 +216,8 @@ class SlashCommandHandler:
                     "Manage MCP servers",
                     subcommands=[
                         ("list", "List configured MCP servers"),
-                        ("add", "Add a new MCP server"),
+                        ("catalog", "Browse MCP server catalog"),
+                        ("add", "Add a new MCP server manually"),
                         ("edit <name>", "Edit an MCP server config"),
                         ("remove <name>", "Remove an MCP server"),
                         ("enable <name>", "Enable an MCP server"),

@@ -6,6 +6,7 @@ from .context import ContextScreen
 from .disclaimer import DisclaimerScreen
 from .help import HelpScreen
 from .mcp import MCPServerConfigScreen
+from .mcp_catalog import MCPCatalogScreen
 from .provider import ProviderConfigScreen
 from .providers import ProvidersScreen
 from .save_dialog import SaveFileDialog
@@ -19,6 +20,7 @@ __all__ = [
     "ContextScreen",
     "DisclaimerScreen",
     "HelpScreen",
+    "MCPCatalogScreen",
     "MCPServerConfigScreen",
     "ModelListScreen",
     "ProviderConfigScreen",

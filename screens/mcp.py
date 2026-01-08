@@ -8,9 +8,53 @@ from .base import Binding, Button, ComposeResult, Container, Input, Label, Modal
 
 
 class MCPServerConfigScreen(ModalScreen):
-    """Screen to add/edit an MCP server configuration."""
-
     BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "dismiss", "Close")]
+
+    DEFAULT_CSS = """
+    MCPServerConfigScreen {
+        align: center middle;
+    }
+    
+    #mcp-config-container {
+        width: 70;
+        height: auto;
+        max-height: 80%;
+        background: $surface;
+        border: tall $primary;
+        padding: 1 2;
+    }
+    
+    #mcp-config-container > Label:first-child {
+        text-style: bold;
+        width: 100%;
+        content-align: center middle;
+        margin-bottom: 1;
+    }
+    
+    .input-label {
+        margin-top: 1;
+        text-style: bold;
+    }
+    
+    .input-hint {
+        color: $text-muted;
+        text-style: italic;
+    }
+    
+    #mcp-config-container Input {
+        margin-bottom: 0;
+    }
+    
+    #buttons {
+        margin-top: 2;
+        height: auto;
+        align: center middle;
+    }
+    
+    #buttons Button {
+        margin: 0 1;
+    }
+    """
 
     def __init__(self, name: str = "", current_config: dict | None = None):
         super().__init__()
@@ -119,5 +163,5 @@ class MCPServerConfigScreen(ModalScreen):
         else:
             self.dismiss(None)
 
-    async def action_dismiss(self, result: object = None) -> None:
+    def action_dismiss(self) -> None:
         self.dismiss(None)
