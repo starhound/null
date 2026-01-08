@@ -36,12 +36,20 @@ class Config:
         agent_mode_str = sm.get_config("ai.agent_mode", "false")
         agent_mode = agent_mode_str.lower() in ("true", "1", "yes")
 
+        agent_max_iterations = int(sm.get_config("ai.agent_max_iterations", "10"))
+        agent_approval_mode = sm.get_config("ai.agent_approval_mode", "auto")
+        agent_thinking_visible_str = sm.get_config("ai.agent_thinking_visible", "true")
+        agent_thinking_visible = agent_thinking_visible_str.lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+
         return {
             "theme": sm.get_config("theme", DEFAULT_THEME),
             "shell": sm.get_config("shell", DEFAULT_SHELL),
             "ai": {
                 "provider": provider,
-                # Dynamic load based on active provider
                 "model": sm.get_config(f"ai.{provider}.model", DEFAULT_AI_MODEL),
                 "endpoint": sm.get_config(
                     f"ai.{provider}.endpoint", DEFAULT_AI_ENDPOINT
@@ -49,6 +57,9 @@ class Config:
                 "api_key": sm.get_config(f"ai.{provider}.api_key", ""),
                 "region": sm.get_config(f"ai.{provider}.region", ""),
                 "agent_mode": agent_mode,
+                "agent_max_iterations": agent_max_iterations,
+                "agent_approval_mode": agent_approval_mode,
+                "agent_thinking_visible": agent_thinking_visible,
                 "active_prompt": sm.get_config(
                     "ai.active_prompt", DEFAULT_AI_ACTIVE_PROMPT
                 ),

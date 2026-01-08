@@ -25,6 +25,13 @@ def temp_dir():
 
 
 @pytest.fixture
+def temp_workdir(temp_dir, monkeypatch):
+    """Create a temporary directory and change into it (for file operation tests)."""
+    monkeypatch.chdir(temp_dir)
+    return temp_dir
+
+
+@pytest.fixture
 def mock_home(temp_dir, monkeypatch):
     """Mock home directory to use temp directory."""
     null_dir = temp_dir / ".null"
@@ -53,6 +60,7 @@ def mock_storage(mock_home, monkeypatch):
 def mock_config(mock_storage):
     """Provide access to Config with mocked storage."""
     from config import Config
+
     return Config
 
 

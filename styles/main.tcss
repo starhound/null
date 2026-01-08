@@ -3402,3 +3402,26 @@ Sidebar Tab {
     padding: 0 1;
     min-width: 6;
 }
+
+AgentStatusWidget {
+    width: 100%;
+    height: auto;
+    padding: 1;
+}
+
+AgentStatusWidget Label {
+    width: 100%;
+    height: auto;
+    color: $text;
+    padding: 0;
+}
+
+AgentStatusWidget #agent-state-label {
+    text-style: bold;
+    color: $primary;
+}
+
+AgentStatusWidget #agent-recent-tools {
+    margin-top: 1;
+    color: $text-dim;
+}

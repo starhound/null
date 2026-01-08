@@ -340,8 +340,8 @@ class AIExecutor:
         system_prompt: str,
         max_tokens: int,
     ):
-        """Execute AI with structured think → tool → think flow."""
         from ai.thinking import get_thinking_strategy
+        from managers.agent import AgentState
 
         ai_provider = self.app.ai_provider
         assert ai_provider is not None, "AI provider must be set"
@@ -349,49 +349,63 @@ class AIExecutor:
         registry = self._get_tool_registry()
         tools = registry.get_all_tools_schema()
 
-        # Get thinking strategy for this provider/model
         provider_name = Config.get("ai.provider") or ""
         model_name = ai_provider.model
         strategy = get_thinking_strategy(provider_name, model_name)
 
-        # Enhance system prompt with thinking instructions if needed
         enhanced_prompt = system_prompt
         if strategy.requires_prompting:
             prompt_addition = strategy.get_prompt_addition()
             if prompt_addition:
                 enhanced_prompt = system_prompt + "\n\n" + prompt_addition
 
-        # Agent settings
         ai_config = self.app.config.get("ai", {})
         max_iterations = ai_config.get("agent_max_iterations", 10)
-        approval_mode = ai_config.get(
-            "agent_approval_mode", "auto"
-        )  # auto, per_tool, per_iteration
-        auto_approve_all = False  # Set to True when user chooses "Approve All"
+        approval_mode = ai_config.get("agent_approval_mode", "auto")
+        auto_approve_all = False
 
         full_response = ""
         current_messages: list[Message] = list(messages)
         iteration_num = 0
         total_usage: TokenUsage | None = None
         has_iteration_ui = isinstance(widget, AgentResponseBlock)
-        # Cast widget to AgentResponseBlock for type checker when has_iteration_ui is True
         agent_widget: AgentResponseBlock | None = None
         if has_iteration_ui:
             assert isinstance(widget, AgentResponseBlock)
             agent_widget = widget
 
+        agent_manager = self.app.agent_manager
+        task_preview = prompt[:100] + ("..." if len(prompt) > 100 else "")
+        agent_manager.start_session(task_preview)
+
         while iteration_num < max_iterations:
+            if agent_manager.should_cancel():
+                full_response += "\n\n[Cancelled by user]"
+                block_state.content_output = full_response
+                widget.update_output(full_response)
+                agent_manager.end_session(cancelled=True)
+                break
+
+            if agent_manager.should_pause():
+                agent_manager.update_state(AgentState.PAUSED)
+                while (
+                    agent_manager.should_pause() and not agent_manager.should_cancel()
+                ):
+                    await asyncio.sleep(0.1)
+                if agent_manager.should_cancel():
+                    continue
             iteration_num += 1
             pending_tool_calls: list[Any] = []
             raw_response = ""
             iteration_start = time.time()
 
-            # Create iteration state
+            agent_manager.record_iteration()
+            agent_manager.update_state(AgentState.THINKING)
+
             iteration = AgentIteration(
                 iteration_number=iteration_num, status="thinking"
             )
 
-            # Add iteration to UI if widget supports it
             if agent_widget is not None:
                 agent_widget.add_iteration(iteration)
 
@@ -463,9 +477,9 @@ class AIExecutor:
                         )
                 break
 
-            # Check if approval is needed
             if approval_mode != "auto" and not auto_approve_all:
                 iteration.status = "waiting_approval"
+                agent_manager.update_state(AgentState.WAITING_APPROVAL)
                 if agent_widget is not None:
                     agent_widget.update_iteration(
                         iteration.id, status="waiting_approval"
@@ -504,8 +518,8 @@ class AIExecutor:
 
                 # If "approve" or "approve-all", continue to execute
 
-            # Update iteration status to executing
             iteration.status = "executing"
+            agent_manager.update_state(AgentState.EXECUTING)
             if agent_widget is not None:
                 agent_widget.update_iteration(iteration.id, status="executing")
 
@@ -572,13 +586,19 @@ class AIExecutor:
             # Clear prompt for next iteration
             prompt = ""
 
-        # Check if we hit max iterations
         if iteration_num >= max_iterations:
             full_response += (
                 f"\n\n*Warning: Reached maximum iterations ({max_iterations})*"
             )
             block_state.content_output = full_response
             widget.update_output(full_response)
+
+        if total_usage:
+            agent_manager.record_tokens(
+                total_usage.input_tokens + total_usage.output_tokens
+            )
+
+        agent_manager.end_session(cancelled=self.app._ai_cancelled)
 
         self._finalize_response(
             block_state, widget, full_response, messages, max_tokens, total_usage
@@ -754,18 +774,23 @@ class AIExecutor:
                     continue
                 # If "approve" or "approve-all", proceed to execute
 
-            # Execute the tool
             result = await registry.execute_tool(tool_call)
             results.append(result)
 
             duration = time.time() - start_time
 
-            # Update tool state
             tool_state.status = "error" if result.is_error else "success"
             tool_state.output = result.content
             tool_state.duration = duration
 
-            # Update accordion if available
+            self.app.agent_manager.record_tool_call(
+                tool_name=tc.name,
+                args=tool_state.arguments,
+                result=result.content[:500],
+                success=not result.is_error,
+                duration=duration,
+            )
+
             if ai_widget is not None:
                 content_preview = (
                     result.content[:1000]

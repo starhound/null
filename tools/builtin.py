@@ -4,9 +4,23 @@ import asyncio
 import os
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from commands.todo import TodoManager
+
+if TYPE_CHECKING:
+    from managers.agent import AgentManager
+
+_agent_manager: "AgentManager | None" = None
+
+
+def set_agent_manager(manager: "AgentManager") -> None:
+    global _agent_manager
+    _agent_manager = manager
+
+
+def get_agent_manager() -> "AgentManager | None":
+    return _agent_manager
 
 
 @dataclass
@@ -160,6 +174,82 @@ async def todo_delete(todo_id: str) -> str:
     if manager.delete(todo_id):
         return f"Deleted task {todo_id}"
     return f"Task {todo_id} not found"
+
+
+async def agent_status() -> str:
+    manager = get_agent_manager()
+    if not manager:
+        return "[Agent manager not initialized]"
+
+    status = manager.get_status()
+
+    if not status["active"]:
+        return f"Agent: idle\nTotal sessions: {status['history_count']}"
+
+    session = status["current_session"]
+    lines = [
+        f"Agent: {session['state']}",
+        f"Session: {session['id']}",
+        f"Task: {session['task']}",
+        f"Iterations: {session['iterations']}",
+        f"Tool calls: {session['tool_calls']}",
+        f"Duration: {session['duration']:.1f}s",
+    ]
+    if session["errors"]:
+        lines.append(f"Errors: {session['errors']}")
+
+    return "\n".join(lines)
+
+
+async def agent_history(limit: int = 5) -> str:
+    manager = get_agent_manager()
+    if not manager:
+        return "[Agent manager not initialized]"
+
+    sessions = manager.get_history(limit=limit)
+    if not sessions:
+        return "No session history available."
+
+    lines = ["Recent agent sessions:"]
+    for s in reversed(sessions):
+        status = "cancelled" if s.state.value == "cancelled" else "completed"
+        lines.append(
+            f"  {s.id} | {status} | {s.iterations} iters | "
+            f"{s.tool_calls} tools | {s.duration:.1f}s"
+        )
+
+    return "\n".join(lines)
+
+
+async def agent_stats() -> str:
+    manager = get_agent_manager()
+    if not manager:
+        return "[Agent manager not initialized]"
+
+    stats = manager.stats.to_dict()
+
+    if stats["total_sessions"] == 0:
+        return "No agent sessions recorded yet."
+
+    lines = [
+        f"Total sessions: {stats['total_sessions']}",
+        f"Total iterations: {stats['total_iterations']}",
+        f"Total tool calls: {stats['total_tool_calls']}",
+        f"Total tokens: {stats['total_tokens']}",
+        f"Total duration: {stats['total_duration']:.1f}s",
+        f"Errors: {stats['error_count']}",
+        f"Avg iterations/session: {stats['avg_iterations_per_session']:.1f}",
+        f"Avg tools/session: {stats['avg_tools_per_session']:.1f}",
+    ]
+
+    if stats["tool_usage"]:
+        lines.append("\nTool usage:")
+        for tool, count in sorted(
+            stats["tool_usage"].items(), key=lambda x: x[1], reverse=True
+        )[:5]:
+            lines.append(f"  {tool}: {count}")
+
+    return "\n".join(lines)
 
 
 async def list_directory(path: str = ".", show_hidden: bool = False) -> str:
@@ -337,6 +427,44 @@ BUILTIN_TOOLS: list[BuiltinTool] = [
             "required": ["todo_id"],
         },
         handler=todo_delete,
+        requires_approval=False,
+    ),
+    BuiltinTool(
+        name="agent_status",
+        description="Get the current agent status including state, session info, iterations, and tool calls.",
+        input_schema={
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+        handler=agent_status,
+        requires_approval=False,
+    ),
+    BuiltinTool(
+        name="agent_history",
+        description="Get recent agent session history with stats for each session.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "description": "Number of sessions to return (default: 5)",
+                },
+            },
+            "required": [],
+        },
+        handler=agent_history,
+        requires_approval=False,
+    ),
+    BuiltinTool(
+        name="agent_stats",
+        description="Get cumulative agent statistics across all sessions including tool usage breakdown.",
+        input_schema={
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+        handler=agent_stats,
         requires_approval=False,
     ),
 ]

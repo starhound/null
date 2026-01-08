@@ -177,8 +177,7 @@ class ExecutionEngine:
                 if slave_fd > 2:
                     os.close(slave_fd)
 
-                # Execute the command with interactive shell to load aliases
-                os.execvpe(shell, [shell, "-i", "-c", command], env)
+                os.execvpe(shell, [shell, "-c", command], env)
 
             # Parent process
             os.close(slave_fd)

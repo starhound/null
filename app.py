@@ -17,7 +17,7 @@ from ai.factory import AIFactory
 from ai.manager import AIManager
 from config import Config, get_settings
 from handlers import ExecutionHandler, InputHandler, SlashCommandHandler
-from managers import ProcessManager, BranchManager
+from managers import ProcessManager, BranchManager, AgentManager
 
 # from executor import ExecutionEngine  # Removed global import
 from mcp import MCPManager
@@ -92,6 +92,12 @@ class NullApp(App):
         # self.executor removed - executor is now per-process
         self.process_manager = ProcessManager()
         self.branch_manager = BranchManager()
+
+        # Agent Manager
+        self.agent_manager = AgentManager()
+        from tools.builtin import set_agent_manager
+
+        set_agent_manager(self.agent_manager)
 
         # CLI session tracking
         self.current_cli_block: BlockState | None = None

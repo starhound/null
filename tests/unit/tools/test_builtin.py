@@ -1,8 +1,4 @@
-"""Tests for tools/builtin.py - built-in tool definitions and handlers."""
-
 import os
-import tempfile
-from pathlib import Path
 
 import pytest
 
@@ -146,37 +142,35 @@ class TestRunCommandHandler:
         """Should handle invalid command gracefully."""
         result = await run_command("nonexistent_command_xyz123")
         # Should contain error or exit code
-        assert "Exit code:" in result or "Error" in result or "not found" in result.lower()
+        assert (
+            "Exit code:" in result or "Error" in result or "not found" in result.lower()
+        )
 
 
 class TestReadFileHandler:
-    """Tests for read_file async handler."""
-
     @pytest.mark.asyncio
-    async def test_read_existing_file(self, temp_dir):
-        """Should read contents of existing file."""
-        test_file = temp_dir / "test.txt"
+    async def test_read_existing_file(self, temp_workdir):
+        test_file = temp_workdir / "test.txt"
         test_file.write_text("Hello, World!")
 
         result = await read_file(str(test_file))
         assert result == "Hello, World!"
 
     @pytest.mark.asyncio
-    async def test_read_nonexistent_file(self):
-        """Should return error for non-existent file."""
-        result = await read_file("/nonexistent/path/file.txt")
+    async def test_read_nonexistent_file(self, temp_workdir):
+        result = await read_file(str(temp_workdir / "nonexistent.txt"))
         assert "not found" in result.lower()
 
     @pytest.mark.asyncio
-    async def test_read_directory_as_file(self, temp_dir):
-        """Should return error when trying to read directory."""
-        result = await read_file(str(temp_dir))
+    async def test_read_directory_as_file(self, temp_workdir):
+        subdir = temp_workdir / "subdir"
+        subdir.mkdir()
+        result = await read_file(str(subdir))
         assert "Not a file" in result
 
     @pytest.mark.asyncio
-    async def test_read_with_max_lines(self, temp_dir):
-        """Should respect max_lines parameter."""
-        test_file = temp_dir / "multiline.txt"
+    async def test_read_with_max_lines(self, temp_workdir):
+        test_file = temp_workdir / "multiline.txt"
         test_file.write_text("\n".join(f"Line {i}" for i in range(100)))
 
         result = await read_file(str(test_file), max_lines=5)
@@ -185,37 +179,26 @@ class TestReadFileHandler:
         assert "truncated" in result
 
     @pytest.mark.asyncio
-    async def test_read_expands_tilde(self):
-        """Should expand ~ in path."""
-        # Create test file in temp location that we can reference
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
-            f.write("test content")
-            temp_path = f.name
+    async def test_read_expands_tilde(self, temp_workdir):
+        test_file = temp_workdir / "tilde_test.txt"
+        test_file.write_text("test content")
 
-        try:
-            result = await read_file(temp_path)
-            assert result == "test content"
-        finally:
-            os.unlink(temp_path)
+        result = await read_file(str(test_file))
+        assert result == "test content"
 
     @pytest.mark.asyncio
-    async def test_read_relative_path(self, temp_dir, monkeypatch):
-        """Should handle relative paths."""
-        test_file = temp_dir / "relative_test.txt"
+    async def test_read_relative_path(self, temp_workdir):
+        test_file = temp_workdir / "relative_test.txt"
         test_file.write_text("relative content")
 
-        monkeypatch.chdir(temp_dir)
         result = await read_file("relative_test.txt")
         assert result == "relative content"
 
 
 class TestWriteFileHandler:
-    """Tests for write_file async handler."""
-
     @pytest.mark.asyncio
-    async def test_write_new_file(self, temp_dir):
-        """Should create and write to new file."""
-        test_path = temp_dir / "new_file.txt"
+    async def test_write_new_file(self, temp_workdir):
+        test_path = temp_workdir / "new_file.txt"
 
         result = await write_file(str(test_path), "Hello, World!")
 
@@ -224,9 +207,8 @@ class TestWriteFileHandler:
         assert test_path.read_text() == "Hello, World!"
 
     @pytest.mark.asyncio
-    async def test_write_overwrites_existing(self, temp_dir):
-        """Should overwrite existing file."""
-        test_path = temp_dir / "existing.txt"
+    async def test_write_overwrites_existing(self, temp_workdir):
+        test_path = temp_workdir / "existing.txt"
         test_path.write_text("old content")
 
         result = await write_file(str(test_path), "new content")
@@ -235,9 +217,8 @@ class TestWriteFileHandler:
         assert test_path.read_text() == "new content"
 
     @pytest.mark.asyncio
-    async def test_write_creates_parent_dirs(self, temp_dir):
-        """Should create parent directories if needed."""
-        test_path = temp_dir / "nested" / "dir" / "file.txt"
+    async def test_write_creates_parent_dirs(self, temp_workdir):
+        test_path = temp_workdir / "nested" / "dir" / "file.txt"
 
         result = await write_file(str(test_path), "nested content")
 
@@ -246,19 +227,17 @@ class TestWriteFileHandler:
         assert test_path.read_text() == "nested content"
 
     @pytest.mark.asyncio
-    async def test_write_reports_byte_count(self, temp_dir):
-        """Should report number of bytes written."""
-        test_path = temp_dir / "bytes_test.txt"
-        content = "12345"  # 5 bytes
+    async def test_write_reports_byte_count(self, temp_workdir):
+        test_path = temp_workdir / "bytes_test.txt"
+        content = "12345"
 
         result = await write_file(str(test_path), content)
 
         assert "5 bytes" in result
 
     @pytest.mark.asyncio
-    async def test_write_empty_content(self, temp_dir):
-        """Should handle empty content."""
-        test_path = temp_dir / "empty.txt"
+    async def test_write_empty_content(self, temp_workdir):
+        test_path = temp_workdir / "empty.txt"
 
         result = await write_file(str(test_path), "")
 
@@ -267,81 +246,70 @@ class TestWriteFileHandler:
 
 
 class TestListDirectoryHandler:
-    """Tests for list_directory async handler."""
-
     @pytest.mark.asyncio
-    async def test_list_directory(self, temp_dir):
-        """Should list directory contents."""
-        (temp_dir / "file1.txt").write_text("content")
-        (temp_dir / "file2.txt").write_text("content")
-        (temp_dir / "subdir").mkdir()
+    async def test_list_directory(self, temp_workdir):
+        (temp_workdir / "file1.txt").write_text("content")
+        (temp_workdir / "file2.txt").write_text("content")
+        (temp_workdir / "subdir").mkdir()
 
-        result = await list_directory(str(temp_dir))
+        result = await list_directory(str(temp_workdir))
 
         assert "file1.txt" in result
         assert "file2.txt" in result
         assert "subdir/" in result
 
     @pytest.mark.asyncio
-    async def test_list_hides_hidden_by_default(self, temp_dir):
-        """Should hide hidden files by default."""
-        (temp_dir / "visible.txt").write_text("content")
-        (temp_dir / ".hidden").write_text("hidden")
+    async def test_list_hides_hidden_by_default(self, temp_workdir):
+        (temp_workdir / "visible.txt").write_text("content")
+        (temp_workdir / ".hidden").write_text("hidden")
 
-        result = await list_directory(str(temp_dir))
+        result = await list_directory(str(temp_workdir))
 
         assert "visible.txt" in result
         assert ".hidden" not in result
 
     @pytest.mark.asyncio
-    async def test_list_shows_hidden_when_requested(self, temp_dir):
-        """Should show hidden files when show_hidden=True."""
-        (temp_dir / "visible.txt").write_text("content")
-        (temp_dir / ".hidden").write_text("hidden")
+    async def test_list_shows_hidden_when_requested(self, temp_workdir):
+        (temp_workdir / "visible.txt").write_text("content")
+        (temp_workdir / ".hidden").write_text("hidden")
 
-        result = await list_directory(str(temp_dir), show_hidden=True)
+        result = await list_directory(str(temp_workdir), show_hidden=True)
 
         assert "visible.txt" in result
         assert ".hidden" in result
 
     @pytest.mark.asyncio
-    async def test_list_nonexistent_directory(self):
-        """Should return error for non-existent directory."""
-        result = await list_directory("/nonexistent/path")
+    async def test_list_nonexistent_directory(self, temp_workdir):
+        result = await list_directory(str(temp_workdir / "nonexistent"))
         assert "not found" in result.lower()
 
     @pytest.mark.asyncio
-    async def test_list_file_as_directory(self, temp_dir):
-        """Should return error when path is a file."""
-        test_file = temp_dir / "file.txt"
+    async def test_list_file_as_directory(self, temp_workdir):
+        test_file = temp_workdir / "file.txt"
         test_file.write_text("content")
 
         result = await list_directory(str(test_file))
         assert "Not a directory" in result
 
     @pytest.mark.asyncio
-    async def test_list_empty_directory(self, temp_dir):
-        """Should indicate when directory is empty."""
-        empty_dir = temp_dir / "empty"
+    async def test_list_empty_directory(self, temp_workdir):
+        empty_dir = temp_workdir / "empty"
         empty_dir.mkdir()
 
         result = await list_directory(str(empty_dir))
         assert "empty" in result.lower()
 
     @pytest.mark.asyncio
-    async def test_list_shows_file_sizes(self, temp_dir):
-        """Should show file sizes in bytes."""
-        test_file = temp_dir / "sized.txt"
-        test_file.write_text("12345")  # 5 bytes
+    async def test_list_shows_file_sizes(self, temp_workdir):
+        test_file = temp_workdir / "sized.txt"
+        test_file.write_text("12345")
 
-        result = await list_directory(str(temp_dir))
+        result = await list_directory(str(temp_workdir))
         assert "5 bytes" in result
 
     @pytest.mark.asyncio
-    async def test_list_default_path(self, temp_dir, monkeypatch):
-        """Should use current directory by default."""
-        (temp_dir / "testfile.txt").write_text("content")
-        monkeypatch.chdir(temp_dir)
+    async def test_list_default_path(self, temp_workdir):
+        (temp_workdir / "testfile.txt").write_text("content")
 
         result = await list_directory()
         assert "testfile.txt" in result

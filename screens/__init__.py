@@ -1,8 +1,8 @@
-"""Screen modules for the Null terminal."""
-
+from .agent import AgentScreen
 from .approval import ToolApprovalScreen
 from .config import ConfigScreen
 from .confirm import ConfirmDialog
+from .context import ContextScreen
 from .disclaimer import DisclaimerScreen
 from .help import HelpScreen
 from .mcp import MCPServerConfigScreen
@@ -13,8 +13,10 @@ from .selection import ModelListScreen, SelectionListScreen, ThemeSelectionScree
 from .tools import ToolsScreen
 
 __all__ = [
+    "AgentScreen",
     "ConfigScreen",
     "ConfirmDialog",
+    "ContextScreen",
     "DisclaimerScreen",
     "HelpScreen",
     "MCPServerConfigScreen",

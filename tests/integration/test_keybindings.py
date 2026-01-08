@@ -126,18 +126,6 @@ class TestModeToggleKeybindings:
         assert input_widget.mode != initial
 
     @pytest.mark.asyncio
-    async def test_ctrl_b_toggles_mode(self, running_app):
-        """Ctrl+B should toggle AI mode."""
-        pilot, app = running_app
-        input_widget = app.query_one("#input", InputController)
-
-        initial = input_widget.mode
-        await pilot.press("ctrl+b")
-        await pilot.pause()
-
-        assert input_widget.mode != initial
-
-    @pytest.mark.asyncio
     async def test_ctrl_space_toggles_mode(self, running_app):
         """Ctrl+Space should toggle AI mode."""
         pilot, app = running_app

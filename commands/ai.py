@@ -202,26 +202,267 @@ class AICommands(CommandMixin):
         await self.show_output(f"/prompts show {key}", content)
 
     async def cmd_agent(self, args: list[str]):
-        """Toggle agent mode for autonomous tool execution."""
-        current_mode = self.app.config.get("ai", {}).get("agent_mode", False)
-        new_mode = not current_mode
+        """Agent mode control. Usage: /agent [status|history|stats|stop|pause|resume|clear]"""
+        if not args:
+            await self._agent_toggle()
+            return
 
-        Config.update_key(["ai", "agent_mode"], str(new_mode).lower())
+        subcommand = args[0].lower()
+
+        if subcommand == "status":
+            await self._agent_status()
+        elif subcommand == "history":
+            limit = int(args[1]) if len(args) > 1 else 10
+            await self._agent_history(limit)
+        elif subcommand == "stats":
+            await self._agent_stats()
+        elif subcommand == "stop":
+            self._agent_stop()
+        elif subcommand == "pause":
+            self._agent_pause()
+        elif subcommand == "resume":
+            self._agent_resume()
+        elif subcommand == "clear":
+            self._agent_clear()
+        elif subcommand == "tools":
+            await self._agent_tools()
+        elif subcommand in ("on", "enable"):
+            await self._agent_set_mode(True)
+        elif subcommand in ("off", "disable"):
+            await self._agent_set_mode(False)
+        elif subcommand == "inspect":
+            self._agent_inspect()
+        elif subcommand == "config":
+            await self._agent_config(args[1:] if len(args) > 1 else [])
+        else:
+            self.notify(
+                "Usage: /agent [status|history|stats|stop|pause|resume|clear|tools|inspect|config|on|off]",
+                severity="warning",
+            )
+
+    async def _agent_toggle(self):
+        current_mode = self.app.config.get("ai", {}).get("agent_mode", False)
+        await self._agent_set_mode(not current_mode)
+
+    async def _agent_set_mode(self, enabled: bool):
+        Config.update_key(["ai", "agent_mode"], str(enabled).lower())
         self.app.config = Config.load_all()
 
-        status = "enabled" if new_mode else "disabled"
+        status = "enabled" if enabled else "disabled"
         self.notify(f"Agent mode {status}")
 
-        if new_mode:
-            # Show helpful info about agent mode
+        if enabled:
             info = """Agent mode enabled. The AI will now:
 - Automatically execute tool calls without confirmation
 - Loop until task completion (max 10 iterations)
 - Show each tool execution as a separate block
 - Continue reasoning after receiving tool results
 
-Use /agent again to disable."""
+Use /agent off or /agent again to disable."""
             await self.show_output("Agent Mode", info)
+
+    async def _agent_status(self):
+        manager = self.app.agent_manager
+        status = manager.get_status()
+
+        lines = [
+            f"Agent Mode: {'enabled' if self.app.config.get('ai', {}).get('agent_mode', False) else 'disabled'}"
+        ]
+        lines.append(f"State: {status['state']}")
+
+        if status["active"] and status["current_session"]:
+            session = status["current_session"]
+            lines.extend(
+                [
+                    f"\nCurrent Session: {session['id']}",
+                    f"  Task: {session['task'][:60]}{'...' if len(session['task']) > 60 else ''}",
+                    f"  Iterations: {session['iterations']}",
+                    f"  Tool calls: {session['tool_calls']}",
+                    f"  Duration: {session['duration']:.1f}s",
+                ]
+            )
+            if session["errors"]:
+                lines.append(f"  Errors: {session['errors']}")
+        else:
+            lines.append("\nNo active session")
+
+        lines.append(f"\nHistory: {status['history_count']} sessions")
+
+        await self.show_output("/agent status", "\n".join(lines))
+
+    async def _agent_history(self, limit: int):
+        manager = self.app.agent_manager
+        sessions = manager.get_history(limit=limit)
+
+        if not sessions:
+            await self.show_output("/agent history", "No session history available.")
+            return
+
+        lines = [f"Last {len(sessions)} agent sessions:\n"]
+        for s in reversed(sessions):
+            state = "cancelled" if s.state.value == "cancelled" else "completed"
+            lines.append(
+                f"{s.id} | {state:10} | {s.iterations:2} iters | {s.tool_calls:2} tools | {s.duration:6.1f}s"
+            )
+            if s.current_task:
+                task_preview = s.current_task[:50] + (
+                    "..." if len(s.current_task) > 50 else ""
+                )
+                lines.append(f"       Task: {task_preview}")
+            if s.errors:
+                lines.append(f"       Errors: {len(s.errors)}")
+
+        await self.show_output("/agent history", "\n".join(lines))
+
+    async def _agent_stats(self):
+        manager = self.app.agent_manager
+        stats = manager.stats.to_dict()
+
+        if stats["total_sessions"] == 0:
+            await self.show_output("/agent stats", "No agent sessions recorded yet.")
+            return
+
+        lines = [
+            "Agent Statistics",
+            "=" * 30,
+            f"Total sessions:       {stats['total_sessions']}",
+            f"Total iterations:     {stats['total_iterations']}",
+            f"Total tool calls:     {stats['total_tool_calls']}",
+            f"Total tokens:         {stats['total_tokens']}",
+            f"Total duration:       {stats['total_duration']:.1f}s",
+            f"Errors:               {stats['error_count']}",
+            "",
+            f"Avg iters/session:    {stats['avg_iterations_per_session']:.1f}",
+            f"Avg tools/session:    {stats['avg_tools_per_session']:.1f}",
+        ]
+
+        if stats["tool_usage"]:
+            lines.extend(["", "Tool Usage:"])
+            for tool, count in sorted(
+                stats["tool_usage"].items(), key=lambda x: x[1], reverse=True
+            ):
+                lines.append(f"  {tool:20} {count}")
+
+        await self.show_output("/agent stats", "\n".join(lines))
+
+    def _agent_stop(self):
+        manager = self.app.agent_manager
+        if manager.is_active:
+            manager.request_cancel()
+            self.notify("Agent session cancelled")
+        else:
+            self.notify("No active agent session", severity="warning")
+
+    def _agent_pause(self):
+        manager = self.app.agent_manager
+        if manager.is_active:
+            manager.request_pause()
+            self.notify("Agent session paused")
+        else:
+            self.notify("No active agent session", severity="warning")
+
+    def _agent_resume(self):
+        manager = self.app.agent_manager
+        if manager.should_pause():
+            manager.resume()
+            self.notify("Agent session resumed")
+        else:
+            self.notify("Agent is not paused", severity="warning")
+
+    def _agent_clear(self):
+        manager = self.app.agent_manager
+        manager.clear_history()
+        manager.reset_stats()
+        self.notify("Agent history and stats cleared")
+
+    def _agent_inspect(self):
+        from screens import AgentScreen
+
+        self.app.push_screen(AgentScreen())
+
+    async def _agent_config(self, args: list[str]):
+        if not args:
+            ai_config = self.app.config.get("ai", {})
+            lines = [
+                "Agent Configuration:",
+                "=" * 30,
+                f"max_iterations:    {ai_config.get('agent_max_iterations', 10)}",
+                f"approval_mode:     {ai_config.get('agent_approval_mode', 'auto')}",
+                f"thinking_visible:  {ai_config.get('agent_thinking_visible', True)}",
+                "",
+                "Usage: /agent config <key> <value>",
+                "  max_iterations   1-50     Maximum tool iterations",
+                "  approval_mode    auto|per_tool|per_iteration",
+                "  thinking_visible true|false  Show thinking process",
+            ]
+            await self.show_output("/agent config", "\n".join(lines))
+            return
+
+        if len(args) < 2:
+            self.notify("Usage: /agent config <key> <value>", severity="warning")
+            return
+
+        key, value = args[0], args[1]
+
+        if key == "max_iterations":
+            try:
+                val = int(value)
+                if not 1 <= val <= 50:
+                    self.notify("max_iterations must be 1-50", severity="error")
+                    return
+                Config.set("ai.agent_max_iterations", str(val))
+                self.app.config = Config.load_all()
+                self.notify(f"max_iterations set to {val}")
+            except ValueError:
+                self.notify("max_iterations must be a number", severity="error")
+
+        elif key == "approval_mode":
+            if value not in ("auto", "per_tool", "per_iteration"):
+                self.notify(
+                    "approval_mode must be: auto, per_tool, or per_iteration",
+                    severity="error",
+                )
+                return
+            Config.set("ai.agent_approval_mode", value)
+            self.app.config = Config.load_all()
+            self.notify(f"approval_mode set to {value}")
+
+        elif key == "thinking_visible":
+            if value.lower() not in ("true", "false"):
+                self.notify("thinking_visible must be: true or false", severity="error")
+                return
+            Config.set("ai.agent_thinking_visible", value.lower())
+            self.app.config = Config.load_all()
+            self.notify(f"thinking_visible set to {value.lower()}")
+
+        else:
+            self.notify(f"Unknown config key: {key}", severity="error")
+
+    async def _agent_tools(self):
+        from tools.builtin import BUILTIN_TOOLS
+
+        lines = ["Available Agent Tools:", "=" * 30, ""]
+
+        for tool in BUILTIN_TOOLS:
+            approval = "[requires approval]" if tool.requires_approval else ""
+            lines.append(f"{tool.name:20} {approval}")
+            lines.append(f"  {tool.description[:70]}")
+            lines.append("")
+
+        mcp_tools = []
+        if self.app.mcp_manager:
+            for tool in self.app.mcp_manager.get_all_tools():
+                mcp_tools.append((tool.server_name, tool))
+
+        if mcp_tools:
+            lines.extend(["MCP Tools:", "=" * 30, ""])
+            for server, tool in mcp_tools:
+                lines.append(f"{tool.name:20} [{server}]")
+                if tool.description:
+                    lines.append(f"  {tool.description[:70]}")
+                lines.append("")
+
+        await self.show_output("/agent tools", "\n".join(lines))
 
     async def cmd_compact(self, args: list[str]):
         """Summarize context to reduce token usage."""

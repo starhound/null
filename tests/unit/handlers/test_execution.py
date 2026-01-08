@@ -1,7 +1,7 @@
 import pytest
-import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
 from handlers.execution import ExecutionHandler
+from handlers.ai_executor import AIExecutor
 from models import BlockState, BlockType
 from ai.base import StreamChunk, TokenUsage
 
@@ -21,6 +21,11 @@ def mock_app():
 @pytest.fixture
 def execution_handler(mock_app):
     return ExecutionHandler(mock_app)
+
+
+@pytest.fixture
+def ai_executor(mock_app):
+    return AIExecutor(mock_app)
 
 
 async def async_gen(items):
@@ -61,14 +66,12 @@ from ai.base import StreamChunk, TokenUsage, ToolCallData
 
 
 @pytest.mark.asyncio
-async def test_execute_ai_with_tools_approval(execution_handler, mock_app):
-    # Setup
+async def test_execute_ai_with_tools_approval(ai_executor, mock_app):
     mock_app.ai_provider.supports_tools.return_value = True
     prompt = "Run command"
     block_state = BlockState(type=BlockType.AI_RESPONSE, content_input=prompt)
     widget = MagicMock()
 
-    # Mock tool call data
     tool_call = ToolCallData(id="tc-1", name="run_command", arguments={"command": "ls"})
     chunk = StreamChunk(text="", tool_calls=[tool_call], is_complete=True)
 
@@ -77,21 +80,19 @@ async def test_execute_ai_with_tools_approval(execution_handler, mock_app):
         async_gen([StreamChunk(text="Done", is_complete=True)]),
     ]
 
-    # Mock tool registry and approval
     mock_registry = MagicMock()
     mock_registry.requires_approval.return_value = True
     mock_registry.execute_tool = AsyncMock(
         return_value=MagicMock(content="output", is_error=False, tool_call_id="tc-1")
     )
-    execution_handler._get_tool_registry = MagicMock(return_value=mock_registry)
+    mock_registry.get_all_tools_schema.return_value = []
+    ai_executor._get_tool_registry = MagicMock(return_value=mock_registry)
 
-    # Patch _request_tool_approval on the instance
     with patch.object(
-        execution_handler, "_request_tool_approval", new_callable=AsyncMock
+        ai_executor, "_request_tool_approval", new_callable=AsyncMock
     ) as mock_approval:
         mock_approval.return_value = "approve"
 
-        # Execute
         with (
             patch("config.Config.get", return_value="test-provider"),
             patch("prompts.get_prompt_manager") as mock_pm,
@@ -102,8 +103,7 @@ async def test_execute_ai_with_tools_approval(execution_handler, mock_app):
                 truncated=False, messages=[], estimated_tokens=10, message_count=0
             )
 
-            await execution_handler.execute_ai(prompt, block_state, widget)
+            await ai_executor.execute_ai(prompt, block_state, widget)
 
-        # Verify approval was requested
         mock_approval.assert_called()
         mock_registry.execute_tool.assert_called()
