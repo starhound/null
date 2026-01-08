@@ -34,6 +34,7 @@ from widgets import (
     HistorySearch,
     HistoryViewport,
     InputController,
+    Sidebar,
     StatusBar,
 )
 
@@ -120,9 +121,7 @@ class NullApp(App):
         yield CommandPalette(id="command-palette")
 
         with Horizontal(id="main-area"):
-            tree = DirectoryTree(".", id="file-tree")
-            tree.display = False
-            yield tree
+            yield Sidebar()
             yield HistoryViewport(id="history")
 
         # History search replaces input container when active
@@ -457,12 +456,13 @@ class NullApp(App):
 
     def action_toggle_file_tree(self):
         try:
-            tree = self.query_one("#file-tree", DirectoryTree)
-            tree.display = not tree.display
-            if tree.display:
-                tree.focus()
+            sidebar = self.query_one("Sidebar", Sidebar)
+            if sidebar.display and sidebar.current_view == "files":
+                sidebar.toggle_visibility()
             else:
-                self.query_one("#input", InputController).focus()
+                sidebar.set_view("files")
+                if not sidebar.display:
+                    sidebar.toggle_visibility()
         except Exception:
             pass
 

@@ -26,73 +26,6 @@ class TodoScreen(ModalScreen):
         Binding("enter", "add_task", "Add Task"),
     ]
 
-    CSS = """
-    TodoScreen {
-        align: center middle;
-        background: $layer-void 80%;
-    }
-
-    TodoScreen #todo-container {
-        width: 70%;
-        height: 80%;
-        background: $layer-base;
-        border: double $primary $border-normal;
-        layout: vertical;
-        padding: 1 2;
-    }
-
-    TodoScreen #title {
-        text-style: bold;
-        color: $primary;
-        text-align: center;
-        padding-bottom: 1;
-        border-bottom: solid $primary 20%;
-    }
-
-    TodoScreen DataTable {
-        height: 1fr;
-        background: $layer-raised 10%;
-        margin-bottom: 1;
-    }
-    
-    TodoScreen DataTable > .datatable--header {
-        background: $layer-raised 30%;
-        color: $primary;
-        text-style: bold;
-    }
-
-    TodoScreen DataTable > .datatable--cursor {
-        background: $primary 30%;
-        color: $text-bright;
-    }
-
-    TodoScreen #input-area {
-        height: auto;
-        layout: horizontal;
-        align: center middle;
-        margin-top: 1;
-    }
-
-    TodoScreen Input {
-        width: 1fr;
-        margin-right: 1;
-    }
-
-    TodoScreen Button {
-        min-width: 8;
-    }
-
-    TodoScreen #add-btn {
-        background: $success;
-        color: $layer-void;
-    }
-
-    TodoScreen #close-btn {
-        background: $layer-raised;
-        margin-left: 1;
-    }
-    """
-
     def __init__(self):
         super().__init__()
         self.manager = TodoManager()
@@ -130,6 +63,13 @@ class TodoScreen(ModalScreen):
             created = t["created_at"][:16].replace("T", " ")
             table.add_row(t["id"], status_icon, t["content"], created, key=t["id"])
 
+    def _refresh_sidebar(self):
+        """Notify sidebar to refresh todo list."""
+        try:
+            self.app.query_one("Sidebar").load_todos()
+        except Exception:
+            pass
+
     def action_add_task(self):
         inp = self.query_one("#new-task-input", Input)
         content = inp.value.strip()
@@ -137,6 +77,7 @@ class TodoScreen(ModalScreen):
             self.manager.add(content)
             inp.value = ""
             self.load_tasks()
+            self._refresh_sidebar()
             self.notify("Task added")
 
     def action_delete_task(self):
@@ -144,18 +85,20 @@ class TodoScreen(ModalScreen):
         if table.cursor_row is not None:
             # key is the row key which we set to id
             row_key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
-            if row_key:
-                self.manager.delete(row_key.value)
+            if row_key and row_key.value:
+                # Value from datatable key is always valid for our purposes
+                self.manager.delete(str(row_key.value))
                 self.load_tasks()
+                self._refresh_sidebar()
 
     def action_toggle_status(self):
         table = self.query_one(DataTable)
         if table.cursor_row is not None:
             row_key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
-            if not row_key:
+            if not row_key or not row_key.value:
                 return
 
-            todo_id = row_key.value
+            todo_id = str(row_key.value)
             todos = self.manager.load()
             item = next((t for t in todos if t["id"] == todo_id), None)
 
@@ -168,6 +111,7 @@ class TodoScreen(ModalScreen):
 
                 self.manager.update_status(todo_id, new_status)
                 self.load_tasks()
+                self._refresh_sidebar()
 
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "add-btn":

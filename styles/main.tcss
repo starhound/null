@@ -3252,3 +3252,153 @@ PromptEditorScreen #close-btn {
     background: $layer-raised;
     color: $text-muted;
 }
+
+/* ==========================================================================
+   Todo Screen
+   ========================================================================== */
+
+TodoScreen {
+    align: center middle;
+    background: $layer-void 80%;
+}
+
+TodoScreen #todo-container {
+    width: 70%;
+    height: 80%;
+    background: $layer-base;
+    border: double $primary $border-normal;
+    layout: vertical;
+    padding: 1 2;
+}
+
+TodoScreen #title {
+    text-style: bold;
+    color: $primary;
+    text-align: center;
+    padding-bottom: 1;
+    border-bottom: solid $primary 20%;
+}
+
+TodoScreen DataTable {
+    height: 1fr;
+    background: $layer-raised 10%;
+    margin-bottom: 1;
+}
+
+TodoScreen DataTable > .datatable--header {
+    background: $layer-raised 30%;
+    color: $primary;
+    text-style: bold;
+}
+
+TodoScreen DataTable > .datatable--cursor {
+    background: $primary 30%;
+    color: $text-bright;
+}
+
+TodoScreen #input-area {
+    height: auto;
+    layout: horizontal;
+    align: center middle;
+    margin-top: 1;
+}
+
+TodoScreen Input {
+    width: 1fr;
+    margin-right: 1;
+}
+
+TodoScreen Button {
+    min-width: 8;
+}
+
+TodoScreen #add-btn {
+    background: $success;
+    color: $layer-void;
+}
+
+TodoScreen #close-btn {
+    background: $layer-raised;
+    margin-left: 1;
+}
+
+/* ==========================================================================
+   Sidebar Widget
+   ========================================================================== */
+
+Sidebar {
+    width: 30;
+    min-width: 25;
+    max-width: 50;
+    height: 100%;
+    dock: left;
+    background: $layer-base 80%;
+    border-right: solid $border-dim;
+    display: none;
+    padding: 0;
+}
+
+Sidebar #sidebar-content {
+    height: 100%;
+    width: 100%;
+}
+
+Sidebar TabbedContent {
+    height: 1fr;
+}
+
+Sidebar ContentSwitcher {
+    height: 1fr;
+}
+
+Sidebar TabPane {
+    padding: 0;
+    height: 1fr;
+}
+
+Sidebar DirectoryTree {
+    background: transparent;
+    border: none;
+    width: 100%;
+    height: 100%;
+}
+
+Sidebar DataTable {
+    background: transparent;
+    border: none;
+    width: 100%;
+    height: 100%;
+    color: $text;
+}
+
+Sidebar DataTable > .datatable--header {
+    background: $layer-raised 30%;
+    color: $secondary;
+}
+
+Sidebar DataTable > .datatable--cursor {
+    background: $primary 30%;
+    color: $text-bright;
+}
+
+Sidebar DataTable > .datatable--row {
+    background: transparent;
+    color: $text;
+}
+
+Sidebar DataTable > .datatable--row-hover {
+    background: $layer-raised 20%;
+}
+
+Sidebar Tabs {
+    dock: top;
+    height: 1;
+    min-height: 1;
+    background: $layer-raised 50%;
+}
+
+Sidebar Tab {
+    height: 1;
+    padding: 0 1;
+    min-width: 6;
+}

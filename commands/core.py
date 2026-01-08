@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app import NullApp
-
-from widgets import HistoryViewport, StatusBar
+    from widgets import HistoryViewport, StatusBar
 
 from .base import CommandMixin
 
@@ -46,14 +45,24 @@ class CoreCommands(CommandMixin):
         context_chars = len(context_str)
         context_tokens = context_chars // 4
 
-        status_bar = self.app.query_one("#status-bar", StatusBar)
-        provider_status = status_bar.provider_status
+        try:
+            status_bar = self.app.query_one("#status-bar")
+            provider_status = status_bar.provider_status
 
-        # Token usage info
-        total_tokens = (
-            status_bar.session_input_tokens + status_bar.session_output_tokens
-        )
-        session_cost = status_bar.session_cost
+            # Token usage info
+            total_tokens = (
+                status_bar.session_input_tokens + status_bar.session_output_tokens
+            )
+            session_cost = status_bar.session_cost
+
+            s_in = status_bar.session_input_tokens
+            s_out = status_bar.session_output_tokens
+        except Exception:
+            provider_status = "unknown"
+            total_tokens = 0
+            session_cost = 0.0
+            s_in = 0
+            s_out = 0
 
         lines = [
             f"  Provider:      {provider_name} ({provider_status})",
@@ -61,7 +70,7 @@ class CoreCommands(CommandMixin):
             f"  Persona:       {persona}",
             f"  Blocks:        {blocks_count}",
             f"  Context:       ~{context_tokens} tokens ({context_chars} chars)",
-            f"  Session Tokens: {total_tokens:,} ({status_bar.session_input_tokens:,} in / {status_bar.session_output_tokens:,} out)",
+            f"  Session Tokens: {total_tokens:,} ({s_in:,} in / {s_out:,} out)",
             f"  Session Cost:   ${session_cost:.4f}",
         ]
         await self.show_output("/status", "\n".join(lines))
@@ -71,12 +80,21 @@ class CoreCommands(CommandMixin):
         self.app.blocks = []
         self.app.current_cli_block = None
         self.app.current_cli_widget = None
-        history = self.app.query_one("#history", HistoryViewport)
-        await history.remove_children()
+
+        # Avoid direct import if possible, or use string selector
+        try:
+            history = self.app.query_one("#history")
+            await history.remove_children()
+        except Exception:
+            pass
 
         # Reset token usage in status bar
-        status_bar = self.app.query_one("#status-bar", StatusBar)
-        status_bar.reset_token_usage()
+        try:
+            status_bar = self.app.query_one("#status-bar")
+            if hasattr(status_bar, "reset_token_usage"):
+                status_bar.reset_token_usage()
+        except Exception:
+            pass
 
         self.app._update_status_bar()
         self.notify("History and context cleared")

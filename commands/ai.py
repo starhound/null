@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app import NullApp
+    from widgets import BlockWidget, HistoryViewport
 
 from ai.factory import AIFactory
 from config import Config
 from models import BlockState, BlockType
-from widgets import BlockWidget, HistoryViewport
 
 from .base import CommandMixin
 
@@ -277,8 +277,12 @@ Be brief but preserve essential context. Output only the summary."""
             self.app.blocks = []
             self.app.current_cli_block = None
             self.app.current_cli_widget = None
-            history = self.app.query_one("#history", HistoryViewport)
-            await history.remove_children()
+
+            try:
+                history = self.app.query_one("#history")
+                await history.remove_children()
+            except Exception:
+                pass
 
             summary_block = BlockState(
                 type=BlockType.SYSTEM_MSG,
@@ -288,8 +292,14 @@ Be brief but preserve essential context. Output only the summary."""
             )
             self.app.blocks.append(summary_block)
 
-            block_widget = BlockWidget(summary_block)
-            await history.mount(block_widget)
+            try:
+                from widgets import BlockWidget
+
+                block_widget = BlockWidget(summary_block)
+                history = self.app.query_one("#history")
+                await history.mount(block_widget)
+            except Exception:
+                pass
 
             new_token_count = len(summary) // 4
             reduction = ((old_token_count - new_token_count) / old_token_count) * 100

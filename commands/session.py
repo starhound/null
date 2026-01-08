@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app import NullApp
+    from widgets import BlockWidget, HistoryViewport, StatusBar
 
 from config import Config
-from widgets import BlockWidget, HistoryViewport, StatusBar
 
 from .base import CommandMixin
 
@@ -56,11 +56,21 @@ class SessionCommands(CommandMixin):
             self.app.current_cli_block = None
             self.app.current_cli_widget = None
             storage.clear_current_session()
-            history = self.app.query_one("#history", HistoryViewport)
-            await history.remove_children()
+
+            try:
+                history = self.app.query_one("#history")
+                await history.remove_children()
+            except Exception:
+                pass
+
             # Reset token usage for new session
-            status_bar = self.app.query_one("#status-bar", StatusBar)
-            status_bar.reset_token_usage()
+            try:
+                status_bar = self.app.query_one("#status-bar")
+                if hasattr(status_bar, "reset_token_usage"):
+                    status_bar.reset_token_usage()
+            except Exception:
+                pass
+
             self.notify("Started new session")
 
         else:
@@ -74,16 +84,34 @@ class SessionCommands(CommandMixin):
                 self.app.blocks = blocks
                 self.app.current_cli_block = None
                 self.app.current_cli_widget = None
-                history = self.app.query_one("#history", HistoryViewport)
-                await history.remove_children()
-                for block in self.app.blocks:
-                    block.is_running = False
-                    block_widget = BlockWidget(block)
-                    await history.mount(block_widget)
-                history.scroll_end(animate=False)
-                # Reset token usage when loading a session (no history of past tokens)
-                status_bar = self.app.query_one("#status-bar", StatusBar)
-                status_bar.reset_token_usage()
+
+                try:
+                    history = self.app.query_one("#history")
+                    await history.remove_children()
+
+                    # Need to import BlockWidget locally to avoid circular import if used
+                    # But we can assume create_block is available on app or handle it differently
+                    # Actually, create_block is what we need.
+                    from widgets import create_block
+
+                    for block in self.app.blocks:
+                        block.is_running = False
+                        block_widget = create_block(block)
+                        await history.mount(block_widget)
+
+                    if hasattr(history, "scroll_end"):
+                        history.scroll_end(animate=False)
+                except Exception:
+                    pass
+
+                # Reset token usage
+                try:
+                    status_bar = self.app.query_one("#status-bar")
+                    if hasattr(status_bar, "reset_token_usage"):
+                        status_bar.reset_token_usage()
+                except Exception:
+                    pass
+
                 self.notify(f"Loaded session: {name}")
             else:
                 self.notify(f"Session not found: {name}", severity="error")

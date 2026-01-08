@@ -26,6 +26,7 @@ from .history import HistoryViewport
 from .history_search import HistorySearch
 from .input import InputController
 from .palette import CommandPalette, PaletteAction
+from .sidebar import Sidebar
 from .status_bar import StatusBar
 from .suggester import CommandItem, CommandSuggester
 
@@ -50,6 +51,7 @@ __all__ = [
     "HistoryViewport",
     "InputController",
     "PaletteAction",
+    "Sidebar",
     "StatusBar",
     "SystemBlock",
     "ThinkingWidget",

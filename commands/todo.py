@@ -97,6 +97,12 @@ class TodoCommands(CommandMixin):
             item = self.manager.add(content)
             self.notify(f"Added task: {item['content']}")
 
+            # Refresh sidebar if open
+            try:
+                self.app.query_one("Sidebar").load_todos()
+            except Exception:
+                pass
+
         elif subcmd == "list":
             todos = self.manager.load()
             if not todos:
@@ -114,12 +120,24 @@ class TodoCommands(CommandMixin):
 
             await self.show_output("/todo list", "\n".join(lines))
 
+        elif subcmd == "display":
+            try:
+                sidebar = self.app.query_one("Sidebar")
+                sidebar.set_view("todo")
+            except Exception:
+                pass
+
         elif subcmd in ("done", "finish", "complete"):
             if len(args) < 2:
                 self.notify("Usage: /todo done <id>", severity="error")
                 return
             if self.manager.update_status(args[1], "done"):
                 self.notify(f"Task {args[1]} marked done")
+                # Refresh sidebar if open
+                try:
+                    self.app.query_one("Sidebar").load_todos()
+                except Exception:
+                    pass
             else:
                 self.notify("Task not found", severity="error")
 
@@ -129,6 +147,11 @@ class TodoCommands(CommandMixin):
                 return
             if self.manager.delete(args[1]):
                 self.notify(f"Task {args[1]} deleted")
+                # Refresh sidebar if open
+                try:
+                    self.app.query_one("Sidebar").load_todos()
+                except Exception:
+                    pass
             else:
                 self.notify("Task not found", severity="error")
         else:
