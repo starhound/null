@@ -8,6 +8,43 @@ The Model Context Protocol (MCP) is a standard for connecting AI models to exter
 - **Tools**: Functions the AI can call (e.g., web search, database queries)
 - **Resources**: Data the AI can access (e.g., file contents, API data)
 
+## MCP Server Catalog
+
+Null Terminal includes a curated catalog of 100+ MCP servers across 18 categories. Browse and install servers with a single command:
+
+```bash
+/mcp catalog
+```
+
+This opens an interactive browser where you can:
+- Browse servers by category (File System, Database, Development, Cloud, etc.)
+- Search for servers by name or description
+- See which servers are already installed (marked with [Installed])
+- Install servers with pre-filled configuration
+
+### Available Categories
+
+| Category | Description |
+|----------|-------------|
+| File System | File and directory operations |
+| Database | SQL, NoSQL, and vector databases |
+| Development | GitHub, GitLab, CI/CD tools |
+| Sysadmin | Docker, Kubernetes, SSH |
+| Monitoring | Prometheus, Grafana, Datadog |
+| Cloud | AWS, GCP, Azure, Cloudflare |
+| Web | Browser automation, web scraping |
+| Search | Brave, Exa, Tavily, Google |
+| Communication | Slack, Discord, Email |
+| Productivity | Notion, Obsidian, Todoist |
+| Memory | Knowledge graphs, vector stores |
+| Finance | Stripe, Plaid, stock data |
+| Social | Twitter, Reddit, YouTube |
+| Utility | Time, weather, calculations |
+| AI | OpenAI, Anthropic, HuggingFace |
+| E-commerce | Shopify, WooCommerce |
+| Analytics | Google Analytics, Mixpanel |
+| CRM | Salesforce, HubSpot, Zendesk |
+
 ## Configuration
 
 MCP servers are configured in `~/.null/mcp.json`:
@@ -40,6 +77,12 @@ MCP servers are configured in `~/.null/mcp.json`:
 /mcp
 # or
 /mcp list
+```
+
+### Browse Catalog
+```bash
+/mcp catalog
+# Opens interactive catalog browser
 ```
 
 ### Add Server
@@ -191,6 +234,36 @@ The status bar shows MCP connection status:
 
 ## Finding MCP Servers
 
-- **Official Anthropic servers**: https://github.com/anthropics/mcp-servers
+- **Built-in Catalog**: Use `/mcp catalog` to browse 100+ curated servers
+- **Official MCP servers**: https://github.com/modelcontextprotocol/servers
 - **Community servers**: Search GitHub for "mcp-server"
 - **Build your own**: See MCP SDK documentation
+
+## Environment Variables
+
+Many MCP servers require API keys or credentials. Set them in the server configuration:
+
+```json
+{
+  "github": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-github"],
+    "env": {
+      "GITHUB_TOKEN": "ghp_xxxxxxxxxxxx"
+    }
+  }
+}
+```
+
+Common environment variables by server type:
+
+| Server | Required Variables |
+|--------|-------------------|
+| GitHub | `GITHUB_TOKEN` |
+| Slack | `SLACK_BOT_TOKEN`, `SLACK_TEAM_ID` |
+| Brave Search | `BRAVE_API_KEY` |
+| PostgreSQL | `POSTGRES_CONNECTION_STRING` |
+| AWS | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` |
+| Google APIs | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+
+The catalog shows required environment variables for each server before installation.
