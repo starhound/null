@@ -9,6 +9,7 @@ from .bedrock import BedrockProvider
 from .cohere import CohereProvider
 from .google_ai import GoogleAIProvider
 from .google_vertex import GoogleVertexProvider
+from .nvidia import NVIDIAProvider
 from .ollama import OllamaProvider
 from .openai_compat import OpenAICompatibleProvider
 
@@ -282,10 +283,9 @@ class AIFactory:
             )
 
         elif provider_name == "nvidia":
-            return OpenAICompatibleProvider(
+            return NVIDIAProvider(
                 api_key=config.get("api_key", ""),
-                base_url="https://integrate.api.nvidia.com/v1",
-                model=get("model", "meta/llama-3.1-405b-instruct"),
+                model=get("model", "meta/llama-3.1-8b-instruct"),
             )
 
         elif provider_name == "xai":

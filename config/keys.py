@@ -17,6 +17,9 @@ SENSITIVE_KEYS = {
     "ai.openrouter.api_key",
     "ai.fireworks.api_key",
     "ai.perplexity.api_key",
+    "ai.nvidia.api_key",
+    "ai.huggingface.api_key",
+    "ai.cloudflare.api_key",
 }
 
 
