@@ -8,7 +8,7 @@
 Null is a next-generation TUI (Terminal User Interface) designed for the modern AI-integrated workflow. Built on [Textual](https://textual.textualize.io/), it blends the raw power of the command line with the intelligence of LLMs, all wrapped in a sleek, cyber-noir aesthetic.
 
 <p align="center">
-  <img src="docs/null_graphic.png" alt="Null Terminal" width="600">
+  <img src="docs/demo.gif" alt="Null Terminal Demo" width="800">
 </p>
 
 ## ✨ Features
@@ -42,6 +42,11 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
 ### 1. Installation
 
 See [**Installation Guide**](docs/user/installation.md) for detailed instructions for Windows, Linux, and Mac.
+
+**Via Docker:**
+```bash
+docker run -it --rm ghcr.io/starhound/null-terminal:latest
+```
 
 **Via pipx (Linux/Mac):**
 ```bash
