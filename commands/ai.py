@@ -202,7 +202,7 @@ class AICommands(CommandMixin):
         await self.show_output(f"/prompts show {key}", content)
 
     async def cmd_agent(self, args: list[str]):
-        """Agent mode control. Usage: /agent [status|history|stats|stop|pause|resume|clear]"""
+        """Agent mode control. Usage: /agent [status|history|stats|stop|pause|resume|clear|save|load|list]"""
         if not args:
             await self._agent_toggle()
             return
@@ -234,9 +234,27 @@ class AICommands(CommandMixin):
             self._agent_inspect()
         elif subcommand == "config":
             await self._agent_config(args[1:] if len(args) > 1 else [])
+        elif subcommand == "save":
+            name = args[1] if len(args) > 1 else None
+            await self._agent_save(name)
+        elif subcommand == "load":
+            if len(args) > 1:
+                await self._agent_load(args[1])
+            else:
+                self.notify("Usage: /agent load <name_or_id>", severity="warning")
+        elif subcommand == "list":
+            await self._agent_list_saved()
+        elif subcommand == "export":
+            session_id = args[1] if len(args) > 1 else None
+            await self._agent_export(session_id)
+        elif subcommand == "delete":
+            if len(args) > 1:
+                self._agent_delete_saved(args[1])
+            else:
+                self.notify("Usage: /agent delete <name_or_id>", severity="warning")
         else:
             self.notify(
-                "Usage: /agent [status|history|stats|stop|pause|resume|clear|tools|inspect|config|on|off]",
+                "Usage: /agent [status|history|stats|stop|pause|resume|clear|tools|inspect|config|save|load|list|export|delete|on|off]",
                 severity="warning",
             )
 
@@ -463,6 +481,83 @@ Use /agent off or /agent again to disable."""
                 lines.append("")
 
         await self.show_output("/agent tools", "\n".join(lines))
+
+    async def _agent_save(self, name: str | None):
+        manager = self.app.agent_manager
+        if manager.current_session:
+            path = manager.save_current_session(name)
+            if path:
+                self.notify(f"Session saved: {path.name}")
+            else:
+                self.notify("Failed to save session", severity="error")
+        elif manager.get_history(1):
+            last_session = manager.get_history(1)[0]
+            path = manager.save_session(last_session, name)
+            self.notify(f"Last session saved: {path.name}")
+        else:
+            self.notify("No session to save", severity="warning")
+
+    async def _agent_load(self, name_or_id: str):
+        manager = self.app.agent_manager
+        session = manager.load_session(name_or_id)
+        if session:
+            lines = [
+                f"Loaded Session: {session.id}",
+                f"Task: {session.current_task}",
+                f"Started: {session.started_at.isoformat()}",
+                f"Iterations: {session.iterations}",
+                f"Tool Calls: {session.tool_calls}",
+                "",
+                "Tool History:",
+            ]
+            for i, call in enumerate(session.tool_history[-5:], 1):
+                lines.append(
+                    f"  {i}. {call.get('tool', 'Unknown')} - {'OK' if call.get('success') else 'FAIL'}"
+                )
+            await self.show_output(f"/agent load {name_or_id}", "\n".join(lines))
+        else:
+            self.notify(f"Session not found: {name_or_id}", severity="error")
+
+    async def _agent_list_saved(self):
+        manager = self.app.agent_manager
+        sessions = manager.list_saved_sessions()
+        if not sessions:
+            await self.show_output("/agent list", "No saved sessions.")
+            return
+
+        lines = ["Saved Agent Sessions:", "=" * 50, ""]
+        for s in sessions:
+            lines.append(
+                f"{s['id']:10} | {s['started_at'][:16]} | {s['iterations']:2} iters | {s['tool_calls']:2} tools"
+            )
+            if s.get("task"):
+                lines.append(f"           Task: {s['task']}")
+        await self.show_output("/agent list", "\n".join(lines))
+
+    async def _agent_export(self, session_id: str | None):
+        manager = self.app.agent_manager
+        if session_id:
+            session = manager.load_session(session_id)
+        elif manager.current_session:
+            session = manager.current_session
+        elif manager.get_history(1):
+            session = manager.get_history(1)[0]
+        else:
+            self.notify("No session to export", severity="warning")
+            return
+
+        if session:
+            markdown = manager.export_session_to_markdown(session)
+            await self.show_output(f"/agent export {session.id}", markdown)
+        else:
+            self.notify("Session not found", severity="error")
+
+    def _agent_delete_saved(self, name_or_id: str):
+        manager = self.app.agent_manager
+        if manager.delete_saved_session(name_or_id):
+            self.notify(f"Deleted session: {name_or_id}")
+        else:
+            self.notify(f"Session not found: {name_or_id}", severity="error")
 
     async def cmd_compact(self, args: list[str]):
         """Summarize context to reduce token usage."""

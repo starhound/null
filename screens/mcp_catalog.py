@@ -10,21 +10,27 @@ from .base import Binding, ComposeResult, ModalScreen
 
 
 class CatalogItemWidget(Static):
-    def __init__(self, entry: CatalogEntry):
+    def __init__(self, entry: CatalogEntry, is_installed: bool = False):
         super().__init__()
         self.entry = entry
+        self.is_installed = is_installed
 
     def compose(self) -> ComposeResult:
         with Horizontal(classes="catalog-item"):
             with Vertical(classes="catalog-item-info"):
-                yield Label(f"[bold]{self.entry.name}[/bold]", classes="catalog-name")
+                name_label = f"[bold]{self.entry.name}[/bold]"
+                if self.is_installed:
+                    name_label += " [green][Installed][/green]"
+                yield Label(name_label, classes="catalog-name")
                 yield Label(self.entry.description, classes="catalog-desc")
                 env_text = (
                     ", ".join(self.entry.env_keys) if self.entry.env_keys else "None"
                 )
                 yield Label(f"[dim]Env: {env_text}[/dim]", classes="catalog-env")
+
+            button_label = "Configure" if self.is_installed else "Install"
             yield Button(
-                "Install",
+                button_label,
                 id=f"install-{self.entry.name}",
                 classes="catalog-install-btn",
             )
@@ -131,10 +137,11 @@ class MCPCatalogScreen(ModalScreen):
     }
     """
 
-    def __init__(self):
+    def __init__(self, installed_servers: set[str] | None = None):
         super().__init__()
         self.current_category = "all"
         self.search_query = ""
+        self.installed_servers = installed_servers or set()
 
     def compose(self) -> ComposeResult:
         with Container(id="catalog-container"):
@@ -150,7 +157,8 @@ class MCPCatalogScreen(ModalScreen):
 
                 with VerticalScroll(id="server-list"):
                     for entry in CATALOG:
-                        yield CatalogItemWidget(entry)
+                        is_installed = entry.name in self.installed_servers
+                        yield CatalogItemWidget(entry, is_installed=is_installed)
 
             with Horizontal(id="catalog-footer"):
                 yield Button("Add Custom", id="add-custom")
@@ -213,5 +221,5 @@ class MCPCatalogScreen(ModalScreen):
                     }
                 )
 
-    async def action_dismiss(self) -> None:
+    async def action_dismiss(self, result: object = None) -> None:
         self.dismiss(None)

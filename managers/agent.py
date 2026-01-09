@@ -1,6 +1,8 @@
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any
 import asyncio
 
@@ -48,7 +50,25 @@ class AgentSession:
             "state": self.state.value,
             "current_task": self.current_task,
             "errors": self.errors,
+            "tool_history": self.tool_history,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "AgentSession":
+        return cls(
+            id=data["id"],
+            started_at=datetime.fromisoformat(data["started_at"]),
+            ended_at=datetime.fromisoformat(data["ended_at"])
+            if data.get("ended_at")
+            else None,
+            iterations=data.get("iterations", 0),
+            tool_calls=data.get("tool_calls", 0),
+            tokens_used=data.get("tokens_used", 0),
+            state=AgentState(data.get("state", "idle")),
+            current_task=data.get("current_task", ""),
+            errors=data.get("errors", []),
+            tool_history=data.get("tool_history", []),
+        )
 
 
 @dataclass
@@ -261,3 +281,105 @@ class AgentManager:
                     callback(self.state)
             except Exception:
                 pass
+
+    def _get_sessions_dir(self) -> Path:
+        sessions_dir = Path.home() / ".null" / "agent_sessions"
+        sessions_dir.mkdir(parents=True, exist_ok=True)
+        return sessions_dir
+
+    def save_session(self, session: AgentSession, name: str | None = None) -> Path:
+        """Save an agent session to disk."""
+        sessions_dir = self._get_sessions_dir()
+
+        if name:
+            filename = f"agent-{name}.json"
+        else:
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            filename = f"agent-{session.id}-{timestamp}.json"
+
+        filepath = sessions_dir / filename
+        filepath.write_text(json.dumps(session.to_dict(), indent=2), encoding="utf-8")
+        return filepath
+
+    def save_current_session(self, name: str | None = None) -> Path | None:
+        """Save the current session if active."""
+        if self._current_session:
+            return self.save_session(self._current_session, name)
+        return None
+
+    def load_session(self, name_or_id: str) -> AgentSession | None:
+        """Load a session by name or ID."""
+        sessions_dir = self._get_sessions_dir()
+
+        for pattern in [f"agent-{name_or_id}.json", f"agent-{name_or_id}-*.json"]:
+            matches = list(sessions_dir.glob(pattern))
+            if matches:
+                filepath = sorted(matches, reverse=True)[0]
+                try:
+                    data = json.loads(filepath.read_text(encoding="utf-8"))
+                    return AgentSession.from_dict(data)
+                except Exception:
+                    return None
+        return None
+
+    def list_saved_sessions(self) -> list[dict[str, Any]]:
+        """List all saved agent sessions."""
+        sessions = []
+        sessions_dir = self._get_sessions_dir()
+
+        for filepath in sorted(sessions_dir.glob("agent-*.json"), reverse=True):
+            try:
+                data = json.loads(filepath.read_text(encoding="utf-8"))
+                sessions.append(
+                    {
+                        "id": data.get("id", ""),
+                        "task": data.get("current_task", "")[:50],
+                        "started_at": data.get("started_at", ""),
+                        "iterations": data.get("iterations", 0),
+                        "tool_calls": data.get("tool_calls", 0),
+                        "path": str(filepath),
+                    }
+                )
+            except Exception:
+                pass
+
+        return sessions[:20]
+
+    def delete_saved_session(self, name_or_id: str) -> bool:
+        """Delete a saved session."""
+        sessions_dir = self._get_sessions_dir()
+
+        for pattern in [f"agent-{name_or_id}.json", f"agent-{name_or_id}-*.json"]:
+            for filepath in sessions_dir.glob(pattern):
+                filepath.unlink()
+                return True
+        return False
+
+    def export_session_to_markdown(self, session: AgentSession) -> str:
+        """Export session to markdown format for review."""
+        lines = [
+            f"# Agent Session: {session.id}",
+            f"**Task:** {session.current_task}",
+            f"**Started:** {session.started_at.isoformat()}",
+            f"**Duration:** {session.duration:.1f}s",
+            f"**Iterations:** {session.iterations}",
+            f"**Tool Calls:** {session.tool_calls}",
+            "",
+            "## Tool History",
+            "",
+        ]
+
+        for i, call in enumerate(session.tool_history, 1):
+            lines.append(f"### {i}. {call.get('tool', 'Unknown')}")
+            lines.append(f"**Args:** `{call.get('args', '')[:100]}`")
+            lines.append(f"**Success:** {call.get('success', False)}")
+            lines.append(f"**Duration:** {call.get('duration', 0):.2f}s")
+            lines.append(f"```\n{call.get('result', '')[:500]}\n```")
+            lines.append("")
+
+        if session.errors:
+            lines.append("## Errors")
+            for error in session.errors:
+                lines.append(f"- {error}")
+
+        return "\n".join(lines)

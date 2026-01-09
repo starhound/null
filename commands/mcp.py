@@ -74,6 +74,8 @@ class MCPCommands(CommandMixin):
     async def _mcp_catalog(self):
         from screens import MCPCatalogScreen
 
+        installed_servers = set(self.app.mcp_manager.config.servers.keys())
+
         def on_catalog_result(result):
             if not result:
                 return
@@ -87,7 +89,7 @@ class MCPCommands(CommandMixin):
                 if entry:
                     self._install_from_catalog(entry)
 
-        self.app.push_screen(MCPCatalogScreen(), on_catalog_result)
+        self.app.push_screen(MCPCatalogScreen(installed_servers), on_catalog_result)
 
     def _install_from_catalog(self, entry):
         from mcp.catalog import CatalogEntry
