@@ -225,24 +225,223 @@ class TestBlockState:
         assert restored.content_thinking == original.content_thinking
 
 
-class TestBlockStateExport:
-    """Tests for BlockState export functionality."""
+class TestExportToJson:
+    def test_returns_valid_json_string(self):
+        from models import export_to_json
 
-    def test_export_to_json(self):
-        """Test exporting blocks to JSON."""
         blocks = [
             BlockState(
                 type=BlockType.COMMAND, content_input="ls", content_output="file.txt"
             ),
+        ]
+        result = export_to_json(blocks)
+        parsed = json.loads(result)
+        assert "blocks" in parsed
+        assert "exported_at" in parsed
+        assert "version" in parsed
+
+    def test_empty_blocks_produces_empty_array(self):
+        from models import export_to_json
+
+        result = export_to_json([])
+        parsed = json.loads(result)
+        assert parsed["blocks"] == []
+
+    def test_preserves_block_content(self):
+        from models import export_to_json
+
+        blocks = [
             BlockState(
-                type=BlockType.AI_RESPONSE, content_input="hi", content_output="hello"
+                type=BlockType.COMMAND,
+                content_input="echo hello",
+                content_output="hello",
             ),
         ]
+        result = export_to_json(blocks)
+        parsed = json.loads(result)
+        assert parsed["blocks"][0]["content_input"] == "echo hello"
+        assert parsed["blocks"][0]["content_output"] == "hello"
 
-        # Test that to_dict produces valid JSON
-        for block in blocks:
-            data = block.to_dict()
-            json_str = json.dumps(data)
-            assert json_str is not None
-            parsed = json.loads(json_str)
-            assert parsed["content_input"] == block.content_input
+    def test_multiple_blocks_serialized(self):
+        from models import export_to_json
+
+        blocks = [
+            BlockState(type=BlockType.COMMAND, content_input="cmd1"),
+            BlockState(type=BlockType.AI_RESPONSE, content_input="query"),
+            BlockState(type=BlockType.SYSTEM_MSG, content_input="notice"),
+        ]
+        result = export_to_json(blocks)
+        parsed = json.loads(result)
+        assert len(parsed["blocks"]) == 3
+
+
+class TestExportToMarkdown:
+    def test_returns_string(self):
+        from models import export_to_markdown
+
+        blocks = [BlockState(type=BlockType.COMMAND, content_input="ls")]
+        result = export_to_markdown(blocks)
+        assert isinstance(result, str)
+
+    def test_contains_header(self):
+        from models import export_to_markdown
+
+        result = export_to_markdown([])
+        assert "# Null Session" in result
+
+    def test_command_block_formatted(self):
+        from models import export_to_markdown
+
+        blocks = [
+            BlockState(
+                type=BlockType.COMMAND,
+                content_input="ls -la",
+                content_output="file.txt",
+            ),
+        ]
+        result = export_to_markdown(blocks)
+        assert "## Command" in result
+        assert "$ ls -la" in result
+        assert "file.txt" in result
+
+    def test_command_with_non_zero_exit_shows_code(self):
+        from models import export_to_markdown
+
+        block = BlockState(type=BlockType.COMMAND, content_input="bad_cmd")
+        block.exit_code = 127
+        result = export_to_markdown([block])
+        assert "Exit code: 127" in result
+
+    def test_ai_response_formatted(self):
+        from models import export_to_markdown
+
+        blocks = [
+            BlockState(
+                type=BlockType.AI_RESPONSE,
+                content_input="What is Python?",
+                content_output="A programming language",
+            ),
+        ]
+        result = export_to_markdown(blocks)
+        assert "## AI Conversation" in result
+        assert "What is Python?" in result
+        assert "A programming language" in result
+
+    def test_ai_response_with_metadata(self):
+        from models import export_to_markdown
+
+        block = BlockState(
+            type=BlockType.AI_RESPONSE,
+            content_input="test",
+            content_output="response",
+        )
+        block.metadata = {"model": "gpt-4", "tokens": "100/50"}
+        result = export_to_markdown([block])
+        assert "Model: gpt-4" in result
+        assert "Tokens: 100/50" in result
+
+    def test_agent_response_with_iterations(self):
+        from models import export_to_markdown
+
+        tc = ToolCallState(
+            id="tc1",
+            tool_name="run_command",
+            arguments='{"cmd": "ls"}',
+            output="file.txt",
+            status="success",
+        )
+        iteration = AgentIteration(
+            iteration_number=1, thinking="I will list files", tool_calls=[tc]
+        )
+        block = BlockState(
+            type=BlockType.AGENT_RESPONSE,
+            content_input="List files",
+            iterations=[iteration],
+            content_output="Done listing files",
+        )
+        result = export_to_markdown([block])
+        assert "## Agent Session" in result
+        assert "### Iteration 1" in result
+        assert "I will list files" in result
+        assert "run_command" in result
+
+    def test_tool_call_block_formatted(self):
+        from models import export_to_markdown
+
+        block = BlockState(type=BlockType.TOOL_CALL, content_input="tool")
+        block.metadata = {"tool_name": "read_file", "arguments": '{"path": "/tmp"}'}
+        block.content_output = "file content"
+        result = export_to_markdown([block])
+        assert "## Tool Call" in result
+        assert "read_file" in result
+
+    def test_ai_query_formatted(self):
+        from models import export_to_markdown
+
+        blocks = [BlockState(type=BlockType.AI_QUERY, content_input="How do I?")]
+        result = export_to_markdown(blocks)
+        assert "How do I?" in result
+
+    def test_contains_footer(self):
+        from models import export_to_markdown
+
+        result = export_to_markdown([])
+        assert "Exported from Null Terminal" in result
+
+
+class TestSaveExport:
+    def test_creates_json_file(self, tmp_path, monkeypatch):
+        from models import save_export
+
+        monkeypatch.setattr("models.Path.home", lambda: tmp_path)
+        blocks = [BlockState(type=BlockType.COMMAND, content_input="ls")]
+
+        filepath = save_export(blocks, format="json")
+
+        assert filepath.exists()
+        assert filepath.suffix == ".json"
+        assert "null-export" in filepath.name
+
+    def test_creates_markdown_file(self, tmp_path, monkeypatch):
+        from models import save_export
+
+        monkeypatch.setattr("models.Path.home", lambda: tmp_path)
+        blocks = [BlockState(type=BlockType.COMMAND, content_input="ls")]
+
+        filepath = save_export(blocks, format="md")
+
+        assert filepath.exists()
+        assert filepath.suffix == ".md"
+
+    def test_creates_export_directory(self, tmp_path, monkeypatch):
+        from models import save_export
+
+        monkeypatch.setattr("models.Path.home", lambda: tmp_path)
+        blocks = [BlockState(type=BlockType.COMMAND, content_input="ls")]
+
+        save_export(blocks, format="md")
+
+        export_dir = tmp_path / ".null" / "exports"
+        assert export_dir.exists()
+
+    def test_json_file_contains_valid_json(self, tmp_path, monkeypatch):
+        from models import save_export
+
+        monkeypatch.setattr("models.Path.home", lambda: tmp_path)
+        blocks = [BlockState(type=BlockType.COMMAND, content_input="test_cmd")]
+
+        filepath = save_export(blocks, format="json")
+
+        content = filepath.read_text()
+        parsed = json.loads(content)
+        assert parsed["blocks"][0]["content_input"] == "test_cmd"
+
+    def test_default_format_is_markdown(self, tmp_path, monkeypatch):
+        from models import save_export
+
+        monkeypatch.setattr("models.Path.home", lambda: tmp_path)
+        blocks = [BlockState(type=BlockType.COMMAND, content_input="ls")]
+
+        filepath = save_export(blocks)
+
+        assert filepath.suffix == ".md"

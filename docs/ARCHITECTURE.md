@@ -12,24 +12,24 @@ The application is structured around four core pillars:
 
 ```mermaid
 graph TD
-    NullApp[NullApp<br>app.py<br>Main Orchestrator & Event Hub]
+    NullApp["NullApp<br>app.py<br>Main Orchestrator & Event Hub"]
     
-    subgraph UI_Layer [UI Layer]
-        Widgets[Widgets<br>blocks/]
-        Screens[Screens<br>modals]
-        Handlers[Handlers<br>Input | AI | CLI Executor]
+    subgraph UI_Layer ["UI Layer"]
+        Widgets["Widgets<br>blocks/"]
+        Screens["Screens<br>modals"]
+        Handlers["Handlers<br>Input / AI / CLI Executor"]
     end
     
-    subgraph Managers_Layer [Managers Layer]
-        Managers[AIManager | MCPManager | ProcessManager | AgentManager]
+    subgraph Managers_Layer ["Managers Layer"]
+        Managers["AIManager / MCPManager<br>ProcessManager / AgentManager"]
     end
     
-    subgraph Provider_Layer [Provider Layer ai/]
-        Providers[Ollama | OpenAI | Anthropic | Bedrock | ...]
+    subgraph Provider_Layer ["Provider Layer (ai/)"]
+        Providers["Ollama / OpenAI / Anthropic<br>Bedrock / ..."]
     end
     
-    subgraph Storage_Layer [Storage Layer]
-        Storage[SQLite null.db | Config | Encryption]
+    subgraph Storage_Layer ["Storage Layer"]
+        Storage["SQLite (null.db)<br>Config / Encryption"]
     end
 
     NullApp --> UI_Layer

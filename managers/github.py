@@ -54,14 +54,17 @@ class GitHubContextManager:
 
     async def _run_gh(self, *args: str) -> tuple[str, int]:
         """Run gh CLI command and return output and return code."""
-        proc = await asyncio.create_subprocess_exec(
-            "gh",
-            *args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await proc.communicate()
-        return stdout.decode("utf-8", errors="replace"), proc.returncode or 0
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                "gh",
+                *args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await proc.communicate()
+            return stdout.decode("utf-8", errors="replace"), proc.returncode or 0
+        except FileNotFoundError:
+            return "gh CLI not installed. Install from https://cli.github.com/", 1
 
     async def detect_repo(self) -> str | None:
         """Detect current repo from git remote."""

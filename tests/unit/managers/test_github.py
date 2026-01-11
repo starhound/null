@@ -84,6 +84,13 @@ class TestGitHubContextManager:
         return GitHubContextManager()
 
     @pytest.mark.asyncio
+    async def test_run_gh_handles_missing_cli(self, manager):
+        with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
+            output, rc = await manager._run_gh("repo", "view")
+            assert rc == 1
+            assert "gh CLI not installed" in output
+
+    @pytest.mark.asyncio
     async def test_detect_repo_success(self, manager):
         with patch.object(manager, "_run_gh", new_callable=AsyncMock) as mock_run:
             mock_run.return_value = ("owner/repo\n", 0)
