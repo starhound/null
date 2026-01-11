@@ -1,0 +1,45 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git Credentials
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies
+        run: |
+          pip install mkdocs-material mkdocs-minify-plugin mkdocs-git-revision-date-localized-plugin
+
+      - name: Setup docs structure
+        run: |
+          # Copy root files to docs for build if they haven't been committed to docs/ yet
+          # We check if they exist in docs/ first to avoid overwriting if we decide to maintain them there
+          [ ! -f docs/index.md ] && cp README.md docs/index.md || true
+          [ ! -f docs/contributing.md ] && cp CONTRIBUTING.md docs/contributing.md || true
+          [ ! -f docs/changelog.md ] && cp CHANGELOG.md docs/changelog.md || true
+          [ ! -f docs/license.md ] && cp LICENSE docs/license.md || true
+          
+          # Ensure CNAME exists in docs folder for custom domain
+          echo "null-terminal.com" > docs/CNAME
+
+      - name: Deploy to GitHub Pages
+        run: mkdocs gh-deploy --force
