@@ -773,3 +773,732 @@ Be brief but preserve essential context. Output only the summary."""
         from screens.context import ContextScreen
 
         self.app.push_screen(ContextScreen())
+
+    async def cmd_profile(self, args: list[str]):
+        """Manage agent profiles. Usage: /profile [list|<name>|create|edit|export|import|delete]"""
+        if not args:
+            await self._profile_list()
+            return
+
+        subcommand = args[0].lower()
+
+        if subcommand == "list":
+            await self._profile_list()
+        elif subcommand == "create":
+            await self._profile_create(args[1:] if len(args) > 1 else [])
+        elif subcommand == "edit":
+            if len(args) > 1:
+                await self._profile_edit(args[1])
+            else:
+                self.notify("Usage: /profile edit <name>", severity="warning")
+        elif subcommand == "export":
+            if len(args) > 1:
+                await self._profile_export(args[1])
+            else:
+                self.notify("Usage: /profile export <name>", severity="warning")
+        elif subcommand == "import":
+            if len(args) > 1:
+                await self._profile_import(args[1])
+            else:
+                self.notify("Usage: /profile import <file>", severity="warning")
+        elif subcommand == "delete":
+            if len(args) > 1:
+                await self._profile_delete(args[1])
+            else:
+                self.notify("Usage: /profile delete <name>", severity="warning")
+        elif subcommand == "active":
+            await self._profile_active()
+        else:
+            await self._profile_activate(subcommand)
+
+    async def _profile_list(self):
+        """List all available profiles."""
+        from managers.profiles import ProfileManager
+
+        pm = ProfileManager()
+        pm.initialize()
+
+        profiles = pm.list_profiles()
+        if not profiles:
+            await self.show_output("/profile list", "No profiles available.")
+            return
+
+        lines = ["Available Agent Profiles:", "=" * 60, ""]
+
+        for profile in profiles:
+            source_label = "[builtin]" if profile.source == "builtin" else "[local]"
+            active_marker = " ← active" if pm.active_profile_id == profile.id else ""
+            lines.append(
+                f"{profile.icon} {profile.name:25} {source_label:10}{active_marker}"
+            )
+            lines.append(f"   ID: {profile.id}")
+            lines.append(f"   {profile.description}")
+            if profile.tags:
+                lines.append(f"   Tags: {', '.join(profile.tags)}")
+            lines.append("")
+
+        lines.extend(
+            [
+                "Commands:",
+                "  /profile <name>           - Activate a profile",
+                "  /profile create           - Create new profile",
+                "  /profile edit <name>      - Edit a profile",
+                "  /profile export <name>    - Export profile to YAML",
+                "  /profile import <file>    - Import profile from YAML",
+                "  /profile delete <name>    - Delete a profile",
+                "  /profile active           - Show active profile",
+            ]
+        )
+
+        await self.show_output("/profile list", "\n".join(lines))
+
+    async def _profile_activate(self, profile_id: str):
+        """Activate a profile by ID or name."""
+        from managers.profiles import ProfileManager
+
+        pm = ProfileManager()
+        pm.initialize()
+
+        profile = pm.get_profile(profile_id)
+        if not profile:
+            self.notify(f"Profile not found: {profile_id}", severity="error")
+            return
+
+        pm.activate(profile_id)
+        self.notify(f"Activated profile: {profile.name}")
+
+        lines = [
+            f"Profile: {profile.icon} {profile.name}",
+            f"Description: {profile.description}",
+            "",
+            "Configuration:",
+            f"  Temperature: {profile.temperature}",
+            f"  Max Iterations: {profile.max_iterations}",
+            f"  Max Tokens: {profile.max_tokens or 'unlimited'}",
+        ]
+
+        if profile.allowed_tools:
+            lines.append(f"  Allowed Tools: {', '.join(profile.allowed_tools)}")
+        else:
+            lines.append("  Allowed Tools: all")
+
+        if profile.blocked_tools:
+            lines.append(f"  Blocked Tools: {', '.join(profile.blocked_tools)}")
+
+        if profile.require_approval:
+            lines.append(f"  Requires Approval: {', '.join(profile.require_approval)}")
+
+        if profile.auto_include_files:
+            lines.append(
+                f"  Auto-Include Files: {', '.join(profile.auto_include_files)}"
+            )
+
+        await self.show_output(f"/profile {profile_id}", "\n".join(lines))
+
+    async def _profile_active(self):
+        """Show the currently active profile."""
+        from managers.profiles import ProfileManager
+
+        pm = ProfileManager()
+        pm.initialize()
+
+        if not pm.active_profile:
+            self.notify("No active profile. Use /profile <name> to activate one.")
+            return
+
+        profile = pm.active_profile
+        lines = [
+            f"Active Profile: {profile.icon} {profile.name}",
+            f"ID: {profile.id}",
+            f"Description: {profile.description}",
+            "",
+            "Configuration:",
+            f"  Temperature: {profile.temperature}",
+            f"  Max Iterations: {profile.max_iterations}",
+            f"  Max Tokens: {profile.max_tokens or 'unlimited'}",
+        ]
+
+        if profile.system_prompt:
+            lines.extend(["", "System Prompt:", profile.system_prompt[:500]])
+            if len(profile.system_prompt) > 500:
+                lines.append("... (truncated)")
+
+        await self.show_output("/profile active", "\n".join(lines))
+
+    async def _profile_create(self, args: list[str]):
+        """Create a new profile interactively."""
+        from managers.profiles import ProfileManager
+
+        pm = ProfileManager()
+        pm.initialize()
+
+        if args and args[0] == "from":
+            if len(args) < 2:
+                self.notify(
+                    "Usage: /profile create from <source_id> <new_id> <new_name>",
+                    severity="warning",
+                )
+                return
+
+            source_id = args[1]
+            new_id = args[2] if len(args) > 2 else source_id + "_copy"
+            new_name = " ".join(args[3:]) if len(args) > 3 else f"{source_id} (Copy)"
+
+            profile = pm.duplicate_profile(source_id, new_id, new_name)
+            if profile:
+                self.notify(f"Created profile: {new_id}")
+                await self._profile_activate(new_id)
+            else:
+                self.notify(
+                    f"Could not duplicate profile: {source_id}", severity="error"
+                )
+        else:
+            self.notify(
+                "Interactive profile creation not yet implemented. Use /profile create from <source_id>"
+            )
+
+    async def _profile_edit(self, profile_id: str):
+        """Edit a profile."""
+        from managers.profiles import ProfileManager
+
+        pm = ProfileManager()
+        pm.initialize()
+
+        profile = pm.get_profile(profile_id)
+        if not profile:
+            self.notify(f"Profile not found: {profile_id}", severity="error")
+            return
+
+        if profile.source == "builtin":
+            self.notify(
+                "Cannot edit builtin profiles. Duplicate and edit the copy.",
+                severity="warning",
+            )
+            return
+
+        self.notify(
+            "Profile editing UI not yet implemented. Use /profile export to view/edit YAML."
+        )
+
+    async def _profile_export(self, profile_id: str):
+        """Export a profile to YAML."""
+        from managers.profiles import ProfileManager
+
+        pm = ProfileManager()
+        pm.initialize()
+
+        yaml_content = pm.export_profile(profile_id)
+        if not yaml_content:
+            self.notify(f"Profile not found: {profile_id}", severity="error")
+            return
+
+        await self.show_output(f"/profile export {profile_id}", yaml_content)
+
+    async def _profile_import(self, file_path: str):
+        """Import a profile from YAML file."""
+        from managers.profiles import ProfileManager
+        from pathlib import Path
+
+        try:
+            yaml_file = Path(file_path).expanduser()
+            if not yaml_file.exists():
+                self.notify(f"File not found: {file_path}", severity="error")
+                return
+
+            content = yaml_file.read_text(encoding="utf-8")
+            pm = ProfileManager()
+            pm.initialize()
+
+            profile = pm.import_profile(content)
+            if profile:
+                self.notify(f"Imported profile: {profile.id}")
+                await self._profile_activate(profile.id)
+            else:
+                self.notify(
+                    "Failed to import profile. Check YAML format.", severity="error"
+                )
+        except Exception as e:
+            self.notify(f"Import error: {e}", severity="error")
+
+    async def _profile_delete(self, profile_id: str):
+        """Delete a profile."""
+        from managers.profiles import ProfileManager
+
+        pm = ProfileManager()
+        pm.initialize()
+
+        profile = pm.get_profile(profile_id)
+        if not profile:
+            self.notify(f"Profile not found: {profile_id}", severity="error")
+            return
+
+        if profile.source == "builtin":
+            self.notify("Cannot delete builtin profiles.", severity="warning")
+            return
+
+        if pm.delete_profile(profile_id):
+            self.notify(f"Deleted profile: {profile_id}")
+        else:
+            self.notify(f"Failed to delete profile: {profile_id}", severity="error")
+
+    async def cmd_plan(self, args: list[str]):
+        """Planning mode. Usage: /plan <goal> | /plan status | /plan approve [step_id|all] | /plan skip <step_id> | /plan cancel | /plan execute"""
+        from managers.planning import PlanManager, StepStatus
+
+        pm: PlanManager = getattr(self.app, "_plan_manager", None) or PlanManager()
+        if not hasattr(self.app, "_plan_manager"):
+            object.__setattr__(self.app, "_plan_manager", pm)
+
+        if not args:
+            if pm.active_plan:
+                await self._plan_status(pm)
+            else:
+                self.notify(
+                    "Usage: /plan <goal> - Create a plan for a task",
+                    severity="warning",
+                )
+            return
+
+        subcommand = args[0].lower()
+
+        if subcommand == "status":
+            await self._plan_status(pm)
+        elif subcommand == "approve":
+            await self._plan_approve(pm, args[1:])
+        elif subcommand == "skip":
+            if len(args) > 1:
+                await self._plan_skip(pm, args[1])
+            else:
+                self.notify("Usage: /plan skip <step_id>", severity="warning")
+        elif subcommand == "cancel":
+            await self._plan_cancel(pm)
+        elif subcommand == "execute":
+            await self._plan_execute(pm)
+        elif subcommand == "list":
+            await self._plan_list(pm)
+        else:
+            goal = " ".join(args)
+            await self._plan_create(pm, goal)
+
+    async def _plan_create(self, pm, goal: str):
+        from managers.planning import StepStatus
+
+        if not self.app.ai_provider:
+            self.notify("No AI provider configured", severity="error")
+            return
+
+        self.notify(f"Generating plan for: {goal}")
+
+        context = ""
+        if self.app.blocks:
+            context_parts = []
+            for block in self.app.blocks[-5:]:
+                if block.content_output:
+                    context_parts.append(block.content_output[:500])
+            context = "\n".join(context_parts)
+
+        plan = await pm.generate_plan(goal, self.app.ai_provider, context)
+
+        lines = [
+            f"Plan: {plan.id}",
+            f"Goal: {plan.goal}",
+            f"Status: {plan.status.value}",
+            "",
+            "Steps:",
+        ]
+
+        status_icons = {
+            StepStatus.PENDING: "○",
+            StepStatus.APPROVED: "◉",
+            StepStatus.EXECUTING: "▶",
+            StepStatus.COMPLETED: "✓",
+            StepStatus.FAILED: "✗",
+            StepStatus.SKIPPED: "⊘",
+        }
+
+        for step in plan.steps:
+            icon = status_icons.get(step.status, "?")
+            type_label = f"[{step.step_type.value}]"
+            lines.append(
+                f"  {icon} {step.order}. [{step.id}] {type_label} {step.description}"
+            )
+
+            if step.tool_name:
+                lines.append(f"      Tool: {step.tool_name}")
+
+        lines.extend(
+            [
+                "",
+                "Commands:",
+                "  /plan approve all    - Approve all pending steps",
+                "  /plan approve <id>   - Approve specific step",
+                "  /plan skip <id>      - Skip a step",
+                "  /plan execute        - Start execution",
+                "  /plan cancel         - Cancel the plan",
+            ]
+        )
+
+        await self.show_output(f"/plan {goal}", "\n".join(lines))
+
+    async def _plan_status(self, pm):
+        from managers.planning import StepStatus
+
+        plan = pm.active_plan
+        if not plan:
+            self.notify("No active plan. Use /plan <goal> to create one.")
+            return
+
+        lines = [
+            f"Plan: {plan.id}",
+            f"Goal: {plan.goal}",
+            f"Status: {plan.status.value}",
+            f"Progress: {plan.progress * 100:.0f}%",
+            "",
+            "Steps:",
+        ]
+
+        status_icons = {
+            StepStatus.PENDING: "○",
+            StepStatus.APPROVED: "◉",
+            StepStatus.EXECUTING: "▶",
+            StepStatus.COMPLETED: "✓",
+            StepStatus.FAILED: "✗",
+            StepStatus.SKIPPED: "⊘",
+        }
+
+        for step in plan.steps:
+            icon = status_icons.get(step.status, "?")
+            type_label = f"[{step.step_type.value}]"
+            lines.append(
+                f"  {icon} {step.order}. [{step.id}] {type_label} {step.description}"
+            )
+
+            if step.result:
+                lines.append(f"      Result: {step.result[:100]}...")
+            if step.error:
+                lines.append(f"      Error: {step.error}")
+
+        await self.show_output("/plan status", "\n".join(lines))
+
+    async def _plan_approve(self, pm, args: list[str]):
+        plan = pm.active_plan
+        if not plan:
+            self.notify("No active plan", severity="warning")
+            return
+
+        if not args or args[0].lower() == "all":
+            count = pm.approve_all(plan.id)
+            self.notify(f"Approved {count} steps")
+        else:
+            step_id = args[0]
+            if pm.approve_step(plan.id, step_id):
+                self.notify(f"Approved step {step_id}")
+            else:
+                self.notify(f"Could not approve step {step_id}", severity="error")
+
+    async def _plan_skip(self, pm, step_id: str):
+        plan = pm.active_plan
+        if not plan:
+            self.notify("No active plan", severity="warning")
+            return
+
+        if pm.skip_step(plan.id, step_id):
+            self.notify(f"Skipped step {step_id}")
+        else:
+            self.notify(f"Could not skip step {step_id}", severity="error")
+
+    async def _plan_cancel(self, pm):
+        plan = pm.active_plan
+        if not plan:
+            self.notify("No active plan", severity="warning")
+            return
+
+        if pm.cancel_plan(plan.id):
+            self.notify("Plan cancelled")
+        else:
+            self.notify("Could not cancel plan", severity="error")
+
+    async def _plan_execute(self, pm):
+        from managers.planning import StepStatus, StepType
+        import time
+
+        plan = pm.active_plan
+        if not plan:
+            self.notify("No active plan", severity="warning")
+            return
+
+        next_step = plan.get_next_step()
+        if not next_step:
+            self.notify("No approved steps to execute. Use /plan approve first.")
+            return
+
+        pm.start_execution(plan.id)
+        self.notify(f"Executing step {next_step.order}: {next_step.description}")
+
+        start_time = time.time()
+
+        try:
+            if next_step.step_type == StepType.TOOL and next_step.tool_name:
+                from tools.builtin import get_builtin_tool
+
+                tool = get_builtin_tool(next_step.tool_name)
+                if tool:
+                    result = await tool.handler(**(next_step.tool_args or {}))
+                    pm.complete_step(
+                        plan.id,
+                        next_step.id,
+                        result=str(result),
+                        duration=time.time() - start_time,
+                    )
+                    self.notify(f"Step {next_step.order} completed")
+                else:
+                    pm.complete_step(
+                        plan.id,
+                        next_step.id,
+                        error=f"Tool not found: {next_step.tool_name}",
+                        duration=time.time() - start_time,
+                    )
+                    self.notify(
+                        f"Tool not found: {next_step.tool_name}", severity="error"
+                    )
+            elif next_step.step_type == StepType.CHECKPOINT:
+                pm.complete_step(
+                    plan.id,
+                    next_step.id,
+                    result="Checkpoint reached",
+                    duration=time.time() - start_time,
+                )
+                self.notify("Checkpoint reached. Review before continuing.")
+            else:
+                if self.app.ai_provider:
+                    response = ""
+                    gen = self.app.ai_provider.generate(  # type: ignore[union-attr]
+                        next_step.description,
+                        [],
+                    )
+                    async for chunk in gen:
+                        response += chunk
+                    pm.complete_step(
+                        plan.id,
+                        next_step.id,
+                        result=response[:500],
+                        duration=time.time() - start_time,
+                    )
+                    await self.show_output(f"Step {next_step.order}", response)
+                else:
+                    pm.complete_step(
+                        plan.id,
+                        next_step.id,
+                        error="No AI provider",
+                        duration=time.time() - start_time,
+                    )
+
+            if plan.get_next_step():
+                self.notify("Use /plan execute to continue to next step")
+            elif plan.is_complete:
+                self.notify("Plan completed!")
+
+        except Exception as e:
+            pm.complete_step(
+                plan.id,
+                next_step.id,
+                error=str(e),
+                duration=time.time() - start_time,
+            )
+            self.notify(f"Step failed: {e}", severity="error")
+
+    async def _plan_list(self, pm):
+        if not pm.plans:
+            self.notify("No plans created yet")
+            return
+
+        lines = ["Plans:", ""]
+        for plan_id, plan in pm.plans.items():
+            active = " (active)" if plan_id == pm.active_plan_id else ""
+            lines.append(f"  {plan_id}{active}: {plan.goal[:50]} [{plan.status.value}]")
+
+        await self.show_output("/plan list", "\n".join(lines))
+
+    async def cmd_bg(self, args: list[str]):
+        """Background agents. Usage: /bg <goal> | /bg list | /bg status <id> | /bg cancel <id> | /bg logs <id> | /bg clear"""
+        from managers.background import BackgroundAgentManager, TaskStatus
+
+        manager: BackgroundAgentManager = (
+            getattr(self.app, "background_manager", None) or BackgroundAgentManager()
+        )
+        if not hasattr(self.app, "background_manager"):
+            object.__setattr__(self.app, "background_manager", manager)
+
+        if not args:
+            await self._bg_list(manager)
+            return
+
+        subcommand = args[0].lower()
+
+        if subcommand == "list":
+            await self._bg_list(manager)
+        elif subcommand == "status":
+            if len(args) > 1:
+                await self._bg_status(manager, args[1])
+            else:
+                self.notify("Usage: /bg status <task_id>", severity="warning")
+        elif subcommand == "cancel":
+            if len(args) > 1:
+                await self._bg_cancel(manager, args[1])
+            else:
+                self.notify("Usage: /bg cancel <task_id>", severity="warning")
+        elif subcommand == "logs":
+            if len(args) > 1:
+                await self._bg_logs(manager, args[1])
+            else:
+                self.notify("Usage: /bg logs <task_id>", severity="warning")
+        elif subcommand == "clear":
+            await self._bg_clear(manager)
+        else:
+            goal = " ".join(args)
+            await self._bg_spawn(manager, goal)
+
+    async def _bg_list(self, manager):
+        from managers.background import TaskStatus
+
+        tasks = manager.list_tasks(limit=20)
+        if not tasks:
+            self.notify("No background tasks")
+            return
+
+        lines = [
+            f"Background Tasks (active: {manager.active_count}, queued: {manager.queued_count})",
+            "",
+        ]
+
+        for task in tasks:
+            lines.append(task.summary)
+            if task.status == TaskStatus.RUNNING:
+                lines.append(
+                    f"  Progress: {task.progress * 100:.0f}% - {task.current_step}"
+                )
+
+        await self.show_output("/bg list", "\n".join(lines))
+
+    async def _bg_status(self, manager, task_id: str):
+        from managers.background import TaskStatus
+
+        task = manager.get_task(task_id)
+        if not task:
+            self.notify(f"Task not found: {task_id}", severity="error")
+            return
+
+        lines = [
+            f"Task: {task.id}",
+            f"Goal: {task.goal}",
+            f"Status: {task.status.value}",
+            f"Progress: {task.progress * 100:.0f}%",
+            f"Duration: {task.duration:.1f}s",
+        ]
+
+        if task.current_step:
+            lines.append(f"Current: {task.current_step}")
+        if task.result:
+            lines.append(f"\nResult:\n{task.result[:500]}")
+        if task.error:
+            lines.append(f"\nError: {task.error}")
+
+        await self.show_output(f"/bg status {task_id}", "\n".join(lines))
+
+    async def _bg_cancel(self, manager, task_id: str):
+        if manager.cancel_task(task_id):
+            self.notify(f"Cancelled task: {task_id}")
+        else:
+            self.notify(f"Could not cancel task: {task_id}", severity="error")
+
+    async def _bg_logs(self, manager, task_id: str):
+        task = manager.get_task(task_id)
+        if not task:
+            self.notify(f"Task not found: {task_id}", severity="error")
+            return
+
+        if not task.logs:
+            self.notify(f"No logs for task: {task_id}")
+            return
+
+        await self.show_output(f"/bg logs {task_id}", "\n".join(task.logs[-50:]))
+
+    async def _bg_clear(self, manager):
+        count = manager.clear_completed()
+        self.notify(f"Cleared {count} completed tasks")
+
+    async def _bg_spawn(self, manager, goal: str):
+        if not self.app.ai_provider:
+            self.notify("No AI provider configured", severity="error")
+            return
+
+        task = await manager.spawn(goal, self.app.ai_provider)
+        self.notify(f"Started background task: {task.id}")
+
+    async def cmd_orchestrate(self, args: list[str]):
+        """Multi-agent orchestration. Usage: /orchestrate <goal> | /orchestrate status | /orchestrate stop"""
+        from managers.orchestrator import AgentOrchestrator, AgentRole
+
+        if not args:
+            self.notify(
+                "Usage: /orchestrate <goal> | /orchestrate status | /orchestrate stop",
+                severity="error",
+            )
+            return
+
+        subcommand = args[0].lower()
+
+        if subcommand == "status":
+            orch = getattr(self.app, "_orchestrator", None)
+            if orch is None:
+                self.notify("No active orchestration session")
+                return
+
+            if orch.is_running:
+                self.notify("Orchestration in progress...")
+            else:
+                self.notify("Orchestration idle")
+            return
+
+        if subcommand == "stop":
+            orch = getattr(self.app, "_orchestrator", None)
+            if orch is None:
+                self.notify("No active orchestration session")
+                return
+
+            orch.stop()
+            self.notify("Orchestration stopped")
+            return
+
+        goal = " ".join(args)
+
+        if not self.app.ai_provider:
+            self.notify("No AI provider configured", severity="error")
+            return
+
+        orchestrator = AgentOrchestrator()
+        object.__setattr__(self.app, "_orchestrator", orchestrator)
+
+        self.notify(f"Starting orchestration for: {goal}")
+
+        try:
+            result = await orchestrator.execute(goal, self.app.ai_provider)
+
+            output = f"Orchestration Complete\n"
+            output += f"Success: {result.success}\n"
+            output += f"Duration: {result.duration:.2f}s\n"
+            output += f"Subtasks: {len(result.subtasks)}\n\n"
+
+            for subtask in result.subtasks:
+                output += f"[{subtask.assigned_agent.value}] {subtask.id}: {subtask.description}\n"
+                output += f"  Status: {subtask.status}\n"
+                if subtask.result:
+                    output += f"  Result: {subtask.result[:200]}...\n"
+                output += "\n"
+
+            output += f"Final Result:\n{result.final_result}\n"
+
+            await self.show_output("/orchestrate", output)
+
+        except Exception as e:
+            self.notify(f"Orchestration error: {e}", severity="error")

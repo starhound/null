@@ -124,11 +124,9 @@ class SelectionListScreen(ModalScreen):
 
 
 class ModelItem(Static):
-    """A clickable model item."""
+    can_focus = True
 
     class Selected(Message):
-        """Message sent when a model is selected."""
-
         def __init__(self, provider: str, model: str):
             super().__init__()
             self.provider = provider
@@ -141,14 +139,29 @@ class ModelItem(Static):
         self.add_class("model-item")
 
     def on_click(self):
-        """Handle click on model item."""
         self.post_message(self.Selected(self.provider, self.model))
+
+    def on_key(self, event) -> None:
+        if event.key == "enter":
+            self.post_message(self.Selected(self.provider, self.model))
+            event.stop()
 
 
 class ModelListScreen(ModalScreen):
-    """Screen to select an AI model with collapsible provider sections."""
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("escape", "dismiss", "Close"),
+        Binding("up", "focus_prev", "Previous", show=False),
+        Binding("down", "focus_next", "Next", show=False),
+        Binding("tab", "focus_next", "Next", show=False),
+        Binding("shift+tab", "focus_prev", "Previous", show=False),
+    ]
 
-    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "dismiss", "Close")]
+    def action_focus_prev(self):
+        self.focus_previous()
+
+    def action_focus_next(self):
+        self.focus_next()
+
     SPINNER_FRAMES: ClassVar[list[str]] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
     is_loading: reactive[bool] = reactive(True)

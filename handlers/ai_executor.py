@@ -12,24 +12,30 @@ from textual.css.query import NoMatches
 from ai.base import Message, TokenUsage, ToolCallData, calculate_cost
 from config import Config, get_settings
 from models import AgentIteration, BlockType
-from tools import ToolRegistry, ToolResult
+from tools import ToolCall, ToolRegistry, ToolResult
+from tools.streaming import StreamingToolCall
 from widgets import AgentResponseBlock, AIResponseBlock, BaseBlockWidget, StatusBar
 
 from .common import UIBuffer
 
 if TYPE_CHECKING:
     from app import NullApp
-    from models import BlockState
+    from models import BlockState, ToolCallState
 
 
 class AIExecutor:
     """Handles AI generation and execution."""
 
     _background_tasks: ClassVar[set[asyncio.Task[None]]] = set()
+    _active_streaming_calls: ClassVar[dict[str, StreamingToolCall]] = {}
 
     def __init__(self, app: NullApp):
         self.app = app
         self._tool_registry: ToolRegistry | None = None
+
+    async def cancel_tool(self, tool_id: str) -> None:
+        if tool_id in self._active_streaming_calls:
+            self._active_streaming_calls[tool_id].cancel()
 
     def _get_tool_registry(self) -> ToolRegistry:
         """Get or create the tool registry."""
@@ -785,7 +791,15 @@ class AIExecutor:
                     continue
                 # If "approve" or "approve-all", proceed to execute
 
-            result = await registry.execute_tool(tool_call)
+            is_run_command = tc.name == "run_command"
+
+            if is_run_command and ai_widget is not None:
+                result = await self._execute_streaming_command(
+                    tool_call, registry, ai_widget, tc.id, tool_state
+                )
+            else:
+                result = await registry.execute_tool(tool_call)
+
             results.append(result)
 
             duration = time.time() - start_time
@@ -825,6 +839,75 @@ class AIExecutor:
 
         return results
 
+    async def _execute_streaming_command(
+        self,
+        tool_call: ToolCall,
+        registry: ToolRegistry,
+        ai_widget: AIResponseBlock,
+        tool_id: str,
+        tool_state: Any,
+    ) -> ToolResult:
+        """Execute run_command with streaming output to the tool accordion."""
+        from tools import ToolProgress, ToolStatus
+        from tools.builtin import run_command
+        from tools.streaming import StreamingToolCall
+
+        command = tool_call.arguments.get("command", "")
+        working_dir = tool_call.arguments.get("working_dir")
+
+        streaming_call = StreamingToolCall(
+            id=tool_id,
+            name=tool_call.name,
+            arguments=tool_call.arguments,
+        )
+        self._active_streaming_calls[tool_id] = streaming_call
+
+        ai_widget.update_tool_call(
+            tool_id=tool_id,
+            status="running",
+            output="",
+            streaming=True,
+        )
+
+        def on_progress(progress: ToolProgress) -> None:
+            status_map = {
+                ToolStatus.RUNNING: "running",
+                ToolStatus.COMPLETED: "success",
+                ToolStatus.FAILED: "error",
+                ToolStatus.CANCELLED: "error",
+            }
+            status = status_map.get(progress.status, "running")
+
+            self.app.call_from_thread(
+                ai_widget.update_tool_call,
+                tool_id=tool_id,
+                status=status if progress.is_complete else "running",
+                output=progress.output,
+                duration=progress.elapsed,
+                streaming=not progress.is_complete,
+            )
+
+            if progress.progress is not None:
+                self.app.call_from_thread(
+                    ai_widget.update_tool_progress,
+                    tool_id,
+                    progress,
+                )
+
+        try:
+            result = await run_command(
+                command=command,
+                working_dir=working_dir,
+                on_progress=on_progress,
+                tool_call=streaming_call,
+            )
+            is_error = "[Exit code:" in result or "[Error" in result
+            return ToolResult(tool_call.id, result, is_error=is_error)
+        except Exception as e:
+            return ToolResult(tool_call.id, f"[Error: {e!s}]", is_error=True)
+        finally:
+            self._active_streaming_calls.pop(tool_id, None)
+
     async def _request_tool_approval(
         self, tool_calls: list, iteration_number: int = 1
     ) -> str:
@@ -832,10 +915,8 @@ class AIExecutor:
 
         from screens import ToolApprovalScreen
 
-        # Build tool call data for the approval screen
         tool_data = [{"name": tc.name, "arguments": tc.arguments} for tc in tool_calls]
 
-        # Create and push the approval screen
         screen = ToolApprovalScreen(
             tool_calls=tool_data, iteration_number=iteration_number
         )

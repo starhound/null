@@ -46,3 +46,6 @@ class ExecutionHandler:
     ) -> None:
         """Execute a command and append output to existing CLI block."""
         await self.cli_executor.execute_cli_append(cmd, block, widget)
+
+    async def cancel_tool(self, tool_id: str) -> None:
+        await self.ai_executor.cancel_tool(tool_id)

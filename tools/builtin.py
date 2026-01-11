@@ -34,9 +34,28 @@ class BuiltinTool:
     requires_approval: bool = True  # Whether to ask user before executing
 
 
-async def run_command(command: str, working_dir: str | None = None) -> str:
-    """Execute a shell command and return the output."""
+async def run_command(
+    command: str,
+    working_dir: str | None = None,
+    on_progress: Callable[[Any], None] | None = None,
+    tool_call: Any | None = None,
+) -> str:
+    """Execute a shell command and return the output.
+
+    If on_progress is provided, streams output in real-time via callbacks.
+    """
     cwd = working_dir or os.getcwd()
+
+    if on_progress:
+        from .streaming import ToolProgress, ToolStatus, run_command_streaming
+
+        return await run_command_streaming(
+            command=command,
+            working_dir=cwd,
+            timeout=300.0,
+            on_progress=on_progress,
+            tool_call=tool_call,
+        )
 
     try:
         process = await asyncio.create_subprocess_shell(

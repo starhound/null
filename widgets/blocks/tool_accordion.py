@@ -1,21 +1,21 @@
-"""Tool accordion widget for agent mode tool calls."""
-
 import json
 from typing import ClassVar
 
 from rich.markdown import Markdown
 from rich.syntax import Syntax
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import Container, VerticalScroll
 from textual.events import Click
+from textual.message import Message
 from textual.reactive import reactive
 from textual.timer import Timer
-from textual.widgets import Label, Static
+from textual.widgets import Button, Label, ProgressBar, Static
+
+from tools.streaming import ToolProgress, ToolStatus
 
 
 class ToolHeader(Static):
-    """Header line for a tool call item."""
-
     SPINNER_FRAMES: ClassVar[list[str]] = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
 
     def __init__(
@@ -33,6 +33,8 @@ class ToolHeader(Static):
         self.expanded = expanded
         self._spinner_index = 0
         self._spinner_timer: Timer | None = None
+        self._elapsed_timer: Timer | None = None
+        self._start_time: float = 0.0
 
     def compose(self) -> ComposeResult:
         icon = "▼" if self.expanded else "▶"
@@ -40,14 +42,17 @@ class ToolHeader(Static):
         yield Label(icon, classes=icon_classes, id="tool-icon")
         yield Label(self.tool_name, classes="tool-name")
 
-        # Status indicator
         status_icon = self._get_status_icon()
         yield Label(status_icon, classes=f"tool-status {self.status}", id="tool-status")
 
-        # Spacer with decorative line
+        yield ProgressBar(
+            total=100, show_eta=False, classes="tool-progress", id="tool-progress"
+        )
+
         yield Static("", classes="tool-spacer")
 
-        # Duration (only show if > 0)
+        yield Button("✕", id="cancel-btn", classes="tool-cancel-btn", variant="error")
+
         duration_text = f"{self.duration:.1f}s" if self.duration > 0 else ""
         yield Label(duration_text, classes="tool-duration", id="tool-duration")
 
@@ -57,12 +62,17 @@ class ToolHeader(Static):
             "running": self.SPINNER_FRAMES[0],
             "success": "󰄬",
             "error": "✗",
+            "cancelled": "⊘",
         }
         return icons.get(self.status, "○")
 
     def on_mount(self) -> None:
+        self.query_one("#tool-progress", ProgressBar).display = False
+        self.query_one("#cancel-btn", Button).display = self.status == "running"
+
         if self.status == "running":
             self._spinner_timer = self.set_interval(0.08, self._animate_spinner)
+            self._start_elapsed_timer()
 
     def _animate_spinner(self) -> None:
         if self.status != "running":
@@ -77,28 +87,73 @@ class ToolHeader(Static):
         except Exception:
             pass
 
+    def _start_elapsed_timer(self) -> None:
+        import time
+
+        self._start_time = time.time()
+        if self._elapsed_timer:
+            self._elapsed_timer.stop()
+        self._elapsed_timer = self.set_interval(0.5, self._update_elapsed)
+
+    def _update_elapsed(self) -> None:
+        import time
+
+        if self.status != "running":
+            if self._elapsed_timer:
+                self._elapsed_timer.stop()
+            return
+
+        elapsed = time.time() - self._start_time
+        try:
+            duration_label = self.query_one("#tool-duration", Label)
+            duration_label.update(f"{elapsed:.1f}s")
+        except Exception:
+            pass
+
     def update_status(self, status: str, duration: float = 0.0) -> None:
-        """Update the tool status and duration."""
         self.status = status
         self.duration = duration
         try:
             status_label = self.query_one("#tool-status", Label)
             status_label.update(self._get_status_icon())
-            status_label.remove_class("pending", "running", "success", "error")
+            status_label.remove_class(
+                "pending", "running", "success", "error", "cancelled"
+            )
             status_label.add_class(status)
 
             duration_label = self.query_one("#tool-duration", Label)
             duration_label.update(f"{duration:.1f}s" if duration > 0 else "")
 
-            if status == "running" and not self._spinner_timer:
-                self._spinner_timer = self.set_interval(0.08, self._animate_spinner)
-            elif status != "running" and self._spinner_timer:
-                self._spinner_timer.stop()
+            cancel_btn = self.query_one("#cancel-btn", Button)
+            cancel_btn.display = status == "running"
+
+            if status == "running":
+                if not self._spinner_timer:
+                    self._spinner_timer = self.set_interval(0.08, self._animate_spinner)
+                self._start_elapsed_timer()
+            else:
+                if self._spinner_timer:
+                    self._spinner_timer.stop()
+                if self._elapsed_timer:
+                    self._elapsed_timer.stop()
+
+                self.query_one("#tool-progress", ProgressBar).display = False
+
+        except Exception:
+            pass
+
+    def update_progress(self, progress: float | None) -> None:
+        try:
+            bar = self.query_one("#tool-progress", ProgressBar)
+            if progress is not None:
+                bar.display = True
+                bar.progress = progress * 100
+            else:
+                bar.display = False
         except Exception:
             pass
 
     def set_expanded(self, expanded: bool) -> None:
-        """Update the expand/collapse icon."""
         self.expanded = expanded
         try:
             icon_label = self.query_one("#tool-icon", Label)
@@ -112,19 +167,25 @@ class ToolHeader(Static):
 
 
 class ToolOutput(VerticalScroll):
-    """Collapsible output container for tool results."""
+    streaming = reactive(False)
 
-    def __init__(self, arguments: str = "", output: str = "", id: str | None = None):
+    def __init__(
+        self,
+        arguments: str = "",
+        output: str = "",
+        id: str | None = None,
+        streaming: bool = False,
+    ):
         super().__init__(id=id)
         self.arguments = arguments
         self.output = output
+        self.streaming = streaming
+        self._auto_scroll = True
 
     def compose(self) -> ComposeResult:
         with Container(classes="tool-output-content"):
-            # Show arguments if present
             if self.arguments:
                 try:
-                    # Try to parse and pretty-print JSON arguments
                     args_dict = json.loads(self.arguments)
                     args_formatted = json.dumps(args_dict, indent=2)
                     yield Static(
@@ -136,36 +197,56 @@ class ToolOutput(VerticalScroll):
                 except (json.JSONDecodeError, TypeError):
                     yield Static(f"Args: {self.arguments}", classes="tool-args")
 
-            # Show output
             if self.output:
-                yield Static(
-                    Markdown(self.output), classes="tool-result", id="tool-result"
-                )
+                if self.streaming:
+                    yield Static(
+                        self.output, classes="tool-result streaming", id="tool-result"
+                    )
+                else:
+                    yield Static(
+                        Markdown(self.output), classes="tool-result", id="tool-result"
+                    )
             else:
-                yield Static("(no output)", classes="tool-result", id="tool-result")
+                yield Static(
+                    "(running...)" if self.streaming else "(no output)",
+                    classes="tool-result",
+                    id="tool-result",
+                )
 
-    def update_output(self, output: str) -> None:
-        """Update the output content."""
+    def update_output(self, output: str, streaming: bool = False) -> None:
         self.output = output
+        self.streaming = streaming
+
         try:
             result = self.query_one("#tool-result", Static)
-            result.update(Markdown(output) if output else "(no output)")
+
+            if streaming:
+                result.update(output if output else "(running...)")
+                result.add_class("streaming")
+            else:
+                result.remove_class("streaming")
+                result.update(Markdown(output) if output else "(no output)")
+
+            if self._auto_scroll and streaming:
+                self.scroll_end(animate=False)
+
         except Exception:
             pass
 
     def show(self) -> None:
-        """Show the output panel."""
         self.add_class("visible")
 
     def hide(self) -> None:
-        """Hide the output panel."""
         self.remove_class("visible")
 
 
 class ToolAccordionItem(Static):
-    """Single collapsible tool call in the accordion."""
-
     expanded = reactive(False)
+
+    class CancelRequested(Message):
+        def __init__(self, tool_id: str):
+            self.tool_id = tool_id
+            super().__init__()
 
     def __init__(
         self,
@@ -177,6 +258,7 @@ class ToolAccordionItem(Static):
         duration: float = 0.0,
         id: str | None = None,
         classes: str | None = None,
+        streaming: bool = False,
     ):
         super().__init__(id=id, classes=classes)
         self.tool_id = tool_id
@@ -185,6 +267,7 @@ class ToolAccordionItem(Static):
         self.output = output
         self.status = status
         self.duration = duration
+        self.streaming = streaming
         self._header: ToolHeader | None = None
         self._output_panel: ToolOutput | None = None
 
@@ -199,19 +282,24 @@ class ToolAccordionItem(Static):
         yield self._header
 
         self._output_panel = ToolOutput(
-            arguments=self.arguments, output=self.output, id=f"output-{self.tool_id}"
+            arguments=self.arguments,
+            output=self.output,
+            id=f"output-{self.tool_id}",
+            streaming=self.streaming,
         )
         yield self._output_panel
 
     def on_click(self, event: Click) -> None:
-        """Toggle expand/collapse on click."""
-        # Only toggle if clicking the header area
         if event.y <= 1:
             self.expanded = not self.expanded
             event.stop()
 
+    @on(Button.Pressed, "#cancel-btn")
+    def on_cancel_pressed(self, event: Button.Pressed) -> None:
+        event.stop()
+        self.post_message(self.CancelRequested(self.tool_id))
+
     def watch_expanded(self, expanded: bool) -> None:
-        """Update UI when expanded state changes."""
         if self._header:
             self._header.set_expanded(expanded)
         if self._output_panel:
@@ -221,36 +309,41 @@ class ToolAccordionItem(Static):
                 self._output_panel.hide()
 
     def update_status(self, status: str, duration: float = 0.0) -> None:
-        """Update the tool status."""
         self.status = status
         self.duration = duration
         if self._header:
             self._header.update_status(status, duration)
 
-    def update_output(self, output: str) -> None:
-        """Update the tool output."""
+    def update_output(self, output: str, streaming: bool = False) -> None:
         self.output = output
+        self.streaming = streaming
         if self._output_panel:
-            self._output_panel.update_output(output)
+            self._output_panel.update_output(output, streaming=streaming)
+
+    def update_progress(self, progress: ToolProgress) -> None:
+        if self._header:
+            self._header.update_progress(progress.progress)
+
+        self.update_status(progress.status.value, progress.elapsed)
+        self.update_output(progress.output, streaming=True)
 
 
 class ToolAccordion(Container):
-    """Stack of collapsible tool calls for agent mode."""
-
     def __init__(self, id: str | None = None, classes: str | None = None):
         super().__init__(id=id, classes=classes)
         self._tools: dict[str, ToolAccordionItem] = {}
 
     def compose(self) -> ComposeResult:
-        # Empty by default - tools added dynamically
-        # Using "yield from []" to create an empty generator
         yield from []
 
     def add_tool(
-        self, tool_id: str, tool_name: str, arguments: str = "", status: str = "running"
+        self,
+        tool_id: str,
+        tool_name: str,
+        arguments: str = "",
+        status: str = "running",
+        streaming: bool = False,
     ) -> ToolAccordionItem:
-        """Add a new tool call to the accordion."""
-        # Remove empty class if this is the first tool
         if "empty" in self.classes:
             self.remove_class("empty")
 
@@ -260,9 +353,14 @@ class ToolAccordion(Container):
             arguments=arguments,
             status=status,
             id=f"tool-{tool_id}",
+            streaming=streaming,
         )
         self._tools[tool_id] = item
         self.mount(item)
+
+        if streaming:
+            item.expanded = True
+
         return item
 
     def update_tool(
@@ -271,21 +369,19 @@ class ToolAccordion(Container):
         status: str | None = None,
         output: str | None = None,
         duration: float | None = None,
+        streaming: bool = False,
     ) -> None:
-        """Update an existing tool call."""
         item = self._tools.get(tool_id)
         if item:
             if status is not None:
                 item.update_status(status, duration or 0.0)
             if output is not None:
-                item.update_output(output)
+                item.update_output(output, streaming=streaming)
 
     def get_tool(self, tool_id: str) -> ToolAccordionItem | None:
-        """Get a tool item by ID."""
         return self._tools.get(tool_id)
 
     def clear(self) -> None:
-        """Remove all tool items."""
         for item in self._tools.values():
             item.remove()
         self._tools.clear()

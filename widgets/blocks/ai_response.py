@@ -1,5 +1,7 @@
 """AI Response block widget for chat mode (simple Q&A)."""
 
+from typing import Any
+
 from textual import on
 from textual.app import ComposeResult
 
@@ -179,11 +181,20 @@ class AIResponseBlock(BaseBlockWidget):
                 self.thinking_widget.force_render()
 
     def add_tool_call(
-        self, tool_id: str, tool_name: str, arguments: str = "", status: str = "running"
+        self,
+        tool_id: str,
+        tool_name: str,
+        arguments: str = "",
+        status: str = "running",
+        streaming: bool = False,
     ):
         """Add a tool call to the accordion (for chat mode tool calls)."""
         return self.tool_accordion.add_tool(
-            tool_id=tool_id, tool_name=tool_name, arguments=arguments, status=status
+            tool_id=tool_id,
+            tool_name=tool_name,
+            arguments=arguments,
+            status=status,
+            streaming=streaming,
         )
 
     def update_tool_call(
@@ -192,11 +203,21 @@ class AIResponseBlock(BaseBlockWidget):
         status: str | None = None,
         output: str | None = None,
         duration: float | None = None,
+        streaming: bool = False,
     ):
         """Update an existing tool call in the accordion."""
         self.tool_accordion.update_tool(
-            tool_id=tool_id, status=status, output=output, duration=duration
+            tool_id=tool_id,
+            status=status,
+            output=output,
+            duration=duration,
+            streaming=streaming,
         )
+
+    def update_tool_progress(self, tool_id: str, progress: Any) -> None:
+        item = self.tool_accordion.get_tool(tool_id)
+        if item:
+            item.update_progress(progress)
 
     # Action button handlers
     @on(ActionButton.Pressed)

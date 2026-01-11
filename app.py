@@ -97,6 +97,27 @@ class NullApp(App):
 
         set_agent_manager(self.agent_manager)
 
+        # Plan Manager
+        from managers.planning import PlanManager
+
+        self.plan_manager = PlanManager()
+
+        # Error Detector
+        from managers.error_detector import ErrorDetector
+
+        self.error_detector = ErrorDetector()
+        self._watch_mode = False
+
+        # Review Manager
+        from managers.review import ReviewManager
+
+        self.review_manager = ReviewManager()
+
+        # Suggestion Engine
+        from managers.suggestions import SuggestionEngine
+
+        self.suggestion_engine = SuggestionEngine()
+
         # CLI session tracking
         self.current_cli_block: BlockState | None = None
         self.current_cli_widget: BaseBlockWidget | None = None
@@ -848,6 +869,13 @@ class NullApp(App):
 
         # Send input to the process via process manager
         self.process_manager.send_input(block_id, data)
+
+    async def on_tool_accordion_item_cancel_requested(self, message):
+        tool_id = message.tool_id
+        self.notify(f"Cancelling tool {tool_id}...", severity="warning")
+
+        if hasattr(self.execution_handler, "cancel_tool"):
+            await self.execution_handler.cancel_tool(tool_id)
 
     # -------------------------------------------------------------------------
     # Utilities

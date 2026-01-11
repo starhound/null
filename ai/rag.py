@@ -155,10 +155,23 @@ class Chunker:
 class RAGManager:
     """Manages indexing and retrieval."""
 
-    def __init__(self):
-        self.store = VectorStore(Path.home() / ".null" / "index.json")
+    def __init__(self, use_sqlite: bool = False):
+        """Initialize RAG manager.
+
+        Args:
+            use_sqlite: If True, use SQLiteVectorStore instead of JSON VectorStore
+        """
+        if use_sqlite:
+            try:
+                from ai.rag_sqlite import SQLiteVectorStore
+
+                self.store = SQLiteVectorStore()
+            except ImportError:
+                self.store = VectorStore(Path.home() / ".null" / "index.json")
+        else:
+            self.store = VectorStore(Path.home() / ".null" / "index.json")
+
         self.chunker = Chunker()
-        # Default ignore patterns
         self.ignore_patterns = [
             ".git*",
             "__pycache__*",
@@ -272,7 +285,7 @@ class RAGManager:
         results = self.store.search(vector, limit)
         return [r[0] for r in results]
 
-    def get_stats(self) -> IndexStats:
+    def get_stats(self) -> IndexStats | dict:
         return self.store.stats()
 
     def clear(self):

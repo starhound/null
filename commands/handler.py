@@ -15,6 +15,7 @@ from .core import CoreCommands
 from .mcp import MCPCommands
 from .rag import RAGCommands
 from .session import SessionCommands
+from .share import ShareCommands
 from .todo import TodoCommands
 
 if TYPE_CHECKING:
@@ -42,6 +43,7 @@ class SlashCommandHandler:
         self._ai = AICommands(app)
         self._rag = RAGCommands(app)
         self._session = SessionCommands(app)
+        self._share = ShareCommands(app)
         self._mcp = MCPCommands(app)
         self._config = ConfigCommands(app)
         self._todo = TodoCommands(app)
@@ -59,7 +61,118 @@ class SlashCommandHandler:
             ),
             "git": (
                 self._core.cmd_git,
-                CommandInfo("git", "Show git status"),
+                CommandInfo(
+                    "git",
+                    "Git operations",
+                    "",
+                    subcommands=[
+                        ("status", "Show git status"),
+                        ("diff [file]", "Show changes"),
+                        ("commit [msg]", "Commit (AI message if empty)"),
+                        ("undo", "Undo last commit"),
+                        ("log [n]", "Show recent commits"),
+                        ("stash [msg]", "Stash changes"),
+                        ("stash pop", "Apply stash"),
+                    ],
+                ),
+            ),
+            "diff": (
+                self._core.cmd_diff,
+                CommandInfo("diff", "Show git diff (shortcut for /git diff)"),
+            ),
+            "undo": (
+                self._core.cmd_undo,
+                CommandInfo("undo", "Undo last git commit"),
+            ),
+            "fix": (
+                self._core.cmd_fix,
+                CommandInfo(
+                    "fix",
+                    "Generate fix for last error",
+                    "",
+                    subcommands=[
+                        ("", "Fix last detected error"),
+                        ("<error>", "Parse and fix provided error text"),
+                    ],
+                ),
+            ),
+            "watch": (
+                self._core.cmd_watch,
+                CommandInfo(
+                    "watch",
+                    "Toggle error watch mode",
+                    "",
+                    subcommands=[
+                        ("", "Toggle watch mode on/off"),
+                        ("stop", "Disable watch mode"),
+                    ],
+                ),
+            ),
+            "review": (
+                self._core.cmd_review,
+                CommandInfo(
+                    "review",
+                    "Review pending code changes",
+                    "",
+                    subcommands=[
+                        ("", "Show pending changes"),
+                        ("status", "Show review status"),
+                        ("accept [file] [hunk]", "Accept changes"),
+                        ("reject [file] [hunk]", "Reject changes"),
+                        ("apply", "Apply accepted changes"),
+                        ("clear", "Clear all pending"),
+                        ("show <file>", "Show file diff"),
+                    ],
+                ),
+            ),
+            "issue": (
+                self._core.cmd_issue,
+                CommandInfo(
+                    "issue",
+                    "GitHub issue operations",
+                    "",
+                    subcommands=[
+                        ("<number>", "View issue details"),
+                        ("list", "List open issues"),
+                        ("create", "Create new issue"),
+                    ],
+                ),
+            ),
+            "pr": (
+                self._core.cmd_pr,
+                CommandInfo(
+                    "pr",
+                    "GitHub PR operations",
+                    "",
+                    subcommands=[
+                        ("<number>", "View PR details"),
+                        ("list", "List open PRs"),
+                        ("create", "Create new PR"),
+                        ("diff <number>", "Show PR diff"),
+                    ],
+                ),
+            ),
+            "cmd": (
+                self._core.cmd_cmd,
+                CommandInfo(
+                    "cmd",
+                    "Translate natural language to shell command",
+                    "",
+                    subcommands=[
+                        ("<description>", "Describe what you want to do"),
+                    ],
+                ),
+            ),
+            "explain": (
+                self._core.cmd_explain,
+                CommandInfo(
+                    "explain",
+                    "Explain a shell command",
+                    "",
+                    subcommands=[
+                        ("<command>", "Command to explain"),
+                    ],
+                ),
             ),
             "clear": (
                 self._core.cmd_clear,
@@ -68,6 +181,21 @@ class SlashCommandHandler:
             "reload": (
                 self._core.cmd_reload,
                 CommandInfo("reload", "Reload configuration and themes"),
+            ),
+            "map": (
+                self._core.cmd_map,
+                CommandInfo(
+                    "map",
+                    "Show project architecture",
+                    "",
+                    subcommands=[
+                        ("", "Show full architecture"),
+                        ("<path>", "Show architecture for specific path"),
+                        ("--format mermaid", "Output as mermaid diagram"),
+                        ("--depth N", "Limit analysis depth"),
+                        ("<component>", "Show component details"),
+                    ],
+                ),
             ),
             "quit": (
                 self._core.cmd_quit,
@@ -174,6 +302,18 @@ class SlashCommandHandler:
                     ],
                 ),
             ),
+            "orchestrate": (
+                self._ai.cmd_orchestrate,
+                CommandInfo(
+                    "orchestrate",
+                    "Multi-agent orchestration",
+                    subcommands=[
+                        ("<goal>", "Start orchestration with goal"),
+                        ("status", "Show orchestration status"),
+                        ("stop", "Stop active orchestration"),
+                    ],
+                ),
+            ),
             "compact": (
                 self._ai.cmd_compact,
                 CommandInfo("compact", "Summarize context to save tokens"),
@@ -181,6 +321,53 @@ class SlashCommandHandler:
             "context": (
                 self._ai.cmd_context,
                 CommandInfo("context", "Inspect context messages"),
+            ),
+            "plan": (
+                self._ai.cmd_plan,
+                CommandInfo(
+                    "plan",
+                    "Create and manage AI-generated plans",
+                    "",
+                    subcommands=[
+                        ("<goal>", "Generate a plan for the goal"),
+                        ("show", "Show current plan"),
+                        ("approve [id|all]", "Approve step(s)"),
+                        ("skip <id>", "Skip a step"),
+                        ("execute", "Execute approved steps"),
+                        ("cancel", "Cancel current plan"),
+                    ],
+                ),
+            ),
+            "workflow": (
+                self._core.cmd_workflow,
+                CommandInfo(
+                    "workflow",
+                    "Manage workflow templates",
+                    "",
+                    subcommands=[
+                        ("list", "List all workflows"),
+                        ("run <name>", "Run a workflow"),
+                        ("save [name]", "Save session as workflow"),
+                        ("import <file>", "Import workflow from YAML"),
+                        ("export <name>", "Export workflow to YAML"),
+                    ],
+                ),
+            ),
+            "bg": (
+                self._ai.cmd_bg,
+                CommandInfo(
+                    "bg",
+                    "Run AI agents in background",
+                    "",
+                    subcommands=[
+                        ("<goal>", "Start background task"),
+                        ("list", "List all tasks"),
+                        ("status <id>", "Show task status"),
+                        ("cancel <id>", "Cancel task"),
+                        ("logs <id>", "Show task logs"),
+                        ("clear", "Clear completed"),
+                    ],
+                ),
             ),
             # RAG commands
             "index": (
@@ -228,6 +415,21 @@ class SlashCommandHandler:
                     ],
                 ),
             ),
+            "share": (
+                self._share.cmd_share,
+                CommandInfo(
+                    "share",
+                    "Share session in various formats",
+                    subcommands=[
+                        ("", "Share to clipboard (markdown)"),
+                        ("--format json", "Share as JSON"),
+                        ("--format markdown", "Share as Markdown"),
+                        ("--format html", "Share as HTML"),
+                        ("--output <path>", "Save to file"),
+                        ("--anonymize", "Anonymize sensitive data"),
+                    ],
+                ),
+            ),
             # MCP commands
             "mcp": (
                 self._mcp.cmd_mcp,
@@ -266,6 +468,23 @@ class SlashCommandHandler:
             "theme": (
                 self._config.cmd_theme,
                 CommandInfo("theme", "Change UI theme", "F3"),
+            ),
+            "profile": (
+                self._ai.cmd_profile,
+                CommandInfo(
+                    "profile",
+                    "Manage agent profiles",
+                    subcommands=[
+                        ("list", "List all profiles"),
+                        ("<name>", "Activate a profile"),
+                        ("create [from <id>]", "Create new profile"),
+                        ("edit <name>", "Edit a profile"),
+                        ("export <name>", "Export profile to YAML"),
+                        ("import <file>", "Import profile from YAML"),
+                        ("delete <name>", "Delete a profile"),
+                        ("active", "Show active profile"),
+                    ],
+                ),
             ),
         }
 

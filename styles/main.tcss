@@ -2331,6 +2331,15 @@ ToolOutput .tool-result {
     width: 100%;
 }
 
+ToolOutput .tool-result.streaming {
+    color: $text-bright;
+    background: $layer-void;
+    padding: 0 1;
+    height: auto;
+    max-height: 20;
+    overflow-y: auto;
+}
+
 /* ==========================================================================
    AIResponseBlock (Chat Mode) - Subtle, Conversational Styling
    ========================================================================== */
@@ -3424,4 +3433,33 @@ AgentStatusWidget #agent-state-label {
 AgentStatusWidget #agent-recent-tools {
     margin-top: 1;
     color: $text-dim;
+}
+
+/* ==========================================================================
+   Streaming Tool Styles
+   ========================================================================== */
+
+.tool-progress {
+    width: 1fr;
+    height: 1;
+    margin: 0 1;
+    background: $layer-raised;
+    color: $primary;
+    display: none;
+}
+
+.tool-cancel-btn {
+    width: 3;
+    min-width: 3;
+    height: 1;
+    border: none;
+    background: transparent;
+    color: $error;
+    margin-left: 1;
+    display: none;
+}
+
+.tool-cancel-btn:hover {
+    background: $error;
+    color: $background;
 }

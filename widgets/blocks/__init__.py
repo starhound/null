@@ -13,6 +13,9 @@ from .code_block import (
     get_file_extension,
 )
 from .command import CommandBlock
+from .commit_block import CommitBlockWidget
+from .correction_block import CorrectionLoopBlock
+from .diff_view import DiffViewWidget
 from .execution import ExecutionWidget
 from .frame import BlockFrame, FrameSeparator
 from .iteration import (
@@ -72,6 +75,9 @@ __all__ = [
     "BlockWidget",
     "CodeBlockWidget",
     "CommandBlock",
+    "CommitBlockWidget",
+    "CorrectionLoopBlock",
+    "DiffViewWidget",
     "ExecutionWidget",
     "FrameSeparator",
     "IterationContainer",
