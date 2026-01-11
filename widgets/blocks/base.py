@@ -13,6 +13,9 @@ class BaseBlockWidget(Static):
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("c", "copy_content", "Copy", show=False),
         Binding("y", "copy_content", "Copy", show=False),  # vim-style yank
+        Binding("r", "retry_block", "Retry", show=False),
+        Binding("e", "edit_block", "Edit", show=False),
+        Binding("f", "fork_block", "Fork", show=False),
     ]
 
     class RetryRequested(Message):
@@ -76,3 +79,13 @@ class BaseBlockWidget(Static):
         content = self.block.content_output or ""
         if content:
             self.post_message(self.CopyRequested(self.block.id, content))
+
+    def action_retry_block(self) -> None:
+        self.post_message(self.RetryRequested(self.block.id))
+
+    def action_edit_block(self) -> None:
+        content = self.block.content_input or ""
+        self.post_message(self.EditRequested(self.block.id, content))
+
+    def action_fork_block(self) -> None:
+        self.post_message(self.ForkRequested(self.block.id))

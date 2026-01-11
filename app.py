@@ -46,9 +46,6 @@ class NullApp(App):
 
     BINDINGS: ClassVar[list[BindingType]] = [
         ("escape", "cancel_operation", "Cancel"),
-        ("escape", "cancel_operation", "Cancel"),
-        # ("ctrl+c", "smart_quit", "Quit"),  # Handled in on_key to allow terminal capture
-        ("ctrl+l", "clear_history", "Clear History"),
         ("ctrl+l", "clear_history", "Clear History"),
         ("ctrl+s", "quick_export", "Export"),
         ("ctrl+r", "search_history", "Search History"),
@@ -744,13 +741,13 @@ class NullApp(App):
         self, message: BaseBlockWidget.CopyRequested
     ):
         """Handle copy button click."""
+        copied = False
         try:
             import pyperclip
 
             pyperclip.copy(message.content)
-            self.notify("Copied to clipboard")
+            copied = True
         except ImportError:
-            # Fallback: try to use xclip/xsel on Linux or pbcopy on macOS
             import asyncio
             import subprocess
             import sys
@@ -770,11 +767,26 @@ class NullApp(App):
                         input=message.content.encode(),
                         check=True,
                     )
-                self.notify("Copied to clipboard")
+                copied = True
             except Exception:
                 self.notify("Failed to copy - install pyperclip", severity="error")
         except Exception as e:
             self.notify(f"Copy failed: {e}", severity="error")
+
+        if copied:
+            self._show_copy_feedback(message.block_id)
+
+    def _show_copy_feedback(self, block_id: str) -> None:
+        from widgets.blocks.actions import ActionBar
+
+        try:
+            history = self.query_one("#history")
+            for widget in history.query("ActionBar"):
+                if isinstance(widget, ActionBar) and widget.block_id == block_id:
+                    widget.show_copy_feedback()
+                    break
+        except Exception:
+            pass
 
     async def on_base_block_widget_fork_requested(
         self, message: BaseBlockWidget.ForkRequested

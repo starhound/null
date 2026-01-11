@@ -2153,6 +2153,11 @@ ActionButton:disabled {
     background: transparent;
 }
 
+ActionButton.copied {
+    color: $success;
+    text-style: bold;
+}
+
 /* --- BlockFrame: Chat/Agent mode container --- */
 
 BlockFrame {

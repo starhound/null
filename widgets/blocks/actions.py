@@ -77,3 +77,29 @@ class ActionBar(Horizontal):
             meta_label.update(meta_text)
         except Exception:
             pass
+
+    def show_copy_feedback(self) -> None:
+        try:
+            copy_btn = self.query_one("#copy-btn", ActionButton)
+            original_label = copy_btn.label
+            copy_btn.label = "[✓ Copied]"
+            copy_btn.add_class("copied")
+            self.set_timer(
+                1.5, lambda: self._reset_copy_button(copy_btn, original_label)
+            )
+        except Exception:
+            pass
+
+    def _reset_copy_button(self, btn: ActionButton, original_label) -> None:
+        try:
+            btn.label = original_label
+            btn.remove_class("copied")
+        except Exception:
+            pass
+
+    def _reset_copy_button(self, btn: ActionButton, original_label) -> None:
+        try:
+            btn.label = original_label
+            btn.remove_class("copied")
+        except Exception:
+            pass

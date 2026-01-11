@@ -144,3 +144,29 @@ class TestBaseBlockWidgetBindings:
                 assert b.action == "copy_content"
             elif isinstance(b, tuple) and b[0] in ("c", "y"):
                 assert b[1] == "copy_content"
+
+    def test_action_bindings_defined(self):
+        from textual.binding import Binding
+
+        bindings = BaseBlockWidget.BINDINGS
+        binding_keys = []
+        for b in bindings:
+            if isinstance(b, Binding):
+                binding_keys.append(b.key)
+            elif isinstance(b, tuple):
+                binding_keys.append(b[0])
+
+        assert "r" in binding_keys
+        assert "e" in binding_keys
+        assert "f" in binding_keys
+
+    def test_action_bindings_target_correct_actions(self):
+        from textual.binding import Binding
+
+        expected = {"r": "retry_block", "e": "edit_block", "f": "fork_block"}
+        bindings = BaseBlockWidget.BINDINGS
+        for b in bindings:
+            if isinstance(b, Binding) and b.key in expected:
+                assert b.action == expected[b.key]
+            elif isinstance(b, tuple) and b[0] in expected:
+                assert b[1] == expected[b[0]]

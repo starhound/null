@@ -171,9 +171,10 @@ class AIExecutor:
             widget.set_loading(False)
             self.app._active_worker = None
         except Exception as e:
-            block_state.content_output = f"AI Error: {e!s}"
+            error_msg = f"**⚠️ Error:** {e!s}"
+            block_state.content_output = error_msg
             block_state.is_running = False
-            widget.update_output(f"Error: {e!s}")
+            widget.update_output(error_msg)
             widget.set_loading(False)
             self.app._active_worker = None
 
@@ -1039,7 +1040,7 @@ class AIExecutor:
                 ai_widget.update_output("")
 
             except Exception as e:
-                err_msg = f"\n**Error Running Command:** {e!s}\n"
+                err_msg = f"\n**⚠️ Error Running Command:** {e!s}\n"
                 ai_block.content_exec_output = err_msg
                 ai_widget.update_output("")
                 self.app.notify(f"Agent Execution Error: {e}", severity="error")

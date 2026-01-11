@@ -1,3 +1,6 @@
+from typing import ClassVar
+
+from textual.binding import Binding, BindingType
 from textual.widget import Widget
 from textual.widgets import ListItem, ListView
 
@@ -18,6 +21,13 @@ class HistoryViewport(ListView):
     }
     """
 
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("j", "cursor_down", "Down", show=False),
+        Binding("k", "cursor_up", "Up", show=False),
+        Binding("g", "scroll_home", "Top", show=False),
+        Binding("G", "scroll_end", "Bottom", show=False),
+    ]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._auto_scroll = True
@@ -31,8 +41,8 @@ class HistoryViewport(ListView):
         self.call_later(self.scroll_end, animate=False)
 
     def on_key(self, event) -> None:
-        if event.key in ("pageup", "home"):
+        if event.key in ("pageup", "home", "k"):
             self._auto_scroll = False
-        elif event.key in ("down", "pagedown", "end"):
+        elif event.key in ("down", "pagedown", "end", "j"):
             if self.index == len(self.children) - 1:
                 self._auto_scroll = True
