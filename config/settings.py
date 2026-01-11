@@ -76,6 +76,8 @@ class AISettings:
     embedding_provider: str = "ollama"
     embedding_model: str = "nomic-embed-text"
     embedding_endpoint: str = "http://localhost:11434"
+    use_rag: bool = False
+    rag_top_k: int = 3
 
 
 @dataclass

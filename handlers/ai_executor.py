@@ -126,6 +126,12 @@ class AIExecutor:
             # Cast messages to proper type (ContextManager returns compatible dict structure)
             messages = cast(list[Message], context_info.messages)
 
+            settings = get_settings()
+            if settings.ai.use_rag:
+                messages = await self._inject_rag_context(
+                    prompt, messages, ai_provider, settings.ai.rag_top_k
+                )
+
             if is_agent_block:
                 # Agent mode: structured iterations with tool use
                 # If using default prompt in agent mode, switch to specialized agent prompt
@@ -1006,6 +1012,37 @@ class AIExecutor:
             task.add_done_callback(self._background_tasks.discard)
         except Exception:
             pass
+
+    async def _inject_rag_context(
+        self,
+        prompt: str,
+        messages: list[Message],
+        ai_provider,
+        top_k: int = 3,
+    ) -> list[Message]:
+        try:
+            from ai.rag import RAGManager
+
+            rag_manager = RAGManager()
+            stats = rag_manager.get_stats()
+
+            if stats.get("total_chunks", 0) == 0:
+                return messages
+
+            chunks = await rag_manager.search(prompt, ai_provider, limit=top_k)
+            if not chunks:
+                return messages
+
+            rag_context = "## Relevant Context from Local Index:\n\n"
+            for chunk in chunks:
+                rag_context += f"From {chunk.source}:\n```\n{chunk.content}\n```\n\n"
+
+            rag_message: Message = {"role": "user", "content": rag_context}
+            return [rag_message, *messages]
+
+        except Exception as e:
+            self.app.log(f"RAG context injection failed: {e}")
+            return messages
 
     def run_agent_command(
         self, command: str, ai_block: BlockState, ai_widget: BaseBlockWidget
