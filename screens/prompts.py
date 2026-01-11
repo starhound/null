@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import ClassVar, cast
 
 from textual.app import ComposeResult
-from textual.binding import Binding
+from textual.binding import Binding, BindingType
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import (
     Button,
@@ -19,9 +19,6 @@ from textual.widgets import (
 
 from prompts import get_prompt_manager
 from screens.base import ModalScreen
-
-if TYPE_CHECKING:
-    from app import NullApp
 
 
 class PromptListItem(ListItem):
@@ -41,7 +38,7 @@ class PromptListItem(ListItem):
 class PromptEditorScreen(ModalScreen):
     """Screen for managing system prompts."""
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("escape", "dismiss", "Close"),
         Binding("ctrl+s", "save_prompt", "Save"),
         Binding("ctrl+n", "new_prompt", "New"),
@@ -115,14 +112,10 @@ class PromptEditorScreen(ModalScreen):
         desc_input = self.query_one("#prompt-desc-input", Input)
         content_area = self.query_one("#prompt-content-area", TextArea)
         delete_btn = self.query_one("#delete-btn", Button)
-        save_btn = self.query_one("#save-btn", Button)
 
         name_input.value = key
         desc_input.value = data.get("description", "")
         content_area.text = data.get("content", "")
-
-        # Check if built-in (read-only mostly, but we allow 'save as new' implicitly if key changed)
-        is_user = self.pm.get_prompt(key) == self.pm._user_prompts.get(key)
 
         # If it's built-in, disable delete and warn on save (or force name change)
         if key in self.pm._user_prompts:

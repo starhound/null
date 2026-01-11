@@ -5,14 +5,16 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
-from ai.base import Message, TokenUsage, calculate_cost, ToolCallData
-from config import Config, get_settings
-from models import AgentIteration, BlockType, ToolCallState
 from textual.css.query import NoMatches
-from tools import ToolCall, ToolResult, ToolRegistry
-from widgets import BaseBlockWidget, AIResponseBlock, AgentResponseBlock, StatusBar
+
+from ai.base import Message, TokenUsage, ToolCallData, calculate_cost
+from config import Config, get_settings
+from models import AgentIteration, BlockType
+from tools import ToolRegistry, ToolResult
+from widgets import AgentResponseBlock, AIResponseBlock, BaseBlockWidget, StatusBar
+
 from .common import UIBuffer
 
 if TYPE_CHECKING:
@@ -22,6 +24,8 @@ if TYPE_CHECKING:
 
 class AIExecutor:
     """Handles AI generation and execution."""
+
+    _background_tasks: ClassVar[set[asyncio.Task[None]]] = set()
 
     def __init__(self, app: NullApp):
         self.app = app
@@ -43,19 +47,31 @@ class AIExecutor:
             from context import ContextManager
             from prompts import get_prompt_manager
 
-            # Get FRESH config values (not stale self.app.config)
             provider_name = Config.get("ai.provider") or ""
-            active_key = Config.get("ai.active_prompt") or "default"
+            model_override = None
 
-            # Get the AI provider (bail early if not configured)
-            ai_provider = self.app.ai_provider
+            if hasattr(self.app, "mcp_manager"):
+                profile_ai = self.app.mcp_manager.config.get_active_ai_config()
+                if profile_ai:
+                    if "provider" in profile_ai:
+                        provider_name = profile_ai["provider"]
+                    if "model" in profile_ai:
+                        model_override = profile_ai["model"]
+
+            ai_provider = self.app.ai_manager.get_provider(provider_name)
+
             if not ai_provider:
-                widget.update_output("AI Provider not configured")
+                widget.update_output(f"AI Provider '{provider_name}' not configured")
                 widget.set_loading(False)
                 return
 
+            if model_override:
+                ai_provider.model = model_override
+
             # Get model directly from provider (always current)
             model_name = ai_provider.model
+
+            active_key = Config.get("ai.active_prompt") or "default"
 
             prompt_manager = get_prompt_manager()
             system_prompt = prompt_manager.get_prompt_content(active_key, provider_name)
@@ -388,7 +404,7 @@ class AIExecutor:
 
             if agent_manager.should_pause():
                 agent_manager.update_state(AgentState.PAUSED)
-                while (
+                while (  # noqa: ASYNC110
                     agent_manager.should_pause() and not agent_manager.should_cancel()
                 ):
                     await asyncio.sleep(0.1)
@@ -615,7 +631,7 @@ class AIExecutor:
         import time
 
         from models import ToolCallState
-        from tools import ToolCall, ToolResult
+        from tools import ToolCall
         from widgets.blocks import AIResponseBlock
 
         results: list[ToolResult] = []
@@ -713,7 +729,7 @@ class AIExecutor:
         import time
 
         from models import ToolCallState
-        from tools import ToolCall, ToolResult
+        from tools import ToolCall
         from widgets.blocks import AIResponseBlock
 
         results: list[Any] = []
@@ -761,11 +777,6 @@ class AIExecutor:
                     break
                 elif approval_result == "reject":
                     # Skip this tool but continue (add error message so LLM knows)
-                    tool_result_msg: Message = {
-                        "role": "tool",
-                        "tool_call_id": tc.id,
-                        "content": "Tool execution rejected by user.",
-                    }
                     results.append(
                         ToolResult(
                             tc.id, "Tool execution rejected by user.", is_error=True
@@ -901,6 +912,16 @@ class AIExecutor:
         widget.set_loading(False)
         if get_settings().terminal.auto_save_session:
             self.app._auto_save()
+
+        try:
+            from managers.recall import RecallManager
+
+            recall_manager = RecallManager()
+            task = asyncio.create_task(recall_manager.index_interaction(block_state))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
+        except Exception:
+            pass
 
     def run_agent_command(
         self, command: str, ai_block: BlockState, ai_widget: BaseBlockWidget

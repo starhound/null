@@ -27,7 +27,7 @@ class TestAIManagerInit:
         mock_provider = MagicMock()
         mock_factory.get_provider.return_value = mock_provider
 
-        manager = AIManager()
+        _manager = AIManager()
 
         # get_active_provider is called during init
         mock_config.get.assert_called()
@@ -139,8 +139,10 @@ class TestAIManagerGetActiveProvider:
         manager = AIManager()
         manager._providers = {}
 
-        with patch.object(manager, 'get_provider', return_value=mock_provider) as mock_get:
-            provider = manager.get_active_provider()
+        with patch.object(
+            manager, "get_provider", return_value=mock_provider
+        ) as mock_get:
+            _provider = manager.get_active_provider()
             mock_get.assert_called_with("anthropic")
 
 
@@ -149,7 +151,9 @@ class TestAIManagerGetAutocompleteProvider:
 
     @patch("ai.manager.Config")
     @patch("ai.manager.AIFactory")
-    def test_returns_autocomplete_provider_when_configured(self, mock_factory, mock_config):
+    def test_returns_autocomplete_provider_when_configured(
+        self, mock_factory, mock_config
+    ):
         """Should return autocomplete-specific provider when configured."""
         mock_provider = MagicMock()
         mock_config.get.side_effect = lambda key: {
@@ -159,7 +163,9 @@ class TestAIManagerGetAutocompleteProvider:
 
         manager = AIManager()
 
-        with patch.object(manager, 'get_provider', return_value=mock_provider) as mock_get:
+        with patch.object(
+            manager, "get_provider", return_value=mock_provider
+        ) as mock_get:
             manager.get_autocomplete_provider()
             # Should try to get groq provider
             mock_get.assert_called_with("groq")
@@ -176,7 +182,9 @@ class TestAIManagerGetAutocompleteProvider:
 
         manager = AIManager()
 
-        with patch.object(manager, 'get_active_provider', return_value=mock_provider) as mock_get:
+        with patch.object(
+            manager, "get_active_provider", return_value=mock_provider
+        ) as mock_get:
             manager.get_autocomplete_provider()
             mock_get.assert_called_once()
 
@@ -355,7 +363,7 @@ class TestAIManagerFetchModelsForProvider:
         manager = AIManager()
         manager._providers = {}
 
-        with patch.object(manager, 'get_provider', return_value=mock_provider):
+        with patch.object(manager, "get_provider", return_value=mock_provider):
             name, models, error = await manager._fetch_models_for_provider("test")
 
         assert name == "test"
@@ -372,7 +380,7 @@ class TestAIManagerFetchModelsForProvider:
         manager = AIManager()
         manager._providers = {}
 
-        with patch.object(manager, 'get_provider', return_value=None):
+        with patch.object(manager, "get_provider", return_value=None):
             name, models, error = await manager._fetch_models_for_provider("broken")
 
         assert name == "broken"
@@ -399,7 +407,7 @@ class TestAIManagerFetchModelsForProvider:
         manager = AIManager()
         manager._providers = {}
 
-        with patch.object(manager, 'get_provider', return_value=mock_provider):
+        with patch.object(manager, "get_provider", return_value=mock_provider):
             # Use a short timeout for testing
             with patch("ai.manager.asyncio.wait_for", side_effect=TimeoutError):
                 name, models, error = await manager._fetch_models_for_provider("slow")
@@ -421,7 +429,7 @@ class TestAIManagerFetchModelsForProvider:
         manager = AIManager()
         manager._providers = {}
 
-        with patch.object(manager, 'get_provider', return_value=mock_provider):
+        with patch.object(manager, "get_provider", return_value=mock_provider):
             name, models, error = await manager._fetch_models_for_provider("failing")
 
         assert name == "failing"
@@ -442,8 +450,8 @@ class TestAIManagerFetchModelsForProvider:
         manager = AIManager()
         manager._providers = {}
 
-        with patch.object(manager, 'get_provider', return_value=mock_provider):
-            name, models, error = await manager._fetch_models_for_provider("verbose")
+        with patch.object(manager, "get_provider", return_value=mock_provider):
+            _name, _models, error = await manager._fetch_models_for_provider("verbose")
 
         assert len(error) <= 53  # 50 chars + "..."
         assert error.endswith("...")
@@ -455,15 +463,19 @@ class TestAIManagerFetchModelsForProvider:
         """Should update local provider model when using default."""
         mock_provider = MagicMock()
         mock_provider.model = "local-model"  # Default placeholder
-        mock_provider.list_models = AsyncMock(return_value=["actual-model", "other-model"])
+        mock_provider.list_models = AsyncMock(
+            return_value=["actual-model", "other-model"]
+        )
 
         mock_config.get.return_value = None
 
         manager = AIManager()
         manager._providers = {}
 
-        with patch.object(manager, 'get_provider', return_value=mock_provider):
-            name, models, error = await manager._fetch_models_for_provider("lm_studio")
+        with patch.object(manager, "get_provider", return_value=mock_provider):
+            _name, _models, _error = await manager._fetch_models_for_provider(
+                "lm_studio"
+            )
 
         # Should update to first available model
         assert mock_provider.model == "actual-model"
@@ -476,13 +488,15 @@ class TestAIManagerListAllModels:
     @pytest.mark.asyncio
     @patch("ai.manager.Config")
     @patch("ai.manager.AIFactory")
-    async def test_returns_empty_dict_when_no_providers(self, mock_factory, mock_config):
+    async def test_returns_empty_dict_when_no_providers(
+        self, mock_factory, mock_config
+    ):
         """Should return empty dict when no usable providers."""
         mock_config.get.return_value = None
 
         manager = AIManager()
 
-        with patch.object(manager, 'get_usable_providers', return_value=[]):
+        with patch.object(manager, "get_usable_providers", return_value=[]):
             result = await manager.list_all_models()
 
         assert result == {}
@@ -499,8 +513,12 @@ class TestAIManagerListAllModels:
         async def mock_fetch(name):
             return (name, [f"{name}-model1", f"{name}-model2"], None)
 
-        with patch.object(manager, 'get_usable_providers', return_value=["openai", "anthropic"]):
-            with patch.object(manager, '_fetch_models_for_provider', side_effect=mock_fetch):
+        with patch.object(
+            manager, "get_usable_providers", return_value=["openai", "anthropic"]
+        ):
+            with patch.object(
+                manager, "_fetch_models_for_provider", side_effect=mock_fetch
+            ):
                 result = await manager.list_all_models()
 
         assert "openai" in result
@@ -522,8 +540,12 @@ class TestAIManagerListAllModels:
                 return (name, [], None)
             return (name, ["model"], None)
 
-        with patch.object(manager, 'get_usable_providers', return_value=["working", "empty"]):
-            with patch.object(manager, '_fetch_models_for_provider', side_effect=mock_fetch):
+        with patch.object(
+            manager, "get_usable_providers", return_value=["working", "empty"]
+        ):
+            with patch.object(
+                manager, "_fetch_models_for_provider", side_effect=mock_fetch
+            ):
                 result = await manager.list_all_models()
 
         assert "working" in result
@@ -543,8 +565,12 @@ class TestAIManagerListAllModels:
                 raise Exception("Provider error")
             return (name, ["model"], None)
 
-        with patch.object(manager, 'get_usable_providers', return_value=["working", "broken"]):
-            with patch.object(manager, '_fetch_models_for_provider', side_effect=mock_fetch):
+        with patch.object(
+            manager, "get_usable_providers", return_value=["working", "broken"]
+        ):
+            with patch.object(
+                manager, "_fetch_models_for_provider", side_effect=mock_fetch
+            ):
                 result = await manager.list_all_models()
 
         # Should still have working provider
@@ -565,7 +591,7 @@ class TestAIManagerListAllModelsStreaming:
 
         manager = AIManager()
 
-        with patch.object(manager, 'get_usable_providers', return_value=[]):
+        with patch.object(manager, "get_usable_providers", return_value=[]):
             results = [r async for r in manager.list_all_models_streaming()]
 
         assert results == []
@@ -582,14 +608,16 @@ class TestAIManagerListAllModelsStreaming:
         async def mock_fetch(name):
             return (name, [f"{name}-model"], None)
 
-        with patch.object(manager, 'get_usable_providers', return_value=["p1", "p2"]):
-            with patch.object(manager, '_fetch_models_for_provider', side_effect=mock_fetch):
+        with patch.object(manager, "get_usable_providers", return_value=["p1", "p2"]):
+            with patch.object(
+                manager, "_fetch_models_for_provider", side_effect=mock_fetch
+            ):
                 results = [r async for r in manager.list_all_models_streaming()]
 
         assert len(results) == 2
 
         # Each result should have (name, models, error, completed, total)
-        for name, models, error, completed, total in results:
+        for name, _models, _error, completed, total in results:
             assert total == 2
             assert completed <= total
             assert name in ["p1", "p2"]
@@ -606,12 +634,16 @@ class TestAIManagerListAllModelsStreaming:
         async def mock_fetch(name):
             return (name, ["model"], None)
 
-        with patch.object(manager, 'get_usable_providers', return_value=["a", "b", "c"]):
-            with patch.object(manager, '_fetch_models_for_provider', side_effect=mock_fetch):
+        with patch.object(
+            manager, "get_usable_providers", return_value=["a", "b", "c"]
+        ):
+            with patch.object(
+                manager, "_fetch_models_for_provider", side_effect=mock_fetch
+            ):
                 results = [r async for r in manager.list_all_models_streaming()]
 
         # Check that all have total=3
-        for _, _, _, completed, total in results:
+        for _, _, _, _completed, total in results:
             assert total == 3
 
         # Final result should have completed=3

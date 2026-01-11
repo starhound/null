@@ -2,8 +2,6 @@
 
 import os
 
-import pytest
-
 from config.defaults import (
     DEFAULT_AGENT_MODE,
     DEFAULT_AI_ACTIVE_PROMPT,

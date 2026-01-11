@@ -3,7 +3,6 @@ import codecs
 import fcntl
 import os
 import pty
-import select
 import signal
 import struct
 import termios
@@ -206,7 +205,6 @@ class ExecutionEngine:
                         chunk = os.read(master_fd, 65536)  # Read up to 64KB
                         if not chunk:
                             # EOF detected during read loop
-                            data = b""
                             break
 
                         data_read = True
@@ -255,7 +253,6 @@ class ExecutionEngine:
                         break
                     except OSError:
                         # PTY closed or error
-                        data = b""
                         break
 
                 # After draining the buffer, check if we need to flush partials
@@ -281,7 +278,7 @@ class ExecutionEngine:
                 if not data_read:
                     # No data was read in this cycle, check if process died
                     try:
-                        pid_result = os.waitpid(pid, os.WNOHANG)
+                        pid_result = os.waitpid(pid, os.WNOHANG)  # noqa: ASYNC222
                         if pid_result[0] != 0:
                             break
                     except ChildProcessError:

@@ -2,6 +2,10 @@
 
 > **"Shell in the Void."**
 
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Built with Textual](https://img.shields.io/badge/Built%20with-Textual-blueviolet)](https://textual.textualize.io/)
+
 > [!NOTE]
 > Null Terminal is under active development and not yet officially released. Features and APIs may change.
 
@@ -11,88 +15,271 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
   <img src="docs/demo.gif" alt="Null Terminal Demo" width="800">
 </p>
 
-## ✨ Features
+## Why Null?
 
-### 🧠 Advanced AI Integration
--   **Multi-Provider Support**: Seamlessly switch between Ollama, OpenAI, Anthropic, Bedrock, and more.
--   **Local RAG / Knowledge Base**: Index your local codebase with `/index build` and chat with it using semantic search.
--   **Autonomous Agents**: Toggle `/agent` mode to let the AI execute multi-step tasks, run shell commands, and edit files autonomously.
--   **Local RLLM Training**: Train LLMs from scratch using the "Chat with Code" engine directly in the terminal.
--   **Context Inspector**: View exactly what the AI sees with `/context`.
+- **Two Modes, One Interface**: Seamlessly switch between CLI and AI mode with `Ctrl+Space`
+- **Block-Based Output**: Every command and response is a distinct, interactive block
+- **20+ AI Providers**: From local Ollama to cloud providers like OpenAI, Anthropic, and Google
+- **Agent Mode**: Let the AI execute multi-step tasks autonomously
+- **MCP Integration**: Extend AI capabilities with Model Context Protocol servers
 
-### 🛠️ Developer Workflow Tools
--   **Task Dashboard**: Integrated kanban-style todo manager (`/todo`) to track your work without leaving the terminal.
--   **Prompt Editor**: Create and manage custom system prompts and personas with a full UI (`/prompts`).
--   **Git Integration**: Real-time git status tracking in the status bar and `/git` command support.
--   **File Explorer**: Interactive sidebar for navigating your project structure.
+---
 
-### 🔌 Extensibility & MCP
--   **MCP Support**: Full support for the **Model Context Protocol**. Connect external tools and resources (databases, APIs) that the AI can use.
--   **Tool Management**: Inspect available tools with `/mcp tools` and manage server connections.
+## Features
 
-### ⚡ Performance & UX
--   **Block-Based Interface**: Distinct visual blocks for Commands, AI Responses, and System messages.
--   **Smart Autocomplete**: Context-aware suggestions for commands and arguments.
--   **High-Performance PTY**: Low-latency execution for standard shell commands.
--   **Cross-Platform Installer**: Native Windows installer (EXE) and standard pipx support for Linux/Mac.
--   **Interactive TUI Mode**: Full support for running interactive applications like `vim`, `htop`, and `ssh` directly inside blocks.
+### AI Integration
 
-## 🚀 Quick Start
+| Feature | Description |
+|---------|-------------|
+| **Multi-Provider** | Ollama, OpenAI, Anthropic, Google, Azure, Bedrock, Groq, Mistral, DeepSeek, and more |
+| **Agent Mode** | Autonomous multi-step task execution with tool calling |
+| **RAG / Code Search** | Index your codebase with `/index build` for semantic search |
+| **Reasoning Display** | See the AI's thinking process for compatible models |
+| **Context Inspector** | View exactly what the AI sees with `/context` |
+| **Cost Tracking** | Real-time token usage and cost display in status bar |
 
-### 1. Installation
+### Developer Tools
 
-See [**Installation Guide**](docs/user/installation.md) for detailed instructions for Windows, Linux, and Mac.
+| Feature | Description |
+|---------|-------------|
+| **Task Manager** | Integrated todo dashboard (`/todo`) |
+| **Prompt Editor** | Custom system prompts and personas (`/prompts`) |
+| **Git Integration** | Branch and status in status bar |
+| **File Explorer** | Sidebar file tree (`Ctrl+\`) |
+| **Session Export** | Export conversations to Markdown/JSON |
+| **SSH Manager** | Save and connect to remote hosts |
+
+### MCP (Model Context Protocol)
+
+| Feature | Description |
+|---------|-------------|
+| **Server Catalog** | Pre-configured popular MCP servers |
+| **Tool Discovery** | Automatic tool registration from servers |
+| **Resource Access** | Read external resources (databases, APIs) |
+| **Management UI** | `/mcp` commands for full control |
+
+### UX
+
+| Feature | Description |
+|---------|-------------|
+| **Block Interface** | Distinct visual blocks for each interaction |
+| **10+ Themes** | Null Dark, Monokai, Dracula, and custom themes |
+| **Command Palette** | Quick access with `Ctrl+P` |
+| **Interactive TUI** | Run `vim`, `htop`, `ssh` inside blocks |
+| **History Search** | `Ctrl+R` for command history |
+
+---
+
+## Quick Start
+
+### Installation
+
+**Via pipx (Recommended):**
+```bash
+pipx install null-terminal
+null
+```
 
 **Via Docker:**
 ```bash
 docker run -it --rm ghcr.io/starhound/null-terminal:latest
 ```
 
-**Via pipx (Linux/Mac):**
+**From Source:**
 ```bash
-pipx install null-terminal
-null
+git clone https://github.com/starhound/null-terminal.git
+cd null-terminal
+uv sync
+uv run main.py
 ```
 
-**Windows:**
-Download the latest installer from releases or run from source.
+See [Installation Guide](docs/user/installation.md) for Windows, advanced options, and troubleshooting.
 
-### 2. Configuration
-On first run, type `/settings` to configure your AI provider (e.g., Ollama URL or OpenAI API Key).
+### First Run
 
-### 3. Basic Usage
+1. **Configure AI Provider**: Type `/settings` or press `F3`
+2. **Select a Model**: Press `F2` or type `/model`
+3. **Toggle AI Mode**: Press `Ctrl+Space` to switch between CLI and AI
 
-| Goal | Command / Action |
-|------|------------------|
-| **Toggle AI Mode** | Press `Ctrl+Space` or type `/ai` |
-| **Run Command** | Just type it (e.g. `ls -la`) |
-| **Chat with Code** | `/index build` then ask questions |
-| **Manage Tasks** | `/todo` to open dashboard |
-| **Change Theme** | `/theme` or press `F3` |
+### Basic Usage
 
-## ⌨️ Key Controls
+```bash
+# CLI Mode (default)
+ls -la                    # Run shell commands
+cd ~/projects             # Navigate directories
+
+# AI Mode (Ctrl+Space to toggle)
+Explain this error        # Ask questions
+Refactor this function    # Get code help
+
+# Slash Commands (always available)
+/help                     # Show help
+/model                    # Select AI model
+/agent                    # Toggle agent mode
+/todo                     # Task manager
+/theme dracula            # Change theme
+```
+
+---
+
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
-| `Ctrl+Space` | Toggle Input Mode (CLI ↔ AI) |
-| `Ctrl+P` | Command Palette |
-| `Ctrl+\` | Toggle File Tree Sidebar |
-| `Ctrl+R` | Run History Search |
-| `F1` | Help Screen |
-| `F2` | Select Model |
-| `F3` | Change Theme |
+| `Ctrl+Space` | Toggle CLI / AI mode |
+| `Ctrl+P` | Command palette |
+| `Ctrl+\` | Toggle file sidebar |
+| `Ctrl+R` | History search |
+| `Ctrl+F` | Search blocks |
+| `Ctrl+L` | Clear history |
+| `F1` | Help screen |
+| `F2` | Model selector |
+| `F3` | Theme selector |
+| `F4` | Provider selector |
+| `Escape` | Cancel / Close |
 
-## 📖 Documentation
+---
 
--   [**User Guide**](docs/user/README.md): Detailed usage instructions.
--   [**Installation**](docs/user/installation.md): Setup for all platforms.
--   [**SSH Guide**](docs/user/ssh.md): Managing remote connections.
--   [**RLLM Training**](docs/user/training.md): Training models from scratch.
--   [**Commands Reference**](docs/user/commands.md): List of all slash commands.
--   [**Architecture**](docs/ARCHITECTURE.md): System design for contributors.
+## AI Providers
+
+### Local (Free)
+
+| Provider | Setup |
+|----------|-------|
+| **Ollama** | `ollama pull llama3.2` then `/provider ollama` |
+| **LM Studio** | Start server, then `/provider lm_studio` |
+| **Llama.cpp** | Start server, then `/provider llama_cpp` |
+
+### Cloud
+
+| Provider | Models |
+|----------|--------|
+| **OpenAI** | GPT-4o, GPT-4 Turbo, o1 |
+| **Anthropic** | Claude 3.5 Sonnet, Claude 3 Opus |
+| **Google** | Gemini 2.0 Flash, Gemini 1.5 Pro |
+| **Azure** | Azure OpenAI deployments |
+| **AWS Bedrock** | Claude, Titan, Llama |
+| **Groq** | Llama 3.3, Mixtral (fast) |
+| **Mistral** | Mistral Large, Codestral |
+| **DeepSeek** | DeepSeek Chat, DeepSeek Coder |
+
+See [Providers Guide](docs/user/providers.md) for full list and configuration.
+
+---
+
+## Agent Mode
+
+Enable autonomous task execution:
+
+```bash
+/agent                    # Toggle agent mode
+
+# Then ask:
+"Create a Python script that fetches weather data and saves it to weather.json"
+```
+
+The agent will:
+1. Plan the approach
+2. Execute tools (read/write files, run commands)
+3. Iterate until the task is complete
+
+Safety features:
+- Tool approval prompts for dangerous operations
+- Maximum 10 iterations per task
+- Cancel anytime with `Escape`
+
+---
+
+## MCP Integration
+
+Add external tools via Model Context Protocol:
+
+```bash
+/mcp catalog              # Browse available servers
+/mcp add                  # Add a server manually
+/mcp tools                # List available tools
+```
+
+Popular MCP servers:
+- **Brave Search** - Web search
+- **Filesystem** - File operations
+- **PostgreSQL** - Database queries
+- **GitHub** - Repository management
+
+---
+
+## Configuration
+
+Settings are stored in `~/.null/`:
+
+| File | Purpose |
+|------|---------|
+| `config.json` | User preferences |
+| `null.db` | Sessions, encrypted API keys |
+| `mcp.json` | MCP server configs |
+| `themes/` | Custom themes |
+| `prompts/` | Custom system prompts |
+
+---
+
+## Documentation
+
+| Guide | Description |
+|-------|-------------|
+| [User Guide](docs/user/README.md) | Complete usage instructions |
+| [Commands Reference](docs/user/commands.md) | All slash commands |
+| [Providers Guide](docs/user/providers.md) | AI provider setup |
+| [MCP Guide](docs/user/mcp.md) | MCP server configuration |
+| [Themes Guide](docs/user/themes.md) | Customizing appearance |
+| [SSH Guide](docs/user/ssh.md) | Remote connections |
+
+### For Contributors
+
+| Guide | Description |
+|-------|-------------|
+| [Architecture](docs/ARCHITECTURE.md) | System design overview |
+| [Development](docs/DEVELOPMENT.md) | Dev environment setup |
+| [Contributing](CONTRIBUTING.md) | How to contribute |
+| [Feature Specs](docs/FEATURE_SPECS.md) | Planned features |
+
+---
+
+## Tech Stack
+
+- **[Textual](https://textual.textualize.io/)** - TUI framework
+- **[httpx](https://www.python-httpx.org/)** - Async HTTP client
+- **Python 3.12+** - Async/await, type hints
+- **SQLite** - Local storage
+- **Fernet** - API key encryption
+
+---
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+```bash
+# Development setup
+git clone https://github.com/starhound/null-terminal.git
+cd null-terminal
+uv sync
+uv run pytest                    # Run tests
+uv run main.py                   # Run app
+uv run textual console           # Debug console
+```
+
+---
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
 <p align="center">
-  Built with 🖤 by Starhound
+  Built with 🖤 by <a href="https://github.com/starhound">Starhound</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/starhound/null-terminal/stargazers">Star us on GitHub</a>
 </p>

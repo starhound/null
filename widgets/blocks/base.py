@@ -37,6 +37,12 @@ class BaseBlockWidget(Static):
             self.block_id = block_id
             super().__init__()
 
+    class ViewRequested(Message):
+        def __init__(self, block_id: str, view_type: str):
+            self.block_id = block_id
+            self.view_type = view_type
+            super().__init__()
+
     def __init__(self, block: BlockState):
         super().__init__()
         self.block = block

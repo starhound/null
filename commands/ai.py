@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app import NullApp
-    from widgets import BlockWidget, HistoryViewport
 
 from ai.factory import AIFactory
 from config import Config

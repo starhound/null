@@ -45,6 +45,14 @@ class Config:
             "yes",
         )
 
+        embedding_provider = sm.get_config("ai.embedding_provider", "ollama")
+        embedding_model = sm.get_config(
+            f"ai.embedding.{embedding_provider}.model", "nomic-embed-text"
+        )
+        embedding_endpoint = sm.get_config(
+            f"ai.embedding.{embedding_provider}.endpoint", "http://localhost:11434"
+        )
+
         return {
             "theme": sm.get_config("theme", DEFAULT_THEME),
             "shell": sm.get_config("shell", DEFAULT_SHELL),
@@ -60,6 +68,9 @@ class Config:
                 "agent_max_iterations": agent_max_iterations,
                 "agent_approval_mode": agent_approval_mode,
                 "agent_thinking_visible": agent_thinking_visible,
+                "embedding_provider": embedding_provider,
+                "embedding_model": embedding_model,
+                "embedding_endpoint": embedding_endpoint,
                 "active_prompt": sm.get_config(
                     "ai.active_prompt", DEFAULT_AI_ACTIVE_PROMPT
                 ),

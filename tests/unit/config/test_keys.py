@@ -1,7 +1,5 @@
 """Unit tests for config/keys.py - sensitive key detection and ConfigKeys class."""
 
-import pytest
-
 from config.keys import SENSITIVE_KEYS, ConfigKeys, is_sensitive_key
 
 

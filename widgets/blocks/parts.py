@@ -1,5 +1,8 @@
+import json
 import re
 
+from rich.json import JSON
+from rich.table import Table
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.message import Message
@@ -28,7 +31,21 @@ class StopButton(Label):
         # Note: cursor style handled via CSS
 
     def on_click(self, event) -> None:
-        """Handle click on stop button."""
+        event.stop()
+        self.post_message(self.Pressed(self._block_id))
+
+
+class VizButton(Label):
+    class Pressed(Message, bubble=True):
+        def __init__(self, block_id: str):
+            super().__init__()
+            self.block_id = block_id
+
+    def __init__(self, block_id: str):
+        super().__init__("📊 Viz", id="viz-btn", classes="viz-action")
+        self._block_id = block_id
+
+    def on_click(self, event) -> None:
         event.stop()
         self.post_message(self.Pressed(self._block_id))
 
@@ -89,6 +106,7 @@ class BlockHeader(Static):
 
         ts_str = self.block.timestamp.strftime("%H:%M")
         yield Label(ts_str, classes="timestamp")
+        yield Label("", id="header-actions", classes="header-actions")
 
 
 class BlockMeta(Static):
@@ -175,6 +193,41 @@ class BlockBody(Static):
             content.update(self._make_links_clickable(display_text))
         except Exception:
             pass
+
+    def set_view_mode(self, mode: str):
+        """Switch display mode (text, json, table)."""
+        try:
+            content = self.query_one("#body-content", Static)
+        except Exception:
+            return
+
+        if mode == "json":
+            try:
+                data = json.loads(self.content_text)
+                content.update(JSON.from_data(data))
+            except Exception:
+                content.update(Text("Invalid JSON", style="red"))
+        elif mode == "table":
+            try:
+                data = json.loads(self.content_text)
+                if (
+                    isinstance(data, list)
+                    and len(data) > 0
+                    and isinstance(data[0], dict)
+                ):
+                    table = Table(show_header=True, header_style="bold magenta")
+                    keys = list(data[0].keys())
+                    for key in keys:
+                        table.add_column(str(key))
+                    for item in data:
+                        table.add_row(*[str(item.get(k, "")) for k in keys])
+                    content.update(table)
+                else:
+                    content.update(Text("Data is not a list of objects", style="red"))
+            except Exception:
+                content.update(Text("Invalid Data for Table", style="red"))
+        else:
+            content.update(self._make_links_clickable(self.content_text))
 
     def _truncate_output(self, text: str) -> tuple[str, bool, int]:
         """Truncate output to max lines, keeping the most recent lines.

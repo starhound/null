@@ -118,6 +118,57 @@ class StorageManager:
             )
         """)
 
+        # Interactions Table (for Recall/Semantic Search)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS interactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                vector_id TEXT,
+                type TEXT,
+                input TEXT,
+                output TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT
+            )
+        """)
+
+        # Interactions Table (for Recall/Semantic Search)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS interactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                vector_id TEXT,
+                type TEXT,
+                input TEXT,
+                output TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT
+            )
+        """)
+
+        # Interactions Table (for Recall/Semantic Search)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS interactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                vector_id TEXT,
+                type TEXT,
+                input TEXT,
+                output TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS interactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                vector_id TEXT,
+                type TEXT,
+                input TEXT,
+                output TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT
+            )
+        """)
+
         # SSH Hosts Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS ssh_hosts (
@@ -375,6 +426,35 @@ class StorageManager:
         cursor = self.conn.cursor()
         cursor.execute("DELETE FROM ssh_hosts WHERE alias = ?", (alias,))
         self.conn.commit()
+
+    def add_interaction(
+        self,
+        type: str,
+        input_text: str,
+        output_text: str,
+        vector_id: str | None = None,
+        metadata: str | None = None,
+    ) -> int | None:
+        """Add an interaction (command/AI response) to history."""
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO interactions (type, input, output, vector_id, metadata)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (type, input_text, output_text, vector_id, metadata),
+        )
+        self.conn.commit()
+        return cursor.lastrowid
+
+    def search_interactions(self, query: str, limit: int = 20) -> list[dict[str, Any]]:
+        """Search interactions by input content."""
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT * FROM interactions WHERE input LIKE ? OR output LIKE ? ORDER BY id DESC LIMIT ?",
+            (f"%{query}%", f"%{query}%", limit),
+        )
+        return [dict(row) for row in cursor.fetchall()]
 
     def close(self):
         """Close the database connection."""

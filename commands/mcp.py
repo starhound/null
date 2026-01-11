@@ -45,11 +45,124 @@ class MCPCommands(CommandMixin):
             await self._mcp_disable(args[1])
         elif subcommand == "reconnect":
             await self._mcp_reconnect(args[1] if len(args) >= 2 else None)
+        elif subcommand == "profile":
+            await self._mcp_profile(args[1:])
         else:
             self.notify(
-                "Usage: /mcp [list|catalog|tools|add|edit|remove|enable|disable|reconnect]",
+                "Usage: /mcp [list|catalog|tools|profile|...]",
                 severity="warning",
             )
+
+    async def _mcp_profile(self, args: list[str]):
+        """Manage MCP profiles."""
+        config = self.app.mcp_manager.config
+        profiles = config.profiles
+        active = config.active_profile
+
+        if not args:
+            lines = ["# MCP Profiles", ""]
+            for name, data in profiles.items():
+                prefix = "*" if name == active else " "
+                count = 0
+                ai_info = ""
+
+                if isinstance(data, list):
+                    count = len(data)
+                elif isinstance(data, dict):
+                    count = len(data.get("servers", []))
+                    if "ai" in data:
+                        ai = data["ai"]
+                        info_parts = []
+                        if "provider" in ai:
+                            info_parts.append(f"AI: {ai['provider']}")
+                        if "embedding_provider" in ai:
+                            info_parts.append(f"Embed: {ai['embedding_provider']}")
+                        if "autocomplete_provider" in ai:
+                            info_parts.append(f"Auto: {ai['autocomplete_provider']}")
+
+                        if info_parts:
+                            ai_info = f" [{', '.join(info_parts)}]"
+
+                lines.append(f"{prefix} {name} ({count} servers){ai_info}")
+
+            if not profiles:
+                lines.append("No profiles defined.")
+
+            if active:
+                lines.append(f"\nActive Profile: {active}")
+            else:
+                lines.append("\nNo active profile (all enabled servers active)")
+
+            lines.append("\nCommands:")
+            lines.append("  /mcp profile <name>        Switch to profile")
+            lines.append("  /mcp profile create <name> [flags]")
+            lines.append("     Flags: --provider, --model")
+            lines.append("            --embedding-provider, --embedding-model")
+            lines.append("            --autocomplete-provider, --autocomplete-model")
+            lines.append("  /mcp profile delete <name> Delete profile")
+            lines.append("  /mcp profile clear         Deactivate profile")
+
+            await self.show_output("/mcp profile", "\n".join(lines))
+            return
+
+        subcmd = args[0]
+
+        if subcmd == "clear":
+            config.set_active_profile(None)
+            self.notify("Deactivated profile. All enabled servers are now active.")
+            await self.app.mcp_manager.disconnect_all()
+            await self.app.mcp_manager.initialize()
+            self.app.run_worker(self.app._check_provider_health())
+            return
+
+        if subcmd == "create" and len(args) >= 2:
+            name = args[1]
+            current_enabled = [s.name for s in config.get_enabled_servers()]
+
+            ai_config = None
+            flags = {
+                "--provider": "provider",
+                "--model": "model",
+                "--embedding-provider": "embedding_provider",
+                "--embedding-model": "embedding_model",
+                "--embedding-endpoint": "embedding_endpoint",
+                "--autocomplete-provider": "autocomplete_provider",
+                "--autocomplete-model": "autocomplete_model",
+            }
+
+            if any(f in args for f in flags):
+                ai_config = {}
+                for flag, key in flags.items():
+                    if flag in args:
+                        try:
+                            idx = args.index(flag)
+                            if idx + 1 < len(args) and not args[idx + 1].startswith(
+                                "-"
+                            ):
+                                ai_config[key] = args[idx + 1]
+                        except ValueError:
+                            pass
+
+            config.create_profile(name, current_enabled, ai_config)
+            self.notify(
+                f"Created profile '{name}' with {len(current_enabled)} servers."
+            )
+            return
+
+        if subcmd == "delete" and len(args) >= 2:
+            name = args[1]
+            config.delete_profile(name)
+            self.notify(f"Deleted profile '{name}'.")
+            return
+
+        if subcmd in profiles:
+            config.set_active_profile(subcmd)
+            self.notify(f"Switched to profile: {subcmd}")
+            await self.app.mcp_manager.disconnect_all()
+            await self.app.mcp_manager.initialize()
+            self.app.run_worker(self.app._check_provider_health())
+        else:
+            self.notify(f"Profile not found: {subcmd}", severity="error")
 
     async def _mcp_list(self):
         status = self.app.mcp_manager.get_status()
@@ -101,7 +214,7 @@ class MCPCommands(CommandMixin):
         prefilled = {
             "command": entry.command,
             "args": entry.args,
-            "env": {k: "" for k in entry.env_keys},
+            "env": dict.fromkeys(entry.env_keys, ""),
         }
 
         def on_config_result(result):

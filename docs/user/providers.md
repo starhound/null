@@ -244,3 +244,114 @@ API Key: Optional
 - Stored in SQLite database (`~/.null/null.db`)
 - Encryption key in OS keyring or `~/.null/.key`
 - Keys never logged or displayed in plain text
+
+## Token Pricing Reference
+
+Pricing per 1M tokens (USD). Updated January 2025.
+
+### OpenAI
+
+| Model | Input | Output | Context |
+|-------|-------|--------|---------|
+| `gpt-4o` | $2.50 | $10.00 | 128K |
+| `gpt-4o-mini` | $0.15 | $0.60 | 128K |
+| `gpt-4-turbo` | $10.00 | $30.00 | 128K |
+| `o1` | $15.00 | $60.00 | 200K |
+| `o1-mini` | $3.00 | $12.00 | 128K |
+
+### Anthropic
+
+| Model | Input | Output | Context |
+|-------|-------|--------|---------|
+| `claude-3-5-sonnet` | $3.00 | $15.00 | 200K |
+| `claude-3-5-haiku` | $0.80 | $4.00 | 200K |
+| `claude-3-opus` | $15.00 | $75.00 | 200K |
+
+### Google Gemini
+
+| Model | Input | Output | Context |
+|-------|-------|--------|---------|
+| `gemini-2.0-flash` | $0.10 | $0.40 | 1M |
+| `gemini-1.5-pro` | $1.25 | $5.00 | 2M |
+| `gemini-1.5-flash` | $0.075 | $0.30 | 1M |
+
+### DeepSeek
+
+| Model | Input | Output | Context |
+|-------|-------|--------|---------|
+| `deepseek-chat` | $0.14 | $0.28 | 64K |
+| `deepseek-coder` | $0.14 | $0.28 | 64K |
+| `deepseek-reasoner` | $0.55 | $2.19 | 64K |
+
+### Mistral
+
+| Model | Input | Output | Context |
+|-------|-------|--------|---------|
+| `mistral-large` | $2.00 | $6.00 | 128K |
+| `mistral-small` | $0.20 | $0.60 | 32K |
+| `codestral` | $0.20 | $0.60 | 32K |
+
+### Cohere
+
+| Model | Input | Output | Context |
+|-------|-------|--------|---------|
+| `command-r-plus` | $2.50 | $10.00 | 128K |
+| `command-r` | $0.50 | $1.50 | 128K |
+
+### Groq (Hosted)
+
+| Model | Input | Output | Context |
+|-------|-------|--------|---------|
+| `llama-3.3-70b-versatile` | $0.59 | $0.79 | 128K |
+| `llama-3.1-8b-instant` | $0.05 | $0.08 | 128K |
+
+### Local Models
+
+Local models via Ollama, LM Studio, or Llama.cpp are **free** (no API costs).
+
+## Google AI Studio
+
+For personal/development use (separate from Vertex AI):
+
+```
+Endpoint: https://generativelanguage.googleapis.com/v1beta
+API Key: Required (from AI Studio)
+```
+
+**Setup:**
+1. Go to https://aistudio.google.com/
+2. Create an API key
+3. In Null Terminal: `/provider google_ai`
+
+**Models:**
+- `gemini-2.0-flash` - Latest Flash model
+- `gemini-1.5-pro` - High capability
+- `gemini-1.5-flash` - Fast and efficient
+
+**Differences from Vertex AI:**
+- AI Studio: API key auth, simpler setup, generous free tier
+- Vertex AI: GCP auth, enterprise features, project-based billing
+
+## NVIDIA NIM (Detailed)
+
+NVIDIA's inference microservices platform:
+
+```
+Endpoint: https://integrate.api.nvidia.com/v1
+API Key: Required (from build.nvidia.com)
+```
+
+**Setup:**
+1. Go to https://build.nvidia.com/
+2. Sign in and get API key
+3. In Null Terminal: `/provider nvidia`
+
+**Available Models:**
+- `meta/llama-3.1-405b-instruct` - Largest Llama
+- `nvidia/nemotron-4-340b-instruct` - NVIDIA's flagship
+- `mistralai/mixtral-8x22b-instruct-v0.1` - Large MoE model
+
+**Features:**
+- Enterprise-grade inference
+- Optimized for NVIDIA hardware
+- Compatible with OpenAI API format

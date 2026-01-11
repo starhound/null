@@ -1,10 +1,12 @@
+import json
+
 from textual.app import ComposeResult
 from textual.widgets import Label
 
 from models import BlockState
 
 from .base import BaseBlockWidget
-from .parts import BlockBody, BlockFooter, BlockHeader
+from .parts import BlockBody, BlockFooter, BlockHeader, VizButton
 from .terminal import TerminalBlock
 
 
@@ -34,6 +36,38 @@ class CommandBlock(BaseBlockWidget):
         """Update the command output display."""
         if self.body_widget and self._mode == "line":
             self.body_widget.content_text = self.block.content_output
+            self._check_for_viz(self.block.content_output)
+
+    def _check_for_viz(self, content: str):
+        if not content or len(content) < 10:
+            return
+
+        stripped = content.strip()
+        if stripped.startswith("{") or stripped.startswith("["):
+            try:
+                json.loads(content)
+                self._show_viz_button()
+            except Exception:
+                pass
+
+    def _show_viz_button(self):
+        try:
+            actions = self.header.query_one("#header-actions")
+            if not actions.query("VizButton"):
+                actions.mount(VizButton(self.block.id))
+        except Exception:
+            pass
+
+    def on_viz_button_pressed(self, event: VizButton.Pressed) -> None:
+        if event.block_id != self.block.id:
+            return
+
+        if self._mode == "viz":
+            self.body_widget.set_view_mode("text")
+            self._mode = "line"
+        else:
+            self.body_widget.set_view_mode("json")
+            self._mode = "viz"
 
     def switch_to_tui(self) -> TerminalBlock:
         """Switch from line mode to TUI mode.

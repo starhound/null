@@ -1,9 +1,6 @@
 """Unit tests for config/storage.py - StorageManager and SecurityManager classes."""
 
 import sqlite3
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 from cryptography.fernet import Fernet
@@ -182,7 +179,9 @@ class TestStorageManagerConfig:
 
         # Value in database should be encrypted
         cursor = mock_storage.conn.cursor()
-        cursor.execute("SELECT value, is_sensitive FROM config WHERE key = ?", ("api.key",))
+        cursor.execute(
+            "SELECT value, is_sensitive FROM config WHERE key = ?", ("api.key",)
+        )
         row = cursor.fetchone()
         assert row["is_sensitive"] == 1
         assert row["value"] != "secret123"  # Should be encrypted
@@ -423,8 +422,14 @@ class TestStorageManagerSession:
         from models import BlockState, BlockType
 
         blocks = [
-            BlockState(type=BlockType.COMMAND, content_input="ls", content_output="file1"),
-            BlockState(type=BlockType.AI_RESPONSE, content_input="hello", content_output="Hi there!"),
+            BlockState(
+                type=BlockType.COMMAND, content_input="ls", content_output="file1"
+            ),
+            BlockState(
+                type=BlockType.AI_RESPONSE,
+                content_input="hello",
+                content_output="Hi there!",
+            ),
         ]
 
         mock_storage.save_session(blocks, name="test")

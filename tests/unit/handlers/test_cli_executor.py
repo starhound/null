@@ -1,5 +1,7 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+
 from handlers.cli_executor import CLIExecutor
 from models import BlockState, BlockType
 

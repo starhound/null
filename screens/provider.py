@@ -142,7 +142,7 @@ class ProviderConfigScreen(ModalScreen):
 
     def on_mount(self) -> None:
         if self.inputs:
-            first_key = list(self.inputs.keys())[0]
+            first_key = next(iter(self.inputs.keys()))
             self.inputs[first_key].focus()
 
     def on_unmount(self) -> None:

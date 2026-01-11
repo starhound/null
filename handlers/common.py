@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app import NullApp
     from textual.timer import Timer
+
+    from app import NullApp
 
 
 class UIBuffer:

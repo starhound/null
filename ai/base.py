@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
 from typing import Any, TypedDict
 
@@ -265,7 +264,8 @@ class LLMProvider(ABC):
         pass
 
     async def close(self) -> None:
-        pass
+        """Clean up provider resources. Override in subclasses if needed."""
+        return None
 
     def get_model_info(self) -> ModelInfo:
         """Get model information including context limits."""

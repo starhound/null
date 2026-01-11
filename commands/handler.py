@@ -185,6 +185,10 @@ class SlashCommandHandler:
                     ],
                 ),
             ),
+            "recall": (
+                self._rag.cmd_recall,
+                CommandInfo("recall", "Search interaction history"),
+            ),
             # Session commands
             "session": (
                 self._session.cmd_session,

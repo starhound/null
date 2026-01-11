@@ -1,9 +1,11 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
-from handlers.execution import ExecutionHandler
+
+from ai.base import StreamChunk, ToolCallData
 from handlers.ai_executor import AIExecutor
+from handlers.execution import ExecutionHandler
 from models import BlockState, BlockType
-from ai.base import StreamChunk, TokenUsage
 
 
 @pytest.fixture
@@ -60,9 +62,6 @@ async def test_execute_ai_simple(execution_handler, mock_app):
     assert block_state.content_output == "Hi there"
     assert not block_state.is_running
     widget.update_output.assert_called()
-
-
-from ai.base import StreamChunk, TokenUsage, ToolCallData
 
 
 @pytest.mark.asyncio

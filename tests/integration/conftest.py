@@ -1,11 +1,10 @@
 """Fixtures and configuration for integration tests."""
 
-import asyncio
-import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
 
 # Patch AI-related modules before importing the app
 @pytest.fixture(autouse=True)
@@ -17,7 +16,9 @@ def mock_ai_components(monkeypatch):
     mock_ai_manager.get_provider.return_value = None
     mock_ai_manager.get_usable_providers.return_value = []
     mock_ai_manager.list_all_models = AsyncMock(return_value={})
-    mock_ai_manager._fetch_models_for_provider = AsyncMock(return_value=("test", [], None))
+    mock_ai_manager._fetch_models_for_provider = AsyncMock(
+        return_value=("test", [], None)
+    )
 
     # Mock MCPManager
     mock_mcp_manager = MagicMock()
@@ -48,10 +49,12 @@ def temp_home(tmp_path, monkeypatch):
 
     # Patch storage module DB_PATH
     import config.storage as storage_module
+
     monkeypatch.setattr(storage_module, "DB_PATH", null_dir / "null.db")
 
     # Patch settings CONFIG_PATH
     import config.settings as settings_module
+
     monkeypatch.setattr(settings_module, "CONFIG_PATH", null_dir / "config.json")
 
     # Reset SettingsManager singleton
@@ -97,7 +100,7 @@ async def running_app(app_with_mocked_storage):
 
     # Cleanup after test
     try:
-        if hasattr(app, 'storage') and app.storage:
+        if hasattr(app, "storage") and app.storage:
             app.storage.close()
     except Exception:
         pass

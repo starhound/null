@@ -1,7 +1,5 @@
 """Tests for ai/base.py - TokenUsage, calculate_cost, StreamChunk, and related utilities."""
 
-import pytest
-
 from ai.base import (
     Message,
     ModelInfo,
@@ -87,7 +85,9 @@ class TestStreamChunk:
 
     def test_with_tool_calls(self):
         """StreamChunk can hold tool calls."""
-        tool_call = ToolCallData(id="call_123", name="test_tool", arguments={"arg": "value"})
+        tool_call = ToolCallData(
+            id="call_123", name="test_tool", arguments={"arg": "value"}
+        )
         chunk = StreamChunk(tool_calls=[tool_call])
         assert len(chunk.tool_calls) == 1
         assert chunk.tool_calls[0].name == "test_tool"
@@ -109,7 +109,7 @@ class TestToolCallData:
         tool_call = ToolCallData(
             id="call_abc123",
             name="search_files",
-            arguments={"pattern": "*.py", "path": "/src"}
+            arguments={"pattern": "*.py", "path": "/src"},
         )
         assert tool_call.id == "call_abc123"
         assert tool_call.name == "search_files"
@@ -135,10 +135,7 @@ class TestModelInfo:
     def test_custom_values(self):
         """ModelInfo should accept custom values."""
         info = ModelInfo(
-            name="gpt-4",
-            max_tokens=8192,
-            context_window=128000,
-            supports_tools=True
+            name="gpt-4", max_tokens=8192, context_window=128000, supports_tools=True
         )
         assert info.name == "gpt-4"
         assert info.max_tokens == 8192
@@ -317,7 +314,7 @@ class TestMessage:
         msg: Message = {
             "role": "assistant",
             "content": "",
-            "tool_calls": [{"id": "call_1", "function": {"name": "test"}}]
+            "tool_calls": [{"id": "call_1", "function": {"name": "test"}}],
         }
         assert msg["role"] == "assistant"
         assert len(msg["tool_calls"]) == 1
@@ -327,7 +324,7 @@ class TestMessage:
         msg: Message = {
             "role": "tool",
             "content": "Tool output",
-            "tool_call_id": "call_1"
+            "tool_call_id": "call_1",
         }
         assert msg["role"] == "tool"
         assert msg["tool_call_id"] == "call_1"

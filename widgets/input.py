@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 from textual.binding import Binding, BindingType
 from textual.events import Click
 from textual.message import Message
-from textual.widgets import TextArea
+from textual.widgets import Label, TextArea
 
 if TYPE_CHECKING:
     pass
@@ -14,6 +14,22 @@ try:
     import pyperclip
 except ImportError:
     pyperclip = None
+
+
+class GhostLabel(Label):
+    """Overlay label for ghost text suggestions."""
+
+    DEFAULT_CSS = """
+    GhostLabel {
+        layer: overlay;
+        color: #666666;
+        background: transparent;
+        display: none;
+        width: auto;
+        height: 1;
+        padding: 0;
+    }
+    """
 
 
 class InputController(TextArea):
@@ -27,6 +43,7 @@ class InputController(TextArea):
         Binding("shift+enter", "newline", "New Line", priority=True),
         Binding("ctrl+shift+c", "copy_selection", "Copy", priority=True),
         Binding("ctrl+u", "clear_to_start", "Clear Line", priority=True),
+        Binding("right", "accept_ghost", "Accept Suggestion", priority=False),
     ]
 
     class Submitted(Message):
@@ -44,20 +61,69 @@ class InputController(TextArea):
             super().__init__()
 
     def __init__(self, placeholder: str = "", **kwargs):
-        # TextArea doesn't have placeholder, but we store it for reference
         super().__init__(**kwargs)
-        self._placeholder = placeholder
+        self.placeholder = placeholder
         self.cmd_history: list[str] = []
         self.cmd_history_index: int = -1
         self.current_input: str = ""
-        self.mode: str = "CLI"  # "CLI" or "AI"
+        self.mode: str = "CLI"
         self.show_line_numbers = False
         self.tab_behavior = "indent"
-        # Use a dark syntax theme that matches our UI
         self.theme = "vscode_dark"
 
-        # Apply cursor settings from config
+        self.ghost_label = GhostLabel("")
+        self.current_suggestion = ""
+
         self._apply_cursor_settings()
+
+    def on_mount(self):
+        self.mount(self.ghost_label)
+
+    def on_command_suggester_suggestion_ready(self, event):
+        """Handle ghost text suggestion."""
+        suggestion = event.suggestion
+        if (
+            suggestion
+            and suggestion.startswith(self.text)
+            and len(suggestion) > len(self.text)
+        ):
+            self.current_suggestion = suggestion
+            remainder = suggestion[len(self.text) :]
+            self.ghost_label.update(remainder)
+            self.ghost_label.display = True
+            self._update_ghost_position()
+        else:
+            self.ghost_label.display = False
+            self.current_suggestion = ""
+
+    def watch_text(self, new_text: str):
+        """Update ghost text when input changes."""
+        if self.current_suggestion and self.current_suggestion.startswith(new_text):
+            remainder = self.current_suggestion[len(new_text) :]
+            self.ghost_label.update(remainder)
+            self._update_ghost_position()
+        else:
+            self.ghost_label.display = False
+            self.current_suggestion = ""
+
+    def _update_ghost_position(self):
+        try:
+            row, col = self.cursor_location
+            self.ghost_label.styles.offset = (col + 1, row)
+        except Exception:
+            pass
+
+    def action_accept_ghost(self):
+        """Accept the ghost suggestion."""
+        if self.ghost_label.display and self.current_suggestion:
+            self.text = self.current_suggestion
+            self.move_cursor((len(self.text), 0))
+            self.ghost_label.display = False
+            return
+
+        cursor_row, cursor_col = self.cursor_location
+        if cursor_col < len(self.document.get_line(cursor_row)):
+            self.move_cursor_relative(0, 1)
 
     def _apply_cursor_settings(self) -> None:
         """Apply cursor settings from config."""
@@ -67,14 +133,11 @@ class InputController(TextArea):
             settings = get_settings()
             self.cursor_blink = settings.terminal.cursor_blink
 
-            # Apply cursor style class for CSS styling
             cursor_style = settings.terminal.cursor_style
-            # Remove any existing cursor style classes
             self.remove_class("cursor-block", "cursor-beam", "cursor-underline")
-            # Add the appropriate class
             self.add_class(f"cursor-{cursor_style}")
         except Exception:
-            pass  # Use default if settings unavailable
+            pass
 
     @property
     def value(self) -> str:
@@ -87,20 +150,11 @@ class InputController(TextArea):
         self.text = new_value
 
     @property
-    def placeholder(self) -> str:
-        return self._placeholder
-
-    @placeholder.setter
-    def placeholder(self, value: str):
-        self._placeholder = value
-
-    @property
     def is_ai_mode(self) -> bool:
         return self.mode == "AI"
 
     def action_submit(self):
         """Handle Enter key - submit input or select from suggester."""
-        # Check if suggester is visible and has selection
         try:
             from widgets.suggester import CommandSuggester
 
@@ -110,13 +164,10 @@ class InputController(TextArea):
                 if complete:
                     parts = self.text.split(" ")
                     if len(parts) == 1:
-                        # Execute the completed command directly
                         self.text = complete
                     else:
-                        # Complete argument and execute
                         self.text = parts[0] + " " + complete
                     suggester.display = False
-                    # Fall through to execute the command
         except Exception:
             pass
 
@@ -149,7 +200,6 @@ class InputController(TextArea):
             self.cmd_history_index -= 1
 
         self.text = self.cmd_history[self.cmd_history_index]
-        # Move cursor to end
         self.move_cursor((len(self.text), 0))
 
     def action_history_down(self):
@@ -163,18 +213,17 @@ class InputController(TextArea):
             self.cmd_history_index = -1
             self.text = self.current_input
 
-        # Move cursor to end
         self.move_cursor((len(self.text), 0))
 
     def toggle_mode(self):
         if self.mode == "CLI":
             self.mode = "AI"
             self.add_class("ai-mode")
-            self._placeholder = "Ask AI..."
+            self.placeholder = "Ask AI..."
         else:
             self.mode = "CLI"
             self.remove_class("ai-mode")
-            self._placeholder = "Type a command..."
+            self.placeholder = "Type a command..."
         self.post_message(self.Toggled(self.mode))
 
     def _get_current_word(self) -> str:
@@ -190,13 +239,11 @@ class InputController(TextArea):
         last_word = self._get_current_word()
         if not last_word:
             return False
-        # Detect: /path, ./path, ../path, ~/path
         return bool(re.match(r"^[~./]|^\.\./", last_word))
 
     def _get_path_completions(self, partial: str) -> list[str]:
         """Get filesystem completions for partial path."""
         try:
-            # Handle home directory
             if partial.startswith("~"):
                 base = Path.home()
                 if len(partial) > 1 and partial[1] == "/":
@@ -212,7 +259,6 @@ class InputController(TextArea):
                 base = Path.cwd()
                 full_path = base / partial if partial else base
 
-            # Get parent and pattern
             if full_path.exists() and full_path.is_dir():
                 parent = full_path
                 pattern = "*"
@@ -225,7 +271,6 @@ class InputController(TextArea):
 
             matches = []
             for p in parent.glob(pattern):
-                # Get relative path from current dir or show full if needed
                 try:
                     if partial.startswith("~"):
                         rel = "~/" + str(p.relative_to(Path.home()))
@@ -256,12 +301,10 @@ class InputController(TextArea):
             return
 
         if len(completions) == 1:
-            # Single match - complete it
             words[-1] = completions[0]
             self.text = " ".join(words)
             self.move_cursor((len(self.text), 0))
         else:
-            # Multiple matches - find common prefix
             common = completions[0]
             for c in completions[1:]:
                 while not c.startswith(common) and common:
@@ -282,7 +325,6 @@ class InputController(TextArea):
         return row >= self.document.line_count - 1
 
     async def on_key(self, event):
-        # Handle navigation keys manually to support both Suggester and History
         from widgets.suggester import CommandSuggester
 
         if event.key == "up":
@@ -294,7 +336,6 @@ class InputController(TextArea):
                     suggester.select_prev()
                     event.stop()
                     return
-            # Only navigate history if on first line
             if self._on_cursor_first_line():
                 self.action_history_up()
                 event.stop()
@@ -308,13 +349,11 @@ class InputController(TextArea):
                     suggester.select_next()
                     event.stop()
                     return
-            # Only navigate history if on last line
             if self._on_cursor_last_line():
                 self.action_history_down()
                 event.stop()
 
         elif event.key == "tab":
-            # First check slash commands
             if self.text.startswith("/"):
                 suggester = cast(
                     CommandSuggester, self.app.query_one("CommandSuggester")
@@ -331,7 +370,6 @@ class InputController(TextArea):
                         self.move_cursor((len(self.text), 0))
                         event.stop()
                         return
-            # Then check path completion (only in CLI mode)
             elif not self.is_ai_mode and self._is_path_context():
                 partial = self._get_current_word()
                 completions = self._get_path_completions(partial)
@@ -348,12 +386,10 @@ class InputController(TextArea):
 
     async def on_click(self, event: Click) -> None:
         """Handle mouse clicks - right-click to paste."""
-        # Right-click (button 3) to paste from clipboard
         if event.button == 3:
             event.stop()
             await self._paste_from_clipboard()
             return
-        # Let parent handle other clicks (left-click for positioning, etc.)
 
     async def _paste_from_clipboard(self) -> None:
         """Paste content from clipboard at cursor position."""
@@ -363,7 +399,6 @@ class InputController(TextArea):
                 if content:
                     self.insert(content)
             else:
-                # Fallback to xclip on Linux
                 import asyncio
 
                 try:
@@ -389,24 +424,19 @@ class InputController(TextArea):
         """Copy selected text to clipboard (Ctrl+Shift+C)."""
         selected = self.selected_text
         if selected:
-            # We run it in a worker or as a task because action methods should be fast
-            # and _copy_to_clipboard is now async
             self.app.run_worker(self._copy_to_clipboard(selected))
 
     async def _copy_to_clipboard(self, text: str) -> None:
         """Copy text to system clipboard."""
         try:
-            # Try OSC 52 first (works over SSH, in supporting terminals)
             self.app.copy_to_clipboard(text)
         except Exception:
             pass
 
-        # Also use pyperclip for broader compatibility
         try:
             if pyperclip:
                 pyperclip.copy(text)
             else:
-                # Fallback to xclip on Linux
                 import asyncio
 
                 try:
@@ -428,7 +458,6 @@ class InputController(TextArea):
         self, event: TextArea.SelectionChanged
     ) -> None:
         """Auto-copy text when selection is made (copy-on-highlight)."""
-        # Only copy if there's an actual selection (not just cursor movement)
         if event.selection.start != event.selection.end:
             selected = self.selected_text
             if selected:

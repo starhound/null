@@ -3,7 +3,7 @@
 import asyncio
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, ClassVar
 
 if TYPE_CHECKING:
     from textual.worker import Worker
@@ -11,15 +11,13 @@ if TYPE_CHECKING:
 from textual.app import App, ComposeResult
 from textual.binding import BindingType
 from textual.containers import Container, Horizontal
-from textual.widgets import Footer, Label, TextArea, DirectoryTree
+from textual.widgets import DirectoryTree, Footer, Label, TextArea
 
 from ai.factory import AIFactory
 from ai.manager import AIManager
 from config import Config, get_settings
 from handlers import ExecutionHandler, InputHandler, SlashCommandHandler
-from managers import ProcessManager, BranchManager, AgentManager
-
-# from executor import ExecutionEngine  # Removed global import
+from managers import AgentManager, BranchManager, ProcessManager
 from mcp import MCPManager
 from models import BlockState, BlockType
 from screens import ConfirmDialog, HelpScreen, ModelListScreen
@@ -28,7 +26,6 @@ from widgets import (
     AppHeader,
     BaseBlockWidget,
     BlockSearch,
-    create_block,
     CommandPalette,
     CommandSuggester,
     HistorySearch,
@@ -36,6 +33,7 @@ from widgets import (
     InputController,
     Sidebar,
     StatusBar,
+    create_block,
 )
 
 # For backwards compatibility

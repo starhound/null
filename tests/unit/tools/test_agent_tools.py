@@ -1,12 +1,13 @@
 import pytest
+
+from managers.agent import AgentManager
 from tools.builtin import (
-    agent_status,
     agent_history,
     agent_stats,
-    set_agent_manager,
+    agent_status,
     get_agent_manager,
+    set_agent_manager,
 )
-from managers.agent import AgentManager, AgentState
 
 
 @pytest.fixture

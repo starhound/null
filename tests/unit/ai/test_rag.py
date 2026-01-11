@@ -1,10 +1,10 @@
 """Test RAG system."""
 
-import pytest
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
-from ai.rag import Chunker, VectorStore, RAGManager, DocumentChunk
+import pytest
+
+from ai.rag import Chunker, DocumentChunk, RAGManager, VectorStore
 
 
 def test_chunker():

@@ -73,6 +73,9 @@ class AISettings:
     autocomplete_enabled: bool = False
     autocomplete_provider: str = ""
     autocomplete_model: str = ""
+    embedding_provider: str = "ollama"
+    embedding_model: str = "nomic-embed-text"
+    embedding_endpoint: str = "http://localhost:11434"
 
 
 @dataclass

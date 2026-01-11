@@ -65,6 +65,82 @@ uv run ruff check .             # Lint
 uv run textual console          # Debug Console
 ```
 
+## MCP (MODEL CONTEXT PROTOCOL)
+
+### Overview
+Null Terminal implements the Model Context Protocol for extensible tool integration. MCP servers are external processes that provide tools and resources the AI can use.
+
+### Architecture
+```
+mcp/
+├── manager.py      # MCPManager - multi-server lifecycle
+├── client.py       # MCPClient - per-server connection
+├── config.py       # Server configuration (mcp.json)
+└── catalog.py      # Pre-configured server catalog
+```
+
+### Key Components
+| Component | Role |
+|-----------|------|
+| `MCPManager` | Manages all server connections, aggregates tools |
+| `MCPClient` | Single server connection via JSON-RPC over stdio |
+| `MCPConfig` | Loads/saves `~/.null/mcp.json` |
+| `MCPTool` | Tool definition (name, description, schema) |
+
+### Configuration (`~/.null/mcp.json`)
+```json
+{
+  "servers": {
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-brave"],
+      "env": {"BRAVE_API_KEY": "..."},
+      "enabled": true
+    }
+  }
+}
+```
+
+### Tool Flow
+1. `MCPManager.initialize()` - Connects to all enabled servers
+2. `get_all_tools()` - Aggregates tools from all servers
+3. AI generates `tool_call` with MCP tool name
+4. `AIExecutor` routes to `MCPManager.call_tool()`
+5. Result fed back to AI
+
+### Built-in Tools vs MCP Tools
+| Built-in (`tools/builtin.py`) | MCP (`mcp/`) |
+|-------------------------------|--------------|
+| `run_command`, `read_file`, `write_file` | External server tools |
+| Always available | Require server connection |
+| No prefix | Usually no prefix (merged) |
+
+### Adding MCP Servers
+```bash
+# Via command
+/mcp add
+
+# Via catalog
+/mcp catalog
+```
+
+## MANAGERS
+
+### Overview
+Managers handle stateful subsystems independently from UI.
+
+| Manager | Location | Responsibility |
+|---------|----------|----------------|
+| `AIManager` | `ai/manager.py` | Provider lifecycle, model discovery |
+| `MCPManager` | `mcp/manager.py` | MCP server connections |
+| `ProcessManager` | `managers/process.py` | Background PTY processes |
+| `AgentManager` | `managers/agent.py` | Agent session state/history |
+| `BranchManager` | `managers/branch.py` | Conversation branching |
+
+### Lifecycle
+Managers are initialized in `NullApp.__init__()` and accessed via `self.app.*_manager`.
+
 ## NOTES
-*   `handlers/execution.py` is the complexity hotspot (>1200 lines). Modify with care.
+*   `handlers/ai_executor.py` is the complexity hotspot. Modify with care.
 *   Integration tests use `pilot` pattern (Textual) and require `mock_ai_components`.
+*   See `docs/ARCHITECTURE.md` for detailed system diagrams.

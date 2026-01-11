@@ -1,6 +1,5 @@
 """Tests for MCP catalog functionality."""
 
-import pytest
 from mcp.catalog import (
     CATALOG,
     CATEGORIES,
@@ -60,7 +59,7 @@ class TestCatalog:
     def test_catalog_entries_have_required_fields(self):
         """Test all catalog entries have required fields."""
         for entry in CATALOG:
-            assert entry.name, f"Entry missing name"
+            assert entry.name, "Entry missing name"
             assert entry.description, f"Entry {entry.name} missing description"
             assert entry.command, f"Entry {entry.name} missing command"
             assert entry.category, f"Entry {entry.name} missing category"

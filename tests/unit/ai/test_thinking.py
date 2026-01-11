@@ -81,7 +81,7 @@ class TestXMLTagStrategy:
     def test_extract_with_whitespace(self, strategy):
         """Should trim whitespace from extracted thinking."""
         text = "<think>   Padded thinking   </think>Response"
-        thinking, remaining = strategy.extract_thinking(text)
+        thinking, _remaining = strategy.extract_thinking(text)
         assert thinking == "Padded thinking"
 
     def test_streaming_complete_block(self, strategy):
@@ -95,7 +95,7 @@ class TestXMLTagStrategy:
     def test_streaming_incomplete_block(self, strategy):
         """Streaming extraction should detect incomplete blocks."""
         text = "<think>Incomplete thought still being typed..."
-        thinking, remaining, complete = strategy.extract_thinking_streaming(text)
+        thinking, _remaining, complete = strategy.extract_thinking_streaming(text)
         assert "Incomplete thought" in thinking
         assert complete is False
 
@@ -201,7 +201,7 @@ class TestNativeThinkingStrategy:
     def test_streaming_delegates_to_xml(self, strategy):
         """Streaming extraction should also use XML strategy."""
         text = "<think>Streaming native thought</think>Answer"
-        thinking, remaining, complete = strategy.extract_thinking_streaming(text)
+        thinking, _remaining, complete = strategy.extract_thinking_streaming(text)
         assert thinking == "Streaming native thought"
         assert complete is True
 
@@ -415,7 +415,7 @@ class TestEdgeCases:
         strategy = JSONStructuredStrategy()
         # Note: In actual JSON, quotes would be escaped
         text = '{"thinking": "Analysis with newlines and quotes"}\nResponse'
-        thinking, remaining = strategy.extract_thinking(text)
+        thinking, _remaining = strategy.extract_thinking(text)
         assert "Analysis" in thinking
 
     def test_xml_unicode_content(self):

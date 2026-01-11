@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, cast
 
 from textual.app import ComposeResult
 from textual.events import Click
+from textual.message import Message
 from textual.timer import Timer
 from textual.widgets import Label, ListItem, ListView, Static
 
@@ -26,6 +27,11 @@ class CommandSuggester(Static):
     """Popup for command suggestions."""
 
     can_focus = False
+
+    class SuggestionReady(Message):
+        def __init__(self, suggestion: str):
+            self.suggestion = suggestion
+            super().__init__()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -176,14 +182,142 @@ class CommandSuggester(Static):
         )
 
     async def _fetch_ai_suggestion(self, text: str):
-        """Fetch suggestion from AI provider."""
         try:
-            # Access app attributes with getattr to avoid type errors
+            try:
+                from managers.recall import RecallManager
+
+                recall = RecallManager()
+                results = await recall.search(text, limit=1)
+
+                if results and results[0].get("score", 0) > 0.8:
+                    content = results[0].get("content", "")
+                    if content.startswith("Input:"):
+                        suggestion = (
+                            content.split("\n")[0].replace("Input: ", "").strip()
+                        )
+                    else:
+                        suggestion = content.strip()
+
+                    if suggestion and suggestion != text:
+                        self._show_ai_suggestion(suggestion)
+                        return
+            except Exception:
+                pass
+
             ai_manager = getattr(self.app, "ai_manager", None)
             if not ai_manager:
                 return
 
-            provider = ai_manager.get_autocomplete_provider()
+            provider = None
+            mcp_manager = getattr(self.app, "mcp_manager", None)
+            if mcp_manager:
+                profile_ai = mcp_manager.config.get_active_ai_config()
+                if profile_ai and "provider" in profile_ai:
+                    provider = ai_manager.get_provider(profile_ai["provider"])
+
+            if not provider:
+                provider = ai_manager.get_autocomplete_provider()
+
+            if not provider:
+                return
+
+            blocks = getattr(self.app, "blocks", [])
+            history_blocks = blocks[-5:]
+            context_str = ""
+            for b in history_blocks:
+                if b.type == BlockType.COMMAND:
+                    context_str += f"$ {b.content_input}\n{b.content_output[:200]}\n"
+                elif b.type == BlockType.AI_RESPONSE:
+                    context_str += f"AI: {b.content_output[:200]}\n"
+
+            prompt = f"""Given the terminal history and current partial input '{text}', suggest the complete single line command the user intends to type.
+            History:
+            {context_str}
+
+            Current Input: {text}
+
+            Reply ONLY with the suggested command itself, no reasoning.
+            """
+
+            suggestion = ""
+            async for chunk in provider.generate(prompt, []):
+                suggestion += chunk
+
+            suggestion = suggestion.strip().strip("`")
+            if suggestion.startswith("$ "):
+                suggestion = suggestion[2:]
+
+            if suggestion and suggestion != text:
+                self._show_ai_suggestion(suggestion)
+
+        except Exception:
+            pass
+
+            ai_manager = getattr(self.app, "ai_manager", None)
+            if not ai_manager:
+                return
+
+            provider = None
+            mcp_manager = getattr(self.app, "mcp_manager", None)
+            if mcp_manager:
+                profile_ai = mcp_manager.config.get_active_ai_config()
+                if profile_ai and "provider" in profile_ai:
+                    provider = ai_manager.get_provider(profile_ai["provider"])
+
+            if not provider:
+                provider = ai_manager.get_autocomplete_provider()
+
+            if not provider:
+                return
+
+            blocks = getattr(self.app, "blocks", [])
+            history_blocks = blocks[-5:]
+            context_str = ""
+            for b in history_blocks:
+                if b.type == BlockType.COMMAND:
+                    context_str += f"$ {b.content_input}\n{b.content_output[:200]}\n"
+                elif b.type == BlockType.AI_RESPONSE:
+                    context_str += f"AI: {b.content_output[:200]}\n"
+
+            prompt = f"""Given the terminal history and current partial input '{text}', suggest the complete single line command the user intends to type.
+            History:
+            {context_str}
+
+            Current Input: {text}
+
+            Reply ONLY with the suggested command itself, no reasoning.
+            """
+
+            suggestion = ""
+            async for chunk in provider.generate(prompt, []):
+                suggestion += chunk
+
+            suggestion = suggestion.strip().strip("`")
+            if suggestion.startswith("$ "):
+                suggestion = suggestion[2:]
+
+            if suggestion and suggestion != text:
+                self._show_ai_suggestion(suggestion)
+
+        except Exception:
+            pass
+
+            # 2. AI Autocomplete
+            ai_manager = getattr(self.app, "ai_manager", None)
+            if not ai_manager:
+                return
+
+            # Check profile for provider override
+            provider = None
+            mcp_manager = getattr(self.app, "mcp_manager", None)
+            if mcp_manager:
+                profile_ai = mcp_manager.config.get_active_ai_config()
+                if profile_ai and "provider" in profile_ai:
+                    provider = ai_manager.get_provider(profile_ai["provider"])
+
+            if not provider:
+                provider = ai_manager.get_autocomplete_provider()
+
             if not provider:
                 return
 
@@ -207,8 +341,6 @@ class CommandSuggester(Static):
             """
 
             # Use generation (we want a single completion)
-            # Some providers might not support streaming well for single line,
-            # or we just take the first line.
             suggestion = ""
             async for chunk in provider.generate(prompt, []):
                 suggestion += chunk
@@ -226,9 +358,6 @@ class CommandSuggester(Static):
 
     def _show_ai_suggestion(self, suggestion: str):
         """Display the AI suggestion."""
-        # Only show if the input hasn't changed significantly (simple check)
-        # Ideally we check self.last_input but debounce handles mostly.
-
         lv = self.query_one(ListView)
         lv.clear()
 
@@ -237,6 +366,8 @@ class CommandSuggester(Static):
         self.display = True
         self._selected_index = 0
         self._update_highlight()
+
+        self.post_message(self.SuggestionReady(suggestion))
 
     def select_next(self):
         """Move selection down."""

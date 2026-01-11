@@ -16,13 +16,21 @@ class MCPManager:
         self._initialized = False
 
     async def initialize(self):
-        """Initialize and connect to all enabled MCP servers."""
+        """Initialize and connect to all enabled MCP servers in parallel."""
         if self._initialized:
             return
 
-        for server in self.config.get_enabled_servers():
-            await self.connect_server(server.name)
+        enabled_servers = self.config.get_enabled_servers()
+        if not enabled_servers:
+            self._initialized = True
+            return
 
+        # Connect to all servers concurrently
+        tasks = []
+        for server in enabled_servers:
+            tasks.append(self.connect_server(server.name))
+
+        await asyncio.gather(*tasks)
         self._initialized = True
 
     async def connect_server(self, name: str) -> bool:

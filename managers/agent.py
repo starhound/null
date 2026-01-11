@@ -1,10 +1,10 @@
+import asyncio
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
-import asyncio
 
 
 class AgentState(Enum):
@@ -107,6 +107,7 @@ class AgentManager:
         self._max_history = 50
 
         self._state_callbacks: list[Any] = []
+        self._background_tasks: set[asyncio.Task[Any]] = set()
 
     @property
     def is_active(self) -> bool:
@@ -276,7 +277,9 @@ class AgentManager:
         for callback in self._state_callbacks:
             try:
                 if asyncio.iscoroutinefunction(callback):
-                    asyncio.create_task(callback(self.state))
+                    task = asyncio.create_task(callback(self.state))
+                    self._background_tasks.add(task)
+                    task.add_done_callback(self._background_tasks.discard)
                 else:
                     callback(self.state)
             except Exception:

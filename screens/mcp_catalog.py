@@ -4,7 +4,7 @@ from textual.binding import BindingType
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.widgets import Button, Input, Label, ListItem, ListView, Static
 
-from mcp.catalog import CATALOG, CATEGORIES, CatalogEntry, get_by_name, search
+from mcp.catalog import CATALOG, CATEGORIES, CatalogEntry, get_by_name
 
 from .base import Binding, ComposeResult, ModalScreen
 
@@ -46,7 +46,7 @@ class MCPCatalogScreen(ModalScreen):
     MCPCatalogScreen {
         align: center middle;
     }
-    
+
     #catalog-container {
         width: 80%;
         height: 80%;
@@ -54,82 +54,82 @@ class MCPCatalogScreen(ModalScreen):
         border: tall $primary;
         padding: 1 2;
     }
-    
+
     #catalog-header {
         height: auto;
         margin-bottom: 1;
     }
-    
+
     #catalog-title {
         text-style: bold;
         width: 100%;
         content-align: center middle;
     }
-    
+
     #catalog-search {
         margin: 1 0;
     }
-    
+
     #catalog-content {
         height: 1fr;
     }
-    
+
     #category-list {
         width: 25%;
         border-right: solid $primary-darken-2;
         padding-right: 1;
     }
-    
+
     #category-list > ListItem {
         padding: 0 1;
         height: 1;
     }
-    
+
     #category-list > ListItem.--highlight {
         background: $primary;
     }
-    
+
     #server-list {
         width: 75%;
         padding-left: 1;
     }
-    
+
     CatalogItemWidget {
         height: auto;
         margin: 0 0 1 0;
     }
-    
+
     .catalog-item {
         height: auto;
         padding: 0 1;
         background: $surface-lighten-1;
         border: solid $primary-darken-3;
     }
-    
+
     .catalog-item-info {
         width: 1fr;
         height: auto;
     }
-    
+
     .catalog-name {
         height: 1;
     }
-    
+
     .catalog-desc {
         color: $text-muted;
         height: 1;
     }
-    
+
     .catalog-env {
         height: 1;
     }
-    
+
     .catalog-install-btn {
         width: auto;
         min-width: 10;
         height: 3;
     }
-    
+
     #catalog-footer {
         height: auto;
         margin-top: 1;

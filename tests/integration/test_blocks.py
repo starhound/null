@@ -215,7 +215,7 @@ class TestHistoryViewport:
     @pytest.mark.asyncio
     async def test_history_empty_initially(self, running_app):
         """History should be empty on fresh start (no saved session)."""
-        pilot, app = running_app
+        _pilot, app = running_app
         history = app.query_one("#history", HistoryViewport)
 
         # With fresh temp storage, no previous blocks

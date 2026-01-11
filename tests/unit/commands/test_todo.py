@@ -1,8 +1,6 @@
 """Test todo management."""
 
-import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -19,7 +17,7 @@ def mock_todo_file(tmp_path):
 
 def test_todo_manager_init(mock_todo_file):
     """Test manager initialization creates file."""
-    manager = TodoManager()
+    _manager = TodoManager()
     assert mock_todo_file.exists()
     assert mock_todo_file.read_text() == "[]"
 
@@ -57,7 +55,7 @@ def test_todo_delete(mock_todo_file):
     """Test deleting todos."""
     manager = TodoManager()
     item1 = manager.add("Task 1")
-    item2 = manager.add("Task 2")
+    _item2 = manager.add("Task 2")
 
     assert len(manager.load()) == 2
 

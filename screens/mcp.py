@@ -14,7 +14,7 @@ class MCPServerConfigScreen(ModalScreen):
     MCPServerConfigScreen {
         align: center middle;
     }
-    
+
     #mcp-config-container {
         width: 70;
         height: auto;
@@ -23,34 +23,34 @@ class MCPServerConfigScreen(ModalScreen):
         border: tall $primary;
         padding: 1 2;
     }
-    
+
     #mcp-config-container > Label:first-child {
         text-style: bold;
         width: 100%;
         content-align: center middle;
         margin-bottom: 1;
     }
-    
+
     .input-label {
         margin-top: 1;
         text-style: bold;
     }
-    
+
     .input-hint {
         color: $text-muted;
         text-style: italic;
     }
-    
+
     #mcp-config-container Input {
         margin-bottom: 0;
     }
-    
+
     #buttons {
         margin-top: 2;
         height: auto;
         align: center middle;
     }
-    
+
     #buttons Button {
         margin: 0 1;
     }

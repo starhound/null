@@ -6,8 +6,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import TypedDict
 
-from textual.widgets import DataTable
-
 from .base import CommandMixin
 
 

@@ -1,7 +1,9 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
-from mcp.manager import MCPManager
+
 from mcp.config import MCPServerConfig
+from mcp.manager import MCPManager
 
 
 @pytest.fixture

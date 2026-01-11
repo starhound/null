@@ -1,4 +1,7 @@
+from typing import ClassVar
+
 from textual.app import ComposeResult
+from textual.binding import BindingType
 from textual.containers import Container, Horizontal, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Label, Static
@@ -59,7 +62,7 @@ class AgentScreen(ModalScreen):
     }
     """
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         ("escape", "dismiss", "Close"),
         ("c", "clear_history", "Clear History"),
         ("s", "stop_agent", "Stop Agent"),

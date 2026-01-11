@@ -70,7 +70,7 @@ class TestInputModeToggle:
     @pytest.mark.asyncio
     async def test_starts_in_cli_mode(self, running_app):
         """Input should start in CLI mode."""
-        pilot, app = running_app
+        _pilot, app = running_app
         input_widget = app.query_one("#input", InputController)
 
         assert input_widget.mode == "CLI"

@@ -1,7 +1,9 @@
-import pytest
-from unittest.mock import MagicMock, patch
-from managers.process import ProcessManager, ProcessInfo
 import signal
+from unittest.mock import patch
+
+import pytest
+
+from managers.process import ProcessManager
 
 
 @pytest.fixture

@@ -367,6 +367,29 @@ class ConfigScreen(ModalScreen):
             Input(value=s.autocomplete_model, id="autocomplete_model"),
         )
 
+        yield Static("Embedding Settings", classes="settings-header")
+
+        yield from self._setting_row(
+            "ai.embedding_provider",
+            "Embedding Provider",
+            "Provider for semantic search embeddings",
+            Select(providers, value=s.embedding_provider, id="embedding_provider"),
+        )
+
+        yield from self._setting_row(
+            "ai.embedding_model",
+            "Embedding Model",
+            "Model name (e.g. nomic-embed-text)",
+            Input(value=s.embedding_model, id="embedding_model"),
+        )
+
+        yield from self._setting_row(
+            "ai.embedding_endpoint",
+            "Embedding Endpoint",
+            "API endpoint (e.g. http://localhost:11434)",
+            Input(value=s.embedding_endpoint, id="embedding_endpoint"),
+        )
+
     def _collect_values(self):
         """Collect all control values into settings structure."""
         from config import (
@@ -466,92 +489,16 @@ class ConfigScreen(ModalScreen):
             autocomplete_model=str(
                 get_val(self.controls.get("ai.autocomplete_model")) or ""
             ),
-        )
-
-        editor = EditorSettings(
-            tab_size=int(get_val(self.controls.get("editor.tab_size")) or 4),
-            word_wrap=get_bool(self.controls.get("editor.word_wrap"), True),
-            auto_indent=get_bool(self.controls.get("editor.auto_indent"), True),
-            vim_mode=get_bool(self.controls.get("editor.vim_mode"), False),
-        )
-
-        terminal = TerminalSettings(
-            shell=str(get_val(self.controls.get("terminal.shell")) or ""),
-            scrollback_lines=int(
-                get_val(self.controls.get("terminal.scrollback_lines")) or 10000
+            embedding_provider=str(
+                get_val(self.controls.get("ai.embedding_provider")) or "ollama"
             ),
-            auto_save_session=get_bool(
-                self.controls.get("terminal.auto_save_session"), True
+            embedding_model=str(
+                get_val(self.controls.get("ai.embedding_model")) or "nomic-embed-text"
             ),
-            auto_save_interval=int(
-                get_val(self.controls.get("terminal.auto_save_interval")) or 30
+            embedding_endpoint=str(
+                get_val(self.controls.get("ai.embedding_endpoint"))
+                or "http://localhost:11434"
             ),
-            confirm_on_exit=get_bool(
-                self.controls.get("terminal.confirm_on_exit"), True
-            ),
-            clear_on_exit=get_bool(self.controls.get("terminal.clear_on_exit"), False),
-            cursor_style=str(
-                get_val(self.controls.get("terminal.cursor_style")) or "block"
-            ),
-            cursor_blink=get_bool(self.controls.get("terminal.cursor_blink"), True),
-            bold_is_bright=get_bool(self.controls.get("terminal.bold_is_bright"), True),
-        )
-
-        ai = AISettings(
-            provider=str(get_val(self.controls.get("ai.provider")) or "ollama"),
-            context_window=int(get_val(self.controls.get("ai.context_window")) or 4000),
-            max_tokens=int(get_val(self.controls.get("ai.max_tokens")) or 2048),
-            temperature=float(get_val(self.controls.get("ai.temperature")) or 0.7),
-            stream_responses=get_bool(self.controls.get("ai.stream_responses"), True),
-            autocomplete_enabled=get_bool(
-                self.controls.get("ai.autocomplete_enabled"), False
-            ),
-            autocomplete_provider=str(
-                get_val(self.controls.get("ai.autocomplete_provider")) or ""
-            ),
-            autocomplete_model=str(
-                get_val(self.controls.get("ai.autocomplete_model")) or ""
-            ),
-        )
-
-        editor = EditorSettings(
-            tab_size=get_val(self.controls.get("editor.tab_size")) or 4,
-            word_wrap=get_bool(self.controls.get("editor.word_wrap"), True),
-            auto_indent=get_bool(self.controls.get("editor.auto_indent"), True),
-            vim_mode=get_bool(self.controls.get("editor.vim_mode"), False),
-        )
-
-        terminal = TerminalSettings(
-            shell=get_val(self.controls.get("terminal.shell")) or "",
-            scrollback_lines=get_val(self.controls.get("terminal.scrollback_lines"))
-            or 10000,
-            auto_save_session=get_bool(
-                self.controls.get("terminal.auto_save_session"), True
-            ),
-            auto_save_interval=get_val(self.controls.get("terminal.auto_save_interval"))
-            or 30,
-            confirm_on_exit=get_bool(
-                self.controls.get("terminal.confirm_on_exit"), True
-            ),
-            clear_on_exit=get_bool(self.controls.get("terminal.clear_on_exit"), False),
-            cursor_style=get_val(self.controls.get("terminal.cursor_style")) or "block",
-            cursor_blink=get_bool(self.controls.get("terminal.cursor_blink"), True),
-            bold_is_bright=get_bool(self.controls.get("terminal.bold_is_bright"), True),
-        )
-
-        ai = AISettings(
-            provider=get_val(self.controls.get("ai.provider")) or "ollama",
-            context_window=get_val(self.controls.get("ai.context_window")) or 4000,
-            max_tokens=get_val(self.controls.get("ai.max_tokens")) or 2048,
-            temperature=get_val(self.controls.get("ai.temperature")) or 0.7,
-            stream_responses=get_bool(self.controls.get("ai.stream_responses"), True),
-            autocomplete_enabled=get_bool(
-                self.controls.get("ai.autocomplete_enabled"), False
-            ),
-            autocomplete_provider=get_val(self.controls.get("ai.autocomplete_provider"))
-            or "",
-            autocomplete_model=get_val(self.controls.get("ai.autocomplete_model"))
-            or "",
         )
 
         return Settings(appearance=appearance, editor=editor, terminal=terminal, ai=ai)
@@ -578,6 +525,16 @@ class ConfigScreen(ModalScreen):
         Config.set("ai.autocomplete.enabled", str(new_settings.ai.autocomplete_enabled))
         Config.set("ai.autocomplete.provider", new_settings.ai.autocomplete_provider)
         Config.set("ai.autocomplete.model", new_settings.ai.autocomplete_model)
+
+        Config.set("ai.embedding_provider", new_settings.ai.embedding_provider)
+        Config.set(
+            f"ai.embedding.{new_settings.ai.embedding_provider}.model",
+            new_settings.ai.embedding_model,
+        )
+        Config.set(
+            f"ai.embedding.{new_settings.ai.embedding_provider}.endpoint",
+            new_settings.ai.embedding_endpoint,
+        )
 
         # Apply theme immediately
         try:

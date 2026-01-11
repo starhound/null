@@ -1,5 +1,5 @@
-from textual.widgets import ListView, ListItem
 from textual.widget import Widget
+from textual.widgets import ListItem, ListView
 
 
 class HistoryViewport(ListView):

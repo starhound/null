@@ -21,7 +21,7 @@ class TestThemeLoading:
     @pytest.mark.asyncio
     async def test_builtin_themes_available(self, running_app):
         """Built-in themes should be available."""
-        pilot, app = running_app
+        _pilot, app = running_app
 
         themes = app.available_themes
         assert "null-dark" in themes
@@ -30,7 +30,7 @@ class TestThemeLoading:
     @pytest.mark.asyncio
     async def test_all_themes_registered(self, running_app):
         """All themes from get_all_themes should be registered."""
-        pilot, app = running_app
+        _pilot, app = running_app
 
         all_themes = get_all_themes()
         for theme_name in all_themes:
@@ -104,7 +104,7 @@ class TestThemeIntegrity:
         """All themes should have required color properties."""
         themes = get_all_themes()
 
-        for name, theme in themes.items():
+        for _name, theme in themes.items():
             # Themes should have basic required variables
             assert theme is not None
             # Theme should be a valid Textual Theme object

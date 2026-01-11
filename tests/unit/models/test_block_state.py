@@ -1,9 +1,6 @@
 """Tests for BlockState and related models."""
 
 import json
-from datetime import datetime
-
-import pytest
 
 from models import AgentIteration, BlockState, BlockType, ToolCallState
 
@@ -234,8 +231,12 @@ class TestBlockStateExport:
     def test_export_to_json(self):
         """Test exporting blocks to JSON."""
         blocks = [
-            BlockState(type=BlockType.COMMAND, content_input="ls", content_output="file.txt"),
-            BlockState(type=BlockType.AI_RESPONSE, content_input="hi", content_output="hello"),
+            BlockState(
+                type=BlockType.COMMAND, content_input="ls", content_output="file.txt"
+            ),
+            BlockState(
+                type=BlockType.AI_RESPONSE, content_input="hi", content_output="hello"
+            ),
         ]
 
         # Test that to_dict produces valid JSON

@@ -1,7 +1,8 @@
-import pytest
 from unittest.mock import patch
 
-from tools.builtin import todo_list, todo_add, todo_update, todo_delete
+import pytest
+
+from tools.builtin import todo_add, todo_delete, todo_list, todo_update
 
 
 @pytest.fixture

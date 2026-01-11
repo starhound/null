@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app import NullApp
-    from widgets import HistoryViewport, StatusBar
 
 from .base import CommandMixin
 

@@ -2,8 +2,6 @@
 
 from .app_header import AppHeader
 from .block_search import BlockSearch
-
-# Import block widgets from the blocks subpackage
 from .blocks import (
     AIResponseBlock,
     AgentResponseBlock,

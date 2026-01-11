@@ -1,8 +1,5 @@
 """Unit tests for config/ai.py - Config class for AI/LLM settings."""
 
-import pytest
-from unittest.mock import MagicMock, patch
-
 from config.ai import Config
 from config.defaults import (
     DEFAULT_AI_ACTIVE_PROMPT,
@@ -182,6 +179,7 @@ class TestConfigLoadAll:
         """load_all() should use defaults when no config exists."""
         # Use completely fresh temp directory with no prior data
         from pathlib import Path
+
         import config.storage as storage_module
 
         null_dir = temp_dir / ".null"
@@ -191,8 +189,8 @@ class TestConfigLoadAll:
         monkeypatch.setattr(Path, "home", lambda: temp_dir)
         monkeypatch.setattr(storage_module, "DB_PATH", temp_dir / ".null" / "null.db")
 
-        from config.storage import StorageManager
         from config import Config
+        from config.storage import StorageManager
 
         storage = StorageManager()
         try:
@@ -257,6 +255,7 @@ class TestConfigLoadAll:
         """load_all() should use defaults for missing provider-specific settings."""
         # Use completely fresh temp directory to avoid pollution from other tests
         from pathlib import Path
+
         import config.storage as storage_module
 
         null_dir = temp_dir / ".null"
@@ -266,8 +265,8 @@ class TestConfigLoadAll:
         monkeypatch.setattr(Path, "home", lambda: temp_dir)
         monkeypatch.setattr(storage_module, "DB_PATH", temp_dir / ".null" / "null.db")
 
-        from config.storage import StorageManager
         from config import Config
+        from config.storage import StorageManager
 
         storage = StorageManager()
         try:

@@ -2,24 +2,21 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from textual.app import ComposeResult
-from textual.binding import Binding
+from textual.binding import Binding, BindingType
 from textual.containers import Container, Horizontal
 from textual.widgets import Button, DataTable, Input, Label
 
 from commands.todo import TodoManager
 from screens.base import ModalScreen
 
-if TYPE_CHECKING:
-    from app import NullApp
-
 
 class TodoScreen(ModalScreen):
     """Screen for managing todo list."""
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("escape", "dismiss", "Close"),
         Binding("delete", "delete_task", "Delete"),
         Binding("space", "toggle_status", "Toggle Status"),

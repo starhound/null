@@ -3,6 +3,8 @@
 from pathlib import Path
 
 from ai.rag import RAGManager
+from managers.recall import RecallManager
+
 from .base import CommandMixin
 
 
@@ -12,6 +14,36 @@ class RAGCommands(CommandMixin):
     def __init__(self, app):
         self.app = app
         self.rag = RAGManager()
+        self.recall = RecallManager()
+
+    async def cmd_recall(self, args: list[str]):
+        """Search interaction history.
+
+        Usage:
+            /recall <query>   Search past commands and responses
+        """
+        if not args:
+            self.notify("Usage: /recall <query>", severity="error")
+            return
+
+        query = " ".join(args)
+        results = await self.recall.search(query)
+
+        if not results:
+            self.notify("No matching interactions found.")
+            return
+
+        output = ["# Recall Results", ""]
+        for i, res in enumerate(results, 1):
+            score = res.get("score", 0)
+            content = res.get("content", "")
+            display_content = content[:500] + "..." if len(content) > 500 else content
+
+            output.append(f"## {i}. Match (Score: {score:.2f})")
+            output.append(f"```\n{display_content}\n```")
+            output.append("")
+
+        await self.show_output(f"Recall: {query}", "\n".join(output))
 
     async def cmd_index(self, args: list[str]):
         """Manage knowledge base index.

@@ -1,16 +1,12 @@
 """RAG (Retrieval-Augmented Generation) System."""
 
+import asyncio
+import fnmatch
 import json
 import math
-import fnmatch
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict
-
-from config import Config
-
-
-import asyncio
 
 
 @dataclass
@@ -84,7 +80,7 @@ class VectorStore:
                 continue
 
             # Dot product
-            dot = sum(a * b for a, b in zip(query_vector, chunk.vector))
+            dot = sum(a * b for a, b in zip(query_vector, chunk.vector, strict=False))
 
             # Magnitude of chunk vector
             c_mag = math.sqrt(sum(x * x for x in chunk.vector))
@@ -103,7 +99,7 @@ class VectorStore:
     def stats(self) -> IndexStats:
         size_bytes = self.path.stat().st_size if self.path.exists() else 0
         vectors = sum(1 for c in self.chunks if c.vector)
-        unique_docs = len(set(c.source for c in self.chunks))
+        unique_docs = len({c.source for c in self.chunks})
 
         return {
             "total_documents": unique_docs,

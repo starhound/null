@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from config import get_settings
 from executor import ExecutionEngine
 from widgets.blocks import CommandBlock
+
 from .common import UIBuffer
 
 if TYPE_CHECKING:
@@ -18,6 +19,8 @@ if TYPE_CHECKING:
 
 class CLIExecutor:
     """Handles CLI command execution."""
+
+    _background_tasks: ClassVar[set[asyncio.Task[None]]] = set()
 
     def __init__(self, app: NullApp):
         self.app = app
@@ -104,10 +107,20 @@ class CLIExecutor:
 
         if not is_append:
             if hasattr(widget, "set_exit_code"):
-                getattr(widget, "set_exit_code")(exit_code)
+                widget.set_exit_code(exit_code)
         elif exit_code != 0:
             block.content_output += f"\n[exit: {exit_code}]\n"
             widget.update_output()
 
         if get_settings().terminal.auto_save_session:
             self.app._auto_save()
+
+        try:
+            from managers.recall import RecallManager
+
+            recall_manager = RecallManager()
+            task = asyncio.create_task(recall_manager.index_interaction(block))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
+        except Exception:
+            pass
