@@ -210,7 +210,8 @@ class AIExecutor:
                     widget.update_output(full_response)
                     break
 
-                buffer.write(chunk)
+                if chunk.text:
+                    buffer.write(chunk.text)
 
             buffer.flush()
 

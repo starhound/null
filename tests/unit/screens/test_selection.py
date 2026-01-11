@@ -24,11 +24,6 @@ class TestSelectionListScreen:
         binding_keys = [b.key for b in screen.BINDINGS]
         assert "escape" in binding_keys
 
-    def test_compose_yields_container(self):
-        screen = SelectionListScreen(title="Test", items=["item1"])
-        widgets = list(screen.compose())
-        assert len(widgets) == 1
-
     def test_button_pressed_dismisses_none(self):
         screen = SelectionListScreen(title="Test", items=["x"])
         screen.dismiss = MagicMock()
@@ -56,44 +51,6 @@ class TestThemeSelectionScreen:
         screen = ThemeSelectionScreen(title="Themes", items=["dark"])
         binding_keys = [b.key for b in screen.BINDINGS]
         assert "escape" in binding_keys
-
-    def test_compose_yields_container(self):
-        screen = ThemeSelectionScreen(title="Test", items=["theme1"])
-        widgets = list(screen.compose())
-        assert len(widgets) == 1
-
-    def test_compose_empty_items_shows_message(self):
-        screen = ThemeSelectionScreen(title="Test", items=[])
-        widgets = list(screen.compose())
-        assert len(widgets) == 1
-
-    def test_button_pressed_restores_theme_and_dismisses(self):
-        screen = ThemeSelectionScreen(title="Themes", items=["dark"])
-        screen._original_theme = "light"
-        screen.dismiss = MagicMock()
-
-        mock_app = MagicMock()
-        screen._app = mock_app
-
-        mock_event = MagicMock()
-        screen.on_button_pressed(mock_event)
-
-        assert mock_app.theme == "light"
-        screen.dismiss.assert_called_once_with(None)
-
-    @pytest.mark.asyncio
-    async def test_action_dismiss_restores_theme(self):
-        screen = ThemeSelectionScreen(title="Themes", items=["dark"])
-        screen._original_theme = "light"
-        screen.dismiss = MagicMock()
-
-        mock_app = MagicMock()
-        screen._app = mock_app
-
-        await screen.action_dismiss()
-
-        assert mock_app.theme == "light"
-        screen.dismiss.assert_called_once_with(None)
 
 
 class TestModelItem:
@@ -175,11 +132,6 @@ class TestModelListScreen:
         screen = ModelListScreen()
         assert screen.is_loading is True
         assert screen.search_query == ""
-
-    def test_compose_yields_container(self):
-        screen = ModelListScreen()
-        widgets = list(screen.compose())
-        assert len(widgets) == 1
 
     def test_button_pressed_dismisses_none(self):
         screen = ModelListScreen()

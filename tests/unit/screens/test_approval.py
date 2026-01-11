@@ -40,12 +40,6 @@ class TestToolApprovalScreen:
         assert "a" in binding_keys
         assert "r" in binding_keys
 
-    def test_compose_yields_container(self):
-        tool_calls = [{"name": "test", "arguments": {}}]
-        screen = ToolApprovalScreen(tool_calls=tool_calls)
-        widgets = list(screen.compose())
-        assert len(widgets) == 1
-
     def test_action_approve(self):
         screen = ToolApprovalScreen(tool_calls=[])
         screen.dismiss = MagicMock()

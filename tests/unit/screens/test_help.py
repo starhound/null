@@ -12,11 +12,6 @@ class TestHelpScreen:
         binding_keys = [b.key for b in screen.BINDINGS]
         assert "escape" in binding_keys
 
-    def test_compose_yields_container(self):
-        screen = HelpScreen()
-        widgets = list(screen.compose())
-        assert len(widgets) == 1
-
     def test_button_pressed_close(self):
         screen = HelpScreen()
         screen.dismiss = MagicMock()

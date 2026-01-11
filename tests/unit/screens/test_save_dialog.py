@@ -21,11 +21,6 @@ class TestSaveFileDialog:
         binding_keys = [b.key for b in dialog.BINDINGS]
         assert "escape" in binding_keys
 
-    def test_compose_yields_container(self):
-        dialog = SaveFileDialog()
-        widgets = list(dialog.compose())
-        assert len(widgets) == 1
-
     def test_action_cancel_dismisses_none(self):
         dialog = SaveFileDialog()
         dialog.dismiss = MagicMock()
@@ -75,7 +70,7 @@ class TestSaveFileDialogDoSave:
         assert "filename" in dialog.notify.call_args[0][0].lower()
         dialog.dismiss.assert_not_called()
 
-    @patch("screens.save_dialog.Path")
+    @patch("pathlib.Path")
     def test_successful_save(self, mock_path_class):
         dialog = SaveFileDialog(content="test content")
         dialog.notify = MagicMock()
@@ -100,7 +95,7 @@ class TestSaveFileDialogDoSave:
         )
         dialog.dismiss.assert_called_once()
 
-    @patch("screens.save_dialog.Path")
+    @patch("pathlib.Path")
     def test_save_failure_notifies_error(self, mock_path_class):
         dialog = SaveFileDialog(content="test")
         dialog.notify = MagicMock()

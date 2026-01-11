@@ -3,9 +3,11 @@
 from typing import Any, ClassVar
 
 from .anthropic import AnthropicProvider
+from .antigravity import AntigravityProvider
 from .azure import AzureProvider
 from .base import LLMProvider
 from .bedrock import BedrockProvider
+from .claude_oauth import ClaudeOAuthProvider
 from .cohere import CohereProvider
 from .google_ai import GoogleAIProvider
 from .google_vertex import GoogleVertexProvider
@@ -36,6 +38,20 @@ class AIFactory:
             "description": "Claude 3.5, Claude 3, etc.",
             "requires_api_key": True,
             "requires_endpoint": False,
+        },
+        "antigravity": {
+            "name": "Antigravity (Google)",
+            "description": "Claude/Gemini via Google OAuth",
+            "requires_api_key": False,
+            "requires_endpoint": False,
+            "requires_oauth": True,
+        },
+        "claude_oauth": {
+            "name": "Claude Pro/Max",
+            "description": "Claude via Anthropic OAuth",
+            "requires_api_key": False,
+            "requires_endpoint": False,
+            "requires_oauth": True,
         },
         "google": {
             "name": "Google AI Studio",
@@ -229,6 +245,17 @@ class AIFactory:
             return AnthropicProvider(
                 api_key=config.get("api_key", ""),
                 model=get("model", "claude-3-5-sonnet-20241022"),
+            )
+
+        elif provider_name == "antigravity":
+            return AntigravityProvider(
+                model=get("model", "claude-sonnet-4-5"),
+            )
+
+        elif provider_name == "claude_oauth":
+            return ClaudeOAuthProvider(
+                model=get("model", "claude-sonnet-4-20250514"),
+                mode=get("mode", "max"),
             )
 
         elif provider_name == "google":

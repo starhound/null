@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import asyncio
 import base64
 import hashlib
 import json
-import os
 import secrets
 import webbrowser
 from dataclasses import dataclass
@@ -13,8 +11,6 @@ from pathlib import Path
 from threading import Thread
 from typing import Any
 from urllib.parse import parse_qs, urlparse
-
-import httpx
 
 CONFIG_DIR = Path.home() / ".null"
 OAUTH_TOKENS_FILE = CONFIG_DIR / "oauth_tokens.json"

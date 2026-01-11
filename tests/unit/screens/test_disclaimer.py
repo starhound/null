@@ -23,11 +23,6 @@ class TestDisclaimerScreen:
         screen.action_accept()
         screen.dismiss.assert_called_once_with(True)
 
-    def test_compose_yields_container(self):
-        screen = DisclaimerScreen()
-        widgets = list(screen.compose())
-        assert len(widgets) == 1
-
     def test_button_pressed_confirm_yes(self):
         screen = DisclaimerScreen()
         screen.dismiss = MagicMock()

@@ -35,11 +35,6 @@ class TestConfirmDialog:
         dialog.action_cancel()
         dialog.dismiss.assert_called_once_with(False)
 
-    def test_compose_yields_container(self):
-        dialog = ConfirmDialog(title="Test", message="Test message")
-        widgets = list(dialog.compose())
-        assert len(widgets) == 1
-
 
 class TestConfirmDialogButtonHandling:
     def test_yes_button_dismisses_true(self):

@@ -20,39 +20,50 @@
 
 We believe the terminal shouldn't just be a text buffer—it should be an intelligent workspace.
 
-*   **Hybrid Workflow**: Seamlessly switch between manual CLI control and AI assistance.
-*   **Context Aware**: The AI sees what you see—output, errors, and file content.
-*   **Agentic Power**: Delegate complex, multi-step tasks to autonomous agents.
-*   **Extensible**: Connect to any external service via the Model Context Protocol (MCP).
+-   **Hybrid Workflow**: Seamlessly switch between manual CLI control and AI assistance.
+-   **Context Aware**: The AI sees what you see—output, errors, and file content.
+-   **Agentic Power**: Delegate complex, multi-step tasks to autonomous agents.
+-   **Extensible**: Connect to any external service via the Model Context Protocol (MCP).
 
 ---
 
 ## Key Capabilities
 
-### 🧠 Multi-Provider AI
-Connect to your preferred intelligence.
-*   **Local**: Ollama, LM Studio, Llama.cpp (Privacy-first, free)
-*   **Cloud**: OpenAI, Anthropic, Google Gemini, Azure, Bedrock, Groq, Mistral
-*   **Reasoning**: Visualize the thinking process of advanced models.
+<div class="grid cards" markdown>
 
-### 🤖 Autonomous Agents
-Turn instructions into action.
-*   **Agent Mode**: Give a high-level goal like "Refactor the auth module" and watch the agent plan, edit files, run tests, and iterate.
-*   **Planning Mode**: Review and approve execution plans before a single line of code is changed.
-*   **Background Tasks**: Spawn agents to work in the background while you continue using the shell.
+-   **🧠 Multi-Provider AI**
+    ---
+    Connect to your preferred intelligence.
+    
+    *   **Local**: Ollama, LM Studio, Llama.cpp (Privacy-first, free)
+    *   **Cloud**: OpenAI, Anthropic, Google Gemini, Azure, Bedrock, Groq
+    *   **Reasoning**: Visualize the thinking process of advanced models.
 
-### 🔌 MCP Integration
-Extend your terminal's reach.
-*   **100+ Integrations**: Connect to PostgreSQL, GitHub, Slack, Linear, Google Drive, and more.
-*   **Zero Config**: Browse and install servers directly from the built-in catalog.
-*   **Tool Use**: AI models naturally use these tools to fetch data and perform actions.
+-   **🤖 Autonomous Agents**
+    ---
+    Turn instructions into action.
+    
+    *   **Agent Mode**: Give high-level goals like "Refactor auth module".
+    *   **Planning Mode**: Review execution plans before code changes.
+    *   **Background Tasks**: Spawn agents to work while you use the shell.
 
-### 🛠️ Ops & Admin Tools
-Built for engineers.
-*   **Git-Native**: Auto-commit changes, view diffs, and manage branches contextually.
-*   **Task Management**: Integrated `/todo` dashboard for tracking session goals.
-*   **Session Management**: Save, load, and share your workspace state.
-*   **SSH Manager**: seamless remote host management.
+-   **🔌 MCP Integration**
+    ---
+    Extend your terminal's reach.
+    
+    *   **100+ Integrations**: Postgres, GitHub, Slack, Linear, etc.
+    *   **Zero Config**: Install directly from the built-in catalog.
+    *   **Tool Use**: AI naturally uses tools to fetch data and act.
+
+-   **🛠️ Ops & Admin Tools**
+    ---
+    Built for engineers.
+    
+    *   **Git-Native**: Auto-commit, diffs, and context management.
+    *   **Task Management**: Integrated `/todo` dashboard.
+    *   **Session Management**: Save, load, and share workspaces.
+
+</div>
 
 ---
 
@@ -102,10 +113,25 @@ See the [Installation Guide](user/installation.md) for detailed instructions.
 
 ## Documentation Structure
 
-*   **[User Guide](user/index.md)**: Comprehensive manual for all features.
-*   **[Command Reference](user/commands.md)**: Dictionary of all slash commands.
-*   **[MCP Catalog](mcp-servers.md)**: Browse supported external tools.
-*   **[Architecture](ARCHITECTURE.md)**: Deep dive into the system design.
+<div class="grid cards" markdown>
+
+-   [:material-book-open-page-variant: User Guide](user/index.md)
+    ---
+    Comprehensive manual for all features, installation, and configuration.
+
+-   [:material-slash-forward: Command Reference](user/commands.md)
+    ---
+    Dictionary of all slash commands, shortcuts, and parameters.
+
+-   [:material-server-network: MCP Catalog](mcp-servers.md)
+    ---
+    Browse and configure supported external tools and servers.
+
+-   [:material-domain: Architecture](ARCHITECTURE.md)
+    ---
+    Deep dive into the system design, components, and data flow.
+
+</div>
 
 ---
 
@@ -113,9 +139,9 @@ See the [Installation Guide](user/installation.md) for detailed instructions.
 
 Null is open source and community-driven.
 
-*   [Contribution Guide](contributing.md)
-*   [Feature Roadmap](roadmap.md)
-*   [GitHub Repository](https://github.com/starhound/null-terminal)
+-   [Contribution Guide](contributing.md)
+-   [Feature Roadmap](roadmap.md)
+-   [GitHub Repository](https://github.com/starhound/null-terminal)
 
 <p align="center">
   Built with 🖤 by <a href="https://github.com/starhound">Starhound</a>

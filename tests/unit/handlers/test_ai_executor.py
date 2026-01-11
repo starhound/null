@@ -90,7 +90,7 @@ async def test_execute_without_tools_flow(ai_executor, mock_app):
     widget = MagicMock()
 
     async def mock_gen(*args, **kwargs):
-        yield "response"
+        yield StreamChunk(text="response")
 
     mock_app.ai_provider.generate = mock_gen
 
@@ -112,9 +112,9 @@ async def test_execute_without_tools_cancelled(ai_executor, mock_app):
         nonlocal call_count
         call_count += 1
         if call_count == 1:
-            yield "first"
+            yield StreamChunk(text="first")
         mock_app._ai_cancelled = True
-        yield "second"
+        yield StreamChunk(text="second")
 
     mock_app.ai_provider.generate = mock_gen
 
