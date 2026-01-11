@@ -267,14 +267,6 @@ uv run main.py                   # Run app
 uv run textual console           # Debug console
 ```
 
----
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
----
-
 <p align="center">
   Built with 🖤 by <a href="https://github.com/starhound">Starhound</a>
 </p>
