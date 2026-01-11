@@ -45,7 +45,7 @@ All commands are prefixed with `/` and executed from the input prompt.
 | `default` | Default | Balanced assistant |
 | `concise` | Concise | Minimal responses |
 | `agent` | Agent | Task execution optimized |
-| `code` | Code Helper | Programming focus |
+| `code` | Orchestration Helper | Automation focus |
 | `devops` | DevOps | System admin focus |
 
 Add custom prompts in `~/.null/prompts/` as `.txt` or `.md` files.

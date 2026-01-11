@@ -1,6 +1,6 @@
 # Product Roadmap
 
-This roadmap outlines the planned features and strategic direction for Null Terminal. Our goal is to create the ultimate AI-integrated terminal experience.
+This roadmap outlines the planned features and strategic direction for Null Terminal. Our goal is to create the ultimate AI-integrated orchestration terminal.
 
 !!! note
     This roadmap is subject to change based on user feedback and community contributions.
@@ -17,7 +17,7 @@ Features currently being designed or implemented.
 
 - **Plan Block**: Visual widget to see the AI's intended steps.
 - **Interactive Editing**: Modify, skip, or approve individual steps.
-- **Persistence**: Save plans as templates for later use.
+- **Persistence**: Save plans as templates for later use (e.g., standard maintenance procedures).
 
 ### 🔄 Git-Native Operations
 **Status:** In Design
@@ -29,7 +29,7 @@ Features currently being designed or implemented.
 
 ### 📝 Human-in-the-Loop Review
 **Status:** In Design
-**Goal:** Granular control over AI-generated code.
+**Goal:** Granular control over AI-generated changes.
 
 - **Diff View**: Review changes per-file or per-hunk.
 - **Rationale**: See *why* the AI made a specific change.
@@ -42,13 +42,13 @@ Features currently being designed or implemented.
 Features scheduled for upcoming sprints.
 
 ### 🤖 Background Agents
-Run long-running tasks (like refactoring or testing) in the background while you continue working in the terminal.
+Run long-running tasks (like log analysis, backups, or migrations) in the background while you continue working in the terminal.
 
 ### 🔄 Auto-Correction Loop
-An agent that automatically iterates on errors (linting, types, runtime) until the code passes verification.
+An agent that automatically iterates on errors (config validation, connection failures, runtime issues) until the task passes verification.
 
 ### 🎭 Multi-Agent Orchestration
-Specialized agents (Planner, Coder, Reviewer, Tester) collaborating on complex tasks.
+Specialized agents (Planner, Executor, Auditor, Researcher) collaborating on complex tasks.
 
 ---
 
@@ -57,8 +57,8 @@ Specialized agents (Planner, Coder, Reviewer, Tester) collaborating on complex t
 Long-term vision and experimental features.
 
 - **Natural Language to Shell**: Convert English descriptions into precise shell commands.
-- **Session Sharing**: Share conversation URLs with team members.
-- **Semantic RAG**: SQLite-backed vector search for your entire codebase.
+- **Session Sharing**: Share incident post-mortems or workflow logs via URLs.
+- **Semantic RAG**: SQLite-backed vector search for your documentation and logs.
 - **Visual Branching**: Navigate conversation forks visually.
 
 ---

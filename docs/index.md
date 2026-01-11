@@ -10,6 +10,8 @@
 
 Null is a next-generation TUI (Terminal User Interface) designed for the modern AI-integrated workflow. Built on [Textual](https://textual.textualize.io/), it blends the raw power of the command line with the intelligence of LLMs, all wrapped in a sleek, cyber-noir aesthetic.
 
+It is designed as a **SysAdmin-First Orchestrator**, bridging the gap between manual shell operations and autonomous AI agents.
+
 <p align="center">
   <img src="demo.gif" alt="Null Terminal Demo" width="800">
 </p>
@@ -19,8 +21,8 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
 - **Two Modes, One Interface**: Seamlessly switch between CLI and AI mode with `Ctrl+Space`
 - **Block-Based Output**: Every command and response is a distinct, interactive block
 - **20+ AI Providers**: From local Ollama to cloud providers like OpenAI, Anthropic, and Google
-- **Agent Mode**: Let the AI execute multi-step tasks autonomously
-- **MCP Integration**: Extend AI capabilities with Model Context Protocol servers
+- **Agent Orchestration**: Let the AI execute multi-step system tasks autonomously
+- **MCP Integration**: Extend AI capabilities with Model Context Protocol servers (Filesystem, Postgres, etc.)
 
 ---
 
@@ -32,20 +34,20 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
 |---------|-------------|
 | **Multi-Provider** | Ollama, OpenAI, Anthropic, Google, Azure, Bedrock, Groq, Mistral, DeepSeek, and more |
 | **Agent Mode** | Autonomous multi-step task execution with tool calling |
-| **RAG / Code Search** | Index your codebase with `/index build` for semantic search |
+| **RAG / Knowledge Search** | Index your documentation or logs with `/index build` for semantic search |
 | **Reasoning Display** | See the AI's thinking process for compatible models |
 | **Context Inspector** | View exactly what the AI sees with `/context` |
 | **Cost Tracking** | Real-time token usage and cost display in status bar |
 
-### Developer Tools
+### Ops & Admin Tools
 
 | Feature | Description |
 |---------|-------------|
-| **Task Manager** | Integrated todo dashboard (`/todo`) |
+| **Task Manager** | Integrated todo dashboard (`/todo`) for tracking maintenance tasks |
 | **Prompt Editor** | Custom system prompts and personas (`/prompts`) |
 | **Git Integration** | Branch and status in status bar |
 | **File Explorer** | Sidebar file tree (`Ctrl+\`) |
-| **Session Export** | Export conversations to Markdown/JSON |
+| **Session Export** | Export incident reviews or audit logs to Markdown/JSON |
 | **SSH Manager** | Save and connect to remote hosts |
 
 ### MCP (Model Context Protocol)
@@ -54,7 +56,7 @@ Null is a next-generation TUI (Terminal User Interface) designed for the modern 
 |---------|-------------|
 | **Server Catalog** | Pre-configured popular MCP servers |
 | **Tool Discovery** | Automatic tool registration from servers |
-| **Resource Access** | Read external resources (databases, APIs) |
+| **Resource Access** | Read external resources (databases, cloud APIs) |
 | **Management UI** | `/mcp` commands for full control |
 
 ### UX
@@ -105,11 +107,11 @@ See [Installation Guide](user/installation.md) for Windows, advanced options, an
 ```bash
 # CLI Mode (default)
 ls -la                    # Run shell commands
-cd ~/projects             # Navigate directories
+cd /var/log               # Navigate directories
 
 # AI Mode (Ctrl+Space to toggle)
-Explain this error        # Ask questions
-Refactor this function    # Get code help
+Analyze this error log    # Ask questions
+Write a backup script     # Get automation help
 
 # Slash Commands (always available)
 /help                     # Show help
@@ -174,7 +176,7 @@ Enable autonomous task execution:
 /agent                    # Toggle agent mode
 
 # Then ask:
-"Create a Python script that fetches weather data and saves it to weather.json"
+"Scan /var/log/syslog for errors and generate a summary report in /tmp/report.md"
 ```
 
 The agent will:
