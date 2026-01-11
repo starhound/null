@@ -129,7 +129,18 @@ class SlashCommandHandler:
             ),
             "model": (
                 self._ai.cmd_model,
-                CommandInfo("model", "Select AI model", "F2"),
+                CommandInfo(
+                    "model",
+                    "Select AI model",
+                    "F2",
+                    subcommands=[
+                        ("embedding [provider] [model]", "Set embedding model for RAG"),
+                        ("autocomplete [provider] [model]", "Set autocomplete model"),
+                        ("autocomplete on|off", "Enable/disable autocomplete"),
+                        ("status", "Show all model configurations"),
+                        ("<provider> <model>", "Set main LLM directly"),
+                    ],
+                ),
             ),
             "prompts": (
                 self._ai.cmd_prompts,

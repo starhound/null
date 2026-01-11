@@ -124,21 +124,143 @@ class AICommands(CommandMixin):
         await self.cmd_ai(args)
 
     async def cmd_model(self, args: list[str]):
-        """Select or set AI model."""
+        """Select or set AI model. Supports: /model, /model embedding, /model autocomplete, /model status."""
         if not args:
-            # Use the consistent global model selector that supports all providers
             self.app.action_select_model()
+            return
 
+        subcommand = args[0].lower()
+
+        if subcommand == "embedding":
+            await self._model_embedding(args[1:])
+        elif subcommand == "autocomplete":
+            await self._model_autocomplete(args[1:])
+        elif subcommand == "status":
+            await self._model_status()
         elif len(args) == 2:
-            Config.update_key(["ai", "provider"], args[0])
-            Config.update_key(["ai", "model"], args[1])
-            self.notify(f"AI Model set to {args[0]}/{args[1]}")
-            self.app.config = Config.load_all()
-            self.app.ai_provider = AIFactory.get_provider(self.app.config["ai"])
+            await self._set_main_model(args[0], args[1])
         else:
             self.notify(
-                "Usage: /model OR /model <provider> <model_name>", severity="error"
+                "Usage: /model [embedding|autocomplete|status] OR /model <provider> <model>",
+                severity="error",
             )
+
+    async def _set_main_model(self, provider: str, model: str):
+        valid_providers = AIFactory.list_providers()
+        if provider not in valid_providers:
+            self.notify(f"Unknown provider: {provider}", severity="error")
+            self.notify(f"Available: {', '.join(valid_providers[:5])}...")
+            return
+
+        Config.update_key(["ai", "provider"], provider)
+        Config.update_key(["ai", "model"], model)
+        Config.set(f"ai.{provider}.model", model)
+        self.notify(f"Main model set to {provider}/{model}")
+        self.app.config = Config.load_all()
+        self.app.ai_provider = AIFactory.get_provider(self.app.config["ai"])
+        self.app._update_status_bar()
+
+    async def _model_embedding(self, args: list[str]):
+        if not args:
+            provider = Config.get("ai.embedding_provider", "ollama")
+            model = Config.get(f"ai.embedding.{provider}.model", "nomic-embed-text")
+            endpoint = Config.get(
+                f"ai.embedding.{provider}.endpoint", "http://localhost:11434"
+            )
+            self.notify(f"Embedding: {provider}/{model}")
+            self.notify(f"Endpoint: {endpoint}")
+            return
+
+        if len(args) == 1:
+            provider = args[0].lower()
+            valid_providers = AIFactory.list_providers()
+            if provider not in valid_providers:
+                self.notify(f"Unknown provider: {provider}", severity="error")
+                return
+            Config.set("ai.embedding_provider", provider)
+            self.notify(f"Embedding provider set to {provider}")
+
+        elif len(args) >= 2:
+            provider = args[0].lower()
+            model = args[1]
+            valid_providers = AIFactory.list_providers()
+            if provider not in valid_providers:
+                self.notify(f"Unknown provider: {provider}", severity="error")
+                return
+
+            Config.set("ai.embedding_provider", provider)
+            Config.set(f"ai.embedding.{provider}.model", model)
+
+            if len(args) >= 3:
+                Config.set(f"ai.embedding.{provider}.endpoint", args[2])
+
+            self.notify(f"Embedding model set to {provider}/{model}")
+
+    async def _model_autocomplete(self, args: list[str]):
+        if not args:
+            enabled = Config.get("ai.autocomplete.enabled", "false")
+            provider = Config.get("ai.autocomplete.provider", "")
+            model = Config.get("ai.autocomplete.model", "")
+
+            if enabled.lower() == "true" and provider:
+                self.notify(f"Autocomplete: {provider}/{model or 'default'} (enabled)")
+            elif provider:
+                self.notify(f"Autocomplete: {provider}/{model or 'default'} (disabled)")
+            else:
+                self.notify("Autocomplete: not configured")
+            return
+
+        subarg = args[0].lower()
+
+        if subarg in ("on", "enable", "enabled"):
+            Config.set("ai.autocomplete.enabled", "true")
+            self.notify("Autocomplete enabled")
+            return
+        elif subarg in ("off", "disable", "disabled"):
+            Config.set("ai.autocomplete.enabled", "false")
+            self.notify("Autocomplete disabled")
+            return
+
+        provider = subarg
+        valid_providers = AIFactory.list_providers()
+        if provider not in valid_providers:
+            self.notify(f"Unknown provider: {provider}", severity="error")
+            return
+
+        Config.set("ai.autocomplete.provider", provider)
+        Config.set("ai.autocomplete.enabled", "true")
+
+        if len(args) >= 2:
+            model = args[1]
+            Config.set("ai.autocomplete.model", model)
+            self.notify(f"Autocomplete set to {provider}/{model} (enabled)")
+        else:
+            self.notify(f"Autocomplete provider set to {provider} (enabled)")
+
+    async def _model_status(self):
+        lines = ["Model Configuration:", ""]
+
+        provider = Config.get("ai.provider", "ollama")
+        model = Config.get(f"ai.{provider}.model", Config.get("ai.model", ""))
+        lines.append(f"  Main LLM:      {provider}/{model or 'default'}")
+
+        emb_provider = Config.get("ai.embedding_provider", "ollama")
+        emb_model = Config.get(f"ai.embedding.{emb_provider}.model", "nomic-embed-text")
+        lines.append(f"  Embedding:     {emb_provider}/{emb_model}")
+
+        ac_enabled = Config.get("ai.autocomplete.enabled", "false")
+        ac_provider = Config.get("ai.autocomplete.provider", "")
+        ac_model = Config.get("ai.autocomplete.model", "")
+
+        if ac_provider:
+            status = "enabled" if ac_enabled.lower() == "true" else "disabled"
+            lines.append(
+                f"  Autocomplete:  {ac_provider}/{ac_model or 'default'} ({status})"
+            )
+        else:
+            lines.append("  Autocomplete:  not configured")
+
+        await self.show_output("/model status", "\n".join(lines))
 
     async def cmd_prompts(self, args: list[str]):
         """Select or manage system prompts."""
