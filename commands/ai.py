@@ -1081,8 +1081,6 @@ Be brief but preserve essential context. Output only the summary."""
             await self._plan_create(pm, goal)
 
     async def _plan_create(self, pm, goal: str):
-        from managers.planning import StepStatus
-
         if not self.app.ai_provider:
             self.notify("No AI provider configured", severity="error")
             return
@@ -1099,86 +1097,29 @@ Be brief but preserve essential context. Output only the summary."""
 
         plan = await pm.generate_plan(goal, self.app.ai_provider, context)
 
-        lines = [
-            f"Plan: {plan.id}",
-            f"Goal: {plan.goal}",
-            f"Status: {plan.status.value}",
-            "",
-            "Steps:",
-        ]
+        from widgets.blocks.plan_block import PlanBlockWidget
+        from widgets.history import HistoryViewport
 
-        status_icons = {
-            StepStatus.PENDING: "○",
-            StepStatus.APPROVED: "◉",
-            StepStatus.EXECUTING: "▶",
-            StepStatus.COMPLETED: "✓",
-            StepStatus.FAILED: "✗",
-            StepStatus.SKIPPED: "⊘",
-        }
+        plan_widget = PlanBlockWidget(plan)
+        history_vp = self.app.query_one("#history", HistoryViewport)
+        await history_vp.mount(plan_widget)
+        plan_widget.scroll_visible()
 
-        for step in plan.steps:
-            icon = status_icons.get(step.status, "?")
-            type_label = f"[{step.step_type.value}]"
-            lines.append(
-                f"  {icon} {step.order}. [{step.id}] {type_label} {step.description}"
-            )
+        object.__setattr__(self.app, "_active_plan_widget", plan_widget)
 
-            if step.tool_name:
-                lines.append(f"      Tool: {step.tool_name}")
-
-        lines.extend(
-            [
-                "",
-                "Commands:",
-                "  /plan approve all    - Approve all pending steps",
-                "  /plan approve <id>   - Approve specific step",
-                "  /plan skip <id>      - Skip a step",
-                "  /plan execute        - Start execution",
-                "  /plan cancel         - Cancel the plan",
-            ]
-        )
-
-        await self.show_output(f"/plan {goal}", "\n".join(lines))
+    def _update_plan_widget(self, plan):
+        widget = getattr(self.app, "_active_plan_widget", None)
+        if widget:
+            widget.update_plan(plan)
 
     async def _plan_status(self, pm):
-        from managers.planning import StepStatus
-
         plan = pm.active_plan
         if not plan:
             self.notify("No active plan. Use /plan <goal> to create one.")
             return
 
-        lines = [
-            f"Plan: {plan.id}",
-            f"Goal: {plan.goal}",
-            f"Status: {plan.status.value}",
-            f"Progress: {plan.progress * 100:.0f}%",
-            "",
-            "Steps:",
-        ]
-
-        status_icons = {
-            StepStatus.PENDING: "○",
-            StepStatus.APPROVED: "◉",
-            StepStatus.EXECUTING: "▶",
-            StepStatus.COMPLETED: "✓",
-            StepStatus.FAILED: "✗",
-            StepStatus.SKIPPED: "⊘",
-        }
-
-        for step in plan.steps:
-            icon = status_icons.get(step.status, "?")
-            type_label = f"[{step.step_type.value}]"
-            lines.append(
-                f"  {icon} {step.order}. [{step.id}] {type_label} {step.description}"
-            )
-
-            if step.result:
-                lines.append(f"      Result: {step.result[:100]}...")
-            if step.error:
-                lines.append(f"      Error: {step.error}")
-
-        await self.show_output("/plan status", "\n".join(lines))
+        self._update_plan_widget(plan)
+        self.notify(f"Plan '{plan.goal}': {plan.progress * 100:.0f}% complete")
 
     async def _plan_approve(self, pm, args: list[str]):
         plan = pm.active_plan
@@ -1196,6 +1137,8 @@ Be brief but preserve essential context. Output only the summary."""
             else:
                 self.notify(f"Could not approve step {step_id}", severity="error")
 
+        self._update_plan_widget(plan)
+
     async def _plan_skip(self, pm, step_id: str):
         plan = pm.active_plan
         if not plan:
@@ -1204,6 +1147,7 @@ Be brief but preserve essential context. Output only the summary."""
 
         if pm.skip_step(plan.id, step_id):
             self.notify(f"Skipped step {step_id}")
+            self._update_plan_widget(plan)
         else:
             self.notify(f"Could not skip step {step_id}", severity="error")
 
@@ -1215,6 +1159,10 @@ Be brief but preserve essential context. Output only the summary."""
 
         if pm.cancel_plan(plan.id):
             self.notify("Plan cancelled")
+            widget = getattr(self.app, "_active_plan_widget", None)
+            if widget:
+                widget.remove()
+                object.__setattr__(self.app, "_active_plan_widget", None)
         else:
             self.notify("Could not cancel plan", severity="error")
 

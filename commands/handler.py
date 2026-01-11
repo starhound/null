@@ -353,6 +353,19 @@ class SlashCommandHandler:
                     ],
                 ),
             ),
+            "branch": (
+                self._core.cmd_branch,
+                CommandInfo(
+                    "branch",
+                    "Manage conversation branches",
+                    "",
+                    subcommands=[
+                        ("list", "List all branches"),
+                        ("switch <name>", "Switch to branch"),
+                        ("new <name>", "Create new branch (or use 'f' key)"),
+                    ],
+                ),
+            ),
             "bg": (
                 self._ai.cmd_bg,
                 CommandInfo(

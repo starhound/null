@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from commands.todo import TodoManager
+from managers.review import ProposedChange
 
 if TYPE_CHECKING:
     from managers.agent import AgentManager
@@ -128,6 +129,35 @@ async def read_file(path: str, max_lines: int | None = None) -> str:
         return f"[Error reading file: {e!s}]"
 
 
+def _generate_diff_summary(change: ProposedChange) -> str:
+    if change.is_new_file:
+        return "[New file created]"
+
+    if not change.hunks:
+        return "[No changes detected]"
+
+    max_lines_per_section = 5
+    lines = [f"[Diff: +{change.total_additions}/-{change.total_deletions}]"]
+    for hunk in change.hunks:
+        lines.append(
+            f"@@ -{hunk.start_line},{hunk.deletions} +{hunk.start_line},{hunk.additions} @@"
+        )
+        for line in hunk.original_lines[:max_lines_per_section]:
+            lines.append(f"- {line}")
+        if len(hunk.original_lines) > max_lines_per_section:
+            lines.append(
+                f"  ... ({len(hunk.original_lines) - max_lines_per_section} more lines removed)"
+            )
+        for line in hunk.proposed_lines[:max_lines_per_section]:
+            lines.append(f"+ {line}")
+        if len(hunk.proposed_lines) > max_lines_per_section:
+            lines.append(
+                f"  ... ({len(hunk.proposed_lines) - max_lines_per_section} more lines added)"
+            )
+
+    return "\n".join(lines)
+
+
 async def write_file(path: str, content: str) -> str:
     """Write content to a file."""
     if not _is_safe_path(path):
@@ -138,16 +168,34 @@ async def write_file(path: str, content: str) -> str:
         if not os.path.isabs(expanded):
             expanded = os.path.abspath(expanded)
 
+        original_content: str | None = None
+        if os.path.exists(expanded) and os.path.isfile(expanded):
+            try:
+                with open(expanded, encoding="utf-8", errors="replace") as f:
+                    original_content = f.read()
+            except Exception:
+                pass
+
         def _write_file_sync():
-            # Create parent directories if needed
-            os.makedirs(os.path.dirname(expanded), exist_ok=True)
+            os.makedirs(os.path.dirname(expanded) or ".", exist_ok=True)
 
             with open(expanded, "w", encoding="utf-8") as f:
                 f.write(content)
 
             return f"[Successfully wrote {len(content)} bytes to {path}]"
 
-        return await asyncio.to_thread(_write_file_sync)
+        result = await asyncio.to_thread(_write_file_sync)
+
+        if original_content is not None:
+            change = ProposedChange.from_content(
+                file=path,
+                original=original_content,
+                proposed=content,
+            )
+            diff_summary = _generate_diff_summary(change)
+            return f"{result}\n{diff_summary}"
+
+        return f"{result}\n[New file created]"
 
     except Exception as e:
         return f"[Error writing file: {e!s}]"

@@ -183,75 +183,44 @@ class CommandSuggester(Static):
 
     async def _fetch_ai_suggestion(self, text: str):
         try:
-            try:
-                from managers.recall import RecallManager
-
-                recall = RecallManager()
-                results = await recall.search(text, limit=1)
-
-                if results and results[0].get("score", 0) > 0.8:
-                    content = results[0].get("content", "")
-                    if content.startswith("Input:"):
-                        suggestion = (
-                            content.split("\n")[0].replace("Input: ", "").strip()
-                        )
-                    else:
-                        suggestion = content.strip()
-
-                    if suggestion and suggestion != text:
-                        self._show_ai_suggestion(suggestion)
-                        return
-            except Exception:
-                pass
-
-            ai_manager = getattr(self.app, "ai_manager", None)
-            if not ai_manager:
+            engine = getattr(self.app, "suggestion_engine", None)
+            if not engine:
                 return
 
-            provider = None
-            mcp_manager = getattr(self.app, "mcp_manager", None)
-            if mcp_manager:
-                profile_ai = mcp_manager.config.get_active_ai_config()
-                if profile_ai and "provider" in profile_ai:
-                    provider = ai_manager.get_provider(profile_ai["provider"])
+            ai_provider = getattr(self.app, "ai_provider", None)
+            suggestions = await engine.suggest(text, ai_provider, max_suggestions=3)
 
-            if not provider:
-                provider = ai_manager.get_autocomplete_provider()
-
-            if not provider:
-                return
-
-            blocks = getattr(self.app, "blocks", [])
-            history_blocks = blocks[-5:]
-            context_str = ""
-            for b in history_blocks:
-                if b.type == BlockType.COMMAND:
-                    context_str += f"$ {b.content_input}\n{b.content_output[:200]}\n"
-                elif b.type == BlockType.AI_RESPONSE:
-                    context_str += f"AI: {b.content_output[:200]}\n"
-
-            prompt = f"""Given the terminal history and current partial input '{text}', suggest the complete single line command the user intends to type.
-            History:
-            {context_str}
-
-            Current Input: {text}
-
-            Reply ONLY with the suggested command itself, no reasoning.
-            """
-
-            suggestion = ""
-            async for chunk in provider.generate(prompt, []):
-                suggestion += chunk
-
-            suggestion = suggestion.strip().strip("`")
-            if suggestion.startswith("$ "):
-                suggestion = suggestion[2:]
-
-            if suggestion and suggestion != text:
-                self._show_ai_suggestion(suggestion)
+            if suggestions:
+                best = suggestions[0]
+                if best.command and best.command != text:
+                    self._show_ai_suggestions(suggestions)
+                    return
 
         except Exception:
             pass
+
+    def _show_ai_suggestions(self, suggestions):
+        lv = self.query_one(ListView)
+        lv.clear()
+
+        if not suggestions:
+            self.display = False
+            return
+
+        self.display = True
+        self._selected_index = 0
+
+        for s in suggestions:
+            source_icon = {"history": "📜", "context": "📁", "ai": "🤖"}.get(
+                s.source, ""
+            )
+            label = f"{source_icon} {s.command}"
+            lv.append(CommandItem(label, s.command, is_ai=(s.source == "ai")))
+
+        self._update_highlight()
+
+        if suggestions:
+            self.post_message(self.SuggestionReady(suggestions[0].command))
 
     def _show_ai_suggestion(self, suggestion: str):
         """Display the AI suggestion."""

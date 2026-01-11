@@ -58,6 +58,7 @@ class NullApp(App):
         ("ctrl+space", "toggle_ai_mode", "Toggle AI Mode"),
         ("ctrl+t", "toggle_ai_mode", "Toggle AI Mode"),
         ("ctrl+backslash", "toggle_file_tree", "Files"),
+        ("ctrl+b", "toggle_branches", "Branches"),
     ]
 
     def __init__(self):
@@ -485,7 +486,19 @@ class NullApp(App):
                 if not sidebar.display:
                     sidebar.toggle_visibility()
         except Exception:
-            pass  # Sidebar may not be mounted yet
+            pass
+
+    def action_toggle_branches(self):
+        try:
+            sidebar = self.query_one("Sidebar", Sidebar)
+            if sidebar.display and sidebar.current_view == "branches":
+                sidebar.toggle_visibility()
+            else:
+                sidebar.set_view("branches")
+                if not sidebar.display:
+                    sidebar.toggle_visibility()
+        except Exception:
+            pass
 
     def action_select_model(self):
         """Select an AI model from ALL providers."""
@@ -887,6 +900,47 @@ class NullApp(App):
 
         if hasattr(self.execution_handler, "cancel_tool"):
             await self.execution_handler.cancel_tool(tool_id)
+
+    async def on_plan_block_widget_step_approved(self, message):
+        from managers.planning import PlanManager
+
+        pm = getattr(self, "_plan_manager", None)
+        if pm and isinstance(pm, PlanManager):
+            pm.approve_step(message.plan_id, message.step_id)
+            self.notify(f"Approved step {message.step_id}")
+
+    async def on_plan_block_widget_step_skipped(self, message):
+        from managers.planning import PlanManager
+
+        pm = getattr(self, "_plan_manager", None)
+        if pm and isinstance(pm, PlanManager):
+            pm.skip_step(message.plan_id, message.step_id)
+            self.notify(f"Skipped step {message.step_id}")
+
+    async def on_plan_block_widget_approve_all_requested(self, message):
+        from managers.planning import PlanManager
+
+        pm = getattr(self, "_plan_manager", None)
+        if pm and isinstance(pm, PlanManager):
+            count = pm.approve_all(message.plan_id)
+            self.notify(f"Approved {count} steps")
+            widget = getattr(self, "_active_plan_widget", None)
+            if widget and pm.active_plan:
+                widget.update_plan(pm.active_plan)
+
+    async def on_plan_block_widget_execute_requested(self, message):
+        from commands.handler import SlashCommandHandler
+
+        handler = getattr(self, "_slash_handler", None)
+        if handler and isinstance(handler, SlashCommandHandler):
+            await handler.handle("/plan execute")
+
+    async def on_plan_block_widget_cancel_requested(self, message):
+        from commands.handler import SlashCommandHandler
+
+        handler = getattr(self, "_slash_handler", None)
+        if handler and isinstance(handler, SlashCommandHandler):
+            await handler.handle("/plan cancel")
 
     # -------------------------------------------------------------------------
     # Utilities

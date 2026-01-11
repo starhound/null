@@ -15,6 +15,7 @@ from textual.widgets import (
 )
 
 from commands.todo import TodoManager
+from widgets.branch_navigator import BranchNavigator
 
 if TYPE_CHECKING:
     from managers.agent import AgentState
@@ -102,6 +103,9 @@ class Sidebar(Container):
                 with TabPane("Agent", id="agent"):
                     yield AgentStatusWidget()
 
+                with TabPane("Branch", id="branches"):
+                    yield Static("Loading branches...", id="branch-placeholder")
+
     def on_mount(self):
         table = self.query_one("#todo-table", DataTable)
         table.add_columns("S", "Task")
@@ -131,6 +135,29 @@ class Sidebar(Container):
                 self.load_todos()
             elif view == "agent":
                 self._refresh_agent_view()
+            elif view == "branches":
+                self._refresh_branch_view()
+        except Exception:
+            pass
+
+    def _refresh_branch_view(self):
+        try:
+            placeholder = self.query_one("#branch-placeholder", Static)
+            branch_manager = getattr(self.app, "branch_manager", None)
+            if branch_manager:
+                branches = branch_manager.list_branches()
+                current = branch_manager.current_branch
+                lines = ["🔀 Branches", ""]
+                for b in branches:
+                    prefix = "● " if b == current else "○ "
+                    lines.append(f"{prefix}{b}")
+                if not branches:
+                    lines.append("(no branches yet)")
+                lines.append("")
+                lines.append("Fork with 'f' on any block")
+                placeholder.update("\n".join(lines))
+            else:
+                placeholder.update("Branch manager not available")
         except Exception:
             pass
 

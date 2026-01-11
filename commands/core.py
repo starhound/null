@@ -1037,3 +1037,54 @@ class CoreCommands(CommandMixin):
     async def _pr_create(self, github: "GitHubContextManager"):
         """Create a new PR (interactive)."""
         self.notify("PR creation not yet implemented in TUI mode", severity="warning")
+
+    async def cmd_branch(self, args: list[str]):
+        """Manage conversation branches: /branch [list|switch <name>|new <name>]"""
+        branch_manager = getattr(self.app, "branch_manager", None)
+        if not branch_manager:
+            from managers.branch import BranchManager
+
+            branch_manager = BranchManager()
+            object.__setattr__(self.app, "branch_manager", branch_manager)
+
+        if not args:
+            await self._branch_list(branch_manager)
+            return
+
+        subcommand = args[0].lower()
+
+        if subcommand == "list":
+            await self._branch_list(branch_manager)
+        elif subcommand == "switch" and len(args) > 1:
+            await self._branch_switch(branch_manager, args[1])
+        elif subcommand == "new" and len(args) > 1:
+            self.notify(f"Use 'f' key on a block to create branch '{args[1]}'")
+        else:
+            self.notify(
+                "Usage: /branch [list|switch <name>|new <name>]", severity="error"
+            )
+
+    async def _branch_list(self, manager):
+        branches = manager.list_branches()
+        current = manager.current_branch
+
+        lines = ["# Conversation Branches", ""]
+        if not branches:
+            lines.append("No branches yet. Press 'f' on any block to fork.")
+        else:
+            for b in branches:
+                prefix = "● " if b == current else "○ "
+                lines.append(f"{prefix}{b}")
+        lines.append("")
+        lines.append("Switch: `/branch switch <name>`")
+        lines.append("Fork: Press 'f' on any block")
+
+        await self.show_output("/branch list", "\n".join(lines))
+
+    async def _branch_switch(self, manager, name: str):
+        try:
+            blocks = manager.switch(name)
+            self.app.blocks = blocks
+            self.notify(f"Switched to branch: {name}")
+        except ValueError as e:
+            self.notify(str(e), severity="error")
