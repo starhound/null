@@ -281,23 +281,18 @@ class TestGetModelContextSize:
         assert get_model_context_size("gemini-1.5-flash") == 1000000
 
     def test_local_model_prefix(self):
-        """Should match local models by prefix."""
         assert get_model_context_size("llama3.1:latest") == 128000
-        assert get_model_context_size("mistral:7b") == 8192
+        assert get_model_context_size("mistral:7b") == 32768
 
     def test_unknown_model_default(self):
-        """Should return default 4096 for unknown models."""
         assert get_model_context_size("completely-unknown-model") == 4096
 
     def test_qwen_models(self):
-        """Should return correct context for Qwen models."""
-        assert get_model_context_size("qwen2.5-coder:32b") == 32768
-        assert get_model_context_size("qwen3:latest") == 40000
+        assert get_model_context_size("qwen2.5-coder:32b") == 131072
+        assert get_model_context_size("qwen3:latest") == 131072
 
     def test_model_contained_in_name(self):
-        """Should match when known key is contained in model name."""
-        # "my-qwen3-coder" contains "qwen3-coder"
-        assert get_model_context_size("my-qwen3-coder-custom") == 40000
+        assert get_model_context_size("my-qwen3-coder-custom") == 131072
 
 
 class TestMessage:

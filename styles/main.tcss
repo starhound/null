@@ -2131,9 +2131,8 @@ ActionButton {
     padding: 0 1;
     margin: 0 1 0 0;
     border: none;
-    color: $text;
+    color: $text-muted;
     background: transparent;
-    text-style: dim;
 }
 
 ActionButton:hover {
@@ -2150,8 +2149,7 @@ ActionButton:focus {
 
 ActionButton.-disabled,
 ActionButton:disabled {
-    color: $text-muted;
-    text-style: dim;
+    color: $text-dim;
     background: transparent;
 }
 

@@ -118,3 +118,29 @@ class TestBaseBlockWidgetDefaultMethods:
         block = BlockState(type=BlockType.AI_RESPONSE, content_input="test")
         widget = BaseBlockWidget(block)
         widget.update_metadata()
+
+
+class TestBaseBlockWidgetBindings:
+    def test_copy_bindings_defined(self):
+        from textual.binding import Binding
+
+        bindings = BaseBlockWidget.BINDINGS
+        binding_keys = []
+        for b in bindings:
+            if isinstance(b, Binding):
+                binding_keys.append(b.key)
+            elif isinstance(b, tuple):
+                binding_keys.append(b[0])
+
+        assert "c" in binding_keys
+        assert "y" in binding_keys
+
+    def test_copy_bindings_target_action(self):
+        from textual.binding import Binding
+
+        bindings = BaseBlockWidget.BINDINGS
+        for b in bindings:
+            if isinstance(b, Binding) and b.key in ("c", "y"):
+                assert b.action == "copy_content"
+            elif isinstance(b, tuple) and b[0] in ("c", "y"):
+                assert b[1] == "copy_content"

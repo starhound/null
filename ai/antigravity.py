@@ -139,10 +139,10 @@ class AntigravityOAuthFlow(BaseOAuthFlow):
             )
 
 
-def _load_opencode_tokens() -> OAuthTokens | None:
-    """Load tokens from OpenCode's antigravity-accounts.json if available."""
+def _load_opencode_account() -> tuple[OAuthTokens | None, str]:
+    """Load tokens and projectId from OpenCode's antigravity-accounts.json."""
     if not OPENCODE_ACCOUNTS_PATH.exists():
-        return None
+        return None, ""
 
     try:
         data = json.loads(OPENCODE_ACCOUNTS_PATH.read_text())
@@ -150,31 +150,40 @@ def _load_opencode_tokens() -> OAuthTokens | None:
         active_index = data.get("activeIndex", 0)
 
         if not accounts or active_index >= len(accounts):
-            return None
+            return None, ""
 
         account = accounts[active_index]
         refresh_token = account.get("refreshToken", "")
+        project_id = account.get("projectId", "") or account.get("managedProjectId", "")
 
         if not refresh_token:
-            return None
+            return None, ""
 
         if "|" in refresh_token:
-            refresh_token = refresh_token.split("|")[0]
+            parts = refresh_token.split("|")
+            refresh_token = parts[0]
+            if not project_id and len(parts) > 1:
+                project_id = parts[1]
 
-        return OAuthTokens(
+        tokens = OAuthTokens(
             access_token="",
             refresh_token=refresh_token,
             expires_at=0,
             provider="antigravity",
         )
+        return tokens, project_id
     except (json.JSONDecodeError, KeyError, TypeError):
-        return None
+        return None, ""
+
+
+DEFAULT_PROJECT_ID = "rising-fact-p41fc"
 
 
 class AntigravityProvider(LLMProvider):
     def __init__(self, model: str = "claude-sonnet-4-5"):
         self.model = model
         self._tokens: OAuthTokens | None = None
+        self._project_id: str = DEFAULT_PROJECT_ID
         self._oauth_flow = AntigravityOAuthFlow()
         self._load_tokens()
 
@@ -182,7 +191,10 @@ class AntigravityProvider(LLMProvider):
         self._tokens = OAuthTokenStore.load("antigravity")
 
         if not self._tokens:
-            self._tokens = _load_opencode_tokens()
+            tokens, project_id = _load_opencode_account()
+            self._tokens = tokens
+            if project_id:
+                self._project_id = project_id
 
     def _save_tokens(self, tokens: OAuthTokens) -> None:
         self._tokens = tokens
@@ -257,7 +269,7 @@ class AntigravityProvider(LLMProvider):
                 }
             )
 
-        body: dict[str, Any] = {
+        request: dict[str, Any] = {
             "model": self.model,
             "contents": contents,
             "generationConfig": {
@@ -279,9 +291,13 @@ class AntigravityProvider(LLMProvider):
                         }
                     )
             if ag_tools:
-                body["tools"] = [{"functionDeclarations": ag_tools}]
+                request["tools"] = [{"functionDeclarations": ag_tools}]
 
-        return body
+        return {
+            "project": self._project_id,
+            "model": self.model,
+            "request": request,
+        }
 
     def _get_headers(self, access_token: str, stream: bool = False) -> dict[str, str]:
         headers = {

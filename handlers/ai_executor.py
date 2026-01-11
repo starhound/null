@@ -174,6 +174,7 @@ class AIExecutor:
             block_state.content_output = f"AI Error: {e!s}"
             block_state.is_running = False
             widget.update_output(f"Error: {e!s}")
+            widget.set_loading(False)
             self.app._active_worker = None
 
     async def _execute_without_tools(

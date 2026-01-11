@@ -1,3 +1,6 @@
+from typing import ClassVar
+
+from textual.binding import Binding, BindingType
 from textual.message import Message
 from textual.widgets import Static
 
@@ -6,6 +9,11 @@ from models import BlockState
 
 class BaseBlockWidget(Static):
     """Base class for all block widgets."""
+
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("c", "copy_content", "Copy", show=False),
+        Binding("y", "copy_content", "Copy", show=False),  # vim-style yank
+    ]
 
     class RetryRequested(Message):
         """Sent when user clicks retry button."""
@@ -63,3 +71,8 @@ class BaseBlockWidget(Static):
         """Set exit code and stop loading."""
         self.block.exit_code = code
         self.set_loading(False)
+
+    def action_copy_content(self) -> None:
+        content = self.block.content_output or ""
+        if content:
+            self.post_message(self.CopyRequested(self.block.id, content))
