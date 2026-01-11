@@ -89,21 +89,21 @@ class CommandSuggester(Static):
 
     @property
     def commands_data(self):
-        """Command definitions dynamic from handler."""
-        # Try to get commands from app handler first
         try:
             handler = getattr(self.app, "command_handler", None)
             if handler:
                 data = {}
                 for cmd in handler.get_all_commands():
-                    # Extract subcommands names for args
-                    args = [sub[0].split()[0] for sub in cmd.subcommands]
+                    args = []
+                    for sub in cmd.subcommands:
+                        if sub and sub[0]:
+                            parts = sub[0].split()
+                            if parts:
+                                args.append(parts[0])
                     data[f"/{cmd.name}"] = {"desc": cmd.description, "args": args}
                 return data
         except Exception:
             pass
-
-        # Fallback if handler not ready (shouldn't happen in runtime)
         return {}
 
     def compose(self) -> ComposeResult:

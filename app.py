@@ -41,9 +41,8 @@ BlockWidget = create_block
 
 
 class NullApp(App):
-    """Main Null terminal application."""
-
     CSS_PATH = "styles/main.tcss"
+    LAYERS = ["base", "overlay"]
 
     BINDINGS: ClassVar[list[BindingType]] = [
         ("escape", "cancel_operation", "Cancel"),
