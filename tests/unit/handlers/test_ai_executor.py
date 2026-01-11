@@ -43,13 +43,15 @@ async def test_execute_ai_no_tools(ai_executor, mock_app):
 
     with (
         patch("handlers.ai_executor.Config.get", return_value="test-provider"),
-        patch("handlers.ai_executor.get_settings", return_value={}),
+        patch("handlers.ai_executor.get_settings") as mock_settings,
         patch("prompts.get_prompt_manager") as mock_pm,
         patch("context.ContextManager.build_messages") as mock_build,
         patch.object(
             ai_executor, "_execute_without_tools", new_callable=AsyncMock
         ) as mock_exec,
     ):
+        # Configure mock settings with use_rag=False
+        mock_settings.return_value.ai.use_rag = False
         mock_pm.return_value.get_prompt_content.return_value = "System prompt"
         mock_build.return_value = MagicMock(
             messages=[], truncated=False, estimated_tokens=10, message_count=0
@@ -68,13 +70,14 @@ async def test_execute_ai_with_tools(ai_executor, mock_app):
 
     with (
         patch("handlers.ai_executor.Config.get", return_value="test-provider"),
-        patch("handlers.ai_executor.get_settings", return_value={}),
+        patch("handlers.ai_executor.get_settings") as mock_settings,
         patch("prompts.get_prompt_manager") as mock_pm,
         patch("context.ContextManager.build_messages") as mock_build,
         patch.object(
             ai_executor, "_execute_with_tools", new_callable=AsyncMock
         ) as mock_exec,
     ):
+        mock_settings.return_value.ai.use_rag = False
         mock_pm.return_value.get_prompt_content.return_value = "System prompt"
         mock_build.return_value = MagicMock(
             messages=[], truncated=False, estimated_tokens=10, message_count=0
@@ -130,7 +133,7 @@ async def test_execute_ai_handles_exception(ai_executor, mock_app):
 
     with (
         patch("handlers.ai_executor.Config.get", return_value="test-provider"),
-        patch("handlers.ai_executor.get_settings", return_value={}),
+        patch("handlers.ai_executor.get_settings") as mock_settings,
         patch("prompts.get_prompt_manager") as mock_pm,
         patch("context.ContextManager.build_messages") as mock_build,
     ):
@@ -152,7 +155,7 @@ async def test_execute_ai_handles_cancelled_error(ai_executor, mock_app):
 
     with (
         patch("handlers.ai_executor.Config.get", return_value="test-provider"),
-        patch("handlers.ai_executor.get_settings", return_value={}),
+        patch("handlers.ai_executor.get_settings") as mock_settings,
         patch("context.ContextManager.build_messages") as mock_build,
         patch("prompts.get_prompt_manager") as mock_pm,
     ):

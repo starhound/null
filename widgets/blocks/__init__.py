@@ -27,6 +27,7 @@ from .iteration import (
 )
 from .iteration_container import IterationContainer
 from .parts import BlockBody, BlockFooter, BlockHeader, BlockMeta, StopButton
+from .plan_block import PlanBlockWidget, PlanStepWidget
 from .system import SystemBlock
 from .terminal import TerminalBlock
 from .thinking import ThinkingWidget
@@ -84,6 +85,8 @@ __all__ = [
     "IterationHeader",
     "IterationSeparator",
     "IterationWidget",
+    "PlanBlockWidget",
+    "PlanStepWidget",
     "SystemBlock",
     "TerminalBlock",
     "ThinkingSection",
