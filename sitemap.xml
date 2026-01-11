@@ -53,11 +53,19 @@
          <lastmod>2026-01-11</lastmod>
     </url>
     <url>
+         <loc>https://null-terminal.com/user/git/</loc>
+         <lastmod>2026-01-11</lastmod>
+    </url>
+    <url>
          <loc>https://null-terminal.com/user/installation/</loc>
          <lastmod>2026-01-11</lastmod>
     </url>
     <url>
          <loc>https://null-terminal.com/user/mcp/</loc>
+         <lastmod>2026-01-11</lastmod>
+    </url>
+    <url>
+         <loc>https://null-terminal.com/user/planning/</loc>
          <lastmod>2026-01-11</lastmod>
     </url>
     <url>
@@ -86,6 +94,10 @@
     </url>
     <url>
          <loc>https://null-terminal.com/user/training/</loc>
+         <lastmod>2026-01-11</lastmod>
+    </url>
+    <url>
+         <loc>https://null-terminal.com/user/workflow/</loc>
          <lastmod>2026-01-11</lastmod>
     </url>
 </urlset>
