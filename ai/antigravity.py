@@ -13,13 +13,14 @@ from __future__ import annotations
 import json
 import os
 import time
+import uuid
 from collections.abc import AsyncGenerator
 from pathlib import Path
 from typing import Any
 
 import httpx
 
-from .base import LLMProvider, ModelInfo, StreamChunk, ToolCallData
+from .base import LLMProvider, ModelInfo, StreamChunk, TokenUsage, ToolCallData
 from .oauth import BaseOAuthFlow, OAuthTokens, OAuthTokenStore, PKCEHelper
 
 # OAuth credentials from opencode-antigravity-auth (MIT license)
@@ -45,29 +46,10 @@ OPENCODE_ACCOUNTS_PATH = (
 )
 
 AVAILABLE_MODELS = [
-    "claude-sonnet-4-5",
-    "claude-sonnet-4-5-thinking",
-    "claude-sonnet-4-5-thinking-low",
-    "claude-sonnet-4-5-thinking-medium",
-    "claude-sonnet-4-5-thinking-high",
-    "claude-opus-4-5-thinking",
-    "claude-opus-4-5-thinking-low",
-    "claude-opus-4-5-thinking-medium",
-    "claude-opus-4-5-thinking-high",
-    "gemini-3-pro",
-    "gemini-3-pro-preview",
-    "gemini-3-pro-low",
-    "gemini-3-pro-high",
-    "gemini-3-flash",
     "gemini-3-flash-preview",
-    "gemini-3-flash-low",
-    "gemini-3-flash-medium",
-    "gemini-3-flash-high",
-    "gemini-2.5-pro",
+    "gemini-3-pro-preview",
     "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
-    "gemini-2.5-computer-use-preview-10-2025",
-    "gpt-oss-120b-medium",
+    "gemini-2.5-pro",
 ]
 
 
@@ -180,7 +162,7 @@ DEFAULT_PROJECT_ID = "rising-fact-p41fc"
 
 
 class AntigravityProvider(LLMProvider):
-    def __init__(self, model: str = "claude-sonnet-4-5"):
+    def __init__(self, model: str = "gemini-3-flash-preview"):
         self.model = model
         self._tokens: OAuthTokens | None = None
         self._project_id: str = DEFAULT_PROJECT_ID
@@ -190,11 +172,12 @@ class AntigravityProvider(LLMProvider):
     def _load_tokens(self) -> None:
         self._tokens = OAuthTokenStore.load("antigravity")
 
-        if not self._tokens:
-            tokens, project_id = _load_opencode_account()
-            self._tokens = tokens
-            if project_id:
-                self._project_id = project_id
+        opencode_tokens, opencode_project_id = _load_opencode_account()
+        if opencode_project_id:
+            self._project_id = opencode_project_id
+
+        if not self._tokens and opencode_tokens:
+            self._tokens = opencode_tokens
 
     def _save_tokens(self, tokens: OAuthTokens) -> None:
         self._tokens = tokens
@@ -218,9 +201,39 @@ class AntigravityProvider(LLMProvider):
         try:
             tokens = await self._oauth_flow.exchange_code(code, verifier)
             self._save_tokens(tokens)
+            await self._discover_project_id(tokens.access_token)
             return True
         except Exception:
             return False
+
+    async def _discover_project_id(self, access_token: str) -> None:
+        url = f"{ANTIGRAVITY_API_BASE}/v1internal:loadCodeAssist"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+            "User-Agent": "google-api-nodejs-client/9.15.1",
+            "X-Goog-Api-Client": "google-cloud-sdk vscode_cloudshelleditor/0.1",
+            "Client-Metadata": '{"ideType":"IDE_UNSPECIFIED","platform":"PLATFORM_UNSPECIFIED","pluginType":"GEMINI"}',
+        }
+        body = {
+            "metadata": {
+                "ideType": "IDE_UNSPECIFIED",
+                "platform": "PLATFORM_UNSPECIFIED",
+                "pluginType": "GEMINI",
+            }
+        }
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.post(url, json=body, headers=headers)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    project = data.get("cloudaicompanionProject")
+                    if isinstance(project, dict):
+                        project = project.get("id", "")
+                    if project:
+                        self._project_id = project
+        except Exception:
+            pass
 
     async def _ensure_valid_token(self) -> str | None:
         if not self._tokens:
@@ -234,6 +247,9 @@ class AntigravityProvider(LLMProvider):
                 self._save_tokens(new_tokens)
             except Exception:
                 return None
+
+        if self._project_id == DEFAULT_PROJECT_ID and self._tokens.access_token:
+            await self._discover_project_id(self._tokens.access_token)
 
         return self._tokens.access_token
 
@@ -269,13 +285,14 @@ class AntigravityProvider(LLMProvider):
                 }
             )
 
+        gen_config: dict[str, Any] = {
+            "temperature": 0.7,
+            "maxOutputTokens": 8192,
+        }
+
         request: dict[str, Any] = {
-            "model": self.model,
             "contents": contents,
-            "generationConfig": {
-                "temperature": 0.7,
-                "maxOutputTokens": 8192,
-            },
+            "generationConfig": gen_config,
         }
 
         if tools:
@@ -297,14 +314,17 @@ class AntigravityProvider(LLMProvider):
             "project": self._project_id,
             "model": self.model,
             "request": request,
+            "userAgent": "opencode",
+            "requestId": str(uuid.uuid4()),
         }
 
     def _get_headers(self, access_token: str, stream: bool = False) -> dict[str, str]:
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
-            "User-Agent": "antigravity/1.11.5 null-terminal/1.0",
+            "User-Agent": "opencode/1.1.13 linux/amd64",
             "X-Goog-Api-Client": "google-cloud-sdk vscode_cloudshelleditor/0.1",
+            "Client-Metadata": '{"ideType":"IDE_UNSPECIFIED","platform":"PLATFORM_UNSPECIFIED","pluginType":"GEMINI"}',
         }
         if stream:
             headers["Accept"] = "text/event-stream"
@@ -348,13 +368,24 @@ class AntigravityProvider(LLMProvider):
 
                     try:
                         data = json.loads(data_str)
+                        if "response" in data:
+                            data = data["response"]
+
+                        usage_meta = data.get("usageMetadata", {})
+                        usage = None
+                        if usage_meta:
+                            usage = TokenUsage(
+                                input_tokens=usage_meta.get("promptTokenCount", 0),
+                                output_tokens=usage_meta.get("candidatesTokenCount", 0),
+                            )
+
                         candidates = data.get("candidates", [])
                         if candidates:
                             content = candidates[0].get("content", {})
                             parts = content.get("parts", [])
                             for part in parts:
                                 if "text" in part:
-                                    yield StreamChunk(text=part["text"])
+                                    yield StreamChunk(text=part["text"], usage=usage)
                     except json.JSONDecodeError:
                         continue
 
@@ -386,26 +417,39 @@ class AntigravityProvider(LLMProvider):
                 return
 
             data = response.json()
+            if "response" in data:
+                data = data["response"]
+
+            usage_meta = data.get("usageMetadata", {})
+            usage = None
+            if usage_meta:
+                usage = TokenUsage(
+                    input_tokens=usage_meta.get("promptTokenCount", 0),
+                    output_tokens=usage_meta.get("candidatesTokenCount", 0),
+                )
+
             candidates = data.get("candidates", [])
 
             if candidates:
                 content = candidates[0].get("content", {})
                 parts = content.get("parts", [])
+                tool_calls = []
 
                 for part in parts:
                     if "text" in part:
-                        yield StreamChunk(text=part["text"])
+                        yield StreamChunk(text=part["text"], usage=usage)
                     elif "functionCall" in part:
                         fc = part["functionCall"]
-                        yield StreamChunk(
-                            tool_calls=[
-                                ToolCallData(
-                                    id=f"call_{fc['name']}",
-                                    name=fc["name"],
-                                    arguments=fc.get("args", {}),
-                                )
-                            ]
+                        tool_calls.append(
+                            ToolCallData(
+                                id=f"call_{fc['name']}",
+                                name=fc["name"],
+                                arguments=fc.get("args", {}),
+                            )
                         )
+
+                if tool_calls:
+                    yield StreamChunk(tool_calls=tool_calls, usage=usage)
 
     async def list_models(self) -> list[str]:
         return AVAILABLE_MODELS

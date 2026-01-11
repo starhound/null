@@ -40,8 +40,8 @@ class AIFactory:
             "requires_endpoint": False,
         },
         "antigravity": {
-            "name": "Antigravity (Google)",
-            "description": "Claude/Gemini via Google OAuth",
+            "name": "Antigravity (Free)",
+            "description": "Gemini 3/2.5 via Google OAuth (OpenCode compatible)",
             "requires_api_key": False,
             "requires_endpoint": False,
             "requires_oauth": True,
