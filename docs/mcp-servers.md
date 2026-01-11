@@ -11,22 +11,22 @@ These are the most commonly used servers to supercharge your workflow.
 -   **Filesystem**
     ---
     Allow the AI to read, write, and manage files on your local machine. Essential for coding agents.
-    [:octicons-arrow-right-24: Official Repo](https://github.com/modelcontextprotocol/servers)
+    [:octicons-arrow-right-24: Official Repo](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem)
 
 -   **GitHub**
     ---
     Manage repositories, issues, and pull requests directly from chat.
-    [:octicons-arrow-right-24: Official Repo](https://github.com/modelcontextprotocol/servers)
+    [:octicons-arrow-right-24: Official Repo](https://github.com/modelcontextprotocol/servers/tree/main/src/github)
 
 -   **PostgreSQL**
     ---
     Query your database, inspect schemas, and analyze data safely.
-    [:octicons-arrow-right-24: Official Repo](https://github.com/modelcontextprotocol/servers)
+    [:octicons-arrow-right-24: Official Repo](https://github.com/modelcontextprotocol/servers/tree/main/src/postgres)
 
 -   **Brave Search**
     ---
     Give your AI access to the live internet for research and documentation lookups.
-    [:octicons-arrow-right-24: Brave Search](https://search.brave.com/)
+    [:octicons-arrow-right-24: Brave Search](https://github.com/brave/brave-search-mcp-server)
 
 -   **Heroku**
     ---
@@ -36,7 +36,7 @@ These are the most commonly used servers to supercharge your workflow.
 -   **Slack**
     ---
     Read channels, send messages, and summarize threads.
-    [:octicons-arrow-right-24: Slack](https://slack.com/)
+    [:octicons-arrow-right-24: Slack](https://github.com/zencoderai/slack-mcp-server)
 
 </div>
 
@@ -52,17 +52,17 @@ Browse the full list of 130+ supported servers by category.
 
     | Server | Description | Links |
     |--------|-------------|-------|
-    | **git** | Local Git operations | [Git](https://git-scm.com/) |
-    | **gitlab** | GitLab projects & MRs | [GitLab](https://gitlab.com/) |
-    | **sentry** | Error tracking & alerts | [Sentry](https://sentry.io/) |
+    | **git** | Local Git operations | [Repo](https://github.com/modelcontextprotocol/servers/tree/main/src/git) |
+    | **gitlab** | GitLab projects & MRs | [Repo](https://github.com/modelcontextprotocol/servers/tree/main/src/gitlab) |
+    | **sentry** | Error tracking & alerts | [Repo](https://github.com/modelcontextprotocol/servers/tree/main/src/sentry) |
     | **docker** | Container management | [Docker](https://www.docker.com/) |
     | **kubernetes** | K8s cluster management | [Kubernetes](https://kubernetes.io/) |
     | **npm** | Package search | [npm](https://www.npmjs.com/) |
     | **pypi** | Python package info | [PyPI](https://pypi.org/) |
     | **aws-cdk** | IaC documentation | [AWS CDK](https://aws.amazon.com/cdk/) |
-    | **circleci** | CI/CD pipelines | [CircleCI](https://circleci.com/) |
+    | **circleci** | CI/CD pipelines | [Repo](https://github.com/CircleCI-Public/mcp-server-circleci) |
     | **code-runner** | Execute snippets | [Repo](https://github.com/formulahendry/mcp-server-code-runner) |
-    | **chrome-devtools** | Browser automation | [Chrome](https://developer.chrome.com/docs/devtools/) |
+    | **chrome-devtools** | Browser automation | [Repo](https://github.com/ChromeDevTools/chrome-devtools-mcp) |
 
 === "Cloud & Ops"
 
@@ -70,10 +70,10 @@ Browse the full list of 130+ supported servers by category.
 
     | Server | Description | Links |
     |--------|-------------|-------|
-    | **aws** | AWS Services (EC2, S3) | [AWS](https://aws.amazon.com/) |
+    | **aws** | AWS Services (EC2, S3) | [Repo](https://github.com/awslabs/mcp) |
     | **gcp** | Google Cloud Platform | [GCP](https://cloud.google.com/) |
-    | **azure** | Microsoft Azure | [Azure](https://azure.microsoft.com/) |
-    | **cloudflare** | DNS & Workers | [Cloudflare](https://www.cloudflare.com/) |
+    | **azure** | Microsoft Azure | [Repo](https://github.com/microsoft/mcp/tree/main/servers/Azure.Mcp.Server) |
+    | **cloudflare** | DNS & Workers | [Repo](https://github.com/cloudflare/mcp-server-cloudflare) |
     | **vercel** | Frontend deployments | [Vercel](https://vercel.com/) |
     | **netlify** | Web hosting | [Netlify](https://www.netlify.com/) |
     | **digitalocean** | Cloud infrastructure | [DigitalOcean](https://www.digitalocean.com/) |
@@ -87,14 +87,14 @@ Browse the full list of 130+ supported servers by category.
 
     | Server | Description | Links |
     |--------|-------------|-------|
-    | **sqlite** | Local SQLite files | [SQLite](https://sqlite.org/) |
+    | **sqlite** | Local SQLite files | [Repo](https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite) |
     | **mysql** | MySQL databases | [MySQL](https://www.mysql.com/) |
-    | **redis** | Key-value store | [Redis](https://redis.io/) |
+    | **redis** | Key-value store | [Repo](https://github.com/modelcontextprotocol/servers/tree/main/src/redis) |
     | **mongodb** | Document store | [MongoDB](https://www.mongodb.com/) |
     | **elasticsearch** | Search engine | [Elastic](https://www.elastic.co/) |
     | **supabase** | Postgres + Auth | [Supabase](https://supabase.com/) |
     | **snowflake** | Data cloud | [Snowflake](https://www.snowflake.com/) |
-    | **clickhouse** | Analytics DB | [ClickHouse](https://clickhouse.com/) |
+    | **clickhouse** | Analytics DB | [Repo](https://github.com/ClickHouse/mcp-clickhouse) |
     | **qdrant** | Vector database | [Qdrant](https://qdrant.tech/) |
 
 === "Productivity"
@@ -103,14 +103,14 @@ Browse the full list of 130+ supported servers by category.
 
     | Server | Description | Links |
     |--------|-------------|-------|
-    | **notion** | Pages & Databases | [Notion](https://www.notion.so/) |
+    | **notion** | Pages & Databases | [Repo](https://github.com/makenotion/notion-mcp-server) |
     | **obsidian** | Local vault notes | [Obsidian](https://obsidian.md/) |
-    | **google-drive** | File access | [Google Drive](https://www.google.com/drive/) |
+    | **google-drive** | File access | [Repo](https://github.com/modelcontextprotocol/servers/tree/main/src/gdrive) |
     | **gmail** | Read/Send email | [Gmail](https://www.google.com/gmail/) |
     | **calendar** | Google Calendar | [Google](https://calendar.google.com/) |
     | **todoist** | Task management | [Todoist](https://todoist.com/) |
     | **trello** | Kanban boards | [Trello](https://trello.com/) |
-    | **slack** | Messaging | [Slack](https://slack.com/) |
+    | **slack** | Messaging | [Repo](https://github.com/zencoderai/slack-mcp-server) |
     | **zoom** | Meetings | [Zoom](https://zoom.us/) |
 
 === "AI & Search"
@@ -125,7 +125,7 @@ Browse the full list of 130+ supported servers by category.
     | **huggingface** | Models & Datasets | [HuggingFace](https://huggingface.co/) |
     | **openai** | GPT Models | [OpenAI](https://openai.com/) |
     | **pinecone** | Vector Store | [Pinecone](https://www.pinecone.io/) |
-    | **memory** | Knowledge Graph | [MCP](https://modelcontextprotocol.io/) |
+    | **memory** | Knowledge Graph | [Repo](https://github.com/modelcontextprotocol/servers/tree/main/src/memory) |
 
 ---
 
