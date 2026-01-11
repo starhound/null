@@ -1,6 +1,6 @@
 site_name: Null Terminal
 site_url: https://null-terminal.com/
-repo_url: https://github.com/starhound/null-terminal
+repo_url: https://github.com/starhound/null
 repo_name: starhound/null-terminal
 edit_uri: edit/main/docs/
 
@@ -54,6 +54,7 @@ plugins:
 nav:
   - Home: index.md
   - Roadmap: roadmap.md
+  - MCP Servers: mcp-servers.md
   - User Guide:
     - Introduction: user/index.md
     - Installation: user/installation.md
