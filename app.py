@@ -249,8 +249,8 @@ class NullApp(App):
             status_bar = self.query_one("#status-bar", StatusBar)
             count = self.process_manager.get_count()
             status_bar.set_process_count(count)
-        except Exception:
-            pass
+        except Exception as e:
+            self.log(f"Error in _update_process_count: {e}")
 
     async def _init_mcp(self):
         """Initialize MCP server connections."""
@@ -259,8 +259,8 @@ class NullApp(App):
             tools = self.mcp_manager.get_all_tools()
             if tools:
                 self.notify(f"MCP: Connected with {len(tools)} tools available")
-        except Exception:
-            pass
+        except Exception as e:
+            self.log(f"Error in _init_mcp: {e}")
 
     async def _detect_local_model(self):
         """Auto-detect model for local providers (lm_studio, ollama)."""
@@ -278,8 +278,8 @@ class NullApp(App):
                 # Update the cached provider reference
                 self.ai_provider = self.ai_manager.get_provider(provider_name)
                 self._update_status_bar()
-        except Exception:
-            pass
+        except Exception as e:
+            self.log(f"Error in _detect_local_model: {e}")
 
     async def _connect_new_mcp_server(self, name: str):
         """Connect to a newly added MCP server."""
@@ -385,7 +385,7 @@ class NullApp(App):
                 # Clear the saved session
                 Config._get_storage().save_current_session([])
             except Exception:
-                pass
+                pass  # Non-critical: session clear on exit can safely fail
         self.exit()
 
     def is_busy(self) -> bool:
@@ -404,21 +404,21 @@ class NullApp(App):
         try:
             self.query_one("#history-search", HistorySearch).show()
         except Exception:
-            pass
+            pass  # Widget may not be mounted yet
 
     def action_search_blocks(self):
         """Open block content search."""
         try:
             self.query_one("#block-search", BlockSearch).show()
         except Exception:
-            pass
+            pass  # Widget may not be mounted yet
 
     def action_open_command_palette(self):
         """Open the command palette."""
         try:
             self.query_one("#command-palette", CommandPalette).show()
         except Exception:
-            pass
+            pass  # Widget may not be mounted yet
 
     def action_open_help(self):
         """Show the help screen."""
@@ -485,7 +485,7 @@ class NullApp(App):
                 if not sidebar.display:
                     sidebar.toggle_visibility()
         except Exception:
-            pass
+            pass  # Sidebar may not be mounted yet
 
     def action_select_model(self):
         """Select an AI model from ALL providers."""
@@ -594,7 +594,7 @@ class NullApp(App):
                 if not suggester.region.contains(event.x, event.y):
                     suggester.display = False
         except Exception:
-            pass
+            pass  # Suggester may not be mounted yet
 
         # Dismiss history search
         try:
@@ -604,7 +604,7 @@ class NullApp(App):
                     history_search.hide()
                 return  # Don't focus input if we just closed search
         except Exception:
-            pass
+            pass  # History search may not be mounted yet
 
         # Focus input when clicking on empty areas (history viewport background)
         try:
@@ -625,7 +625,7 @@ class NullApp(App):
                 if not clicked_on_block:
                     input_ctrl.focus()
         except Exception:
-            pass
+            pass  # Widgets may not be mounted yet
 
     async def on_input_controller_submitted(self, message: InputController.Submitted):
         """Handle input submission."""
@@ -648,7 +648,7 @@ class NullApp(App):
             else:
                 container.remove_class("ai-mode")
         except Exception:
-            pass
+            pass  # Container may not be mounted yet
 
     def on_history_search_selected(self, message: HistorySearch.Selected):
         """Handle history search selection."""
@@ -672,7 +672,7 @@ class NullApp(App):
         try:
             self.query_one("#input", InputController).focus()
         except Exception:
-            pass
+            pass  # Input may not be mounted yet
 
         if action_id.startswith("slash:"):
             # Execute slash command
@@ -708,7 +708,7 @@ class NullApp(App):
         try:
             self.query_one("#input", InputController).focus()
         except Exception:
-            pass
+            pass  # Input may not be mounted yet
 
     async def on_base_block_widget_retry_requested(
         self, message: BaseBlockWidget.RetryRequested
@@ -786,7 +786,7 @@ class NullApp(App):
                     widget.show_copy_feedback()
                     break
         except Exception:
-            pass
+            pass  # ActionBar may not exist for this block
 
     async def on_base_block_widget_fork_requested(
         self, message: BaseBlockWidget.ForkRequested
@@ -903,7 +903,7 @@ class NullApp(App):
                 rel = str(cwd)
             return f"$ {rel}"
         except Exception:
-            return "$ ."
+            return "$ ."  # Fallback if cwd is inaccessible
 
     def _update_prompt(self):
         """Update the prompt line with current directory."""
@@ -920,7 +920,7 @@ class NullApp(App):
             else:
                 prompt_label.remove_class("ai-mode")
         except Exception:
-            pass
+            pass  # Widgets may not be mounted yet
 
     def _update_status_bar(self):
         """Update status bar with current state."""
@@ -949,7 +949,7 @@ class NullApp(App):
             provider_name = Config.get("ai.provider") or "none"
             status_bar.provider_name = provider_name
         except Exception:
-            pass
+            pass  # Status bar may not be mounted during early lifecycle
 
     def _update_header(
         self, provider: str, model: str = "", connected: bool = True
@@ -959,7 +959,7 @@ class NullApp(App):
             header = self.query_one("#app-header", AppHeader)
             header.set_provider(provider, model, connected)
         except Exception:
-            pass
+            pass  # Header may not be mounted yet
 
     async def _check_provider_health(self):
         """Check if AI provider is connected."""
@@ -991,14 +991,15 @@ class NullApp(App):
             # Update process count
             status_bar.set_process_count(self.process_manager.get_count())
 
-        except Exception:
+        except Exception as e:
+            self.log(f"Error in _check_provider_health: {e}")
             try:
                 self.query_one(
                     "#status-bar", StatusBar
                 ).provider_status = "disconnected"
                 self._update_header("Error", "", connected=False)
             except Exception:
-                pass
+                pass  # Status bar may not be mounted yet
 
     def _find_widget_for_block(self, block_id: str) -> BaseBlockWidget | None:
         """Find the BlockWidget for a given block ID."""
@@ -1054,7 +1055,7 @@ class NullApp(App):
                 input_ctrl.value += path
             input_ctrl.focus()
         except Exception:
-            pass
+            pass  # Input widget may not be mounted yet
 
 
 if __name__ == "__main__":

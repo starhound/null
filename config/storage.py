@@ -1,5 +1,7 @@
 """Storage management using SQLite with encryption for sensitive data."""
 
+import json
+import logging
 import os
 import sqlite3
 from datetime import datetime
@@ -7,7 +9,9 @@ from pathlib import Path
 from typing import Any
 
 import keyring
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
+
+logger = logging.getLogger(__name__)
 
 DB_PATH = Path.home() / ".null" / "null.db"
 APP_NAME = "null-terminal"
@@ -28,8 +32,11 @@ class SecurityManager:
         try:
             # Try to get key from keyring
             key = keyring.get_password(APP_NAME, KEYRING_SERVICE_NAME)
-        except Exception:
-            # NoKeyringError or other backend issues
+        except keyring.errors.KeyringError as e:
+            logger.debug("Keyring not available: %s", e)
+            use_keyring = False
+        except Exception as e:
+            logger.warning("Unexpected error accessing keyring: %s", e)
             use_keyring = False
 
         if not key:
@@ -48,8 +55,10 @@ class SecurityManager:
                     try:
                         keyring.set_password(APP_NAME, KEYRING_SERVICE_NAME, key)
                         saved_to_keyring = True
-                    except Exception:
-                        pass
+                    except keyring.errors.KeyringError as e:
+                        logger.debug("Failed to save key to keyring: %s", e)
+                    except Exception as e:
+                        logger.warning("Unexpected error saving to keyring: %s", e)
 
                 if not saved_to_keyring:
                     # Fallback: Store in a hidden file
@@ -59,8 +68,12 @@ class SecurityManager:
                     # Try to set permissions to read/write only by user
                     try:
                         os.chmod(key_path, 0o600)
-                    except Exception:
-                        pass
+                    except OSError as e:
+                        logger.warning(
+                            "Failed to set secure permissions on key file %s: %s",
+                            key_path,
+                            e,
+                        )
 
         self._fernet = Fernet(key.encode())
 
@@ -78,7 +91,13 @@ class SecurityManager:
         assert self._fernet is not None, "Fernet not initialized"
         try:
             return self._fernet.decrypt(token.encode()).decode()
-        except Exception:
+        except InvalidToken:
+            logger.error(
+                "Decryption failed: invalid token (possibly corrupted or wrong key)"
+            )
+            return "[Decryption Failed]"
+        except Exception as e:
+            logger.error("Unexpected decryption error: %s", e)
             return "[Decryption Failed]"
 
 
@@ -185,9 +204,12 @@ class StorageManager:
         # Migration: Add jump_host if missing
         try:
             cursor.execute("ALTER TABLE ssh_hosts ADD COLUMN jump_host TEXT")
-        except Exception:
-            # Column likely exists
+        except sqlite3.OperationalError:
+            # Column already exists - expected during normal operation
             pass
+        except sqlite3.Error as e:
+            logger.error("Database migration failed (add jump_host column): %s", e)
+            raise
 
         self.conn.commit()
 
@@ -210,14 +232,18 @@ class StorageManager:
         if is_sensitive:
             stored_val = self.security.encrypt(value)
 
-        cursor.execute(
-            """
-            INSERT OR REPLACE INTO config (key, value, is_sensitive)
-            VALUES (?, ?, ?)
-        """,
-            (key, stored_val, is_sensitive),
-        )
-        self.conn.commit()
+        try:
+            cursor.execute(
+                """
+                INSERT OR REPLACE INTO config (key, value, is_sensitive)
+                VALUES (?, ?, ?)
+            """,
+                (key, stored_val, is_sensitive),
+            )
+            self.conn.commit()
+        except sqlite3.Error as e:
+            logger.error("Failed to save config key '%s': %s", key, e)
+            raise
 
     def delete_config(self, key: str):
         """Delete a config key from the database."""
@@ -271,8 +297,6 @@ class StorageManager:
 
     def save_session(self, blocks: list[Any], name: str | None = None) -> Path:
         """Save session to JSON file."""
-        import json
-
         from models import BlockState
 
         sessions_dir = self._get_sessions_dir()
@@ -283,26 +307,29 @@ class StorageManager:
             timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
             filename = f"session-{timestamp}.json"
 
-        # Serialize blocks
         data = {
             "saved_at": datetime.now().isoformat(),
             "blocks": [b.to_dict() if isinstance(b, BlockState) else b for b in blocks],
         }
 
         filepath = sessions_dir / filename
-        filepath.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        try:
+            filepath.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        except OSError as e:
+            logger.error("Failed to save session to %s: %s", filepath, e)
+            raise
 
-        # Also save as current
-        self._get_current_session_file().write_text(
-            json.dumps(data, indent=2), encoding="utf-8"
-        )
+        try:
+            self._get_current_session_file().write_text(
+                json.dumps(data, indent=2), encoding="utf-8"
+            )
+        except OSError as e:
+            logger.warning("Failed to update current session file: %s", e)
 
         return filepath
 
     def save_current_session(self, blocks: list[Any]):
         """Quick save to current session (for auto-save)."""
-        import json
-
         from models import BlockState
 
         if not blocks:
@@ -313,14 +340,15 @@ class StorageManager:
             "blocks": [b.to_dict() if isinstance(b, BlockState) else b for b in blocks],
         }
 
-        self._get_current_session_file().write_text(
-            json.dumps(data, indent=2), encoding="utf-8"
-        )
+        try:
+            self._get_current_session_file().write_text(
+                json.dumps(data, indent=2), encoding="utf-8"
+            )
+        except OSError as e:
+            logger.error("Failed to auto-save current session: %s", e)
 
     def load_session(self, name: str | None = None) -> list[Any]:
         """Load session from JSON file."""
-        import json
-
         from models import BlockState
 
         sessions_dir = self._get_sessions_dir()
@@ -337,7 +365,14 @@ class StorageManager:
             data = json.loads(filepath.read_text(encoding="utf-8"))
             blocks = [BlockState.from_dict(b) for b in data.get("blocks", [])]
             return blocks
-        except Exception:
+        except json.JSONDecodeError as e:
+            logger.error("Failed to parse session file %s: %s", filepath, e)
+            return []
+        except OSError as e:
+            logger.error("Failed to read session file %s: %s", filepath, e)
+            return []
+        except (KeyError, TypeError, ValueError) as e:
+            logger.error("Invalid session data in %s: %s", filepath, e)
             return []
 
     def list_sessions(self) -> list[dict[str, Any]]:
@@ -349,8 +384,6 @@ class StorageManager:
             if f.name == "current.json":
                 continue
             try:
-                import json
-
                 data = json.loads(f.read_text(encoding="utf-8"))
                 name = f.stem.replace("session-", "")
                 sessions.append(
@@ -361,8 +394,8 @@ class StorageManager:
                         "path": str(f),
                     }
                 )
-            except Exception:
-                pass
+            except (json.JSONDecodeError, OSError) as e:
+                logger.warning("Skipping corrupted session file %s: %s", f, e)
 
         return sessions
 
