@@ -10,7 +10,7 @@
 
 Null is a next-generation TUI (Terminal User Interface) designed for the modern AI-integrated workflow. Built on [Textual](https://textual.textualize.io/), it blends the raw power of the command line with the intelligence of LLMs, all wrapped in a sleek, cyber-noir aesthetic.
 
-It is designed as a **SysAdmin-First Orchestrator**, bridging the gap between manual shell operations and autonomous AI agents.
+It is a **general-purpose, systems-focused** AI terminal and agent orchestrator, bridging the gap between manual shell operations and autonomous workflows.
 
 <p align="center">
   <img src="demo.gif" alt="Null Terminal Demo" width="800">
