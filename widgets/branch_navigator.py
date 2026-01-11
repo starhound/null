@@ -49,14 +49,14 @@ class BranchNavigator(Static):
     def __init__(self, branch_manager, **kwargs):
         super().__init__(**kwargs)
         self.branch_manager = branch_manager
-        self.tree = Tree("Conversation")
-        self.tree.root.expand()
+        self._branch_tree = Tree("Conversation")
+        self._branch_tree.root.expand()
 
     def compose(self) -> ComposeResult:
         yield Static("🔀 Branches", classes="branch-header")
 
         with ScrollableContainer(id="branch-list"):
-            yield self.tree
+            yield self._branch_tree
 
         yield Button("+ New Branch", id="new-branch")
 
@@ -64,8 +64,8 @@ class BranchNavigator(Static):
         self._render_branch_tree()
 
     def _render_branch_tree(self) -> None:
-        self.tree.clear()
-        self.tree.root.expand()
+        self._branch_tree.clear()
+        self._branch_tree.root.expand()
 
         current = self.branch_manager.current_branch
 
@@ -81,9 +81,9 @@ class BranchNavigator(Static):
             else:
                 label = f"○ {branch}"
 
-            node = self.tree.root.add(label, data=branch)
+            node = self._branch_tree.root.add(label, data=branch)
             if branch == current:
-                self.tree.select_node(node)
+                self._branch_tree.select_node(node)
 
     def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
         branch_id = event.node.data
