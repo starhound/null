@@ -276,6 +276,7 @@ class TestCatalog:
             "monitoring",
             "security",
             "datascience",
+            "cms",
         }
         for entry in CATALOG:
             assert entry.category in valid_categories, (

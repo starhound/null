@@ -10,34 +10,32 @@ The application is structured around four core pillars:
 3.  **The Handler Layer** (Execution & Routing)
 4.  **The State Layer** (Configuration, Context & Managers)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         NullApp (app.py)                        │
-│                    Main Orchestrator & Event Hub                │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │   Widgets   │  │   Screens   │  │        Handlers         │  │
-│  │  (blocks/)  │  │ (modals)    │  │  Input│AI│CLI Executor  │  │
-│  └──────┬──────┘  └──────┬──────┘  └───────────┬─────────────┘  │
-│         │                │                     │                │
-│         └────────────────┴─────────────────────┘                │
-│                          │                                      │
-├──────────────────────────┼──────────────────────────────────────┤
-│  ┌───────────────────────┴───────────────────────────────────┐  │
-│  │                      Managers Layer                       │  │
-│  │  AIManager │ MCPManager │ ProcessManager │ AgentManager   │  │
-│  └───────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │                    Provider Layer (ai/)                   │  │
-│  │  Ollama │ OpenAI │ Anthropic │ Bedrock │ ... (10+ more)   │  │
-│  └───────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │                     Storage Layer                         │  │
-│  │        SQLite (null.db) │ Config │ Encryption             │  │
-│  └───────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    NullApp[NullApp<br>app.py<br>Main Orchestrator & Event Hub]
+    
+    subgraph UI_Layer [UI Layer]
+        Widgets[Widgets<br>blocks/]
+        Screens[Screens<br>modals]
+        Handlers[Handlers<br>Input | AI | CLI Executor]
+    end
+    
+    subgraph Managers_Layer [Managers Layer]
+        Managers[AIManager | MCPManager | ProcessManager | AgentManager]
+    end
+    
+    subgraph Provider_Layer [Provider Layer ai/]
+        Providers[Ollama | OpenAI | Anthropic | Bedrock | ...]
+    end
+    
+    subgraph Storage_Layer [Storage Layer]
+        Storage[SQLite null.db | Config | Encryption]
+    end
+
+    NullApp --> UI_Layer
+    UI_Layer --> Managers_Layer
+    Managers_Layer --> Providers
+    Providers --> Storage
 ```
 
 ---
@@ -81,21 +79,35 @@ class NullApp(App):
 
 Every interaction creates a **Block** - a distinct visual unit in the history.
 
-```
-BlockState (models.py)          BaseBlockWidget (base.py)
-┌──────────────────────┐        ┌──────────────────────┐
-│ type: BlockType      │───────>│ block: BlockState    │
-│ content_input: str   │        │ update_output()      │
-│ content_output: str  │        │ set_loading()        │
-│ metadata: dict       │        │ update_metadata()    │
-│ tool_calls: list     │        └──────────────────────┘
-│ iterations: list     │                   │
-└──────────────────────┘                   │
-                                ┌──────────┴──────────┐
-                        ┌───────┴───────┐     ┌───────┴───────┐
-                        │ CommandBlock  │     │AIResponseBlock│
-                        │ (CLI output)  │     │ (AI response) │
-                        └───────────────┘     └───────────────┘
+```mermaid
+classDiagram
+    class BlockState {
+        +BlockType type
+        +str content_input
+        +str content_output
+        +dict metadata
+        +list tool_calls
+        +list iterations
+    }
+    
+    class BaseBlockWidget {
+        +BlockState block
+        +update_output()
+        +set_loading()
+        +update_metadata()
+    }
+    
+    class CommandBlock {
+        +CLI output
+    }
+    
+    class AIResponseBlock {
+        +AI response
+    }
+    
+    BlockState "1" --* "1" BaseBlockWidget : binds
+    BaseBlockWidget <|-- CommandBlock
+    BaseBlockWidget <|-- AIResponseBlock
 ```
 
 **Block Types:**
@@ -126,17 +138,12 @@ Handlers decouple execution logic from the UI.
 
 ### Input Routing (`handlers/input.py`)
 
-```
-User Input
-    │
-    ▼
-InputHandler.handle_submission()
-    │
-    ├── Starts with "/" ──────────> SlashCommandHandler
-    │
-    ├── AI Mode enabled ──────────> AIExecutor
-    │
-    └── CLI Mode ─────────────────> CLIExecutor
+```mermaid
+graph TD
+    Input[User Input] --> Submit[InputHandler.handle_submission]
+    Submit -->|Starts with /| Slash[SlashCommandHandler]
+    Submit -->|AI Mode| AIExec[AIExecutor]
+    Submit -->|CLI Mode| CLIExec[CLIExecutor]
 ```
 
 ### AI Executor (`handlers/ai_executor.py`)
@@ -144,41 +151,65 @@ InputHandler.handle_submission()
 The complexity hotspot. Manages three execution modes:
 
 **1. Standard Chat**
-```
-User Prompt → LLM → Stream Response → Update Block
+```mermaid
+sequenceDiagram
+    participant User
+    participant LLM
+    participant Block
+    
+    User->>LLM: Prompt
+    LLM-->>Block: Stream Response
+    Block-->>Block: Update
 ```
 
 **2. Tool-Augmented Chat** (max 3 iterations)
-```
-User Prompt → LLM → Tool Call? 
-                      │
-                      ├── Yes → Execute Tool → Feed Result → LLM → ...
-                      │
-                      └── No → Stream Response → Done
+```mermaid
+sequenceDiagram
+    participant User
+    participant LLM
+    participant Tool
+    
+    User->>LLM: Prompt
+    loop Iteration
+        LLM->>Tool: Tool Call?
+        alt Yes
+            Tool-->>LLM: Result
+        else No
+            LLM-->>User: Stream Response
+        end
+    end
 ```
 
 **3. Agent Mode** (max 10 iterations)
-```
-Task → LLM (with tools) → Think → Act → Observe → Repeat until done
-                            │       │       │
-                            │       │       └── Tool result
-                            │       └── Tool call
-                            └── Reasoning (ThinkingWidget)
+```mermaid
+graph TD
+    Task[Task] --> LLM
+    LLM -->|Think| Reasoning
+    LLM -->|Act| ToolCall
+    ToolCall -->|Observe| ToolResult
+    ToolResult --> LLM
+    Reasoning --> AgentBlock
+    
+    subgraph Loop [Max 10 Iterations]
+        LLM
+        Reasoning
+        ToolCall
+        ToolResult
+    end
 ```
 
 ### CLI Executor (`handlers/cli_executor.py`)
 
 Executes shell commands via PTY:
 
-```
-Command → ProcessManager.spawn() → PTY Process
-                                      │
-              ┌───────────────────────┴───────────────────────┐
-              │                                               │
-        Simple Output                               TUI Application
-              │                                               │
-        CommandBlock                                  TerminalBlock
-     (Static rendering)                           (Full PTY emulation)
+```mermaid
+graph TD
+    Command --> Spawn[ProcessManager.spawn]
+    Spawn --> PTY[PTY Process]
+    PTY --> Simple[Simple Output]
+    PTY --> TUI[TUI Application]
+    Simple --> CmdBlock[CommandBlock]
+    TUI --> TermBlock[TerminalBlock]
 ```
 
 ---
@@ -187,20 +218,23 @@ Command → ProcessManager.spawn() → PTY Process
 
 ### Provider Architecture (`ai/`)
 
-```
-LLMProvider (base.py)
-    │
-    ├── validate_connection() → bool
-    ├── list_models() → list[str]
-    ├── supports_tools() → bool
-    └── generate() → AsyncGenerator[StreamChunk, None]
-
-StreamChunk
-    │
-    ├── text: str              # Partial response text
-    ├── tool_calls: list       # Tool call requests
-    ├── is_complete: bool      # Stream finished
-    └── usage: TokenUsage      # Token counts
+```mermaid
+classDiagram
+    class LLMProvider {
+        +validate_connection() bool
+        +list_models() list
+        +supports_tools() bool
+        +generate() AsyncGenerator
+    }
+    
+    class StreamChunk {
+        +str text
+        +list tool_calls
+        +bool is_complete
+        +TokenUsage usage
+    }
+    
+    LLMProvider ..> StreamChunk : yields
 ```
 
 ### Supported Providers
@@ -248,20 +282,17 @@ Extracts reasoning from different model formats:
 
 ### MCP Integration (`mcp/`)
 
-```
-MCPManager
-    │
-    ├── MCPConfig (mcp.json)
-    │       │
-    │       └── Server configs (command, args, env)
-    │
-    ├── MCPClient (per server)
-    │       │
-    │       ├── connect() → Spawn process, handshake
-    │       ├── list_tools() → Available tools
-    │       └── call_tool(name, args) → Result
-    │
-    └── get_all_tools() → Merged tool list for LLM
+```mermaid
+graph TD
+    MCPManager --> Config[MCPConfig<br>mcp.json]
+    MCPManager --> Client[MCPClient<br>per server]
+    
+    Client --> Connect[connect<br>spawn process]
+    Client --> ListTools[list_tools]
+    Client --> CallTool[call_tool]
+    
+    Config --> Client
+    Client --> Tools[Merged Tool List]
 ```
 
 ### Configuration (`config/`)
@@ -280,12 +311,12 @@ MCPManager
 
 Builds the message array for LLM calls:
 
-```python
-ContextManager.build_messages(history_blocks, max_tokens) -> ContextInfo
-    │
-    ├── Converts blocks to messages
-    ├── Truncates long outputs
-    └── Trims oldest messages if over limit
+```mermaid
+graph TD
+    Build[ContextManager.build_messages] --> Convert[Convert blocks to messages]
+    Build --> Truncate[Truncate long outputs]
+    Build --> Trim[Trim oldest messages]
+    Convert & Truncate & Trim --> Context[ContextInfo]
 ```
 
 ---
