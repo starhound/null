@@ -1,6 +1,6 @@
 # Null Terminal User Guide
 
-Null Terminal is a block-based terminal emulator with integrated multi-provider AI chat and autonomous agent capabilities.
+Null Terminal is a block-based terminal emulator with integrated multi-provider AI chat and autonomous agent capabilities. It bridges the gap between traditional CLI tools and modern AI assistance.
 
 ## Quick Start
 
@@ -27,14 +27,15 @@ Every command and AI interaction creates a distinct "block" in the terminal:
 
 Toggle between modes with `Ctrl+Space` or `/ai`.
 
-### Agent Mode
+### Agent Capabilities
 Enable autonomous task execution where the AI can:
-- Execute shell commands
-- Read and write files
-- Use MCP tools
-- Chain multiple operations together
+- Execute shell commands and file operations
+- **Plan Complex Tasks**: Create roadmaps with `/plan`
+- **Git Integration**: Auto-commit changes with generated messages
+- **Use MCP Tools**: Connect to external services (databases, cloud, etc.)
+- **Orchestrate Workflows**: Run multi-agent tasks
 
-Toggle with `/agent` command.
+Toggle agent mode with `/agent`.
 
 ## Essential Shortcuts
 
@@ -48,28 +49,23 @@ Toggle with `/agent` command.
 | `F3` | Change theme |
 | `Escape` | Cancel current operation |
 
-## Essential Commands
+## Feature Highlights
 
-| Command | Description |
-|---------|-------------|
-| `/ai` | Toggle AI mode |
-| `/agent` | Toggle agent mode |
-| `/model` | Select AI model |
-| `/provider` | Configure AI provider |
-| `/config` | Open settings |
-| `/help` | Show help |
-| `/clear` | Clear history |
-| `/export` | Export conversation |
-| `/todo` | Open task dashboard |
-| `/prompts` | Manage system prompts |
+- **Planning Mode**: Review and approve AI plans before execution. [Learn more](planning.md)
+- **Git Operations**: Seamless integration with git workflows. [Learn more](git.md)
+- **Workflows & Agents**: Save sessions and run background tasks. [Learn more](workflow.md)
+- **MCP Integration**: Connect 100+ external tools. [Learn more](mcp.md)
 
 ## Documentation
 
 - [Commands Reference](commands.md) - All slash commands
 - [Keyboard Shortcuts](shortcuts.md) - All keyboard shortcuts
 - [AI Providers](providers.md) - Setting up AI providers
-- [Configuration](configuration.md) - Settings and options
+- [Planning Mode](planning.md) - Task planning and execution
+- [Git Operations](git.md) - Version control integration
+- [Workflows & Agents](workflow.md) - Templates and multi-agent tasks
 - [MCP Servers](mcp.md) - Model Context Protocol setup
+- [Configuration](configuration.md) - Settings and options
 - [Themes](themes.md) - Customizing appearance
 - [Tools & Agent Mode](tools.md) - AI tool use
 - [Sessions](sessions.md) - Saving and loading sessions

@@ -28,6 +28,48 @@ All commands are prefixed with `/` and executed from the input prompt.
 | `/compact` | Summarize conversation to reduce tokens |
 | `/context` | Inspect current AI context messages |
 
+## Planning & Tasks
+
+| Command | Description |
+|---------|-------------|
+| `/plan <goal>` | Generate a plan for the goal |
+| `/plan show` | Show current plan |
+| `/plan approve` | Approve all pending steps |
+| `/plan execute` | Start executing approved steps |
+| `/plan save <name>` | Save plan as workflow template |
+| `/plan load <name>` | Load saved plan |
+| `/todo` | Open task manager |
+| `/todo add <task>` | Add a new task |
+| `/todo list` | List tasks in chat |
+| `/todo done <id>` | Mark task as done |
+| `/todo del <id>` | Delete task |
+
+## Git Operations
+
+| Command | Description |
+|---------|-------------|
+| `/diff [file]` | Show diff for file or all changes |
+| `/commit [message]` | Commit staged changes |
+| `/undo` | Revert last AI commit |
+| `/git log` | Show recent commits |
+| `/git stash` | Stash changes |
+| `/git checkout <file>` | Discard changes |
+
+## Workflows & Agents
+
+| Command | Description |
+|---------|-------------|
+| `/workflow` | Browse workflows |
+| `/workflow run <name>` | Run a workflow |
+| `/workflow save [name]` | Save session as workflow |
+| `/bg <goal>` | Start background task |
+| `/bg list` | List background tasks |
+| `/bg status <id>` | Show task status |
+| `/bg logs <id>` | Show task logs |
+| `/bg cancel <id>` | Cancel running task |
+| `/orchestrate <goal>` | Start multi-agent task |
+| `/agents` | List agent profiles |
+
 ## Prompt/Persona Commands
 
 | Command | Description |
@@ -37,18 +79,6 @@ All commands are prefixed with `/` and executed from the input prompt.
 | `/prompts show <key>` | Show prompt content |
 | `/prompts dir` | Show prompts directory path |
 | `/prompts reload` | Reload prompts from disk |
-
-### Built-in Prompts
-
-| Key | Name | Description |
-|-----|------|-------------|
-| `default` | Default | Balanced assistant |
-| `concise` | Concise | Minimal responses |
-| `agent` | Agent | Task execution optimized |
-| `code` | Orchestration Helper | Automation focus |
-| `devops` | DevOps | System admin focus |
-
-Add custom prompts in `~/.null/prompts/` as `.txt` or `.md` files.
 
 ## Session Commands
 
@@ -61,6 +91,14 @@ Add custom prompts in `~/.null/prompts/` as `.txt` or `.md` files.
 | `/session load [name]` | Load a saved session |
 | `/session list` | List saved sessions |
 | `/session new` | Start new session |
+
+## Collaboration
+
+| Command | Description |
+|---------|-------------|
+| `/share` | Share current session |
+| `/share team` | Share to team workspace |
+| `/import <url>` | Import shared session |
 
 ## MCP Commands
 
@@ -75,17 +113,6 @@ Add custom prompts in `~/.null/prompts/` as `.txt` or `.md` files.
 | `/mcp disable <name>` | Disable MCP server |
 | `/mcp reconnect [name]` | Reconnect to server(s) |
 | `/tools` | Browse available MCP tools |
-| `/tools-ui` | (Deprecated) Same as `/tools` |
-
-## Task Management
-
-| Command | Description |
-|---------|-------------|
-| `/todo` | Open task dashboard |
-| `/todo add <task>` | Add a new task |
-| `/todo list` | List tasks in chat |
-| `/todo done <id>` | Mark task as done |
-| `/todo del <id>` | Delete task |
 
 ## Configuration Commands
 
@@ -104,12 +131,29 @@ Add custom prompts in `~/.null/prompts/` as `.txt` or `.md` files.
 | `/ssh-list` | List saved SSH hosts |
 | `/ssh-del <alias>` | Delete SSH host |
 
-## Built-in Shell Commands
-
-These work in CLI mode without `/` prefix:
+## Advanced
 
 | Command | Description |
 |---------|-------------|
-| `cd <path>` | Change directory |
-| `pwd` | Print working directory |
-| `clear` | Clear terminal screen |
+| `/map` | Visualize project architecture |
+| `/cmd <description>` | Translate natural language to shell command |
+| `/explain <command>` | Explain a shell command |
+| `/fix` | Auto-correct the last error |
+| `/watch` | Monitor output for errors and auto-fix |
+
+---
+
+## Global Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Space` | Toggle between AI and CLI modes |
+| `Ctrl+P` | Open command palette |
+| `Ctrl+\` | Toggle file sidebar |
+| `Ctrl+R` | History search |
+| `Ctrl+F` | Find in blocks |
+| `Ctrl+L` | Clear screen/history |
+| `F1` | Open Help |
+| `F2` | Select Model |
+| `F3` | Open Settings |
+| `F4` | Manage Providers |

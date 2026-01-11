@@ -55,6 +55,10 @@ plugins:
   - minify:
       minify_html: true
 
+extra_javascript:
+  - https://unpkg.com/mermaid/dist/mermaid.min.js
+  - javascripts/mermaid-init.js
+
 nav:
   - Home: index.md
   - Roadmap: roadmap.md
@@ -67,6 +71,9 @@ nav:
     - AI Providers: user/providers.md
     - MCP: user/mcp.md
     - Tools & Agents: user/tools.md
+    - Planning: user/planning.md
+    - Git Operations: user/git.md
+    - Workflows & Agents: user/workflow.md
     - SSH: user/ssh.md
     - Themes: user/themes.md
     - Sessions: user/sessions.md

@@ -63,23 +63,59 @@ Common MCP tools:
 - **query** (database): SQL queries
 - **fetch**: HTTP requests
 
-## Tool Approval
+## Tool Execution
 
-### Approval Required
+### Streaming Results
+Tool output is streamed in real-time for long-running commands. You don't have to wait for completion to see what's happening.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ 🔧 run_command: npm install                    [▼] [■]  │
+├─────────────────────────────────────────────────────────┤
+│ ⏳ Running... (12s)                                     │
+│ ─────────────────────────────────────────────────────── │
+│ npm WARN deprecated lodash@4.17.20                      │
+│ npm WARN deprecated request@2.88.2                      │
+│ added 1247 packages in 10s                              │
+│ █████████████████████░░░░░ 85%                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+- **Stop Button [■]**: Cancel execution immediately (sends SIGTERM).
+- **Auto-scroll**: The view follows new output automatically.
+
+### Tool Approval
+
+To ensure safety, sensitive tools require approval before execution.
+
+#### Approval Required
 - `run_command` - Shell execution
 - `write_file` - File modification
-- Most MCP tools
+- Most MCP tools that modify state
 
-### No Approval Required
+#### No Approval Required
 - `read_file` - File reading
 - `list_directory` - Directory listing
+- Safe/Read-only MCP tools
 
-### Approval Dialog
+#### Approval Dialog
 When a tool requires approval:
-1. Dialog shows tool name and arguments
-2. Review the operation
-3. **Approve** to execute
-4. **Deny** to cancel
+1. A dialog appears showing tool name and arguments.
+2. Review the operation carefully.
+3. **Approve** to execute.
+4. **Deny** to cancel the tool call.
+
+#### Configuration
+You can customize approval settings in `config.json`:
+
+```json
+{
+  "tools": {
+    "require_approval": ["run_command", "write_file", "mcp_*"],
+    "auto_approve_safe": true
+  }
+}
+```
 
 ## Chat Mode (Default)
 
