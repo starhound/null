@@ -43,6 +43,7 @@ config.yaml
 
 # VS Code
 .vscode/
+!.vscode/tasks.json
 
 # Textual
 .textual/
