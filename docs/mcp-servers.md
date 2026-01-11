@@ -89,6 +89,9 @@ Browse and install servers directly from Null Terminal:
 | **appium** | Appium mobile automation | [Appium](https://appium.io/) |
 | **openapi** | Interact with any OpenAPI/Swagger API | [OpenAPI](https://www.openapis.org/) |
 | **graphql** | Query GraphQL endpoints | [GraphQL](https://graphql.org/) |
+| **sap-fiori** | SAP Fiori tools | [SAP Fiori](https://www.sap.com/products/technology-platform/fiori.html) |
+| **sap-ui5** | SAP UI5 development | [SAP UI5](https://ui5.sap.com/) |
+| **code-runner** | Execute code snippets | [MCP Servers](https://github.com/formulahendry/mcp-server-code-runner) |
 
 ---
 
@@ -114,6 +117,7 @@ Browse and install servers directly from Null Terminal:
 | **grafana** | Grafana dashboards and alerts | [Grafana](https://grafana.com/) |
 | **datadog** | Datadog monitoring and logs | [Datadog](https://www.datadoghq.com/) |
 | **pagerduty** | PagerDuty incidents and schedules | [PagerDuty](https://www.pagerduty.com/) |
+| **dynatrace** | Dynatrace observability | [Dynatrace](https://www.dynatrace.com/) |
 
 ---
 
@@ -139,6 +143,7 @@ Browse and install servers directly from Null Terminal:
 | **aiven** | Aiven cloud data platform | [Aiven](https://aiven.io/) |
 | **box** | Box file storage | [Box](https://www.box.com/) |
 | **cloudinary** | Cloudinary media management | [Cloudinary](https://cloudinary.com/) |
+| **heroku** | Heroku platform management | [Heroku](https://www.heroku.com/) |
 
 ---
 
@@ -155,6 +160,7 @@ Browse and install servers directly from Null Terminal:
 | **brightdata** | Bright Data web scraping | [Bright Data](https://brightdata.com/) |
 | **builtwith** | BuiltWith technology profiler | [BuiltWith](https://builtwith.com/) |
 | **cloudsway** | Cloudsway cloud search | [Cloudsway](https://cloudsway.io/) |
+| **chrome-devtools** | Chrome DevTools automation | [Chrome DevTools](https://developer.chrome.com/docs/devtools/) |
 
 ---
 
@@ -272,6 +278,7 @@ Browse and install servers directly from Null Terminal:
 | **lorem-ipsum** | Generate placeholder text | [Anthropic](https://www.anthropic.com/) |
 | **imdb** | Movie and TV show info | [IMDb](https://www.imdb.com/) |
 | **spotify** | Spotify music playback and search | [Spotify](https://www.spotify.com/) |
+| **mapbox** | Mapbox maps and location services | [Mapbox](https://www.mapbox.com/) |
 
 ---
 
@@ -290,9 +297,15 @@ Browse and install servers directly from Null Terminal:
 | **groq** | Groq fast LLM inference | [Groq](https://groq.com/) |
 | **together** | Together AI inference | [Together AI](https://www.together.ai/) |
 | **cohere** | Cohere embeddings and chat | [Cohere](https://cohere.com/) |
-| **phoenix** | Arize Phoenix LLM traces | [Arize AI](https://arize.com/) |
-| **opik** | Comet Opik LLM evaluation | [Comet ML](https://www.comet.com/) |
 | **atla** | Atla AI evaluator | [Atla AI](https://www.atla.ai/) |
+
+---
+
+## Content Management
+
+| Server | Description | Links |
+|--------|-------------|-------|
+| **contentful** | Contentful CMS operations | [Contentful](https://www.contentful.com/) |
 
 ---
 

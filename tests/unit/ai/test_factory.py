@@ -19,11 +19,27 @@ class TestAIFactoryProviders:
     def test_expected_providers_exist(self):
         """Should contain all expected providers."""
         expected = [
-            "ollama", "openai", "anthropic", "google", "azure",
-            "bedrock", "groq", "mistral", "together", "cohere",
-            "xai", "openrouter", "fireworks", "deepseek", "perplexity",
-            "custom", "lm_studio", "llama_cpp", "huggingface", "cloudflare",
-            "nvidia"
+            "ollama",
+            "openai",
+            "anthropic",
+            "google",
+            "azure",
+            "bedrock",
+            "groq",
+            "mistral",
+            "together",
+            "cohere",
+            "xai",
+            "openrouter",
+            "fireworks",
+            "deepseek",
+            "perplexity",
+            "custom",
+            "lm_studio",
+            "llama_cpp",
+            "huggingface",
+            "cloudflare",
+            "nvidia",
         ]
         for provider in expected:
             assert provider in AIFactory.PROVIDERS, f"Missing provider: {provider}"
@@ -45,17 +61,23 @@ class TestAIFactoryProviders:
     def test_provider_description_is_string(self):
         """Provider description should be a string."""
         for name, info in AIFactory.PROVIDERS.items():
-            assert isinstance(info["description"], str), f"{name} description is not string"
+            assert isinstance(info["description"], str), (
+                f"{name} description is not string"
+            )
 
     def test_requires_api_key_is_bool(self):
         """requires_api_key should be a boolean."""
         for name, info in AIFactory.PROVIDERS.items():
-            assert isinstance(info["requires_api_key"], bool), f"{name} requires_api_key is not bool"
+            assert isinstance(info["requires_api_key"], bool), (
+                f"{name} requires_api_key is not bool"
+            )
 
     def test_requires_endpoint_is_bool(self):
         """requires_endpoint should be a boolean."""
         for name, info in AIFactory.PROVIDERS.items():
-            assert isinstance(info["requires_endpoint"], bool), f"{name} requires_endpoint is not bool"
+            assert isinstance(info["requires_endpoint"], bool), (
+                f"{name} requires_endpoint is not bool"
+            )
 
 
 class TestAIFactoryListProviders:
@@ -145,7 +167,7 @@ class TestAIFactoryGetProvider:
         config = {
             "provider": "ollama",
             "endpoint": "http://localhost:11434",
-            "model": "llama3.2"
+            "model": "llama3.2",
         }
         provider = AIFactory.get_provider(config)
         assert isinstance(provider, OllamaProvider)
@@ -155,11 +177,7 @@ class TestAIFactoryGetProvider:
         """Should create OpenAICompatibleProvider for OpenAI."""
         from ai.openai_compat import OpenAICompatibleProvider
 
-        config = {
-            "provider": "openai",
-            "api_key": "test-key",
-            "model": "gpt-4o-mini"
-        }
+        config = {"provider": "openai", "api_key": "test-key", "model": "gpt-4o-mini"}
         provider = AIFactory.get_provider(config)
         assert isinstance(provider, OpenAICompatibleProvider)
         assert provider.model == "gpt-4o-mini"
@@ -171,7 +189,7 @@ class TestAIFactoryGetProvider:
         config = {
             "provider": "anthropic",
             "api_key": "test-key",
-            "model": "claude-3-5-sonnet-20241022"
+            "model": "claude-3-5-sonnet-20241022",
         }
         provider = AIFactory.get_provider(config)
         assert isinstance(provider, AnthropicProvider)
@@ -184,7 +202,7 @@ class TestAIFactoryGetProvider:
         config = {
             "provider": "groq",
             "api_key": "test-key",
-            "model": "llama-3.3-70b-versatile"
+            "model": "llama-3.3-70b-versatile",
         }
         provider = AIFactory.get_provider(config)
         assert isinstance(provider, OpenAICompatibleProvider)
@@ -214,10 +232,7 @@ class TestAIFactoryGetProvider:
         """LM Studio should ensure /v1 suffix on endpoint."""
         from ai.openai_compat import OpenAICompatibleProvider
 
-        config = {
-            "provider": "lm_studio",
-            "endpoint": "http://localhost:1234"
-        }
+        config = {"provider": "lm_studio", "endpoint": "http://localhost:1234"}
         provider = AIFactory.get_provider(config)
         assert isinstance(provider, OpenAICompatibleProvider)
 
@@ -225,10 +240,7 @@ class TestAIFactoryGetProvider:
         """llama.cpp should ensure /v1 suffix on endpoint."""
         from ai.openai_compat import OpenAICompatibleProvider
 
-        config = {
-            "provider": "llama_cpp",
-            "endpoint": "http://localhost:8000"
-        }
+        config = {"provider": "llama_cpp", "endpoint": "http://localhost:8000"}
         provider = AIFactory.get_provider(config)
         assert isinstance(provider, OpenAICompatibleProvider)
 
@@ -247,13 +259,26 @@ class TestAIFactoryGetProvider:
         assert isinstance(provider, OllamaProvider)
 
     def test_google_provider_creation(self):
-        """Should create GoogleVertexProvider."""
-        from ai.google_vertex import GoogleVertexProvider
+        """Should create GoogleAIProvider for 'google' provider."""
+        from ai.google_ai import GoogleAIProvider
 
         config = {
             "provider": "google",
             "api_key": "test-key",
-            "model": "gemini-2.0-flash"
+            "model": "gemini-2.0-flash",
+        }
+        provider = AIFactory.get_provider(config)
+        assert isinstance(provider, GoogleAIProvider)
+
+    def test_google_vertex_provider_creation(self):
+        """Should create GoogleVertexProvider for 'google_vertex' provider."""
+        from ai.google_vertex import GoogleVertexProvider
+
+        config = {
+            "provider": "google_vertex",
+            "project_id": "test-project",
+            "location": "us-central1",
+            "model": "gemini-2.0-flash",
         }
         provider = AIFactory.get_provider(config)
         assert isinstance(provider, GoogleVertexProvider)
@@ -266,7 +291,7 @@ class TestAIFactoryGetProvider:
             "provider": "azure",
             "endpoint": "https://test.openai.azure.com",
             "api_key": "test-key",
-            "model": "gpt-4o"
+            "model": "gpt-4o",
         }
         provider = AIFactory.get_provider(config)
         assert isinstance(provider, AzureProvider)
@@ -278,7 +303,7 @@ class TestAIFactoryGetProvider:
         config = {
             "provider": "cohere",
             "api_key": "test-key",
-            "model": "command-r-plus"
+            "model": "command-r-plus",
         }
         provider = AIFactory.get_provider(config)
         assert isinstance(provider, CohereProvider)
@@ -290,7 +315,7 @@ class TestAIFactoryGetProvider:
         config = {
             "provider": "bedrock",
             "region": "us-east-1",
-            "model": "anthropic.claude-3-sonnet-20240229-v1:0"
+            "model": "anthropic.claude-3-sonnet-20240229-v1:0",
         }
         provider = AIFactory.get_provider(config)
         assert isinstance(provider, BedrockProvider)
@@ -302,7 +327,7 @@ class TestAIFactoryGetProvider:
         config = {
             "provider": "mistral",
             "api_key": "test-key",
-            "model": "mistral-large-latest"
+            "model": "mistral-large-latest",
         }
         provider = AIFactory.get_provider(config)
         assert isinstance(provider, OpenAICompatibleProvider)
@@ -314,7 +339,7 @@ class TestAIFactoryGetProvider:
         config = {
             "provider": "deepseek",
             "api_key": "test-key",
-            "model": "deepseek-chat"
+            "model": "deepseek-chat",
         }
         provider = AIFactory.get_provider(config)
         assert isinstance(provider, OpenAICompatibleProvider)
