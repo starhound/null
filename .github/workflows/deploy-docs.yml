@@ -37,9 +37,6 @@ jobs:
           [ ! -f docs/contributing.md ] && cp CONTRIBUTING.md docs/contributing.md || true
           [ ! -f docs/changelog.md ] && cp CHANGELOG.md docs/changelog.md || true
           [ ! -f docs/license.md ] && cp LICENSE docs/license.md || true
-          
-          # Ensure CNAME exists in docs folder for custom domain
-          echo "null-terminal.com" > docs/CNAME
 
       - name: Deploy to GitHub Pages
         run: mkdocs gh-deploy --force
