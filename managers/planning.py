@@ -154,28 +154,35 @@ class Plan:
         return done / len(self.steps)
 
 
-PLAN_GENERATION_PROMPT = """You are a task planner. Break down the user's goal into a clear, actionable plan.
+PLAN_GENERATION_PROMPT = """You are a task planner. Create a step-by-step plan to achieve the user's goal.
 
-For each step, specify:
-1. A brief description (1 sentence)
-2. The type: "prompt" (AI reasoning), "tool" (run_command, read_file, write_file), or "checkpoint" (pause for user review)
-3. If type is "tool", specify which tool and arguments
+IMPORTANT: Output ONLY the plan steps. Do NOT output any code, explanations, or other content.
 
-Output format (use exactly this structure):
-STEP 1: [description]
-TYPE: [prompt|tool|checkpoint]
-TOOL: [tool_name] (only if type is tool)
-ARGS: [json args] (only if type is tool)
+Each step must follow this EXACT format:
 
-STEP 2: [description]
-...
+STEP 1: Brief description of what to do
+TYPE: prompt
+
+STEP 2: Brief description of next action  
+TYPE: tool
+TOOL: run_command
+ARGS: {{"command": "the shell command"}}
+
+Available step types:
+- "prompt" = AI will think/reason about this step
+- "tool" = Execute a tool (run_command, read_file, write_file)
+- "checkpoint" = Pause for user review
+
+Available tools for TYPE: tool:
+- run_command: Run a shell command. ARGS: {{"command": "..."}}
+- read_file: Read a file. ARGS: {{"path": "..."}}
+- write_file: Write a file. ARGS: {{"path": "...", "content": "..."}}
 
 Goal: {goal}
 
-Context: {context}
+{context}
 
-Create a practical, minimal plan with 3-10 steps. Focus on what's actionable.
-"""
+Now output the plan steps (3-7 steps, nothing else):"""
 
 
 class PlanManager:

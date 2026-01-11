@@ -473,3 +473,105 @@ class TestGitHelperMethods:
 
         mock_notify.assert_called_once()
         assert "Nothing to commit" in mock_notify.call_args[0][0]
+
+
+class TestIssueCommand:
+    @pytest.mark.asyncio
+    async def test_cmd_issue_no_args_shows_usage(self, core_commands):
+        with patch.object(core_commands, "notify") as mock_notify:
+            await core_commands.cmd_issue([])
+
+        mock_notify.assert_called_once()
+        assert "Usage" in mock_notify.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_cmd_issue_unknown_subcommand(self, core_commands):
+        with patch.object(core_commands, "notify") as mock_notify:
+            await core_commands.cmd_issue(["invalid"])
+
+        mock_notify.assert_called_once()
+        assert "Unknown" in mock_notify.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_cmd_issue_list_calls_github(self, core_commands):
+        mock_github = MagicMock()
+        mock_github.list_issues = AsyncMock(return_value=[])
+
+        with (
+            patch("managers.github.GitHubContextManager", return_value=mock_github),
+            patch.object(core_commands, "notify") as mock_notify,
+        ):
+            await core_commands.cmd_issue(["list"])
+
+        mock_github.list_issues.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_cmd_issue_list_handles_no_issues(self, core_commands):
+        mock_github = MagicMock()
+        mock_github.list_issues = AsyncMock(return_value=[])
+
+        with (
+            patch("managers.github.GitHubContextManager", return_value=mock_github),
+            patch.object(core_commands, "notify") as mock_notify,
+        ):
+            await core_commands.cmd_issue(["list"])
+
+        mock_notify.assert_called_once()
+        assert "No open issues" in mock_notify.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_cmd_issue_view_by_number(self, core_commands):
+        from managers.github import GitHubIssue
+
+        mock_issue = GitHubIssue(number=123, title="Test", body="Body", state="open")
+        mock_github = MagicMock()
+        mock_github.get_issue = AsyncMock(return_value=mock_issue)
+        mock_github.format_issue_context = MagicMock(return_value="formatted")
+
+        with (
+            patch("managers.github.GitHubContextManager", return_value=mock_github),
+            patch.object(
+                core_commands, "show_output", new_callable=AsyncMock
+            ) as mock_show,
+        ):
+            await core_commands.cmd_issue(["123"])
+
+        mock_github.get_issue.assert_called_once_with(123)
+        mock_show.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_cmd_issue_view_handles_not_found(self, core_commands):
+        mock_github = MagicMock()
+        mock_github.get_issue = AsyncMock(return_value=None)
+
+        with (
+            patch("managers.github.GitHubContextManager", return_value=mock_github),
+            patch.object(core_commands, "notify") as mock_notify,
+        ):
+            await core_commands.cmd_issue(["999"])
+
+        mock_notify.assert_called_once()
+        assert "Failed to fetch" in mock_notify.call_args[0][0]
+
+
+class TestPrCommand:
+    @pytest.mark.asyncio
+    async def test_cmd_pr_no_args_shows_usage(self, core_commands):
+        with patch.object(core_commands, "notify") as mock_notify:
+            await core_commands.cmd_pr([])
+
+        mock_notify.assert_called_once()
+        assert "Usage" in mock_notify.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_cmd_pr_list_calls_github(self, core_commands):
+        mock_github = MagicMock()
+        mock_github.list_prs = AsyncMock(return_value=[])
+
+        with (
+            patch("managers.github.GitHubContextManager", return_value=mock_github),
+            patch.object(core_commands, "notify") as mock_notify,
+        ):
+            await core_commands.cmd_pr(["list"])
+
+        mock_github.list_prs.assert_called_once()

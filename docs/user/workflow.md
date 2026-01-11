@@ -1,90 +1,131 @@
-# Workflows & Agents
+# Workflows & Orchestration
 
-Null Terminal allows you to save successful agent sessions as reusable workflows and orchestrate multi-agent tasks.
+Null Terminal provides powerful tools for automating repetitive tasks and orchestrating multiple AI agents to solve complex problems.
 
 ## Workflow Templates
 
-Workflows are saved sequences of prompts and tool executions that can be replayed with different variables.
+Workflows are reusable sequences of prompts and tool executions. They allow you to capture successful agent sessions and replay them with different parameters.
 
-### Browsing Workflows
+### Managing Workflows
 
-Use the `/workflow` command to open the workflow browser:
+Use the `/workflow` command to manage your templates.
 
-```bash
-/workflow
+=== "/workflow list"
+    Displays all available workflows, including built-in templates and your saved sessions.
+    ```bash
+    /workflow list
+    ```
+
+=== "/workflow run"
+    Executes a workflow by name. If the workflow defines variables, you will be prompted to provide values.
+    ```bash
+    /workflow run "Debug Python"
+    ```
+
+=== "/workflow save"
+    Captures the current or last active agent session as a new workflow template.
+    ```bash
+    /workflow save "Refactor Component"
+    ```
+
+=== "/workflow import/export"
+    Share workflows using YAML files.
+    ```bash
+    /workflow import ./my-workflow.yaml
+    /workflow export "Refactor Component"
+    ```
+
+!!! tip "Variable Substitution"
+    Workflows support dynamic variables using the `{{variable_name}}` syntax. When running a workflow, Null Terminal will automatically detect these placeholders and ask for input.
+
+### Template Format (YAML)
+
+Workflows are stored as YAML files in `~/.null/workflows/`.
+
+```yaml
+name: "Python Docstring Generator"
+description: "Automatically generates docstrings for all functions in a file"
+tags: ["python", "documentation"]
+variables:
+  file_path: "Path to the Python file"
+steps:
+  - type: "tool"
+    tool_name: "read_file"
+    tool_args:
+      path: "{{file_path}}"
+  - type: "prompt"
+    content: "Analyze the functions in {{file_path}} and generate Google-style docstrings for any that are missing."
 ```
 
-You'll see a list of available workflows, including built-in ones and those you've saved.
+---
 
-### Running a Workflow
+## Background Agents (`/bg`)
 
-Select a workflow to run it. You may be prompted to provide values for variables defined in the template (e.g., `{{filename}}`, `{{error_message}}`).
+For long-running tasks that don't require your immediate attention, you can spawn agents in the background. This allows you to continue using the terminal for other tasks while the agent works in a detached process.
 
-```bash
-/workflow run debug-python
-```
+### Commands
 
-### Creating Workflows
+| Command | Description |
+|---------|-------------|
+| `/bg <goal>` | Start a new background task with the specified goal. |
+| `/bg list` | View all active, queued, and completed background tasks. |
+| `/bg status <id>` | Check the detailed progress and results of a specific task. |
+| `/bg logs <id>` | View the execution logs for a background agent. |
+| `/bg cancel <id>` | Stop a running background task. |
+| `/bg clear` | Remove completed tasks from the list. |
 
-You can save any successful agent session as a workflow:
+!!! info "Detached Execution"
+    Background agents run independently of your main session. You can even close Null Terminal and the tasks will continue to run (if configured as a persistent daemon).
 
-```bash
-/workflow save "Refactor Component"
-```
+---
 
-Null Terminal will attempt to identify variables (like file paths) and parameterize them for future use.
+## Multi-Agent Orchestration (`/orchestrate`)
 
-## Background Agents
+Complex projects often require different skill sets. Orchestration allows you to deploy a **Coordinator Agent** that manages specialized sub-agents.
 
-For long-running tasks, you can spawn agents in the background.
+### Specialized Roles
 
-### Starting a Background Task
+The Coordinator delegates tasks to agents with specific profiles:
 
-```bash
-/bg Analyze the entire codebase for security vulnerabilities
-```
+*   **Planner**: Breaks down the high-level goal into actionable subtasks.
+*   **Coder**: Implements features and writes code.
+*   **Reviewer**: Analyzes code quality and suggests improvements.
+*   **Debugger**: Investigates and fixes failing tests or identified bugs.
+*   **Tester**: Generates and executes test suites to ensure correctness.
 
-This creates a detached agent process. You can continue using the terminal while it works.
+### Usage
 
-### Managing Tasks
-
--   `/bg list`: View all running background tasks.
--   `/bg status <id>`: Check the progress of a specific task.
--   `/bg logs <id>`: View the execution logs.
--   `/bg cancel <id>`: Stop a task.
-
-## Multi-Agent Orchestration
-
-Null Terminal supports specialized agents working together.
-
-### Roles
-
--   **Planner**: Breaks down complex tasks.
--   **Coder**: Writes and modifies code.
--   **Reviewer**: Checks code for quality and bugs.
--   **Tester**: Writes and runs tests.
-
-### Starting an Orchestrated Task
+To start an orchestrated task, use the `/orchestrate` command followed by your goal:
 
 ```bash
-/orchestrate Implement a new user registration flow
+/orchestrate "Build a full-stack Todo app with FastAPI and React"
 ```
 
-A **Coordinator Agent** will analyze your request and assign subtasks to the appropriate specialized agents. You'll see a live view of their collaboration.
+The Coordinator will:
+1.  **Analyze** the request and create a multi-step plan.
+2.  **Assign** subtasks to specialized agents (e.g., Coder for implementation, Tester for validation).
+3.  **Synthesize** the results into a final response.
+
+---
 
 ## Configuration
 
-Customize agent behavior in `~/.null/config.json`:
+You can tune the behavior of workflows and agents in your `~/.null/config.json`:
 
 ```json
 {
-  "background_agents": {
-    "enabled": true,
-    "max_concurrent": 3
+  "ai": {
+    "agent_max_iterations": 20,
+    "agent_approval_mode": "per_tool",
+    "background_agents": {
+      "max_concurrent": 5
+    }
   },
   "orchestration": {
-    "enabled": true,
     "parallel_execution": true
   }
 }
 ```
+
+!!! warning "Token Usage"
+    Multi-agent orchestration and background tasks can consume a significant number of tokens. Keep an eye on the cost tracker in the status bar.

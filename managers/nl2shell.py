@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import shutil
 from dataclasses import dataclass, field
@@ -121,7 +122,7 @@ class NL2Shell:
             "sed",
         ]
 
-    def get_context(self) -> ShellContext:
+    async def get_context(self) -> ShellContext:
         context = ShellContext()
 
         try:
@@ -137,16 +138,19 @@ class NL2Shell:
             context.os_info = "unknown"
 
         try:
-            import subprocess
-
-            result = subprocess.run(
-                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-                capture_output=True,
-                text=True,
-                timeout=2,
+            proc = await asyncio.create_subprocess_exec(
+                "git",
+                "rev-parse",
+                "--abbrev-ref",
+                "HEAD",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
-            if result.returncode == 0:
-                context.git_branch = result.stdout.strip()
+            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=2)
+            if proc.returncode == 0:
+                context.git_branch = stdout.decode().strip()
+        except (FileNotFoundError, asyncio.TimeoutError):
+            pass
         except Exception:
             pass
 
@@ -161,7 +165,7 @@ class NL2Shell:
         natural_language: str,
         provider: LLMProvider,
     ) -> CommandSuggestion:
-        context = self.get_context()
+        context = await self.get_context()
 
         quick_match = self._try_pattern_match(natural_language.lower())
         if quick_match:

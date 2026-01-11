@@ -1,248 +1,121 @@
-# Tools & Agent Mode
+# Tools & Autonomous Agents
 
-Null Terminal supports AI tool use for interactive task execution.
+Null Terminal empowers AI models with the ability to interact directly with your system through **Tools**. Whether you're in a simple chat or running a complex autonomous agent, tools bridge the gap between conversation and execution.
 
-## Built-in Tools
+---
 
-### run_command
-Execute shell commands.
+## 🛠️ Built-in Tools
 
-```
-Tool: run_command
-Arguments: {"command": "ls -la"}
-Approval: Required
-```
+Null Terminal comes pre-equipped with a core set of tools for system interaction.
 
-- 60-second timeout
-- Returns stdout/stderr
-- Captures exit code
+| Tool | Purpose | Approval | Description |
+|:---|:---|:---:|:---|
+| `run_command` | Shell Execution | **Required** | Executes any shell command via PTY. Returns stdout/stderr. |
+| `read_file` | Read Content | Auto | Reads file contents with automatic truncation for large files. |
+| `write_file` | Write Content | **Required** | Creates or overwrites files. Automatically builds parent directories. |
+| `list_directory`| File Discovery | Auto | Lists directory contents, including file types and hidden files. |
 
-### read_file
-Read file contents.
+!!! warning "Security Risk"
+    Tools like `run_command` and `write_file` can modify or delete data. Always review the tool arguments before granting approval.
 
-```
-Tool: read_file
-Arguments: {"path": "/etc/hosts", "max_lines": 100}
-Approval: Not required
-```
+---
 
-- Auto-truncates files over 50KB
-- Optional `max_lines` parameter
+## 🔌 MCP Integration
 
-### write_file
-Write or create files.
+Beyond built-in tools, Null Terminal supports the **Model Context Protocol (MCP)**, allowing you to plug in hundreds of external tools.
 
-```
-Tool: write_file
-Arguments: {"path": "script.py", "content": "print('hello')"}
-Approval: Required
-```
+Common MCP capabilities include:
+- **Web Research**: via Brave Search or Google Search.
+- **Database Access**: Query SQL or NoSQL databases.
+- **API Interaction**: Fetch data from GitHub, Slack, or Linear.
+- **Enhanced Filesystem**: Advanced search and grep capabilities.
 
-- Creates parent directories automatically
-- Overwrites existing files
+For details on setting up and managing these, see the [MCP Servers Guide](mcp.md).
 
-### list_directory
-List directory contents.
+---
 
-```
-Tool: list_directory
-Arguments: {"path": ".", "show_hidden": true}
-Approval: Not required
-```
+## 🔄 Execution Workflow
 
-- Optional `show_hidden` parameter
-- Returns file names and types
+### 1. Request & Approval
+When the AI decides to use a tool, it generates a "Tool Call."
 
-## MCP Tools
+- **Safe Tools**: (e.g., `read_file`) execute automatically to maintain flow.
+- **Sensitive Tools**: (e.g., `run_command`) trigger an **Approval Dialog**. You must manually click **Approve** or **Deny**.
 
-Additional tools from MCP servers. See [MCP Servers](mcp.md).
+### 2. Real-time Streaming
+For long-running processes (like `npm install` or complex builds), output is streamed directly into the block.
 
-Common MCP tools:
-- **brave_search**: Web search
-- **read_file** (MCP): Enhanced file reading
-- **query** (database): SQL queries
-- **fetch**: HTTP requests
+- **Stop Button [■]**: Sends a `SIGTERM` to the process immediately.
+- **Auto-scroll**: The UI tracks the latest output automatically.
+- **Duration**: Real-time timer shows exactly how long the tool has been running.
 
-## Tool Execution
+---
 
-### Streaming Results
-Tool output is streamed in real-time for long-running commands. You don't have to wait for completion to see what's happening.
+## ⚡ Interaction Modes
 
-```
-┌─────────────────────────────────────────────────────────┐
-│ 🔧 run_command: npm install                    [▼] [■]  │
-├─────────────────────────────────────────────────────────┤
-│ ⏳ Running... (12s)                                     │
-│ ─────────────────────────────────────────────────────── │
-│ npm WARN deprecated lodash@4.17.20                      │
-│ npm WARN deprecated request@2.88.2                      │
-│ added 1247 packages in 10s                              │
-│ █████████████████████░░░░░ 85%                          │
-└─────────────────────────────────────────────────────────┘
-```
+Null Terminal operates in two distinct modes for tool execution. Use the `/agent` command or the status bar toggle to switch.
 
-- **Stop Button [■]**: Cancel execution immediately (sends SIGTERM).
-- **Auto-scroll**: The view follows new output automatically.
+=== "Chat Mode (Default)"
 
-### Tool Approval
+    *The standard experience for targeted assistance.*
 
-To ensure safety, sensitive tools require approval before execution.
+    - **One-at-a-time**: AI suggests a tool, you approve, it executes, and the AI responds to the result.
+    - **Controlled**: Best for sensitive operations where you want to oversee every step.
+    - **Display**: Tool calls appear as collapsible accordions within the chat flow.
 
-#### Approval Required
-- `run_command` - Shell execution
-- `write_file` - File modification
-- Most MCP tools that modify state
+    **Example:**
+    > "What files are in the current directory?"
+    >
+    > AI: "Let me check the directory contents."
+    > [Tool: list_directory]
+    >
+    > "The current directory contains main.py, README.md..."
 
-#### No Approval Required
-- `read_file` - File reading
-- `list_directory` - Directory listing
-- Safe/Read-only MCP tools
+=== "Agent Mode (Autonomous)"
 
-#### Approval Dialog
-When a tool requires approval:
-1. A dialog appears showing tool name and arguments.
-2. Review the operation carefully.
-3. **Approve** to execute.
-4. **Deny** to cancel the tool call.
+    *Multi-step task execution with minimal intervention.*
 
-#### Configuration
-You can customize approval settings in `config.json`:
+    - **Chained Execution**: The AI plans a sequence of actions and executes them in an "Iteration Loop."
+    - **Self-Correcting**: If a tool fails (e.g., a command returns an error), the AI analyzes the output and tries a different approach.
+    - **Display**: Shows a specialized "Iteration Block" containing:
+        1. **Thinking**: The AI's internal reasoning for this step.
+        2. **Tool Call**: The specific command being run.
+        3. **Result**: The immediate output of the tool.
+
+    !!! tip "Iteration Limit"
+        Agent Mode is capped at **10 iterations** per task by default to prevent infinite loops and runaway costs.
+
+---
+
+## ⚙️ Configuration
+
+You can customize tool behavior in your `config.json` (located in `~/.null/`):
 
 ```json
 {
   "tools": {
     "require_approval": ["run_command", "write_file", "mcp_*"],
-    "auto_approve_safe": true
+    "auto_approve_safe": true,
+    "agent_max_iterations": 10,
+    "timeout_seconds": 60
   }
 }
 ```
 
-## Chat Mode (Default)
+---
 
-In regular chat mode:
-- AI can suggest tool calls
-- Each tool requires approval
-- Single tool execution per response
-- Results shown in collapsible accordion
+## 💡 Best Practices
 
-### Example
-```
-You: What files are in the current directory?
+### For Chat Mode
+- **Be Specific**: "Read the first 50 lines of main.py" is better than "Look at the code."
+- **Chain Manually**: Use the output of one tool to inform your next prompt.
 
-AI: Let me check the directory contents.
-    [Tool: list_directory - Click to expand]
-
-    The current directory contains:
-    - main.py
-    - README.md
-    - requirements.txt
-```
-
-## Agent Mode
-
-Enable autonomous multi-step task execution.
-
-### Enabling Agent Mode
-```bash
-/agent
-```
-
-Or via status bar toggle.
-
-### How It Works
-1. You provide a task
-2. AI plans the approach
-3. AI executes tools automatically
-4. Results feed into next iteration
-5. Continues until task complete (max 10 iterations)
-
-### Iteration Display
-Each iteration shows:
-- Thinking process (if enabled)
-- Tool calls with arguments
-- Tool results
-- Response fragment
-
-### Example
-```
-You: Create a Python script that fetches weather data and save it
-
-Agent Iteration 1/10:
-  Thinking: I'll create a weather fetching script...
-  [Tool: write_file] weather.py
-  Result: File created
-
-Agent Iteration 2/10:
-  Thinking: Now I'll test if it runs...
-  [Tool: run_command] python weather.py
-  Result: Success - fetched weather for NYC
-
-Final Response:
-  I've created weather.py with the following features...
-```
-
-### Safety Features
-- Maximum 10 iterations per query
-- Tool approval still available (configurable)
-- Stop button to cancel at any point
-- Context preserved between iterations
-
-### Best Practices
-
-**Good for Agent Mode:**
-- Multi-step tasks
-- File manipulation workflows
-- Research and compilation
-- Automated testing
-
-**Better for Chat Mode:**
-- Simple questions
-- Single operations
-- Learning/exploration
-- Sensitive operations
-
-## Tool Results
-
-### Viewing Results
-- Click tool accordion to expand
-- Shows arguments and output
-- Duration displayed
-- Status indicator (success/error)
-
-### In Blocks
-Tool calls are displayed in:
-- **Chat mode**: Collapsible accordion
-- **Agent mode**: Per-iteration display
-
-## Code Execution
-
-AI responses may include code blocks. You can:
-
-1. **Run**: Execute the code directly
-2. **Save**: Save to a file
-3. **Copy**: Copy to clipboard
-
-Supported languages:
-- Python
-- Bash/Shell
-- JavaScript/Node
-- And more
-
-## Tips
-
-### Effective Tool Use
-- Be specific about what you want
-- Provide file paths when known
-- Mention constraints upfront
-
-### Agent Mode Tips
-- Start with clear objectives
-- Break complex tasks into steps
-- Review intermediate results
-- Use `/agent` to toggle off if needed
+### For Agent Mode
+- **Clear Objectives**: Start with a well-defined goal. "Fix the bug in tests/test_api.py" is better than "Fix the app."
+- **Monitor Progress**: Watch the "Thinking" blocks to ensure the agent isn't heading down a rabbit hole.
+- **Stop Early**: If you see the agent making a mistake, use the **Stop** button immediately rather than waiting for it to finish.
 
 ### Troubleshooting
-- Check tool output in accordion
-- Review error messages
-- Verify file permissions
-- Ensure commands are available in PATH
+- **PATH Issues**: Ensure any commands you want the AI to run are in your system `$PATH`.
+- **Permissions**: Null Terminal runs with your user permissions. It cannot execute `sudo` without manual password entry in the PTY.
+- **Context Overload**: If a tool returns massive output, the AI might lose track of the original goal. Try to limit `read_file` or `run_command` output when possible.

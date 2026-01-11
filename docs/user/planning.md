@@ -1,79 +1,141 @@
 # Planning Mode
 
-Null Terminal includes a powerful Planning Mode that allows you to create, review, and execute detailed roadmaps for your AI tasks. This ensures you have control over the AI's approach before any code is written.
+Planning Mode allows you to orchestrate complex AI tasks by creating a structured roadmap before execution. It provides a safety layer where you can review, modify, and approve each step the AI intends to take.
 
 ## Overview
 
-Planning Mode breaks down complex objectives into a series of actionable steps. You can review the plan, edit specific steps, and execute them sequentially or all at once.
+When you initiate Planning Mode, the AI analyzes your objective and breaks it down into a series of actionable steps. This "Look Before You Leap" approach ensures that you maintain full control over the AI's actions, especially when dealing with file modifications or system commands.
 
-## Usage
+---
 
-To start planning mode, use the `/plan` command followed by your goal:
+## Getting Started
 
+To create a new plan, use the `/plan` command followed by your goal.
+
+### Example
 ```bash
 /plan Refactor the authentication module to use JWTs
 ```
 
-The AI will analyze your request and generate a structured plan.
+The AI will generate a plan consisting of multiple steps, which will be displayed in an interactive block.
 
-### Plan Interface
+---
 
-The plan is displayed as an interactive block in your terminal:
+## Interactive Interface
 
-```
+The Plan Interface is a specialized block that allows you to manage the lifecycle of your task.
+
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │ 📋 Plan: Refactor authentication module              [Edit] │
 ├─────────────────────────────────────────────────────────────┤
-│ ☑ 1. Read current auth implementation                       │
-│      └─ read_file: src/auth/handler.py                      │
-│ ☐ 2. Identify security vulnerabilities          [Skip] [✓]  │
-│      └─ Analyze for common auth pitfalls                    │
-│ ☐ 3. Create new JWT-based auth module           [Skip] [✓]  │
-│      └─ write_file: src/auth/jwt_handler.py                 │
-│ ☐ 4. Update tests                               [Skip] [✓]  │
-│      └─ Modify existing test cases                          │
+│ ◉ 1. [a1b2c3d4] [tool] Read current auth implementation      │
+│      Tool: read_file(path="src/auth/handler.py")            │
+│ ○ 2. [e5f6g7h8] [prompt] Identify security vulnerabilities   │
+│ ○ 3. [i9j0k1l2] [tool] Create new JWT auth module            │
+│      Tool: write_file(path="src/auth/jwt_handler.py", ...)  │
+│ ○ 4. [m3n4o5p6] [checkpoint] Review implementation           │
 │ ─────────────────────────────────────────────────────────── │
 │                    [Approve All] [Execute] [Cancel]          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Interacting with Plans
+### Step Status Indicators
 
-- **Approve All**: Accepts the entire plan and begins execution.
-- **Execute**: Starts executing the approved steps.
-- **Edit**: Allows you to modify the plan's goal or steps.
-- **Skip**: Skips a specific step.
-- **✓ (Check)**: Manually marks a step as complete.
+| Icon | Status | Description |
+| :--- | :--- | :--- |
+| `○` | **Pending** | Step is waiting for approval. |
+| `◉` | **Approved** | Step is ready to be executed. |
+| `▶` | **Executing** | Step is currently running. |
+| `✓` | **Completed** | Step finished successfully. |
+| `✗` | **Failed** | Step encountered an error. |
+| `⊘` | **Skipped** | Step was manually skipped. |
 
-## Commands
+---
 
-| Command | Description |
-|---------|-------------|
-| `/plan <goal>` | Generate a plan for the goal |
-| `/plan show` | Show the current plan |
-| `/plan approve` | Approve all pending steps |
-| `/plan execute` | Start executing approved steps |
-| `/plan save <name>` | Save the current plan as a workflow template |
-| `/plan load <name>` | Load a saved plan |
+## Command Reference
+
+Planning Mode supports several subcommands for fine-grained control.
+
+=== "/plan <goal>"
+    Generates a new plan for the specified goal.
+    ```bash
+    /plan "Implement a new feature in the dashboard"
+    ```
+
+=== "/plan status"
+    Shows the details and progress of the currently active plan.
+
+=== "/plan approve"
+    Approves steps for execution.
+    ```bash
+    /plan approve all       # Approve all pending steps
+    /plan approve a1b2c3d4  # Approve a specific step by ID
+    ```
+
+=== "/plan skip"
+    Skips a specific step.
+    ```bash
+    /plan skip e5f6g7h8
+    ```
+
+=== "/plan execute"
+    Starts or continues the execution of all approved steps.
+
+=== "/plan cancel"
+    Aborts the active plan and clears it from the current session.
+
+=== "/plan list"
+    Lists all plans created in the current session.
+
+---
+
+## Step Types
+
+Plans consist of three primary types of steps:
+
+| Type | Description |
+| :--- | :--- |
+| `prompt` | The AI performs reasoning, analysis, or code generation without side effects. |
+| `tool` | The AI executes a specific tool (e.g., `read_file`, `write_file`, `run_command`). |
+| `checkpoint` | Execution pauses automatically, allowing you to review the state before proceeding. |
+
+!!! info "Tool Approvals"
+    Even if a step is approved in the plan, Null Terminal may still prompt for confirmation before executing "dangerous" tools like `write_file` or `run_command`, depending on your [Security Settings](configuration.md#security).
+
+---
 
 ## Configuration
 
-Planning mode behavior can be customized in your `~/.null/config.json`:
+You can customize the planning behavior in your `config.json`.
 
-```json
+```json title="~/.null/config.json"
 {
   "planning": {
     "enabled": true,
-    "auto_approve_read_only": true,
     "max_steps": 20,
     "require_approval": true,
-    "save_plans": true
+    "auto_approve_read_only": true
   }
 }
 ```
 
+| Setting | Default | Description |
+| :--- | :--- | :--- |
+| `enabled` | `true` | Globally enable or disable planning mode. |
+| `max_steps` | `20` | Maximum number of steps the AI can generate for a single plan. |
+| `require_approval` | `true` | If true, steps must be approved before they can be executed. |
+| `auto_approve_read_only`| `true` | Automatically approve `read_file` and other non-destructive tools. |
+
+---
+
 ## Best Practices
 
-1.  **Be Specific**: The more specific your goal, the better the generated plan.
-2.  **Review Critical Steps**: Pay close attention to steps involving file writes or deletions.
-3.  **Iterate**: Use the edit functionality to refine the plan if the AI misses something.
+!!! tip "Be Specific"
+    The quality of the generated plan depends heavily on the specificity of your goal. Instead of "Fix the bug," try "Fix the race condition in the message queue handler."
+
+!!! warning "Review Tool Arguments"
+    Always check the arguments of `tool` steps (especially `run_command`) before approving them. You can see the full tool call in the plan status.
+
+!!! info "Iterative Planning"
+    If the generated plan isn't quite right, you can `/plan cancel` and try again with more context or a more refined goal.

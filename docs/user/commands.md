@@ -1,159 +1,109 @@
-# Slash Commands Reference
+# Command Reference
 
-All commands are prefixed with `/` and executed from the input prompt.
+Null Terminal uses **Slash Commands** (`/command`) to control the application, manage AI settings, and execute specialized tasks.
 
-## Core Commands
+!!! tip "Tip"
+    Press `Ctrl+P` to open the **Command Palette** for a searchable list of all commands.
 
-| Command | Description |
-|---------|-------------|
-| `/help` | Show help screen |
-| `/status` | Display session status (provider, model, tokens, cost) |
-| `/clear` | Clear history and context |
-| `/quit` or `/exit` | Exit the application |
-| `/git` | Show git status |
-| `/reload` | Reload configuration and themes |
+---
 
-## AI Commands
+## Command Categories
 
-| Command | Description |
-|---------|-------------|
-| `/ai` | Toggle AI mode on/off |
-| `/chat` | Toggle AI mode (alias) |
-| `/agent` | Toggle agent mode (autonomous execution) |
-| `/model` | Open model selection screen |
-| `/model <provider> <model>` | Set model directly (e.g., `/model ollama llama3.2`) |
-| `/provider` | Open provider configuration |
-| `/provider <name>` | Switch to specific provider |
-| `/providers` | Open providers management screen |
-| `/compact` | Summarize conversation to reduce tokens |
-| `/context` | Inspect current AI context messages |
+=== "Essential"
 
-## Planning & Tasks
+    Core application controls and session management.
 
-| Command | Description |
-|---------|-------------|
-| `/plan <goal>` | Generate a plan for the goal |
-| `/plan show` | Show current plan |
-| `/plan approve` | Approve all pending steps |
-| `/plan execute` | Start executing approved steps |
-| `/plan save <name>` | Save plan as workflow template |
-| `/plan load <name>` | Load saved plan |
-| `/todo` | Open task manager |
-| `/todo add <task>` | Add a new task |
-| `/todo list` | List tasks in chat |
-| `/todo done <id>` | Mark task as done |
-| `/todo del <id>` | Delete task |
+    | Command | Description | Example |
+    |---------|-------------|---------|
+    | `/help` | Open the keyboard shortcuts and help screen. | `/help` |
+    | `/status` | Show current session tokens, cost, and provider. | `/status` |
+    | `/clear` | Clear the terminal history and reset context. | `/clear` |
+    | `/quit` | Exit the application. | `/quit` |
+    | `/reload` | Reload configuration, themes, and prompts. | `/reload` |
+    | `/export` | Export the current session to Markdown. | `/export session-1.md` |
+    | `/session` | Manage saved sessions (save/load/list). | `/session save debug-log` |
 
-## Git Operations
+=== "AI & Agents"
 
-| Command | Description |
-|---------|-------------|
-| `/diff [file]` | Show diff for file or all changes |
-| `/commit [message]` | Commit staged changes |
-| `/undo` | Revert last AI commit |
-| `/git log` | Show recent commits |
-| `/git stash` | Stash changes |
-| `/git checkout <file>` | Discard changes |
+    Control the intelligence engine.
 
-## Workflows & Agents
+    | Command | Description | Example |
+    |---------|-------------|---------|
+    | `/ai` | Toggle between CLI and AI Chat mode. | `/ai` |
+    | `/agent` | Toggle **Agent Mode** for autonomous tasks. | `/agent` |
+    | `/model` | Switch AI models (e.g., GPT-4o to Claude 3.5). | `/model anthropic claude-3-5-sonnet-20240620` |
+    | `/provider` | Switch AI providers (e.g., Ollama to OpenAI). | `/provider ollama` |
+    | `/prompts` | Manage system prompts and personas. | `/prompts list` |
+    | `/plan` | Create a task plan before execution. | `/plan Refactor auth module` |
+    | `/bg` | Run an agent task in the background. | `/bg Analyze logs` |
+    | `/orchestrate`| Start a multi-agent workflow. | `/orchestrate Build a landing page` |
 
-| Command | Description |
-|---------|-------------|
-| `/workflow` | Browse workflows |
-| `/workflow run <name>` | Run a workflow |
-| `/workflow save [name]` | Save session as workflow |
-| `/bg <goal>` | Start background task |
-| `/bg list` | List background tasks |
-| `/bg status <id>` | Show task status |
-| `/bg logs <id>` | Show task logs |
-| `/bg cancel <id>` | Cancel running task |
-| `/orchestrate <goal>` | Start multi-agent task |
-| `/agents` | List agent profiles |
+=== "Tools & Git"
 
-## Prompt/Persona Commands
+    Integrations and developer tools.
 
-| Command | Description |
-|---------|-------------|
-| `/prompts` | Open prompt editor |
-| `/prompts list` | List available prompts |
-| `/prompts show <key>` | Show prompt content |
-| `/prompts dir` | Show prompts directory path |
-| `/prompts reload` | Reload prompts from disk |
+    | Command | Description | Example |
+    |---------|-------------|---------|
+    | `/mcp` | Manage MCP servers (tools). | `/mcp catalog` |
+    | `/git` | Show git status summary. | `/git` |
+    | `/diff` | Show diff for a file. | `/diff src/main.py` |
+    | `/commit` | Auto-generate commit message and commit. | `/commit` |
+    | `/todo` | Open the task dashboard. | `/todo` |
+    | `/ssh` | Connect to a saved SSH host. | `/ssh prod-server` |
+    | `/map` | Visualize project architecture. | `/map src/` |
 
-## Session Commands
+=== "Settings"
 
-| Command | Description |
-|---------|-------------|
-| `/export` | Export to markdown (default) |
-| `/export md` | Export to markdown |
-| `/export json` | Export to JSON |
-| `/session save [name]` | Save session with optional name |
-| `/session load [name]` | Load a saved session |
-| `/session list` | List saved sessions |
-| `/session new` | Start new session |
+    Configuration and customization.
 
-## Collaboration
-
-| Command | Description |
-|---------|-------------|
-| `/share` | Share current session |
-| `/share team` | Share to team workspace |
-| `/import <url>` | Import shared session |
-
-## MCP Commands
-
-| Command | Description |
-|---------|-------------|
-| `/mcp` or `/mcp list` | List MCP servers and status |
-| `/mcp tools` | List available MCP tools |
-| `/mcp add` | Add new MCP server |
-| `/mcp edit <name>` | Edit MCP server config |
-| `/mcp remove <name>` | Remove MCP server |
-| `/mcp enable <name>` | Enable MCP server |
-| `/mcp disable <name>` | Disable MCP server |
-| `/mcp reconnect [name]` | Reconnect to server(s) |
-| `/tools` | Browse available MCP tools |
-
-## Configuration Commands
-
-| Command | Description |
-|---------|-------------|
-| `/config` or `/settings` | Open settings screen |
-| `/theme` | Open theme selector |
-| `/theme <name>` | Set theme directly |
-
-## SSH Commands
-
-| Command | Description |
-|---------|-------------|
-| `/ssh <alias>` | Connect to saved SSH host |
-| `/ssh-add [alias host user port key]` | Add SSH configuration |
-| `/ssh-list` | List saved SSH hosts |
-| `/ssh-del <alias>` | Delete SSH host |
-
-## Advanced
-
-| Command | Description |
-|---------|-------------|
-| `/map` | Visualize project architecture |
-| `/cmd <description>` | Translate natural language to shell command |
-| `/explain <command>` | Explain a shell command |
-| `/fix` | Auto-correct the last error |
-| `/watch` | Monitor output for errors and auto-fix |
+    | Command | Description | Example |
+    |---------|-------------|---------|
+    | `/settings` | Open the full configuration UI. | `/settings` |
+    | `/theme` | Switch color theme. | `/theme dracula` |
+    | `/mcp edit` | Edit MCP server config. | `/mcp edit github` |
 
 ---
 
 ## Global Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+Space` | Toggle between AI and CLI modes |
-| `Ctrl+P` | Open command palette |
-| `Ctrl+\` | Toggle file sidebar |
-| `Ctrl+R` | History search |
-| `Ctrl+F` | Find in blocks |
-| `Ctrl+L` | Clear screen/history |
-| `F1` | Open Help |
-| `F2` | Select Model |
-| `F3` | Open Settings |
-| `F4` | Manage Providers |
+Shortcuts allow for rapid navigation without typing commands.
+
+| Key | Action | Context |
+|-----|--------|---------|
+| `Ctrl+Space` | **Toggle Mode** (CLI ↔ AI) | Global |
+| `Ctrl+P` | **Command Palette** | Global |
+| `Ctrl+\` | **Toggle Sidebar** (Files) | Global |
+| `Ctrl+R` | **History Search** | Input |
+| `Ctrl+L` | **Clear Screen** | Global |
+| `F1` | **Help Screen** | Global |
+| `F2` | **Select Model** | Global |
+| `F3` | **Settings** | Global |
+| `F4` | **Providers** | Global |
+| `Esc` | **Cancel / Close** | Global |
+
+---
+
+## Common Scenarios
+
+### 1. Switching to a Local Model
+Protect privacy by switching to a local LLM.
+```bash
+/provider ollama
+/model llama3.2
+```
+
+### 2. Autonomous Refactoring
+Let the agent plan and execute a refactor.
+```bash
+/agent
+/plan Refactor user.py to use Pydantic v2
+# (Review plan in UI)
+/plan execute
+```
+
+### 3. Background Research
+Research a topic while coding.
+```bash
+/bg Research the top 3 Python libraries for PDF generation and save summary to docs/research.md
+# Continue working...
+```

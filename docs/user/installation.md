@@ -1,84 +1,125 @@
-# Installation Guide
+# Installation
 
-Null Terminal runs on Linux, macOS, and Windows.
+Null Terminal is cross-platform and can be installed on Linux, macOS, and Windows. Choose the method that best fits your workflow.
 
-## 🪟 Windows Installation
+!!! info "System Requirements"
+    Null Terminal requires **Python 3.10** or higher. We recommend using the latest stable Python version for the best experience.
 
-### 1. EXE Installer (Recommended)
-The easiest way to install Null Terminal on Windows is using the official installer.
+## Quick Start
 
-1.  Go to the [**Releases**](https://github.com/starhound/null/releases) page.
-2.  Download the latest `NullTerminal-Setup.exe`.
-3.  Run the installer and follow the on-screen instructions.
-4.  Once installed, open a command prompt (cmd or PowerShell) and type:
-    ```powershell
-    null
-    ```
-
-### 2. Standalone Zip
-If you prefer a portable version:
-1. Download `NullTerminal-Windows.zip` from Releases.
-2. Extract it to a folder of your choice.
-3. Run `null.exe` directly from that folder.
-
-## 🐧 Linux & 🍎 macOS Installation
-
-### 1. Via pipx (Recommended)
-`pipx` installs Null Terminal in an isolated environment, preventing conflicts with other Python packages.
-
-**Prerequisites:** Python 3.10+
+The fastest way to get up and running is using `pipx`.
 
 ```bash
-# Install pipx if you haven't already
-python3 -m pip install --user pipx
-python3 -m pipx ensurepath
-
-# Install Null Terminal
 pipx install null-terminal
-
-# Run
 null
 ```
 
-### 2. From Source
-For developers or those who want the latest "bleeding edge" version.
+---
 
-```bash
-# Clone the repository
-git clone https://github.com/starhound/null.git
-cd null
+## Installation Methods
 
-# Install dependencies using uv (fast!)
-pip install uv
-uv sync
+=== "pipx (Recommended)"
 
-# Run from source
-uv run main.py
-```
+    [`pipx`](https://github.com/pypa/pipx) is the recommended tool for installing Python applications. It creates an isolated environment for each application, preventing dependency conflicts.
 
-## 🐳 Docker
+    1. **Install pipx** (if not already installed):
+       ```bash
+       python3 -m pip install --user pipx
+       python3 -m pipx ensurepath
+       ```
+    2. **Install Null Terminal**:
+       ```bash
+       pipx install null-terminal
+       ```
+    3. **Launch**:
+       Type `null` in your terminal.
 
-You can run Null Terminal directly from a Docker container.
+    !!! tip "Automatic Updates"
+        To update Null Terminal to the latest version, simply run:
+        ```bash
+        pipx upgrade null-terminal
+        ```
 
-```bash
-# Build the image
-docker build -t null-terminal .
+=== "Docker"
 
-# Run the container
-docker run -it --rm \
-  -v $(pwd)/config:/root/.null \
-  null-terminal
-```
-*Note: Persist data (config, keys, history) by mounting the `/root/.null` volume.*
+    Null Terminal is available as a Docker image, perfect for isolated environments or trying it out without local installation.
+
+    1. **Run the container**:
+       ```bash
+       docker run -it --rm \
+         -v ~/.null:/root/.null \
+         ghcr.io/starhound/null-terminal:latest
+       ```
+
+    !!! warning "Persistence"
+        Always mount the `~/.null` volume as shown above to persist your configuration, API keys, and session history. Without this, all data will be lost when the container exits.
+
+    2. **Custom Build** (Optional):
+       If you want to build the image locally:
+       ```bash
+       git clone https://github.com/starhound/null.git
+       cd null
+       docker build -t null-terminal .
+       docker run -it --rm -v ~/.null:/root/.null null-terminal
+       ```
+
+=== "Windows"
+
+    Windows users have several options, from native installers to standalone binaries.
+
+    #### EXE Installer
+    1. Download the latest `NullTerminal-Setup.exe` from the [Releases](https://github.com/starhound/null/releases) page.
+    2. Run the installer and follow the instructions.
+    3. Open PowerShell or Command Prompt and type `null`.
+
+    #### Portable Version
+    1. Download `NullTerminal-Windows.zip` from the Releases page.
+    2. Extract it to your preferred location.
+    3. Run `null.exe` directly.
+
+    !!! info "PATH Refresh"
+        If the `null` command is not recognized after installation, try restarting your terminal session to refresh the environment variables.
+
+=== "Source"
+
+    Installing from source is best for developers or those who want the latest features before they hit a stable release.
+
+    1. **Clone the repository**:
+       ```bash
+       git clone https://github.com/starhound/null.git
+       cd null
+       ```
+    2. **Install dependencies**:
+       We recommend using [`uv`](https://github.com/astral-sh/uv) for lightning-fast environment management.
+       ```bash
+       pip install uv
+       uv sync
+       ```
+    3. **Run**:
+       ```bash
+       uv run main.py
+       ```
+
+---
+
+## Post-Installation
+
+Once installed, follow these steps to complete your setup:
+
+1.  **Configure AI Providers**: Open the settings with `F3` or type `/settings`.
+2.  **Select a Model**: Use `F2` or type `/model` to choose your preferred AI model.
+3.  **Toggle AI Mode**: Press `Ctrl+Space` to switch between standard CLI and AI-assisted modes.
 
 ## Troubleshooting
 
 ### "Command not found: null"
-- **pipx:** Ensure `~/.local/bin` is in your PATH. Run `pipx ensurepath`.
-- **Windows:** Restart your terminal after installation to refresh the PATH.
+*   **Linux/macOS**: Ensure `~/.local/bin` is in your `$PATH`. If you used `pipx`, run `pipx ensurepath`.
+*   **Windows**: Restart your terminal or computer to ensure the PATH changes take effect.
 
-### Python Version Support
-Null Terminal requires Python 3.10 or higher.
-```bash
-python3 --version
-```
+### Terminal Compatibility
+Null Terminal works best in modern terminals that support:
+*   **TrueColor (24-bit)**: For accurate theme rendering.
+*   **Unicode/Emoji**: For icons and UI elements.
+*   **Mouse Interaction**: For scrolling and clicking UI components.
+
+Recommended terminals: **WezTerm**, **Kitty**, **Alacritty**, or **Windows Terminal**.

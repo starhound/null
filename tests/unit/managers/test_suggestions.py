@@ -547,80 +547,91 @@ class TestSuggestionEngine:
         engine.add_to_history("cd /tmp")
         assert len(engine.history_provider._history) == 2
 
-    def test_get_context_cwd(self):
+    @pytest.mark.asyncio
+    async def test_get_context_cwd(self):
         engine = SuggestionEngine()
-        ctx = engine.get_context()
+        ctx = await engine.get_context()
         assert ctx.cwd != ""
 
-    def test_get_context_directory_contents(self):
+    @pytest.mark.asyncio
+    async def test_get_context_directory_contents(self):
         engine = SuggestionEngine()
-        ctx = engine.get_context()
+        ctx = await engine.get_context()
         assert isinstance(ctx.directory_contents, list)
 
-    @patch("subprocess.run")
-    def test_get_context_git_branch(self, mock_run):
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="main\n",
-        )
-        engine = SuggestionEngine()
-        ctx = engine.get_context()
-        assert ctx.git_branch == "main"
+    @pytest.mark.asyncio
+    async def test_get_context_git_branch(self):
+        mock_proc = AsyncMock()
+        mock_proc.communicate = AsyncMock(return_value=(b"main\n", b""))
+        mock_proc.returncode = 0
 
-    @patch("subprocess.run")
-    def test_get_context_git_dirty(self, mock_run):
-        def side_effect(*args, **kwargs):
-            result = MagicMock()
-            if "rev-parse" in args[0]:
-                result.returncode = 0
-                result.stdout = "main\n"
-            elif "status" in args[0]:
-                result.returncode = 0
-                result.stdout = "M file.py\n"
-            return result
+        with patch("asyncio.create_subprocess_exec", return_value=mock_proc):
+            engine = SuggestionEngine()
+            ctx = await engine.get_context()
+            assert ctx.git_branch == "main"
 
-        mock_run.side_effect = side_effect
-        engine = SuggestionEngine()
-        ctx = engine.get_context()
-        assert ctx.git_dirty is True
+    @pytest.mark.asyncio
+    async def test_get_context_git_dirty(self):
+        call_count = [0]
 
-    @patch("subprocess.run")
-    def test_get_context_git_not_dirty(self, mock_run):
-        def side_effect(*args, **kwargs):
-            result = MagicMock()
-            if "rev-parse" in args[0]:
-                result.returncode = 0
-                result.stdout = "main\n"
-            elif "status" in args[0]:
-                result.returncode = 0
-                result.stdout = ""
-            return result
+        async def mock_communicate():
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return (b"main\n", b"")
+            else:
+                return (b"M file.py\n", b"")
 
-        mock_run.side_effect = side_effect
-        engine = SuggestionEngine()
-        ctx = engine.get_context()
-        assert ctx.git_dirty is False
+        mock_proc = AsyncMock()
+        mock_proc.communicate = mock_communicate
+        mock_proc.returncode = 0
 
-    @patch("subprocess.run")
-    def test_get_context_git_error(self, mock_run):
-        mock_run.side_effect = Exception("Git not found")
-        engine = SuggestionEngine()
-        ctx = engine.get_context()
-        assert ctx.git_branch == ""
-        assert ctx.git_dirty is False
+        with patch("asyncio.create_subprocess_exec", return_value=mock_proc):
+            engine = SuggestionEngine()
+            ctx = await engine.get_context()
+            assert ctx.git_dirty is True
 
+    @pytest.mark.asyncio
+    async def test_get_context_git_not_dirty(self):
+        call_count = [0]
+
+        async def mock_communicate():
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return (b"main\n", b"")
+            else:
+                return (b"", b"")
+
+        mock_proc = AsyncMock()
+        mock_proc.communicate = mock_communicate
+        mock_proc.returncode = 0
+
+        with patch("asyncio.create_subprocess_exec", return_value=mock_proc):
+            engine = SuggestionEngine()
+            ctx = await engine.get_context()
+            assert ctx.git_dirty is False
+
+    @pytest.mark.asyncio
+    async def test_get_context_git_error(self):
+        with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
+            engine = SuggestionEngine()
+            ctx = await engine.get_context()
+            assert ctx.git_branch == ""
+            assert ctx.git_dirty is False
+
+    @pytest.mark.asyncio
     @patch("os.getcwd")
-    def test_get_context_cwd_error(self, mock_getcwd):
+    async def test_get_context_cwd_error(self, mock_getcwd):
         mock_getcwd.side_effect = Exception("Permission denied")
         engine = SuggestionEngine()
-        ctx = engine.get_context()
+        ctx = await engine.get_context()
         assert ctx.cwd == ""
 
+    @pytest.mark.asyncio
     @patch("os.listdir")
-    def test_get_context_listdir_error(self, mock_listdir):
+    async def test_get_context_listdir_error(self, mock_listdir):
         mock_listdir.side_effect = Exception("Permission denied")
         engine = SuggestionEngine()
-        ctx = engine.get_context()
+        ctx = await engine.get_context()
         assert ctx.directory_contents == []
 
     @pytest.mark.asyncio
