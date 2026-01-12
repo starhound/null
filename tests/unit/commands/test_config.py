@@ -46,7 +46,7 @@ class TestCmdConfig:
             await config_commands.cmd_config([])
 
             mock_app.push_screen.assert_called_once()
-            args, kwargs = mock_app.push_screen.call_args
+            args, _kwargs = mock_app.push_screen.call_args
             assert args[0] is mock_screen
 
     @pytest.mark.asyncio
@@ -57,7 +57,7 @@ class TestCmdConfig:
                 with patch.object(config_commands, "notify"):
                     await config_commands.cmd_config([])
 
-                    args, kwargs = mock_app.push_screen.call_args
+                    args, _kwargs = mock_app.push_screen.call_args
                     callback = args[1]
 
                     result = MagicMock()
@@ -78,7 +78,7 @@ class TestCmdConfig:
             with patch.object(config_commands, "notify"):
                 await config_commands.cmd_config([])
 
-                args, kwargs = mock_app.push_screen.call_args
+                args, _kwargs = mock_app.push_screen.call_args
                 callback = args[1]
 
                 result = MagicMock()
@@ -100,7 +100,7 @@ class TestCmdConfig:
                 with patch.object(config_commands, "notify"):
                     await config_commands.cmd_config([])
 
-                    args, kwargs = mock_app.push_screen.call_args
+                    args, _kwargs = mock_app.push_screen.call_args
                     callback = args[1]
 
                     result = MagicMock()
@@ -119,7 +119,7 @@ class TestCmdConfig:
         with patch("screens.ConfigScreen"):
             await config_commands.cmd_config([])
 
-            args, kwargs = mock_app.push_screen.call_args
+            args, _kwargs = mock_app.push_screen.call_args
             callback = args[1]
 
             result = MagicMock()
@@ -142,7 +142,7 @@ class TestCmdConfig:
             with patch.object(config_commands, "notify"):
                 await config_commands.cmd_config([])
 
-                args, kwargs = mock_app.push_screen.call_args
+                args, _kwargs = mock_app.push_screen.call_args
                 callback = args[1]
 
                 result = MagicMock()
@@ -162,7 +162,7 @@ class TestCmdConfig:
         with patch("screens.ConfigScreen"):
             await config_commands.cmd_config([])
 
-            args, kwargs = mock_app.push_screen.call_args
+            args, _kwargs = mock_app.push_screen.call_args
             callback = args[1]
 
             callback(None)
@@ -178,7 +178,7 @@ class TestCmdConfig:
         with patch("screens.ConfigScreen"):
             await config_commands.cmd_config([])
 
-            args, kwargs = mock_app.push_screen.call_args
+            args, _kwargs = mock_app.push_screen.call_args
             callback = args[1]
 
             result = MagicMock()

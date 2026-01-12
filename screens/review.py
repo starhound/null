@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, VerticalScroll
@@ -215,7 +217,7 @@ class FileChangeWidget(Static):
 
 
 class ReviewScreen(ModalScreen[bool]):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("escape", "cancel", "Cancel"),
         Binding("enter", "apply", "Apply Changes"),
         Binding("a", "accept_all", "Accept All"),

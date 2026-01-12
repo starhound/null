@@ -1,10 +1,10 @@
 from textual.app import ComposeResult
+from textual.containers import Vertical
 from textual.message import Message
 from textual.reactive import reactive
-from textual.widgets import Static, Button, ProgressBar
-from textual.containers import Vertical
+from textual.widgets import Button, ProgressBar, Static
 
-from managers.error_detector import DetectedError, CorrectionAttempt
+from managers.error_detector import CorrectionAttempt, DetectedError
 
 
 class CorrectionLoopStopped(Message):
@@ -18,30 +18,30 @@ class CorrectionLoopBlock(Static):
         padding: 1;
         margin: 1 0;
     }
-    
+
     .loop-header {
         text-style: bold;
         color: $warning;
     }
-    
+
     .error-info {
         margin: 1 0;
         padding: 0 1;
         border-left: solid $error;
     }
-    
+
     .attempt {
         margin: 0 0 1 2;
     }
-    
+
     .attempt-success {
         color: $success;
     }
-    
+
     .attempt-fail {
         color: $error;
     }
-    
+
     .attempt-progress {
         color: $warning;
     }

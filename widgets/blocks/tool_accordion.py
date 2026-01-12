@@ -12,7 +12,7 @@ from textual.reactive import reactive
 from textual.timer import Timer
 from textual.widgets import Button, Label, ProgressBar, Static
 
-from tools.streaming import ToolProgress, ToolStatus
+from tools.streaming import ToolProgress
 
 
 class ToolHeader(Static):

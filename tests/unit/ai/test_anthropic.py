@@ -1,12 +1,11 @@
 """Tests for ai/anthropic.py - AnthropicProvider implementation."""
 
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from ai.anthropic import AnthropicProvider
-from ai.base import Message, StreamChunk, TokenUsage
+from ai.base import Message
 
 
 class TestAnthropicProviderInit:

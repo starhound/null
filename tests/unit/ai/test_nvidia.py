@@ -183,7 +183,7 @@ class TestNVIDIAProviderListModels:
         with patch("ai.openai_compat.openai.AsyncOpenAI"):
             provider = NVIDIAProvider(api_key="nvapi-test")
 
-        all_models = NVIDIA_FREE_MODELS + ["extra/model"]
+        all_models = [*NVIDIA_FREE_MODELS, "extra/model"]
         provider.client.models.list = AsyncMock(
             return_value=type(
                 "ModelsResponse",

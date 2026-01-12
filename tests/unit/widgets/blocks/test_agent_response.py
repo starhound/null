@@ -1,7 +1,5 @@
 """Tests for widgets/blocks/agent_response.py - AgentResponseBlock."""
 
-import pytest
-
 from models import AgentIteration, BlockState, BlockType, ToolCallState
 from widgets.blocks.agent_response import AgentResponseBlock
 from widgets.blocks.base import BaseBlockWidget
@@ -311,7 +309,7 @@ class TestAgentResponseBlockWithPreexistingIterations:
             content_input="test",
             iterations=[iteration],
         )
-        widget = AgentResponseBlock(block)
+        AgentResponseBlock(block)
 
         assert len(block.iterations) == 1
 
@@ -324,7 +322,7 @@ class TestAgentResponseBlockWithPreexistingIterations:
             content_input="test",
             iterations=iterations,
         )
-        widget = AgentResponseBlock(block)
+        AgentResponseBlock(block)
 
         assert len(block.iterations) == 3
 
@@ -346,7 +344,7 @@ class TestAgentResponseBlockWithPreexistingIterations:
             content_input="test",
             iterations=[iteration],
         )
-        widget = AgentResponseBlock(block)
+        AgentResponseBlock(block)
 
         assert len(block.iterations[0].tool_calls) == 1
 

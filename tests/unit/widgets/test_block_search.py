@@ -2,7 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from textual.containers import Vertical
 from textual.widgets import Input, Label
 

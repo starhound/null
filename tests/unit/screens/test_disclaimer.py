@@ -1,9 +1,8 @@
 """Tests for the disclaimer screen."""
 
-import pytest
 from unittest.mock import MagicMock
 
-from screens.disclaimer import DisclaimerScreen, DISCLAIMER_TEXT
+from screens.disclaimer import DISCLAIMER_TEXT, DisclaimerScreen
 
 
 class TestDisclaimerScreen:

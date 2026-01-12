@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from managers.architecture import ArchitectureMap, ArchitectureMapper, Component
@@ -131,7 +129,7 @@ from dataclasses import dataclass
 """
         )
         mapper = ArchitectureMapper(tmp_path)
-        imports, exports = mapper._extract_python_info(py_file)
+        imports, _exports = mapper._extract_python_info(py_file)
         assert "typing" in imports
         assert "dataclasses" in imports
 

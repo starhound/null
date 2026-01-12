@@ -1,15 +1,16 @@
-import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
+
+import pytest
 
 from managers.orchestrator import (
-    AgentRole,
-    AgentProfile,
-    AgentMessage,
-    SubTask,
-    OrchestratedResult,
-    AgentOrchestrator,
     BUILTIN_PROFILES,
+    AgentMessage,
+    AgentOrchestrator,
+    AgentProfile,
+    AgentRole,
+    OrchestratedResult,
+    SubTask,
 )
 
 

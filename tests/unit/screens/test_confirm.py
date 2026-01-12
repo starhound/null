@@ -1,6 +1,5 @@
 """Tests for the confirmation dialog screen."""
 
-import pytest
 from unittest.mock import MagicMock
 
 from screens.confirm import ConfirmDialog

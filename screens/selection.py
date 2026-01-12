@@ -226,9 +226,9 @@ class ModelListScreen(ModalScreen):
             async for (
                 provider_name,
                 models,
-                error,
+                _error,
                 completed,
-                total,
+                _total,
             ) in manager.list_all_models_streaming():
                 self._completed_providers = completed
                 self._update_progress_text()
@@ -277,19 +277,26 @@ class ModelListScreen(ModalScreen):
         self._update_progress_text()
 
     def _update_collapsibles(self):
-        """Update the collapsible sections with models."""
+        """Update the collapsible sections with models (incremental)."""
         try:
             scroll = self.query_one("#model-scroll", VerticalScroll)
 
-            # Remove ALL children from scroll (including old collapsibles)
-            for child in list(scroll.children):
-                child.remove()
-
-            # Get sorted providers: active first, then alphabetically
             from config import Config
 
             active_provider = Config.get("ai.provider")
 
+            # Get existing provider IDs to avoid re-creating
+            existing_ids = {child.id for child in scroll.children if child.id}
+
+            # Only process providers that don't already have a collapsible
+            # (unless we're filtering by search, then rebuild is needed)
+            if self.search_query:
+                # When searching, do a full rebuild for accurate filtering
+                for child in list(scroll.children):
+                    child.remove()
+                existing_ids = set()
+
+            # Get sorted providers: active first, then alphabetically
             sorted_providers = sorted(
                 self._models_by_provider.keys(),
                 key=lambda p: (0 if p == active_provider else 1, p),
@@ -297,6 +304,12 @@ class ModelListScreen(ModalScreen):
 
             # Create collapsibles for each provider
             for provider in sorted_providers:
+                provider_id = f"provider-{provider}"
+
+                # Skip if already exists (incremental update)
+                if provider_id in existing_ids:
+                    continue
+
                 models = self._models_by_provider[provider]
                 if not models:
                     continue
@@ -337,7 +350,7 @@ class ModelListScreen(ModalScreen):
                     *model_widgets,
                     title=title,
                     collapsed=collapsed,
-                    id=f"provider-{provider}",
+                    id=provider_id,
                 )
                 scroll.mount(collapsible)
 

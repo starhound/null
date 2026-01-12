@@ -998,8 +998,9 @@ Be brief but preserve essential context. Output only the summary."""
 
     async def _profile_import(self, file_path: str):
         """Import a profile from YAML file."""
-        from managers.profiles import ProfileManager
         from pathlib import Path
+
+        from managers.profiles import ProfileManager
 
         try:
             yaml_file = Path(file_path).expanduser()
@@ -1045,7 +1046,7 @@ Be brief but preserve essential context. Output only the summary."""
 
     async def cmd_plan(self, args: list[str]):
         """Planning mode. Usage: /plan <goal> | /plan status | /plan approve [step_id|all] | /plan skip <step_id> | /plan cancel | /plan execute"""
-        from managers.planning import PlanManager, StepStatus
+        from managers.planning import PlanManager
 
         pm: PlanManager = getattr(self.app, "_plan_manager", None) or PlanManager()
         if not hasattr(self.app, "_plan_manager"):
@@ -1169,8 +1170,9 @@ Be brief but preserve essential context. Output only the summary."""
             self.notify("Could not cancel plan", severity="error")
 
     async def _plan_execute(self, pm):
-        from managers.planning import StepStatus, StepType
         import time
+
+        from managers.planning import StepType
 
         plan = pm.active_plan
         if not plan:
@@ -1271,7 +1273,7 @@ Be brief but preserve essential context. Output only the summary."""
 
     async def cmd_bg(self, args: list[str]):
         """Background agents. Usage: /bg <goal> | /bg list | /bg status <id> | /bg cancel <id> | /bg logs <id> | /bg clear"""
-        from managers.background import BackgroundAgentManager, TaskStatus
+        from managers.background import BackgroundAgentManager
 
         manager: BackgroundAgentManager = (
             getattr(self.app, "background_manager", None) or BackgroundAgentManager()
@@ -1331,8 +1333,6 @@ Be brief but preserve essential context. Output only the summary."""
         await self.show_output("/bg list", "\n".join(lines))
 
     async def _bg_status(self, manager, task_id: str):
-        from managers.background import TaskStatus
-
         task = manager.get_task(task_id)
         if not task:
             self.notify(f"Task not found: {task_id}", severity="error")
@@ -1387,7 +1387,7 @@ Be brief but preserve essential context. Output only the summary."""
 
     async def cmd_orchestrate(self, args: list[str]):
         """Multi-agent orchestration. Usage: /orchestrate <goal> | /orchestrate status | /orchestrate stop"""
-        from managers.orchestrator import AgentOrchestrator, AgentRole
+        from managers.orchestrator import AgentOrchestrator
 
         if not args:
             self.notify(
@@ -1434,7 +1434,7 @@ Be brief but preserve essential context. Output only the summary."""
         try:
             result = await orchestrator.execute(goal, self.app.ai_provider)
 
-            output = f"Orchestration Complete\n"
+            output = "Orchestration Complete\n"
             output += f"Success: {result.success}\n"
             output += f"Duration: {result.duration:.2f}s\n"
             output += f"Subtasks: {len(result.subtasks)}\n\n"

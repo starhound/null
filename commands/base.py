@@ -17,11 +17,10 @@ class CommandMixin:
         """Display system output in a block."""
         await self.app._show_system_output(title, content)
 
-    def notify(
-        self, message: str, severity: str = "information"
-    ):
+    def notify(self, message: str, severity: str = "information"):
         """Show a notification."""
         # Cast severity to proper type for App.notify
         from typing import Literal, cast
+
         sev = cast(Literal["information", "warning", "error"], severity)
         self.app.notify(message, severity=sev)

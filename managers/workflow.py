@@ -3,10 +3,6 @@
 from __future__ import annotations
 
 import logging
-import json
-
-logger = logging.getLogger(__name__)
-import re
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -15,6 +11,8 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowStepType(Enum):

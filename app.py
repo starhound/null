@@ -42,7 +42,7 @@ BlockWidget = create_block
 
 class NullApp(App):
     CSS_PATH = "styles/main.tcss"
-    LAYERS = ["base", "overlay"]
+    LAYERS: ClassVar[list[str]] = ["base", "overlay"]
 
     BINDINGS: ClassVar[list[BindingType]] = [
         ("escape", "cancel_operation", "Cancel"),
@@ -301,6 +301,18 @@ class NullApp(App):
     def action_toggle_ai_mode(self):
         """Toggle between CLI and AI mode."""
         self.query_one("#input", InputController).toggle_mode()
+
+    def action_toggle_agent_mode(self):
+        """Toggle agent mode on/off."""
+        current = Config.get("ai.agent_mode") or False
+        new_value = not current
+        Config.set("ai.agent_mode", new_value)
+        try:
+            status_bar = self.query_one("#status-bar", StatusBar)
+            status_bar.set_agent_mode(new_value)
+        except Exception:
+            pass
+        self.notify(f"Agent mode {'enabled' if new_value else 'disabled'}")
 
     def action_cancel_operation(self):
         """Cancel any running operation."""
@@ -588,11 +600,24 @@ class NullApp(App):
 
     def action_clear_history(self):
         """Clear history and context."""
+        self.blocks = []
+        self.current_cli_block = None
+        self.current_cli_widget = None
 
-        async def do_clear():
-            await self.command_handler.handle("/clear")
+        try:
+            history = self.query_one("#history")
+            history.remove_children()
+        except Exception:
+            pass
 
-        self.run_worker(do_clear())
+        try:
+            status_bar = self.query_one("#status-bar")
+            if hasattr(status_bar, "reset_token_usage"):
+                status_bar.reset_token_usage()
+        except Exception:
+            pass
+
+        self.notify("History cleared")
 
     # -------------------------------------------------------------------------
     # Event Handlers
@@ -619,26 +644,24 @@ class NullApp(App):
         except Exception:
             pass  # History search may not be mounted yet
 
-        # Focus input when clicking on empty areas (history viewport background)
         try:
             history_vp = self.query_one("#history", HistoryViewport)
             input_ctrl = self.query_one("#input", InputController)
 
-            # Check if click is in history viewport area
             if history_vp.region.contains(event.x, event.y):
-                # Check if we clicked on actual content or empty space
-                # by seeing if any block contains the click point
-                clicked_on_block = False
+                clicked_on_focusable = False
                 for block in history_vp.query(BaseBlockWidget):
                     if block.region.contains(event.x, event.y):
-                        clicked_on_block = True
+                        for focusable in block.query("Button, Input, TextArea"):
+                            if focusable.region.contains(event.x, event.y):
+                                clicked_on_focusable = True
+                                break
                         break
 
-                # If clicked on empty space, focus input
-                if not clicked_on_block:
+                if not clicked_on_focusable:
                     input_ctrl.focus()
         except Exception:
-            pass  # Widgets may not be mounted yet
+            pass
 
     async def on_input_controller_submitted(self, message: InputController.Submitted):
         """Handle input submission."""

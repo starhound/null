@@ -232,8 +232,9 @@ class AIProfile(CommandMixin):
 
     async def _profile_import(self, file_path: str):
         """Import a profile from YAML file."""
-        from managers.profiles import ProfileManager
         from pathlib import Path
+
+        from managers.profiles import ProfileManager
 
         try:
             yaml_file = Path(file_path).expanduser()

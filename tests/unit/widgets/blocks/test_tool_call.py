@@ -1,13 +1,12 @@
 """Tests for widgets/blocks/tool_call.py - ToolCallBlock widget."""
 
-import pytest
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from models import BlockState, BlockType
-from widgets.blocks.tool_call import ToolCallBlock
-from widgets.blocks.parts import BlockHeader, BlockMeta, BlockBody
 from widgets.blocks.base import BaseBlockWidget
+from widgets.blocks.parts import BlockBody, BlockHeader, BlockMeta
+from widgets.blocks.tool_call import ToolCallBlock
 
 
 class TestToolCallBlockInitialization:

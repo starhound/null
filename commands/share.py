@@ -461,13 +461,10 @@ class ShareCommands(CommandMixin):
         try:
             if format_type == "json":
                 content = formatter.to_json()
-                file_ext = "json"
             elif format_type == "markdown":
                 content = formatter.to_markdown()
-                file_ext = "md"
             elif format_type == "html":
                 content = formatter.to_html()
-                file_ext = "html"
             else:
                 self.notify(f"Unsupported format: {format_type}", severity="error")
                 return
@@ -485,14 +482,15 @@ class ShareCommands(CommandMixin):
                 self.notify(f"Error writing file: {e}", severity="error")
         else:
             try:
-                import subprocess
+                import asyncio
 
-                process = subprocess.Popen(
-                    ["xclip", "-selection", "clipboard"],
-                    stdin=subprocess.PIPE,
-                    text=True,
+                process = await asyncio.create_subprocess_exec(
+                    "xclip",
+                    "-selection",
+                    "clipboard",
+                    stdin=asyncio.subprocess.PIPE,
                 )
-                process.communicate(input=content)
+                await process.communicate(input=content.encode())
 
                 if process.returncode == 0:
                     block_count = len(self.app.blocks)

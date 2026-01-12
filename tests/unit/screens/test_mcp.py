@@ -1,6 +1,5 @@
 """Tests for the MCP server configuration screen."""
 
-import pytest
 from unittest.mock import MagicMock
 
 from screens.mcp import MCPServerConfigScreen

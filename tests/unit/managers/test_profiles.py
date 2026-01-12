@@ -1,7 +1,6 @@
-import pytest
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+
+import pytest
 
 from managers.profiles import AgentProfile, ProfileManager
 
@@ -243,7 +242,7 @@ source: local
 
     def test_import_invalid_yaml(self, manager):
         manager.initialize()
-        result = manager.import_profile("not: valid: yaml: {")
+        manager.import_profile("not: valid: yaml: {")
 
     def test_duplicate_profile(self, manager):
         manager.initialize()

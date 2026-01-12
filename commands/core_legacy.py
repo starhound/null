@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import NullApp
     from managers.git import GitManager
+    from managers.github import GitHubContextManager
 
 from .base import CommandMixin
 
@@ -278,7 +279,7 @@ class CoreCommands(CommandMixin):
         else:
             self.notify(f"Unknown git subcommand: {args[0]}", severity="error")
 
-    async def _git_status(self, git: "GitManager"):
+    async def _git_status(self, git: GitManager):
         branch = await git.get_branch()
         staged = await git.get_staged_files()
         unstaged = await git.get_unstaged_files()
@@ -312,7 +313,7 @@ class CoreCommands(CommandMixin):
 
         await self.show_output("/git status", "\n".join(lines))
 
-    async def _git_diff(self, git: "GitManager", file: str | None):
+    async def _git_diff(self, git: GitManager, file: str | None):
         staged = await git.get_staged_files()
         diff_content = await git.get_diff(staged=bool(staged), file=file)
 
@@ -323,7 +324,7 @@ class CoreCommands(CommandMixin):
         title = f"/git diff {file}" if file else "/git diff"
         await self.show_output(title, f"```diff\n{diff_content[:5000]}\n```")
 
-    async def _git_commit(self, git: "GitManager", message: str | None):
+    async def _git_commit(self, git: GitManager, message: str | None):
         staged = await git.get_staged_files()
 
         if not staged:
@@ -352,7 +353,7 @@ class CoreCommands(CommandMixin):
         else:
             self.notify(f"Commit failed: {result.error}", severity="error")
 
-    async def _git_undo(self, git: "GitManager"):
+    async def _git_undo(self, git: GitManager):
         commits = await git.get_recent_commits(1)
         if not commits:
             self.notify("No commits to undo")
@@ -366,7 +367,7 @@ class CoreCommands(CommandMixin):
         else:
             self.notify("Failed to undo commit", severity="error")
 
-    async def _git_log(self, git: "GitManager", limit: int):
+    async def _git_log(self, git: GitManager, limit: int):
         commits = await git.get_recent_commits(limit)
 
         if not commits:
@@ -381,14 +382,14 @@ class CoreCommands(CommandMixin):
 
         await self.show_output("/git log", "\n".join(lines))
 
-    async def _git_stash(self, git: "GitManager", message: str | None):
+    async def _git_stash(self, git: GitManager, message: str | None):
         success = await git.stash(message)
         if success:
             self.notify("Changes stashed")
         else:
             self.notify("Failed to stash changes", severity="error")
 
-    async def _git_stash_pop(self, git: "GitManager"):
+    async def _git_stash_pop(self, git: GitManager):
         success = await git.stash_pop()
         if success:
             self.notify("Stash applied")
@@ -844,8 +845,10 @@ class CoreCommands(CommandMixin):
                 self.notify(f"File not found: {file_path}", severity="error")
                 return
 
-            with open(path) as f:
-                content = f.read()
+            import aiofiles
+
+            async with aiofiles.open(path) as f:
+                content = await f.read()
 
             workflow = manager.parse_yaml(content)
             manager.save_workflow(workflow)
@@ -937,7 +940,7 @@ class CoreCommands(CommandMixin):
         else:
             self.notify(f"Unknown issue subcommand: {args[0]}", severity="error")
 
-    async def _issue_view(self, github: "GitHubContextManager", number: int):
+    async def _issue_view(self, github: GitHubContextManager, number: int):
         """View a specific issue."""
         issue = await github.get_issue(number)
         if not issue:
@@ -947,7 +950,7 @@ class CoreCommands(CommandMixin):
         context = github.format_issue_context(issue)
         await self.show_output(f"/issue {number}", context)
 
-    async def _issue_list(self, github: "GitHubContextManager"):
+    async def _issue_list(self, github: GitHubContextManager):
         """List open issues."""
         issues = await github.list_issues(state="open", limit=20)
         if not issues:
@@ -961,12 +964,8 @@ class CoreCommands(CommandMixin):
 
         await self.show_output("/issue list", "\n".join(lines))
 
-    async def _issue_create(self, github: "GitHubContextManager"):
+    async def _issue_create(self, github: GitHubContextManager):
         """Create a new issue (interactive)."""
-        from textual.widgets import Input
-        from textual.containers import Container
-        from textual.widgets import Label, Button
-        from textual.app import ComposeResult
 
         class IssueCreateScreen:
             def __init__(self, github_manager):
@@ -1001,7 +1000,7 @@ class CoreCommands(CommandMixin):
         else:
             self.notify(f"Unknown pr subcommand: {args[0]}", severity="error")
 
-    async def _pr_view(self, github: "GitHubContextManager", number: int):
+    async def _pr_view(self, github: GitHubContextManager, number: int):
         """View a specific PR."""
         pr = await github.get_pr(number)
         if not pr:
@@ -1011,7 +1010,7 @@ class CoreCommands(CommandMixin):
         context = github.format_pr_context(pr)
         await self.show_output(f"/pr {number}", context)
 
-    async def _pr_list(self, github: "GitHubContextManager"):
+    async def _pr_list(self, github: GitHubContextManager):
         """List open PRs."""
         prs = await github.list_prs(state="open", limit=20)
         if not prs:
@@ -1025,7 +1024,7 @@ class CoreCommands(CommandMixin):
 
         await self.show_output("/pr list", "\n".join(lines))
 
-    async def _pr_diff(self, github: "GitHubContextManager", number: int):
+    async def _pr_diff(self, github: GitHubContextManager, number: int):
         """Show PR diff."""
         diff = await github.get_pr_diff(number)
         if not diff:
@@ -1034,7 +1033,7 @@ class CoreCommands(CommandMixin):
 
         await self.show_output(f"/pr diff {number}", f"```diff\n{diff}\n```")
 
-    async def _pr_create(self, github: "GitHubContextManager"):
+    async def _pr_create(self, github: GitHubContextManager):
         """Create a new PR (interactive)."""
         self.notify("PR creation not yet implemented in TUI mode", severity="warning")
 

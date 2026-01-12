@@ -1,9 +1,7 @@
 """Tests for widgets/app_header.py - AppHeader widget."""
 
-from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-import pytest
 from textual.widgets import Label
 
 from widgets.app_header import AppHeader

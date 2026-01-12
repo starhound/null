@@ -38,7 +38,7 @@ OAUTH_SCOPES = [
     "https://www.googleapis.com/auth/experimentsandconfigs",
 ]
 
-ANTIGRAVITY_API_BASE = "https://daily-cloudcode-pa.sandbox.googleapis.com"
+ANTIGRAVITY_API_BASE = "https://cloudcode-pa.googleapis.com"
 
 # Path to OpenCode's antigravity token storage (for token reuse)
 OPENCODE_ACCOUNTS_PATH = (
@@ -175,6 +175,28 @@ class AntigravityProvider(LLMProvider):
         opencode_tokens, opencode_project_id = _load_opencode_account()
         if opencode_project_id:
             self._project_id = opencode_project_id
+
+        # Try environment/gcloud if no project ID yet
+        if self._project_id == DEFAULT_PROJECT_ID:
+            try:
+                env_proj = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get(
+                    "GCLOUD_PROJECT"
+                )
+                if env_proj:
+                    self._project_id = env_proj
+                else:
+                    import subprocess
+
+                    res = subprocess.run(
+                        ["gcloud", "config", "get-value", "project"],
+                        capture_output=True,
+                        text=True,
+                        timeout=2,
+                    )
+                    if res.returncode == 0 and res.stdout.strip():
+                        self._project_id = res.stdout.strip()
+            except Exception:
+                pass
 
         if not self._tokens and opencode_tokens:
             self._tokens = opencode_tokens

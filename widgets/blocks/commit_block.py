@@ -1,7 +1,7 @@
 from textual.app import ComposeResult
-from textual.message import Message
-from textual.widgets import Static, Button
 from textual.containers import Horizontal
+from textual.message import Message
+from textual.widgets import Button, Static
 
 from managers.git import GitCommit, GitDiff
 
@@ -21,24 +21,24 @@ class CommitBlockWidget(Static):
         padding: 1;
         margin: 1 0;
     }
-    
+
     .commit-header {
         text-style: bold;
     }
-    
+
     .commit-file {
         padding-left: 2;
         color: $text-muted;
     }
-    
+
     .commit-file.added {
         color: $success;
     }
-    
+
     .commit-file.modified {
         color: $warning;
     }
-    
+
     .commit-file.deleted {
         color: $error;
     }

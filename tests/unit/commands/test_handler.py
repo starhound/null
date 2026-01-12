@@ -82,8 +82,8 @@ class TestSlashCommandHandlerInit:
 
     def test_handler_creates_legacy_commands(self, handler):
         assert "help" in handler._commands
-        assert callable(handler._commands["help"]) or hasattr(
-            handler._commands["help"], "__call__"
+        assert callable(handler._commands["help"]) or callable(
+            handler._commands["help"]
         )
 
 

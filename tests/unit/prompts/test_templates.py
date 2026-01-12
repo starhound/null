@@ -28,7 +28,9 @@ class TestBuiltinPrompts:
         from prompts.templates import BUILTIN_PROMPTS
 
         for key, prompt in BUILTIN_PROMPTS.items():
-            assert isinstance(prompt["content"], str), f"Prompt '{key}' content is not a string"
+            assert isinstance(prompt["content"], str), (
+                f"Prompt '{key}' content is not a string"
+            )
             assert len(prompt["content"]) > 0, f"Prompt '{key}' content is empty"
 
     def test_prompt_names_are_human_readable(self):

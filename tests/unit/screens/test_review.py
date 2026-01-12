@@ -1,10 +1,9 @@
 """Tests for the review screen."""
 
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock
 
 from managers.review import DiffHunk, HunkStatus, ProposedChange, ReviewManager
-from screens.review import HunkWidget, FileChangeWidget, ReviewScreen
+from screens.review import FileChangeWidget, HunkWidget, ReviewScreen
 
 
 class TestHunkWidgetMessages:
@@ -787,7 +786,7 @@ class TestReviewScreenCSS:
 
     def test_review_screen_has_default_css(self):
         manager = ReviewManager()
-        screen = ReviewScreen(manager)
+        ReviewScreen(manager)
         assert ReviewScreen.DEFAULT_CSS is not None
         assert len(ReviewScreen.DEFAULT_CSS) > 0
 
@@ -844,7 +843,7 @@ class TestReviewScreenSummaryCount:
     def test_single_file_count(self):
         manager = ReviewManager()
         manager.propose("test.py", "a", "b")
-        screen = ReviewScreen(manager)
+        ReviewScreen(manager)
         assert len(manager.pending_changes) == 1
 
     def test_multiple_file_count(self):
@@ -852,7 +851,7 @@ class TestReviewScreenSummaryCount:
         manager.propose("file1.py", "a", "b")
         manager.propose("file2.py", "c", "d")
         manager.propose("file3.py", "e", "f")
-        screen = ReviewScreen(manager)
+        ReviewScreen(manager)
         assert len(manager.pending_changes) == 3
 
 

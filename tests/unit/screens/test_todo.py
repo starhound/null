@@ -1,6 +1,5 @@
 """Tests for the todo dashboard screen."""
 
-import pytest
 from unittest.mock import MagicMock, patch
 
 

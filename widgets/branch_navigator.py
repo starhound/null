@@ -1,7 +1,7 @@
 from textual.app import ComposeResult
-from textual.message import Message
-from textual.widgets import Static, Button, Tree
 from textual.containers import ScrollableContainer
+from textual.message import Message
+from textual.widgets import Button, Static, Tree
 
 
 class BranchSelected(Message):
@@ -25,21 +25,21 @@ class BranchNavigator(Static):
         background: $surface;
         padding: 1;
     }
-    
+
     .branch-header {
         text-style: bold;
         margin-bottom: 1;
     }
-    
+
     #branch-list {
         height: 1fr;
     }
-    
+
     Tree {
         background: $surface;
         padding: 0;
     }
-    
+
     Button {
         width: 100%;
         margin-top: 1;

@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import json
 from dataclasses import dataclass, field
-from pathlib import Path
 
 
 @dataclass
@@ -61,7 +60,7 @@ class GitHubContextManager:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await proc.communicate()
+            stdout, _stderr = await proc.communicate()
             return stdout.decode("utf-8", errors="replace"), proc.returncode or 0
         except FileNotFoundError:
             return "gh CLI not installed. Install from https://cli.github.com/", 1

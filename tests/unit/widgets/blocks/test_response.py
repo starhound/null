@@ -1,7 +1,5 @@
 """Tests for widgets/blocks/response.py - ResponseWidget."""
 
-import pytest
-
 from models import BlockState, BlockType
 from widgets.blocks.response import ResponseWidget
 
@@ -44,8 +42,6 @@ class TestResponseWidgetReactiveContent:
     """Test the reactive content_text property."""
 
     def test_content_text_is_reactive(self):
-        from textual.reactive import Reactive
-
         block = BlockState(type=BlockType.AI_RESPONSE, content_input="test")
         widget = ResponseWidget(block)
 
@@ -160,8 +156,6 @@ class TestResponseWidgetCompose:
     """Test the compose method structure."""
 
     def test_compose_returns_generator(self):
-        from textual.app import ComposeResult
-
         block = BlockState(type=BlockType.AI_RESPONSE, content_input="test")
         widget = ResponseWidget(block)
         result = widget.compose()

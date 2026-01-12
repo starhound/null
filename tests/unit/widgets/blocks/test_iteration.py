@@ -1,8 +1,6 @@
 """Tests for widgets/blocks/iteration.py - IterationWidget and related components."""
 
-from unittest.mock import MagicMock, patch, PropertyMock
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from models import AgentIteration, ToolCallState
 from widgets.blocks.iteration import (
@@ -12,7 +10,6 @@ from widgets.blocks.iteration import (
     ThinkingSection,
     ToolCallItem,
 )
-
 
 # =============================================================================
 # IterationHeader Tests
@@ -204,7 +201,6 @@ class TestThinkingSectionCollapsedReactive:
 
     def test_collapsed_is_reactive(self):
         """collapsed is a reactive property."""
-        from textual.reactive import Reactive
 
         assert hasattr(ThinkingSection, "collapsed")
 
@@ -623,7 +619,7 @@ class TestIterationWidgetWithToolCalls:
         iteration = AgentIteration(
             id="iter-1", iteration_number=1, tool_calls=[tool1, tool2]
         )
-        widget = IterationWidget(iteration)
+        IterationWidget(iteration)
         assert len(iteration.tool_calls) == 2
 
     def test_widget_preserves_tool_call_data(self):

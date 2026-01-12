@@ -62,7 +62,7 @@ ProgressCallback = Callable[[ToolProgress], None]
 async def run_command_streaming(
     command: str,
     working_dir: str | None = None,
-    timeout: float = 300.0,
+    timeout: float = 300.0,  # noqa: ASYNC109 - timeout is intentional API design
     on_progress: ProgressCallback | None = None,
     tool_call: StreamingToolCall | None = None,
 ) -> str:
@@ -168,7 +168,7 @@ async def run_command_streaming(
 async def stream_command(
     command: str,
     working_dir: str | None = None,
-    timeout: float = 300.0,
+    timeout: float = 300.0,  # noqa: ASYNC109 - timeout is intentional API design
     tool_call: StreamingToolCall | None = None,
 ) -> AsyncIterator[ToolProgress]:
     """Execute a command and yield progress updates as an async iterator.

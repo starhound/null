@@ -1,7 +1,5 @@
 """Tests for widgets/blocks/diff_view.py - DiffViewWidget."""
 
-import pytest
-
 from widgets.blocks.diff_view import DiffViewWidget
 
 
@@ -251,7 +249,7 @@ class TestDiffViewWidgetRealWorldDiffs:
 +        if self.value is None:
 +            return 0
 +        return self.value
-     
+
      def other(self):"""
         widget = DiffViewWidget(file="myclass.py", diff_content=diff)
         assert "@@ -10,7 +10,8 @@" in widget.diff_content
@@ -276,5 +274,5 @@ class TestDiffViewWidgetRealWorldDiffs:
 +max_retries = 3"""
         widget = DiffViewWidget(file="config.ini", diff_content=diff)
         lines = widget.diff_content.split("\n")
-        context_lines = [l for l in lines if l.startswith(" ")]
+        context_lines = [line for line in lines if line.startswith(" ")]
         assert len(context_lines) == 2

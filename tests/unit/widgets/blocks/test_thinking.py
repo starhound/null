@@ -1,7 +1,5 @@
 """Tests for widgets/blocks/thinking.py - ThinkingWidget."""
 
-import pytest
-
 from models import BlockState, BlockType
 from widgets.blocks.thinking import ThinkingWidget
 

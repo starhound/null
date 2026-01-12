@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from ai.base import Message, StreamChunk, TokenUsage, ToolCallData
+from ai.base import Message, StreamChunk
 from ai.ollama import OllamaProvider
 
 

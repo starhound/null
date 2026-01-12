@@ -48,7 +48,7 @@ async def run_command(
     cwd = working_dir or os.getcwd()
 
     if on_progress:
-        from .streaming import ToolProgress, ToolStatus, run_command_streaming
+        from .streaming import run_command_streaming
 
         return await run_command_streaming(
             command=command,
@@ -171,8 +171,12 @@ async def write_file(path: str, content: str) -> str:
         original_content: str | None = None
         if os.path.exists(expanded) and os.path.isfile(expanded):
             try:
-                with open(expanded, encoding="utf-8", errors="replace") as f:
-                    original_content = f.read()
+
+                def _read_original():
+                    with open(expanded, encoding="utf-8", errors="replace") as f:
+                        return f.read()
+
+                original_content = await asyncio.to_thread(_read_original)
             except Exception:
                 pass
 

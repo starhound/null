@@ -1,12 +1,11 @@
 """Tests for widgets/branch_navigator.py - BranchNavigator widget."""
 
-import pytest
 from unittest.mock import MagicMock, patch
 
 from widgets.branch_navigator import (
+    BranchForkRequested,
     BranchNavigator,
     BranchSelected,
-    BranchForkRequested,
 )
 
 
@@ -145,7 +144,7 @@ class TestBranchNavigatorRenderBranchTree:
         navigator._render_branch_tree()
 
         children = list(navigator._branch_tree.root.children)
-        feature_node = [c for c in children if c.data == "feature"][0]
+        feature_node = next(c for c in children if c.data == "feature")
         label_text = str(feature_node.label)
         assert "feature" in label_text
 
@@ -331,7 +330,7 @@ class TestBranchNavigatorIntegration:
         navigator._render_branch_tree()
 
         children = list(navigator._branch_tree.root.children)
-        feature_node = [c for c in children if c.data == "feature"][0]
+        feature_node = next(c for c in children if c.data == "feature")
         assert feature_node.data == "feature"
 
     def test_refresh_preserves_manager_reference(self):

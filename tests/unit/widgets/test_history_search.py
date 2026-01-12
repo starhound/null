@@ -2,7 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from textual.containers import Vertical
 from textual.widgets import Input, Label
 
@@ -517,7 +516,7 @@ class TestHistorySearchUpdateResults:
         widget.search_query = "   "
         widget.results = ["old", "results"]
 
-        with patch("config.Config") as mock_config:
+        with patch("config.Config"):
             with patch.object(widget, "_render_results"):
                 widget._update_results()
 

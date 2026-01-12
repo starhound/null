@@ -104,14 +104,17 @@ class SecurityManager:
 class StorageManager:
     """Manages SQLite database for configuration, history, and SSH hosts."""
 
-    def __init__(self):
-        self.db_path = DB_PATH
+    def __init__(self, db_path: Path | None = None):
+        if db_path is None:
+            self.db_path = DB_PATH
+        else:
+            self.db_path = db_path
         self.security = SecurityManager()
         self._init_db()
 
     def _init_db(self):
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self.conn = sqlite3.connect(self.db_path)
+        self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self._create_schema()
 
@@ -138,44 +141,6 @@ class StorageManager:
         """)
 
         # Interactions Table (for Recall/Semantic Search)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS interactions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                vector_id TEXT,
-                type TEXT,
-                input TEXT,
-                output TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                metadata TEXT
-            )
-        """)
-
-        # Interactions Table (for Recall/Semantic Search)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS interactions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                vector_id TEXT,
-                type TEXT,
-                input TEXT,
-                output TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                metadata TEXT
-            )
-        """)
-
-        # Interactions Table (for Recall/Semantic Search)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS interactions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                vector_id TEXT,
-                type TEXT,
-                input TEXT,
-                output TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                metadata TEXT
-            )
-        """)
-
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS interactions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -256,6 +221,19 @@ class StorageManager:
         cursor = self.conn.cursor()
         cursor.execute("DELETE FROM config WHERE key LIKE ?", (f"{prefix}%",))
         self.conn.commit()
+
+    def list_config(self) -> dict[str, str]:
+        """List all configuration key-value pairs."""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT key, value, is_sensitive FROM config")
+        result = {}
+        for row in cursor.fetchall():
+            key = row["key"]
+            val = row["value"]
+            if row["is_sensitive"]:
+                val = self.security.decrypt(val)
+            result[key] = val
+        return result
 
     def add_history(self, command: str, exit_code: int = 0):
         """Add a command to history."""

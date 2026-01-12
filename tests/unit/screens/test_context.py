@@ -1,7 +1,6 @@
 """Tests for the context inspector screen."""
 
-import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from context import ContextInfo
 from screens.context import ContextScreen

@@ -1,13 +1,13 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
-from pathlib import Path
 
 from managers.suggestions import (
-    Suggestion,
+    AISuggestionProvider,
+    ContextProvider,
     ContextState,
     HistoryProvider,
-    ContextProvider,
-    AISuggestionProvider,
+    Suggestion,
     SuggestionEngine,
 )
 

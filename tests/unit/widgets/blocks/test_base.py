@@ -1,7 +1,5 @@
 """Tests for widgets/blocks/base.py - BaseBlockWidget."""
 
-import pytest
-
 from models import BlockState, BlockType
 from widgets.blocks.base import BaseBlockWidget
 

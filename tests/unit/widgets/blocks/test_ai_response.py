@@ -6,13 +6,10 @@ AI responses with optional thinking tags and tool calls.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from models import BlockState, BlockType, ToolCallState
+from widgets.blocks.actions import ActionBar
 from widgets.blocks.ai_response import AIResponseBlock
-from widgets.blocks.actions import ActionBar, ActionButton
 from widgets.blocks.base import BaseBlockWidget
-
 
 # =============================================================================
 # Helper functions for creating test data

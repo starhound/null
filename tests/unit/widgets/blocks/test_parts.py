@@ -1,9 +1,7 @@
 """Tests for widgets/blocks/parts.py - Block UI components."""
 
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 from rich.text import Text
 
 from models import BlockState, BlockType
@@ -81,7 +79,7 @@ class TestBlockBodyTruncation:
         body = BlockBody(max_lines=2)
         lines = ["a", "b", "c", "d", "e"]
         text = "\n".join(lines)
-        result, was_truncated, total = body._truncate_output(text)
+        result, _was_truncated, _total = body._truncate_output(text)
 
         assert "3" in result
         assert "truncated" in result.lower()
@@ -89,7 +87,7 @@ class TestBlockBodyTruncation:
     def test_truncation_preserves_line_content_integrity(self):
         body = BlockBody(max_lines=2)
         text = "first line with data\nsecond line\nthird with more data\nfourth final"
-        result, was_truncated, total = body._truncate_output(text)
+        result, _was_truncated, _total = body._truncate_output(text)
 
         assert "third with more data" in result
         assert "fourth final" in result
@@ -487,8 +485,6 @@ class TestBlockHeaderIconClasses:
         assert "prompt-symbol-cli" in icon_label.classes
 
     def test_ai_query_icon_has_query_classes(self):
-        from textual.widgets import Label
-
         block = BlockState(type=BlockType.AI_QUERY, content_input="test")
         header = BlockHeader(block)
 
@@ -497,8 +493,6 @@ class TestBlockHeaderIconClasses:
         assert "prompt-symbol-query" in icon_label.classes
 
     def test_ai_response_icon_has_response_classes(self):
-        from textual.widgets import Label
-
         block = BlockState(type=BlockType.AI_RESPONSE, content_input="")
         header = BlockHeader(block)
 
@@ -507,8 +501,6 @@ class TestBlockHeaderIconClasses:
         assert "prompt-symbol-response" in icon_label.classes
 
     def test_agent_response_icon_has_agent_classes(self):
-        from textual.widgets import Label
-
         block = BlockState(type=BlockType.AGENT_RESPONSE, content_input="")
         header = BlockHeader(block)
 
@@ -517,8 +509,6 @@ class TestBlockHeaderIconClasses:
         assert "prompt-symbol-agent" in icon_label.classes
 
     def test_system_msg_icon_has_system_classes(self):
-        from textual.widgets import Label
-
         block = BlockState(type=BlockType.SYSTEM_MSG, content_input="")
         header = BlockHeader(block)
 
@@ -812,7 +802,7 @@ class TestBlockBodyWatchContentText:
         body = BlockBody(max_lines=2)
         body._truncated = False
         text = "line1\nline2\nline3\nline4"
-        result, truncated, total = body._truncate_output(text)
+        _result, truncated, total = body._truncate_output(text)
         body._truncated = truncated
         body._total_lines = total
         assert body._truncated is True
@@ -884,8 +874,6 @@ class TestBlockFooterCompose:
         assert "exit-error" in children[0].classes
 
     def test_compose_with_running_block(self):
-        from textual.widgets import Label
-
         block = BlockState(type=BlockType.COMMAND, content_input="sleep 10")
         block.is_running = True
         block.exit_code = None
@@ -939,14 +927,14 @@ class TestBlockBodyEdgeCases:
     def test_very_long_single_line(self):
         body = BlockBody(max_lines=10)
         long_line = "x" * 10000
-        result, was_truncated, total = body._truncate_output(long_line)
+        _result, was_truncated, total = body._truncate_output(long_line)
         assert was_truncated is False
         assert total == 1
 
     def test_empty_lines_in_text(self):
         body = BlockBody(max_lines=5)
         text = "line1\n\nline3\n\nline5"
-        result, was_truncated, total = body._truncate_output(text)
+        _result, was_truncated, total = body._truncate_output(text)
         assert total == 5
         assert was_truncated is False
 

@@ -10,8 +10,8 @@ from .background_sidebar import (
 )
 from .block_search import BlockSearch
 from .blocks import (
-    AIResponseBlock,
     AgentResponseBlock,
+    AIResponseBlock,
     BaseBlockWidget,
     BlockBody,
     BlockFooter,

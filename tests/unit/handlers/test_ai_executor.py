@@ -133,7 +133,7 @@ async def test_execute_ai_handles_exception(ai_executor, mock_app):
 
     with (
         patch("handlers.ai_executor.Config.get", return_value="test-provider"),
-        patch("handlers.ai_executor.get_settings") as mock_settings,
+        patch("handlers.ai_executor.get_settings"),
         patch("prompts.get_prompt_manager") as mock_pm,
         patch("context.ContextManager.build_messages") as mock_build,
     ):
@@ -155,7 +155,7 @@ async def test_execute_ai_handles_cancelled_error(ai_executor, mock_app):
 
     with (
         patch("handlers.ai_executor.Config.get", return_value="test-provider"),
-        patch("handlers.ai_executor.get_settings") as mock_settings,
+        patch("handlers.ai_executor.get_settings"),
         patch("context.ContextManager.build_messages") as mock_build,
         patch("prompts.get_prompt_manager") as mock_pm,
     ):
@@ -193,7 +193,7 @@ class TestAIExecutorToolRegistry:
         mock_app.mcp_manager = mock_mcp
         executor = AIExecutor(mock_app)
 
-        with patch("handlers.ai_executor.ToolRegistry") as mock_registry:
+        with patch("handlers.ai.tool_runner.ToolRegistry") as mock_registry:
             executor._get_tool_registry()
             mock_registry.assert_called_once_with(mcp_manager=mock_mcp)
 
@@ -201,13 +201,15 @@ class TestAIExecutorToolRegistry:
 class TestAIExecutorCancelTool:
     @pytest.mark.asyncio
     async def test_cancel_tool_calls_cancel_on_active(self, ai_executor):
+        from handlers.ai.tool_runner import ToolRunner
+
         mock_streaming = MagicMock()
-        AIExecutor._active_streaming_calls["tool_123"] = mock_streaming
+        ToolRunner._active_streaming_calls["tool_123"] = mock_streaming
 
         await ai_executor.cancel_tool("tool_123")
 
         mock_streaming.cancel.assert_called_once()
-        del AIExecutor._active_streaming_calls["tool_123"]
+        del ToolRunner._active_streaming_calls["tool_123"]
 
     @pytest.mark.asyncio
     async def test_cancel_tool_ignores_unknown(self, ai_executor):
@@ -271,8 +273,8 @@ class TestAIExecutorWithTools:
         with (
             patch.object(ai_executor, "_get_tool_registry") as mock_reg,
             patch.object(
-                ai_executor,
-                "_process_tool_calls",
+                ai_executor._tool_runner,
+                "process_chat_tools",
                 new_callable=AsyncMock,
                 return_value=[mock_result],
             ) as mock_process,
@@ -323,8 +325,8 @@ class TestAIExecutorAgentMode:
             mock_reg.return_value.get_all_tools_schema.return_value = []
             mock_strategy.return_value.requires_prompting = False
 
-            await ai_executor._execute_agent_mode(
-                "task", block, widget, [], "System", 100
+            await ai_executor._agent_loop.run_loop(
+                "task", block, widget, [], "System", 100, ai_executor._finalize_response
             )
 
         mock_app.agent_manager.start_session.assert_called_once()

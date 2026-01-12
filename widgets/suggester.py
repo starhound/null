@@ -7,7 +7,6 @@ from textual.timer import Timer
 from textual.widgets import Label, ListItem, ListView, Static
 
 from config import Config
-from models import BlockType
 
 if TYPE_CHECKING:
     pass

@@ -15,7 +15,6 @@ from managers.git import (
     get_git_manager,
 )
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
@@ -207,7 +206,7 @@ class TestRunGit:
         mock_proc = create_mock_process(stdout="on branch main", returncode=0)
 
         with patch("asyncio.create_subprocess_exec", return_value=mock_proc):
-            stdout, stderr, rc = await git_manager._run_git("status")
+            stdout, _stderr, rc = await git_manager._run_git("status")
             assert stdout == "on branch main"
             assert rc == 0
 
@@ -217,7 +216,7 @@ class TestRunGit:
         mock_proc = create_mock_process(stderr="fatal: not a repo", returncode=128)
 
         with patch("asyncio.create_subprocess_exec", return_value=mock_proc):
-            stdout, stderr, rc = await git_manager._run_git("status")
+            _stdout, stderr, rc = await git_manager._run_git("status")
             assert stderr == "fatal: not a repo"
             assert rc == 128
 
@@ -772,7 +771,7 @@ class TestCommit:
 
             call_count = 0
 
-            async def mock_exec(*args, **kwargs):
+            async def mock_exec(*args, commit_proc=commit_proc, **kwargs):
                 nonlocal call_count
                 call_count += 1
                 if "diff" in args:

@@ -15,7 +15,6 @@ from textual.widgets import (
 )
 
 from commands.todo import TodoManager
-from widgets.branch_navigator import BranchNavigator
 
 if TYPE_CHECKING:
     from managers.agent import AgentState
@@ -123,7 +122,7 @@ class Sidebar(Container):
         except Exception:
             pass
 
-    def _on_agent_state_change(self, state: "AgentState"):
+    def _on_agent_state_change(self, state: AgentState):
         self.call_later(self._refresh_agent_view)
 
     def watch_current_view(self, view: str):

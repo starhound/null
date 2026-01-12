@@ -1,5 +1,6 @@
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock
 
 from managers.planning import (
     Plan,
@@ -143,7 +144,7 @@ class TestPlan:
     def test_get_next_step(self):
         plan = Plan.create(goal="Test")
         step1 = plan.add_step("Step 1")
-        step2 = plan.add_step("Step 2")
+        plan.add_step("Step 2")
         step1.status = StepStatus.APPROVED
         next_step = plan.get_next_step()
         assert next_step == step1
@@ -165,7 +166,7 @@ class TestPlan:
     def test_is_complete_with_pending(self):
         plan = Plan.create(goal="Test")
         step1 = plan.add_step("Step 1")
-        step2 = plan.add_step("Step 2")
+        plan.add_step("Step 2")
         step1.status = StepStatus.COMPLETED
         assert plan.is_complete is False
 
@@ -180,7 +181,7 @@ class TestPlan:
     def test_progress_partial(self):
         plan = Plan.create(goal="Test")
         step1 = plan.add_step("Step 1")
-        step2 = plan.add_step("Step 2")
+        plan.add_step("Step 2")
         step1.status = StepStatus.COMPLETED
         assert plan.progress == 0.5
 

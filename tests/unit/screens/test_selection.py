@@ -1,11 +1,12 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock, PropertyMock
 
 from screens.selection import (
-    SelectionListScreen,
-    ThemeSelectionScreen,
     ModelItem,
     ModelListScreen,
+    SelectionListScreen,
+    ThemeSelectionScreen,
 )
 
 
@@ -487,7 +488,7 @@ class TestModelItem:
 
     def test_init_displays_model_with_indent(self):
         """ModelItem should display model name with indent."""
-        item = ModelItem(provider="anthropic", model="claude-3")
+        ModelItem(provider="anthropic", model="claude-3")
         # The Static widget is initialized with "  {model}"
         # We can't easily check render without mounting, but we can verify init args
 
@@ -1143,7 +1144,10 @@ class TestModelListScreenUpdateCollapsibles:
         assert mock_scroll.mount.call_count == 1
 
     @patch("config.Config")
-    def test_update_collapsibles_removes_old_children(self, mock_config):
+    def test_update_collapsibles_preserves_existing_when_not_searching(
+        self, mock_config
+    ):
+        """Incremental update: existing providers are preserved when not searching."""
         mock_config.get.return_value = None
 
         screen = ModelListScreen()
@@ -1151,12 +1155,36 @@ class TestModelListScreenUpdateCollapsibles:
         screen.search_query = ""
 
         mock_child = MagicMock()
+        mock_child.id = "provider-openai"  # Already exists
         mock_scroll = MagicMock()
         mock_scroll.children = [mock_child]
         screen.query_one = MagicMock(return_value=mock_scroll)
 
         screen._update_collapsibles()
 
+        # Should NOT remove existing children when not searching (incremental)
+        mock_child.remove.assert_not_called()
+        # Should NOT mount duplicate (already exists)
+        assert mock_scroll.mount.call_count == 0
+
+    @patch("config.Config")
+    def test_update_collapsibles_removes_children_when_searching(self, mock_config):
+        """Full rebuild when searching to apply filter."""
+        mock_config.get.return_value = None
+
+        screen = ModelListScreen()
+        screen._models_by_provider = {"openai": ["gpt-4"]}
+        screen.search_query = "gpt"  # Searching
+
+        mock_child = MagicMock()
+        mock_child.id = "provider-openai"
+        mock_scroll = MagicMock()
+        mock_scroll.children = [mock_child]
+        screen.query_one = MagicMock(return_value=mock_scroll)
+
+        screen._update_collapsibles()
+
+        # SHOULD remove children when searching (full rebuild)
         mock_child.remove.assert_called_once()
 
     @patch("config.Config")

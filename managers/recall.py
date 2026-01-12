@@ -1,7 +1,5 @@
-import logging
 import json
-
-logger = logging.getLogger(__name__)
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +7,8 @@ from ai.factory import AIFactory
 from ai.rag import DocumentChunk, VectorStore
 from config.storage import StorageManager
 from models import BlockState
+
+logger = logging.getLogger(__name__)
 
 
 class RecallManager:
@@ -21,18 +21,18 @@ class RecallManager:
 
     async def index_interaction(self, block: BlockState):
         """Index a completed block interaction."""
-        if not block.content or not block.is_complete:
+        if not block.content_input or block.is_running:
             return
 
         input_text = ""
         output_text = ""
 
-        if block.type == "command":
-            input_text = block.content
+        if block.type.value == "command":
+            input_text = block.content_input
             output_text = block.content_output or ""
-        elif block.type == "ai_response":
-            output_text = block.content
-            input_text = "AI Response"
+        elif block.type.value in ("ai", "agent"):
+            output_text = block.content_output or ""
+            input_text = block.content_input
 
         full_text = f"Input: {input_text}\nOutput: {output_text}".strip()
         if not full_text:
@@ -40,12 +40,12 @@ class RecallManager:
 
         metadata = {
             "exit_code": block.exit_code,
-            "model": block.model,
+            "model": block.metadata.get("model"),
             "timestamp": block.timestamp.isoformat() if block.timestamp else None,
         }
 
         interaction_id = self.storage.add_interaction(
-            type=block.type,
+            type=block.type.value,
             input_text=input_text,
             output_text=output_text,
             metadata=json.dumps(metadata),

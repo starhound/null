@@ -177,6 +177,7 @@ class ProvidersScreen(ModalScreen):
             Config.set("ai.provider", provider_name)
             # Also sync to JSON settings
             from config import SettingsManager
+
             SettingsManager().set("ai", "provider", provider_name)
             self.dismiss(("activated", provider_name))
             return

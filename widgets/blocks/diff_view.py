@@ -1,6 +1,6 @@
 from textual.app import ComposeResult
-from textual.widgets import Static
 from textual.containers import ScrollableContainer
+from textual.widgets import Static
 
 
 class DiffViewWidget(Static):
@@ -11,26 +11,26 @@ class DiffViewWidget(Static):
         border: solid $primary;
         padding: 1;
     }
-    
+
     .diff-header {
         background: $primary-darken-3;
         padding: 0 1;
     }
-    
+
     .diff-add {
         color: $success;
         background: $success-darken-3;
     }
-    
+
     .diff-del {
         color: $error;
         background: $error-darken-3;
     }
-    
+
     .diff-context {
         color: $text-muted;
     }
-    
+
     .diff-hunk {
         color: $primary;
         text-style: bold;

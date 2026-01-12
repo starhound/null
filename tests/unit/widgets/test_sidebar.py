@@ -2,19 +2,16 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-from textual.containers import Container, Vertical
+from textual.containers import Container
 from textual.widgets import (
     DataTable,
     DirectoryTree,
     Label,
     Static,
     TabbedContent,
-    TabPane,
 )
 
 from widgets.sidebar import AgentStatusWidget, Sidebar
-
 
 # =============================================================================
 # AgentStatusWidget Tests
@@ -42,7 +39,7 @@ class TestAgentStatusWidgetInit:
     def test_state_labels_have_tuple_format(self):
         """Each state label should be a tuple of (label, color)."""
         widget = AgentStatusWidget()
-        for state, value in widget._state_labels.items():
+        for _state, value in widget._state_labels.items():
             assert isinstance(value, tuple)
             assert len(value) == 2
             assert isinstance(value[0], str)
@@ -606,7 +603,7 @@ class TestSidebarRefreshBranchView:
 
             call_arg = mock_placeholder.update.call_args[0][0]
             lines = call_arg.split("\n")
-            main_line = [l for l in lines if "main" in l][0]
+            main_line = next(line for line in lines if "main" in line)
             assert "\u25cf" in main_line
 
     def test_shows_empty_branches_message(self):

@@ -1,6 +1,6 @@
 import pytest
 
-from models import BlockState, BlockType
+from models import BlockType
 from widgets import InputController
 from widgets.blocks import BaseBlockWidget
 
@@ -118,7 +118,7 @@ class TestSlashCommandBlocks:
     async def test_help_block_content(self, running_app):
         pilot, app = running_app
 
-        initial_blocks = len(app.blocks)
+        len(app.blocks)
         await submit_command(pilot, app, "/help")
 
         await pilot.press("escape")

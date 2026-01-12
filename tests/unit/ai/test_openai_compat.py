@@ -1,11 +1,10 @@
 """Tests for ai/openai_compat.py - OpenAI-compatible provider base."""
 
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from ai.base import Message, StreamChunk, TokenUsage
+from ai.base import Message
 from ai.openai_compat import OpenAICompatibleProvider
 
 
@@ -109,7 +108,7 @@ class TestOpenAICompatibleProviderBuildMessages:
 class TestOpenAICompatibleProviderGenerate:
     @pytest.mark.asyncio
     async def test_generate_yields_content(self):
-        with patch("ai.openai_compat.openai.AsyncOpenAI") as mock_openai:
+        with patch("ai.openai_compat.openai.AsyncOpenAI"):
             provider = OpenAICompatibleProvider(api_key="sk-test")
 
         mock_chunk1 = MagicMock()

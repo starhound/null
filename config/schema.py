@@ -1,4 +1,5 @@
-from typing import Any, Dict, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field, ValidationError
 
 
@@ -21,10 +22,10 @@ class NullConfig(BaseModel):
     ai: AIConfig = Field(default_factory=AIConfig)
 
     @classmethod
-    def validate_config(cls, data: Dict[str, Any]) -> "NullConfig":
+    def validate_config(cls, data: dict[str, Any]) -> "NullConfig":
         try:
             return cls.model_validate(data)
-        except ValidationError as e:
+        except ValidationError:
             # Return default config on critical failures, but log error
             # In a real implementation, we'd log this
             return cls()

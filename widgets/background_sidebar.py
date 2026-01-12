@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 from textual.app import ComposeResult
-from textual.message import Message
-from textual.widgets import Static, Button, ProgressBar
 from textual.containers import ScrollableContainer
+from textual.message import Message
 from textual.timer import Timer
+from textual.widgets import Button, ProgressBar, Static
 
 from managers.background import BackgroundAgentManager, BackgroundTask, TaskStatus
 
@@ -28,7 +30,7 @@ class NewBackgroundTaskRequested(Message):
 class TaskItemWidget(Static):
     """Widget for a single background task."""
 
-    STATUS_ICONS = {
+    STATUS_ICONS: ClassVar[dict[TaskStatus, str]] = {
         TaskStatus.QUEUED: "⏳",
         TaskStatus.RUNNING: "▶",
         TaskStatus.COMPLETED: "✓",
@@ -106,11 +108,11 @@ class BackgroundTasksSidebar(Static):
     .task-failed {
         border-left: solid $error;
     }
-    
+
     .task-queued {
         border-left: solid $text-muted;
     }
-    
+
     .task-cancelled {
         border-left: solid $error-darken-2;
     }

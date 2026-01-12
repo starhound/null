@@ -55,12 +55,12 @@ class ActionBar(Horizontal):
         self.meta_text = meta_text
 
     def compose(self) -> ComposeResult:
-        yield ActionButton("[Copy]", "copy", self.block_id, id="copy-btn")
-        yield ActionButton("[Retry]", "retry", self.block_id, id="retry-btn")
+        yield ActionButton("Copy", "copy", self.block_id, id="copy-btn")
+        yield ActionButton("Retry", "retry", self.block_id, id="retry-btn")
         if self.show_edit:
-            yield ActionButton("[Edit]", "edit", self.block_id, id="edit-btn")
+            yield ActionButton("Edit", "edit", self.block_id, id="edit-btn")
         if self.show_fork:
-            yield ActionButton("[Fork]", "fork", self.block_id, id="fork-btn")
+            yield ActionButton("Fork", "fork", self.block_id, id="fork-btn")
 
         # Spacer to push meta to the right
         yield Static("", classes="action-spacer")
@@ -82,7 +82,7 @@ class ActionBar(Horizontal):
         try:
             copy_btn = self.query_one("#copy-btn", ActionButton)
             original_label = copy_btn.label
-            copy_btn.label = "[✓ Copied]"
+            copy_btn.label = "✓ Copied"
             copy_btn.add_class("copied")
             self.set_timer(
                 1.5, lambda: self._reset_copy_button(copy_btn, original_label)

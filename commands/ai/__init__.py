@@ -1,14 +1,15 @@
 from typing import TYPE_CHECKING
-from .core import AICore
-from .provider import AIProvider
-from .model import AIModel
+
 from .agent import AIAgent
-from .prompts import AIPrompts
-from .context import AIContext
-from .plan import AIPlan
 from .bg import AIBackground
-from .profile import AIProfile
+from .context import AIContext
+from .core import AICore
+from .model import AIModel
 from .orchestrate import AIOrchestrator
+from .plan import AIPlan
+from .profile import AIProfile
+from .prompts import AIPrompts
+from .provider import AIProvider
 
 if TYPE_CHECKING:
     from app import NullApp

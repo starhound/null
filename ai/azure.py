@@ -59,7 +59,9 @@ class AzureProvider(LLMProvider):
 
         try:
             stream = await self.client.chat.completions.create(
-                model=self.deployment_name, messages=chat_messages, stream=True  # type: ignore[arg-type]
+                model=self.deployment_name,
+                messages=chat_messages,
+                stream=True,  # type: ignore[arg-type]
             )
             async for chunk in stream:  # type: ignore[union-attr]
                 if chunk.choices and chunk.choices[0].delta.content:

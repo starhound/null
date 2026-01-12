@@ -1,6 +1,6 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from pathlib import Path
-from unittest.mock import AsyncMock, patch, MagicMock
 
 from utils.git import GitStatus, get_git_status
 

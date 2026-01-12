@@ -2,8 +2,6 @@
 
 from unittest.mock import patch
 
-import pytest
-
 from tools.streaming import ToolProgress, ToolStatus
 from widgets.blocks.tool_accordion import (
     ToolAccordion,
@@ -11,7 +9,6 @@ from widgets.blocks.tool_accordion import (
     ToolHeader,
     ToolOutput,
 )
-
 
 # =============================================================================
 # ToolHeader Tests

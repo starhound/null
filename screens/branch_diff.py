@@ -1,10 +1,10 @@
 from typing import ClassVar
 
-from textual.binding import Binding, BindingType
-from textual.screen import ModalScreen
-from textual.containers import Horizontal, Vertical, ScrollableContainer
-from textual.widgets import Static, Button, Label
 from textual.app import ComposeResult
+from textual.binding import Binding, BindingType
+from textual.containers import Horizontal, ScrollableContainer, Vertical
+from textual.screen import ModalScreen
+from textual.widgets import Button, Label, Static
 
 
 class BranchDiffScreen(ModalScreen):
@@ -20,24 +20,24 @@ class BranchDiffScreen(ModalScreen):
     BranchDiffScreen {
         align: center middle;
     }
-    
+
     #diff-container {
         width: 90%;
         height: 80%;
         background: $surface;
         border: solid $primary;
     }
-    
+
     .column {
         width: 1fr;
         height: 100%;
         border-right: solid $primary;
     }
-    
+
     .column:last-child {
         border-right: none;
     }
-    
+
     .header {
         text-align: center;
         background: $primary;
@@ -46,22 +46,22 @@ class BranchDiffScreen(ModalScreen):
         text-style: bold;
         width: 100%;
     }
-    
+
     .block-item {
         padding: 1;
         border-bottom: solid $primary-darken-2;
         height: auto;
     }
-    
+
     .block-type {
         color: $accent;
         text-style: bold;
     }
-    
+
     .block-content {
         color: $text-muted;
     }
-    
+
     #close {
         width: 100%;
         dock: bottom;

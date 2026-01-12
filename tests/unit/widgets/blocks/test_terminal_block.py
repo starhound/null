@@ -3,10 +3,9 @@
 Tests the pyte-based terminal emulator widget with mocked PTY operations.
 """
 
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
-from rich.style import Style as RichStyle
 from textual.events import Key
 from textual.geometry import Size
 from textual.strip import Strip
@@ -221,7 +220,7 @@ class TestTerminalBlockFeed:
         terminal_block.pyte_stream.feed = MagicMock()
 
         with patch.object(terminal_block, "_schedule_refresh"):
-            terminal_block.feed("こんにちは".encode("utf-8"))
+            terminal_block.feed("こんにちは".encode())
 
         terminal_block.pyte_stream.feed.assert_called_once_with("こんにちは")
 
@@ -655,7 +654,7 @@ class TestTerminalBlockKeyToBytes:
 
         result = terminal_block._key_to_bytes(event)
 
-        assert result == "あ".encode("utf-8")
+        assert result == "あ".encode()
 
     def test_key_to_bytes_unmapped_key_returns_none(self, terminal_block):
         """_key_to_bytes returns None for unmapped keys."""
@@ -1062,6 +1061,7 @@ class TestTerminalBlockInheritance:
     def test_inherits_from_widget(self, mock_settings):
         """TerminalBlock inherits from Widget."""
         from textual.widget import Widget
+
         from widgets.blocks.terminal import TerminalBlock
 
         assert issubclass(TerminalBlock, Widget)

@@ -1,11 +1,10 @@
 """Tests for the branch diff screen."""
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from screens.branch_diff import BranchDiffScreen
-from models import BlockState, BlockType
 from managers.branch import BranchManager
+from models import BlockState, BlockType
+from screens.branch_diff import BranchDiffScreen
 
 
 class TestBranchDiffScreenInit:
@@ -393,7 +392,7 @@ class TestBranchDiffScreenIntegration:
         manager.branches = {"main": blocks, "feature": []}
         manager.current_branch = "main"
 
-        screen = BranchDiffScreen("main", "feature", manager)
+        BranchDiffScreen("main", "feature", manager)
 
         assert manager.current_branch == "main"
         assert len(manager.branches) == 2

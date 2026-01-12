@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ai.rag import DocumentChunk, VectorStore
+from ai.rag import DocumentChunk
 
 
 @dataclass
@@ -34,19 +34,19 @@ class SQLiteVectorStore:
         chunk_index INTEGER,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    
+
     CREATE TABLE IF NOT EXISTS embeddings (
         doc_id TEXT PRIMARY KEY REFERENCES documents(id),
         vector BLOB NOT NULL,
         model TEXT NOT NULL
     );
-    
+
     CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5(
         content,
         content='documents',
         content_rowid='rowid'
     );
-    
+
     CREATE TABLE IF NOT EXISTS query_cache (
         query_hash TEXT PRIMARY KEY,
         query_text TEXT,
@@ -54,7 +54,7 @@ class SQLiteVectorStore:
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         hit_count INTEGER DEFAULT 0
     );
-    
+
     CREATE TABLE IF NOT EXISTS file_index (
         path TEXT PRIMARY KEY,
         mtime REAL,
@@ -175,7 +175,6 @@ class SQLiteVectorStore:
 
     def _doc_to_chunk(self, doc: Document):
         """Convert Document to DocumentChunk for compatibility."""
-        from ai.rag import DocumentChunk
 
         return DocumentChunk(
             id=doc.id,
@@ -430,7 +429,7 @@ class SQLiteVectorStore:
             with open(path, "rb") as f:
                 while chunk := f.read(chunk_size):
                     hasher.update(chunk)
-        except (OSError, IOError):
+        except OSError:
             return ""
         return hasher.hexdigest()
 

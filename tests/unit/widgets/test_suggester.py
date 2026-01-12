@@ -5,11 +5,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from textual.events import Click
 from textual.timer import Timer
-from textual.widgets import Label, ListView
+from textual.widgets import ListView
 
 from managers.suggestions import Suggestion
 from widgets.suggester import CommandItem, CommandSuggester
-
 
 # =============================================================================
 # CommandItem Tests

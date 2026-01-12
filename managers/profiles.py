@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
@@ -83,7 +82,7 @@ class ProfileManager:
 
         for yaml_file in self.profiles_dir.glob("*.yaml"):
             try:
-                with open(yaml_file, "r", encoding="utf-8") as f:
+                with open(yaml_file, encoding="utf-8") as f:
                     data = yaml.safe_load(f)
                     if data:
                         profile = AgentProfile.from_dict(data)

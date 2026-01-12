@@ -1,10 +1,8 @@
 import pytest
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 from managers.review import (
-    HunkStatus,
     DiffHunk,
+    HunkStatus,
     ProposedChange,
     ReviewManager,
 )
@@ -657,7 +655,7 @@ class TestReviewManager:
 
     def test_accept_file_no_hunks(self):
         manager = ReviewManager()
-        change = manager.propose(
+        manager.propose(
             file="test.py",
             original="same",
             proposed="same",
@@ -685,7 +683,7 @@ class TestReviewManager:
     def test_accept_all_counts_pending_only(self):
         manager = ReviewManager()
         change1 = manager.propose("file1.py", "a\nb", "a\nc")
-        change2 = manager.propose("file2.py", "x\ny", "x\nz")
+        manager.propose("file2.py", "x\ny", "x\nz")
 
         if len(change1.hunks) > 0:
             change1.hunks[0].status = HunkStatus.ACCEPTED
@@ -717,7 +715,7 @@ class TestReviewManager:
     def test_reject_all_counts_pending_only(self):
         manager = ReviewManager()
         change1 = manager.propose("file1.py", "a\nb", "a\nc")
-        change2 = manager.propose("file2.py", "x\ny", "x\nz")
+        manager.propose("file2.py", "x\ny", "x\nz")
 
         if len(change1.hunks) > 0:
             change1.hunks[0].status = HunkStatus.REJECTED

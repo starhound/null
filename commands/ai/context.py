@@ -3,8 +3,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import NullApp
 
-from ..base import CommandMixin
 from models import BlockState, BlockType
+
+from ..base import CommandMixin
 
 
 class AIContext(CommandMixin):

@@ -259,7 +259,9 @@ class TestToolRegistryExecution:
 
         result = await registry.execute_tool(call)
 
-        mock_mcp.call_tool.assert_called_once_with("fetch", {"url": "http://example.com"})
+        mock_mcp.call_tool.assert_called_once_with(
+            "fetch", {"url": "http://example.com"}
+        )
         assert result.is_error is False
         assert result.content == "MCP result"
 

@@ -4,7 +4,7 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.message import Message
 from textual.reactive import reactive
-from textual.widgets import Label, Static, LoadingIndicator
+from textual.widgets import Label, LoadingIndicator, Static
 
 from managers.nl2shell import CommandSuggestion
 
@@ -70,7 +70,7 @@ class NL2ShellPreview(Static):
         height: 3;
         align: center middle;
     }
-    
+
     NL2ShellPreview LoadingIndicator {
         color: $primary;
         height: 1;
@@ -129,7 +129,7 @@ class NL2ShellPreview(Static):
         if not suggestion:
             return
 
-        self._alternatives = [suggestion.command] + suggestion.alternatives
+        self._alternatives = [suggestion.command, *suggestion.alternatives]
         self.current_alternative_index = 0
         self._update_display()
 

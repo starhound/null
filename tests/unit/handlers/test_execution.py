@@ -2,7 +2,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from ai.base import StreamChunk, ToolCallData
 from handlers.ai_executor import AIExecutor
 from handlers.execution import ExecutionHandler
 from models import BlockState, BlockType

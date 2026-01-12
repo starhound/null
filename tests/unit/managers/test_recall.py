@@ -2,11 +2,23 @@
 
 import json
 from datetime import datetime
+from enum import Enum
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from managers.recall import RecallManager
+
+
+class MockBlockType(Enum):
+    """Mock BlockType enum matching the real BlockType."""
+
+    COMMAND = "command"
+    AI_RESPONSE = "ai"
+    AGENT_RESPONSE = "agent"
+    AI_QUERY = "ai_query"
+    SYSTEM_MSG = "system"
+    TOOL_CALL = "tool_call"
 
 
 class MockBlock:
@@ -15,19 +27,25 @@ class MockBlock:
     def __init__(
         self,
         type: str = "command",
-        content: str = "",
+        content_input: str = "",
         content_output: str = "",
-        is_complete: bool = True,
+        is_running: bool = False,
         exit_code: int | None = None,
         model: str | None = None,
         timestamp: datetime | None = None,
     ):
-        self.type = type
-        self.content = content
+        type_map = {
+            "command": MockBlockType.COMMAND,
+            "ai": MockBlockType.AI_RESPONSE,
+            "ai_response": MockBlockType.AI_RESPONSE,
+            "agent": MockBlockType.AGENT_RESPONSE,
+        }
+        self.type = type_map.get(type, MockBlockType.COMMAND)
+        self.content_input = content_input
         self.content_output = content_output
-        self.is_complete = is_complete
+        self.is_running = is_running
         self.exit_code = exit_code
-        self.model = model
+        self.metadata = {"model": model} if model else {}
         self.timestamp = timestamp or datetime.now()
 
 
@@ -54,14 +72,14 @@ class TestIndexInteraction:
     @pytest.mark.asyncio
     async def test_index_interaction_skips_empty_content(self, mock_home):
         manager = RecallManager()
-        block = MockBlock(content="", is_complete=True)
+        block = MockBlock(content_input="", is_running=False)
 
         await manager.index_interaction(block)
 
     @pytest.mark.asyncio
     async def test_index_interaction_skips_incomplete_blocks(self, mock_home):
         manager = RecallManager()
-        block = MockBlock(content="ls -la", is_complete=False)
+        block = MockBlock(content_input="ls -la", is_running=True)
 
         await manager.index_interaction(block)
 
@@ -72,9 +90,9 @@ class TestIndexInteraction:
 
         block = MockBlock(
             type="command",
-            content="ls -la",
+            content_input="ls -la",
             content_output="file1.txt\nfile2.txt",
-            is_complete=True,
+            is_running=False,
         )
 
         with patch.object(
@@ -94,8 +112,8 @@ class TestIndexInteraction:
 
         block = MockBlock(
             type="ai_response",
-            content="Python is a programming language.",
-            is_complete=True,
+            content_input="Python is a programming language.",
+            is_running=False,
         )
 
         with patch.object(
@@ -117,9 +135,9 @@ class TestIndexInteraction:
 
         block = MockBlock(
             type="command",
-            content="git status",
+            content_input="git status",
             content_output="On branch main",
-            is_complete=True,
+            is_running=False,
         )
 
         mock_provider = AsyncMock()
@@ -143,9 +161,9 @@ class TestIndexInteraction:
 
         block = MockBlock(
             type="command",
-            content="test command",
+            content_input="test command",
             content_output="test output",
-            is_complete=True,
+            is_running=False,
         )
 
         mock_provider = AsyncMock()
@@ -166,9 +184,9 @@ class TestIndexInteraction:
         now = datetime.now()
         block = MockBlock(
             type="command",
-            content="test command",
+            content_input="test command",
             content_output="test output",
-            is_complete=True,
+            is_running=False,
             exit_code=0,
             timestamp=now,
         )
@@ -195,9 +213,9 @@ class TestIndexInteraction:
 
         block = MockBlock(
             type="command",
-            content="ls",
+            content_input="ls",
             content_output="files",
-            is_complete=True,
+            is_running=False,
         )
 
         mock_provider = AsyncMock()
@@ -492,9 +510,9 @@ class TestEdgeCases:
 
         block = MockBlock(
             type="command",
-            content="clear",
+            content_input="clear",
             content_output="",
-            is_complete=True,
+            is_running=False,
         )
 
         with patch.object(
@@ -514,9 +532,9 @@ class TestEdgeCases:
 
         block = MockBlock(
             type="command",
-            content='echo "hello\nworld" | grep -E "[a-z]+"',
+            content_input='echo "hello\nworld" | grep -E "[a-z]+"',
             content_output="hello\nworld",
-            is_complete=True,
+            is_running=False,
         )
 
         with patch.object(
@@ -556,9 +574,9 @@ class TestEdgeCases:
         long_output = "x" * 10000
         block = MockBlock(
             type="command",
-            content="cat large_file.txt",
+            content_input="cat large_file.txt",
             content_output=long_output,
-            is_complete=True,
+            is_running=False,
         )
 
         with patch.object(
@@ -581,9 +599,9 @@ class TestEdgeCases:
         blocks = [
             MockBlock(
                 type="command",
-                content=f"cmd{i}",
+                content_input=f"cmd{i}",
                 content_output=f"out{i}",
-                is_complete=True,
+                is_running=False,
             )
             for i in range(5)
         ]
@@ -622,9 +640,9 @@ class TestEdgeCases:
 
         block = MockBlock(
             type="command",
-            content="test",
+            content_input="test",
             content_output="output",
-            is_complete=True,
+            is_running=False,
         )
 
         mock_provider = AsyncMock()

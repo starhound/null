@@ -1,6 +1,5 @@
 """Tests for widgets/input.py - InputController and GhostLabel widgets."""
 
-import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -1115,8 +1114,6 @@ class TestInputControllerUpdateGhostPosition:
         controller = InputController()
         ghost_mock = MagicMock()
         controller.ghost_label = ghost_mock
-
-        original_cursor = controller.cursor_location
 
         def raise_exception():
             raise Exception("test")

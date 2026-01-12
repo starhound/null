@@ -1,7 +1,5 @@
 """Tests for widgets/blocks/actions.py - ActionBar and ActionButton."""
 
-import pytest
-
 from widgets.blocks.actions import ActionBar, ActionButton
 
 

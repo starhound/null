@@ -60,7 +60,9 @@ class SSHSession:
         cols: int = 80,
         lines: int = 24,
         input_handler: Callable[[str], None] | None = None,
-    ) -> tuple[asyncssh.SSHWriter[bytes], asyncssh.SSHReader[bytes], asyncssh.SSHReader[bytes]]:
+    ) -> tuple[
+        asyncssh.SSHWriter[bytes], asyncssh.SSHReader[bytes], asyncssh.SSHReader[bytes]
+    ]:
         """Start an interactive shell."""
         if not self._conn:
             await self.connect()

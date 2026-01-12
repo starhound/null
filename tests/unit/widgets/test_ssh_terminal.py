@@ -1,12 +1,9 @@
 """Tests for widgets/ssh_terminal.py - SSHTerminal widget."""
 
-import asyncio
 from asyncio import Task
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
-from rich.segment import Segment
-from rich.style import Style as RichStyle
 from textual.geometry import Size
 from textual.strip import Strip
 

@@ -274,7 +274,7 @@ class ReviewManager:
 
                 os.makedirs(os.path.dirname(file) or ".", exist_ok=True)
 
-                def _write():
+                def _write(file=file, content=content):
                     with open(file, "w", encoding="utf-8") as f:
                         f.write(content)
 

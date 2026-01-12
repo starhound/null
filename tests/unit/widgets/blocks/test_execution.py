@@ -1,6 +1,5 @@
 """Tests for widgets/blocks/execution.py - ExecutionWidget."""
 
-import pytest
 from unittest.mock import MagicMock, patch
 
 from models import BlockState, BlockType
@@ -263,7 +262,7 @@ class TestExecutionWidgetPyperclipFallback:
     def test_pyperclip_import_optional(self):
         """pyperclip import is optional (handled gracefully if missing)."""
         try:
-            import pyperclip
+            import pyperclip  # noqa: F401
 
             pyperclip_available = True
         except ImportError:
@@ -376,7 +375,6 @@ class TestExecutionWidgetInheritance:
 
     def test_has_reactive_decorator_usage(self):
         """Widget uses reactive decorator for state management."""
-        from textual.reactive import reactive
 
         assert hasattr(ExecutionWidget, "exec_output")
         assert hasattr(ExecutionWidget, "is_expanded")
@@ -579,7 +577,7 @@ class TestExecutionWidgetCopyOutput:
         with (
             patch("subprocess.run") as mock_run,
             patch("sys.platform", "linux"),
-            patch.object(widget, "notify") as mock_notify,
+            patch.object(widget, "notify"),
         ):
             mock_run.return_value = MagicMock()
             mock_event = MagicMock()
@@ -609,7 +607,6 @@ class TestExecutionWidgetCopyOutput:
     @patch("widgets.blocks.execution.pyperclip", None)
     def test_copy_output_xclip_failure_suggests_pyperclip(self):
         """copy_output suggests pyperclip when xclip fails."""
-        import subprocess
 
         block = BlockState(type=BlockType.AI_RESPONSE, content_input="test")
         block.content_exec_output = "test content"

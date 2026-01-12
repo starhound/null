@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-import os
 import logging
+import os
 from dataclasses import dataclass, field
-
-logger = logging.getLogger(__name__)
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from ai.base import LLMProvider
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -275,7 +275,7 @@ class SuggestionEngine:
                 )
                 stdout, _ = await asyncio.wait_for(status_proc.communicate(), timeout=2)
                 context.git_dirty = bool(stdout.strip())
-        except (FileNotFoundError, asyncio.TimeoutError):
+        except (TimeoutError, FileNotFoundError):
             pass
         except Exception as e:
             logger.debug(f"Git status check failed: {e}")

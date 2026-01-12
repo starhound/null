@@ -192,7 +192,7 @@ class TestHistoryViewportAddBlock:
         mock_widget = MagicMock(spec=Widget)
 
         with patch.object(viewport, "mount", new_callable=AsyncMock) as mock_mount:
-            with patch.object(viewport, "scroll_end") as mock_scroll:
+            with patch.object(viewport, "scroll_end"):
                 await viewport.add_block(mock_widget)
 
                 mock_mount.assert_called_once()

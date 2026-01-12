@@ -12,7 +12,7 @@ class AIOrchestrator(CommandMixin):
 
     async def cmd_orchestrate(self, args: list[str]):
         """Multi-agent orchestration. Usage: /orchestrate <goal> | /orchestrate status | /orchestrate stop"""
-        from managers.orchestrator import AgentOrchestrator, AgentRole
+        from managers.orchestrator import AgentOrchestrator
 
         if not args:
             self.notify(
@@ -59,7 +59,7 @@ class AIOrchestrator(CommandMixin):
         try:
             result = await orchestrator.execute(goal, self.app.ai_provider)
 
-            output = f"Orchestration Complete\n"
+            output = "Orchestration Complete\n"
             output += f"Success: {result.success}\n"
             output += f"Duration: {result.duration:.2f}s\n"
             output += f"Subtasks: {len(result.subtasks)}\n\n"

@@ -56,7 +56,7 @@ class PlanStep:
         step_type: StepType = StepType.PROMPT,
         tool_name: str | None = None,
         tool_args: dict[str, Any] | None = None,
-    ) -> "PlanStep":
+    ) -> PlanStep:
         return cls(
             id=str(uuid.uuid4())[:8],
             order=order,
@@ -78,7 +78,7 @@ class Plan:
     current_step: int = 0
 
     @classmethod
-    def create(cls, goal: str) -> "Plan":
+    def create(cls, goal: str) -> Plan:
         return cls(
             id=str(uuid.uuid4())[:8],
             goal=goal,
@@ -163,7 +163,7 @@ Each step must follow this EXACT format:
 STEP 1: Brief description of what to do
 TYPE: prompt
 
-STEP 2: Brief description of next action  
+STEP 2: Brief description of next action
 TYPE: tool
 TOOL: run_command
 ARGS: {{"command": "the shell command"}}
@@ -199,7 +199,7 @@ class PlanManager:
     async def generate_plan(
         self,
         goal: str,
-        provider: "LLMProvider",
+        provider: LLMProvider,
         context: str = "",
     ) -> Plan:
         plan = Plan.create(goal)
@@ -227,7 +227,6 @@ class PlanManager:
     def _parse_plan_response(self, plan: Plan, response: str) -> None:
         import re
 
-        step_pattern = r"STEP\s*\d+:\s*(.+?)(?=\nSTEP|\nTYPE|$)"
         type_pattern = r"TYPE:\s*(prompt|tool|checkpoint)"
         tool_pattern = r"TOOL:\s*(\w+)"
         args_pattern = r"ARGS:\s*(\{.+?\})"

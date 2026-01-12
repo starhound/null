@@ -1,11 +1,11 @@
 """Tests for widgets/blocks/commit_block.py - CommitBlockWidget."""
 
-import pytest
-from datetime import datetime
 import inspect
+from datetime import datetime
 
-from textual.widgets import Static
+import pytest
 from textual.message import Message
+from textual.widgets import Static
 
 from managers.git import GitCommit, GitDiff
 from widgets.blocks.commit_block import CommitBlockWidget, CommitRevertRequested

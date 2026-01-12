@@ -2,12 +2,10 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from textual.containers import Vertical
 from textual.widgets import Input, Label
 
 from widgets.palette import CommandPalette, PaletteAction, PaletteItem
-
 
 # =============================================================================
 # PaletteAction Tests
@@ -137,7 +135,7 @@ class TestPaletteActionMatches:
     def test_partial_fuzzy_no_match(self):
         """Partial fuzzy (not all chars) should not match."""
         action = PaletteAction(name="abc", description="def")
-        matches, score = action.matches("xyz")
+        matches, _score = action.matches("xyz")
         assert matches is False
 
     def test_single_char_query(self):
@@ -256,7 +254,7 @@ class TestPaletteItemCompose:
         """Shortcut should be formatted with brackets."""
         action = PaletteAction(name="Test", description="Desc", shortcut="F1")
         item = PaletteItem(action)
-        children = list(item.compose())
+        list(item.compose())
         # The shortcut_display should be "[F1]"
         # We can verify by checking the Label was created properly
 

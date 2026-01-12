@@ -1,5 +1,3 @@
-import pytest
-
 from utils.text import make_links_clickable, strip_ansi, truncate_text
 
 

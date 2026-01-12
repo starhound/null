@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 from unittest.mock import MagicMock
 
-import pytest
 from textual.widgets import Static
 
 from widgets.nl2shell_preview import NL2ShellPreview
@@ -188,7 +187,7 @@ class TestNL2ShellPreviewClassDefinition:
     def test_has_compose_method(self):
         """NL2ShellPreview should have compose method."""
         assert hasattr(NL2ShellPreview, "compose")
-        assert callable(getattr(NL2ShellPreview, "compose"))
+        assert callable(NL2ShellPreview.compose)
 
     def test_has_watch_is_loading_method(self):
         """NL2ShellPreview should have watch_is_loading method."""

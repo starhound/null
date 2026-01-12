@@ -149,7 +149,7 @@ class NL2Shell:
             stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=2)
             if proc.returncode == 0:
                 context.git_branch = stdout.decode().strip()
-        except (FileNotFoundError, asyncio.TimeoutError):
+        except (TimeoutError, FileNotFoundError):
             pass
         except Exception:
             pass

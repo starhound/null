@@ -1,13 +1,12 @@
 """Tests for widgets/blocks/correction_block.py - CorrectionLoopBlock."""
 
-import pytest
 from datetime import datetime
 from unittest.mock import patch
 
-from textual.widgets import Static, Button, ProgressBar
-from textual.containers import Vertical
+import pytest
+from textual.widgets import Static
 
-from managers.error_detector import DetectedError, CorrectionAttempt, ErrorType
+from managers.error_detector import CorrectionAttempt, DetectedError, ErrorType
 from widgets.blocks.correction_block import CorrectionLoopBlock, CorrectionLoopStopped
 
 
@@ -582,7 +581,7 @@ class TestCorrectionLoopBlockIntegration:
 
         widgets = [CorrectionLoopBlock(error=e) for e in errors]
 
-        for widget, error in zip(widgets, errors):
+        for widget, error in zip(widgets, errors, strict=False):
             assert widget.error.error_type == error.error_type
 
 

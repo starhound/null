@@ -1,8 +1,6 @@
 """Tests for widgets/blocks/iteration_container.py - IterationContainer widget."""
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from models import AgentIteration, ToolCallState
 from widgets.blocks.iteration_container import IterationContainer
@@ -731,7 +729,7 @@ class TestIterationContainerEdgeCases:
         iter2 = AgentIteration(id="same-id", iteration_number=2)
 
         with patch.object(container, "mount"):
-            widget1 = container.add_iteration(iter1)
+            container.add_iteration(iter1)
             widget2 = container.add_iteration(iter2)
 
         # Should have only one entry

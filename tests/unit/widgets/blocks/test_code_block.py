@@ -1,17 +1,16 @@
 """Tests for widgets/blocks/code_block.py - CodeBlockWidget and helper functions."""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-import sys
-import asyncio
 
 from widgets.blocks.code_block import (
     CodeBlockWidget,
-    extract_code_blocks,
-    get_file_extension,
-    execute_code,
     _execute_bash,
     _execute_python,
+    execute_code,
+    extract_code_blocks,
+    get_file_extension,
 )
 
 
@@ -300,7 +299,7 @@ echo hello
         text = """```python
 def hello():
     print("world")
-    
+
 hello()
 ```"""
         blocks = extract_code_blocks(text)
@@ -310,7 +309,7 @@ hello()
     def test_returns_start_and_end_positions(self):
         text = "Before ```python\ncode\n``` After"
         blocks = extract_code_blocks(text)
-        code, lang, start, end = blocks[0]
+        _code, _lang, start, end = blocks[0]
         assert start == 7
         assert end == 25
 
@@ -480,7 +479,7 @@ class TestExecuteCode:
 
     @pytest.mark.asyncio
     async def test_execute_bash_with_failure(self):
-        output, exit_code = await execute_code("exit 1", "bash")
+        _output, exit_code = await execute_code("exit 1", "bash")
         assert exit_code == 1
 
     @pytest.mark.asyncio
@@ -522,27 +521,27 @@ class TestExecuteBash:
 
     @pytest.mark.asyncio
     async def test_returns_exit_code_1(self):
-        output, exit_code = await _execute_bash("exit 1")
+        _output, exit_code = await _execute_bash("exit 1")
         assert exit_code == 1
 
     @pytest.mark.asyncio
     async def test_captures_stderr(self):
-        output, exit_code = await _execute_bash("echo error >&2")
+        output, _exit_code = await _execute_bash("echo error >&2")
         assert "error" in output
 
     @pytest.mark.asyncio
     async def test_handles_command_not_found(self):
-        output, exit_code = await _execute_bash("nonexistent_command_xyz123")
+        _output, exit_code = await _execute_bash("nonexistent_command_xyz123")
         assert exit_code != 0
 
     @pytest.mark.asyncio
     async def test_handles_empty_command(self):
-        output, exit_code = await _execute_bash("")
+        _output, exit_code = await _execute_bash("")
         assert exit_code == 0
 
     @pytest.mark.asyncio
     async def test_handles_multiline_output(self):
-        output, exit_code = await _execute_bash("echo line1; echo line2")
+        output, _exit_code = await _execute_bash("echo line1; echo line2")
         assert "line1" in output
         assert "line2" in output
 
@@ -558,17 +557,17 @@ class TestExecutePython:
 
     @pytest.mark.asyncio
     async def test_returns_exit_code_1_on_error(self):
-        output, exit_code = await _execute_python("raise ValueError('test')")
+        _output, exit_code = await _execute_python("raise ValueError('test')")
         assert exit_code == 1
 
     @pytest.mark.asyncio
     async def test_captures_exception_message(self):
-        output, exit_code = await _execute_python("raise ValueError('test error')")
+        output, _exit_code = await _execute_python("raise ValueError('test error')")
         assert "ValueError" in output or "test error" in output
 
     @pytest.mark.asyncio
     async def test_handles_syntax_error(self):
-        output, exit_code = await _execute_python("def incomplete(")
+        _output, exit_code = await _execute_python("def incomplete(")
         assert exit_code == 1
 
     @pytest.mark.asyncio
@@ -581,16 +580,15 @@ class TestExecutePython:
 
     @pytest.mark.asyncio
     async def test_handles_unicode_output(self):
-        output, exit_code = await _execute_python("print('hello')")
+        _output, exit_code = await _execute_python("print('hello')")
         assert exit_code == 0
 
     @pytest.mark.asyncio
     async def test_cleans_up_temp_file(self):
-        import os
         import tempfile
 
         # Count temp files before
-        temp_dir = tempfile.gettempdir()
+        tempfile.gettempdir()
 
         await _execute_python("print('test')")
 

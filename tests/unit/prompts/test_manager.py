@@ -88,7 +88,10 @@ class TestLoadUserPrompts:
 
         prompts = manager.get_all_prompts()
         assert "my-prompt" in prompts
-        assert prompts["my-prompt"]["content"] == "# Custom Prompt\n\nYou are a helpful assistant."
+        assert (
+            prompts["my-prompt"]["content"]
+            == "# Custom Prompt\n\nYou are a helpful assistant."
+        )
         assert prompts["my-prompt"]["source"] == str(prompt_file)
 
     def test_load_txt_prompt(self, temp_prompts_dir, temp_dir, monkeypatch):
@@ -116,9 +119,7 @@ class TestLoadUserPrompts:
             "name": "Advanced Prompt",
             "description": "A prompt with extra features",
             "content": "You are an advanced assistant.",
-            "provider_overrides": {
-                "ollama": {"temperature": 0.8}
-            }
+            "provider_overrides": {"ollama": {"temperature": 0.8}},
         }
         prompt_file = temp_prompts_dir / "advanced.json"
         prompt_file.write_text(json.dumps(prompt_data))
@@ -132,7 +133,9 @@ class TestLoadUserPrompts:
         assert prompts["advanced"]["name"] == "Advanced Prompt"
         assert prompts["advanced"]["description"] == "A prompt with extra features"
         assert prompts["advanced"]["content"] == "You are an advanced assistant."
-        assert prompts["advanced"]["provider_overrides"] == {"ollama": {"temperature": 0.8}}
+        assert prompts["advanced"]["provider_overrides"] == {
+            "ollama": {"temperature": 0.8}
+        }
 
     def test_skip_example_files(self, temp_prompts_dir, temp_dir, monkeypatch):
         """Should skip files ending in .example."""
@@ -152,7 +155,9 @@ class TestLoadUserPrompts:
         assert "test.md" not in prompts
         assert "test" not in prompts
 
-    def test_name_formatting_from_filename(self, temp_prompts_dir, temp_dir, monkeypatch):
+    def test_name_formatting_from_filename(
+        self, temp_prompts_dir, temp_dir, monkeypatch
+    ):
         """Prompt names should be formatted from filenames."""
         monkeypatch.setattr(Path, "home", lambda: temp_dir)
 
@@ -244,9 +249,7 @@ class TestGetPromptContent:
             "name": "Test",
             "description": "Test prompt",
             "content": "Base content",
-            "provider_overrides": {
-                "ollama": {"content_suffix": "\nExtra for Ollama."}
-            }
+            "provider_overrides": {"ollama": {"content_suffix": "\nExtra for Ollama."}},
         }
         (temp_prompts_dir / "test.json").write_text(json.dumps(prompt_data))
 
@@ -265,9 +268,7 @@ class TestGetPromptContent:
             "name": "Test",
             "description": "Test prompt",
             "content": "Base content",
-            "provider_overrides": {
-                "openai": {"content_prefix": "Prefix: "}
-            }
+            "provider_overrides": {"openai": {"content_prefix": "Prefix: "}},
         }
         (temp_prompts_dir / "test.json").write_text(json.dumps(prompt_data))
 
@@ -288,7 +289,7 @@ class TestGetPromptContent:
             "content": "Base content",
             "provider_overrides": {
                 "anthropic": {"content": "Completely different content"}
-            }
+            },
         }
         (temp_prompts_dir / "test.json").write_text(json.dumps(prompt_data))
 
@@ -299,7 +300,9 @@ class TestGetPromptContent:
         content = manager.get_prompt_content("test", provider="anthropic")
         assert content == "Completely different content"
 
-    def test_no_override_for_unspecified_provider(self, temp_prompts_dir, temp_dir, monkeypatch):
+    def test_no_override_for_unspecified_provider(
+        self, temp_prompts_dir, temp_dir, monkeypatch
+    ):
         """Should not apply overrides for unspecified provider."""
         monkeypatch.setattr(Path, "home", lambda: temp_dir)
 
@@ -307,9 +310,7 @@ class TestGetPromptContent:
             "name": "Test",
             "description": "Test prompt",
             "content": "Base content",
-            "provider_overrides": {
-                "ollama": {"content_suffix": "\nOllama specific"}
-            }
+            "provider_overrides": {"ollama": {"content_suffix": "\nOllama specific"}},
         }
         (temp_prompts_dir / "test.json").write_text(json.dumps(prompt_data))
 
@@ -397,7 +398,7 @@ class TestSavePrompt:
             key="new-prompt",
             name="New Prompt",
             description="A new test prompt",
-            content="You are a test assistant."
+            content="You are a test assistant.",
         )
 
         assert filepath.exists()
@@ -417,10 +418,7 @@ class TestSavePrompt:
         manager = PromptManager()
 
         manager.save_prompt(
-            key="saved-prompt",
-            name="Saved",
-            description="Test",
-            content="Content"
+            key="saved-prompt", name="Saved", description="Test", content="Content"
         )
 
         prompt = manager.get_prompt("saved-prompt")
@@ -488,7 +486,9 @@ class TestReload:
         assert prompt is not None
         assert prompt["content"] == "New content"
 
-    def test_reload_removes_deleted_files(self, temp_prompts_dir, temp_dir, monkeypatch):
+    def test_reload_removes_deleted_files(
+        self, temp_prompts_dir, temp_dir, monkeypatch
+    ):
         """Reload should remove prompts for deleted files."""
         monkeypatch.setattr(Path, "home", lambda: temp_dir)
 
@@ -572,7 +572,9 @@ class TestGetAllPrompts:
         prompts = manager.get_all_prompts()
         assert "user-custom" in prompts
 
-    def test_user_prompts_override_builtin(self, temp_prompts_dir, temp_dir, monkeypatch):
+    def test_user_prompts_override_builtin(
+        self, temp_prompts_dir, temp_dir, monkeypatch
+    ):
         """User prompts with same key should override built-in."""
         monkeypatch.setattr(Path, "home", lambda: temp_dir)
 

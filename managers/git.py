@@ -1,7 +1,6 @@
 """Git operations manager for AI-native git workflows."""
 
 import asyncio
-import os
 import re
 import shutil
 from dataclasses import dataclass, field

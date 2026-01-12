@@ -1,9 +1,10 @@
 """Tests for the MCP Tools screen."""
 
-import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
 from dataclasses import dataclass
 from typing import Any
+from unittest.mock import MagicMock, PropertyMock, patch
+
+import pytest
 
 from screens.tools import ToolsScreen
 

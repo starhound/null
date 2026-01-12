@@ -40,19 +40,14 @@ def sample_theme_data():
         "boost": "#00FFFF",
         "luminosity_spread": 0.15,
         "text_alpha": 0.95,
-        "variables": {
-            "custom-var": "#AABBCC"
-        }
+        "variables": {"custom-var": "#AABBCC"},
     }
 
 
 @pytest.fixture
 def minimal_theme_data():
     """Minimal valid theme data (only required fields)."""
-    return {
-        "name": "minimal-theme",
-        "primary": "#FF0000"
-    }
+    return {"name": "minimal-theme", "primary": "#FF0000"}
 
 
 class TestLoadThemeFromDict:
@@ -300,7 +295,9 @@ class TestLoadUserThemes:
 
         # Create example and real theme
         sample_theme_data["name"] = "example-theme"
-        (user_themes_dir / "example-theme.json.example").write_text(json.dumps(sample_theme_data))
+        (user_themes_dir / "example-theme.json.example").write_text(
+            json.dumps(sample_theme_data)
+        )
 
         sample_theme_data["name"] = "real-theme"
         (user_themes_dir / "real-theme.json").write_text(json.dumps(sample_theme_data))
@@ -344,7 +341,9 @@ class TestGetAllThemes:
         for name in builtin_themes:
             assert name in all_themes
 
-    def test_user_themes_override_builtin(self, temp_dir, sample_theme_data, monkeypatch):
+    def test_user_themes_override_builtin(
+        self, temp_dir, sample_theme_data, monkeypatch
+    ):
         """User themes should override built-in themes with same name."""
         builtin_dir = temp_dir / "builtin"
         user_dir = temp_dir / ".null" / "themes"
@@ -477,7 +476,9 @@ class TestEnsureUserThemesDir:
         marker = user_dir / ".initialized"
         assert marker.exists()
 
-    def test_skips_if_already_initialized(self, temp_dir, sample_theme_data, monkeypatch):
+    def test_skips_if_already_initialized(
+        self, temp_dir, sample_theme_data, monkeypatch
+    ):
         """Should skip copying if .initialized exists."""
         user_dir = temp_dir / ".null" / "themes"
         builtin_dir = temp_dir / "builtin"

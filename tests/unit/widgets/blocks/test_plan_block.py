@@ -2,11 +2,8 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from managers.planning import Plan, PlanStep, PlanStatus, StepStatus, StepType
+from managers.planning import Plan, PlanStatus, PlanStep, StepStatus, StepType
 from widgets.blocks.plan_block import PlanBlockWidget, PlanStepWidget
-
 
 # =============================================================================
 # Helper functions for creating test data
@@ -216,38 +213,38 @@ class TestPlanStepWidgetStatusIcons:
     def test_pending_status_icon(self):
         """Pending status uses correct icon (☐)."""
         step = create_plan_step(status=StepStatus.PENDING)
-        widget = PlanStepWidget(step)
+        PlanStepWidget(step)
         # Icons are used in compose(), we can verify the mapping exists
         assert step.status == StepStatus.PENDING
 
     def test_approved_status_icon(self):
         """Approved status uses correct icon (☑)."""
         step = create_plan_step(status=StepStatus.APPROVED)
-        widget = PlanStepWidget(step)
+        PlanStepWidget(step)
         assert step.status == StepStatus.APPROVED
 
     def test_executing_status_icon(self):
         """Executing status uses correct icon (⏳)."""
         step = create_plan_step(status=StepStatus.EXECUTING)
-        widget = PlanStepWidget(step)
+        PlanStepWidget(step)
         assert step.status == StepStatus.EXECUTING
 
     def test_completed_status_icon(self):
         """Completed status uses correct icon (✓)."""
         step = create_plan_step(status=StepStatus.COMPLETED)
-        widget = PlanStepWidget(step)
+        PlanStepWidget(step)
         assert step.status == StepStatus.COMPLETED
 
     def test_skipped_status_icon(self):
         """Skipped status uses correct icon (⊘)."""
         step = create_plan_step(status=StepStatus.SKIPPED)
-        widget = PlanStepWidget(step)
+        PlanStepWidget(step)
         assert step.status == StepStatus.SKIPPED
 
     def test_failed_status_icon(self):
         """Failed status uses correct icon (✗)."""
         step = create_plan_step(status=StepStatus.FAILED)
-        widget = PlanStepWidget(step)
+        PlanStepWidget(step)
         assert step.status == StepStatus.FAILED
 
 
@@ -257,19 +254,19 @@ class TestPlanStepWidgetTypeIcons:
     def test_prompt_type_icon(self):
         """Prompt type uses thought bubble icon (💭)."""
         step = create_plan_step(step_type=StepType.PROMPT)
-        widget = PlanStepWidget(step)
+        PlanStepWidget(step)
         assert step.step_type == StepType.PROMPT
 
     def test_tool_type_icon(self):
         """Tool type uses wrench icon (🔧)."""
         step = create_plan_step(step_type=StepType.TOOL)
-        widget = PlanStepWidget(step)
+        PlanStepWidget(step)
         assert step.step_type == StepType.TOOL
 
     def test_checkpoint_type_icon(self):
         """Checkpoint type uses construction icon (🚧)."""
         step = create_plan_step(step_type=StepType.CHECKPOINT)
-        widget = PlanStepWidget(step)
+        PlanStepWidget(step)
         assert step.step_type == StepType.CHECKPOINT
 
 

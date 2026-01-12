@@ -1,10 +1,11 @@
 """Tests for the MCP server catalog screen."""
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 from mcp.catalog import CATALOG, CATEGORIES, CatalogEntry, get_by_name
-from screens.mcp_catalog import MCPCatalogScreen, CatalogItemWidget
+from screens.mcp_catalog import CatalogItemWidget, MCPCatalogScreen
 
 
 @pytest.fixture
@@ -170,7 +171,6 @@ class TestMCPCatalogScreenCSS:
     def test_default_css_defined(self):
         """Test that DEFAULT_CSS is defined."""
         assert MCPCatalogScreen.DEFAULT_CSS is not None
-        css = MCPCatalogScreen.DEFAULT_CSS
 
     def test_css_contains_main_selectors(self):
         """Test that CSS contains expected selectors."""

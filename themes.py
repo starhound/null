@@ -135,8 +135,8 @@ def _create_example_theme(themes_dir: Path) -> None:
         "text_alpha": 0.92,
         "variables": {
             "block-cursor-background": "#FF6B6B",
-            "block-cursor-foreground": "#1A1A2E"
-        }
+            "block-cursor-foreground": "#1A1A2E",
+        },
     }
 
     example_path = themes_dir / "my-custom-theme.json.example"

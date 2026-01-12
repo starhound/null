@@ -1,7 +1,5 @@
 """Unit tests for context.py - ContextInfo and ContextManager."""
 
-import pytest
-
 from context import ContextInfo, ContextManager
 from models import BlockState, BlockType
 

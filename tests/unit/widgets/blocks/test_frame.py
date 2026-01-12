@@ -1,7 +1,5 @@
 """Tests for widgets/blocks/frame.py - BlockFrame and FrameSeparator."""
 
-import pytest
-
 from widgets.blocks.frame import BlockFrame, FrameSeparator
 
 
@@ -199,8 +197,6 @@ class TestBlockFrameReactiveMode:
     """Tests for the reactive mode property."""
 
     def test_mode_is_reactive(self):
-        from textual.reactive import Reactive
-
         assert hasattr(BlockFrame, "mode")
         assert "mode" in dir(BlockFrame)
 

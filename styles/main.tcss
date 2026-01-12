@@ -457,8 +457,8 @@ ThinkingWidget .peek-window {
     height: auto;
     min-height: 3;
     max-height: 10;
-    margin: 0 1 1 1;
-    padding: 1 1;
+    margin: 0 1 1 3;
+    padding: 1 2;
     background: transparent;
     color: $text-muted;
     scrollbar-size: 0 0;
@@ -1056,7 +1056,7 @@ BlockFooter .stop-action:hover {
 /* Base modal - dark void overlay */
 ModalScreen {
     align: center middle;
-    background: $layer-void 80%;
+    background: rgba(0, 0, 0, 0.7);
 }
 
 /* --- Help Screen --- */
@@ -2079,7 +2079,7 @@ ResponseWidget .response-title {
 ResponseWidget #response-content {
     width: 100%;
     height: auto;
-    padding: 1 1;
+    padding: 1 2;
     color: $text-bright;
 }
 
@@ -2309,11 +2309,11 @@ ToolOutput {
     width: 100%;
     height: auto;
     max-height: 20;
-    padding: 0 2;
+    padding: 1 2;
     background: transparent;
     display: none;
     border-left: solid $accent 40%;
-    margin-left: 1;
+    margin-left: 3;
 }
 
 ToolOutput.visible {
@@ -2367,7 +2367,7 @@ AIResponseBlock ThinkingWidget .peek-window {
 }
 
 AIResponseBlock ToolAccordion {
-    margin: 0 1;
+    margin: 0 1 0 3;
 }
 
 AIResponseBlock ToolAccordionItem:hover {
@@ -2385,6 +2385,7 @@ AIResponseBlock ToolOutput {
 AIResponseBlock ResponseWidget .response-container {
     border: none;
     border-left: thick $primary 30%;
+    margin-left: 3;
 }
 
 AIResponseBlock ResponseWidget .response-header {
@@ -2406,7 +2407,9 @@ AIResponseBlock ActionBar {
 
 AIResponseBlock ActionButton:hover {
     color: $primary;
-    background: $primary 8%;
+    background: $layer-raised;
+    text-style: bold;
+    border-bottom: solid $primary;
 }
 
 /* ==========================================================================
@@ -2514,6 +2517,7 @@ AgentResponseBlock ResponseWidget .response-container {
     border: none;
     border-left: thick $secondary 50%;
     background: $secondary 2%;
+    margin-left: 3;
 }
 
 AgentResponseBlock ResponseWidget .response-header {
@@ -2540,8 +2544,9 @@ AgentResponseBlock ActionBar {
 
 AgentResponseBlock ActionButton:hover {
     color: $secondary;
-    background: $secondary 15%;
+    background: $layer-raised;
     text-style: bold;
+    border-bottom: solid $secondary;
 }
 
 AgentResponseBlock ActionBar .action-meta {
@@ -2553,6 +2558,7 @@ AgentResponseBlock ExecutionWidget #exec-container {
     background: transparent;
     border: none;
     border-left: solid $secondary 40%;
+    margin-left: 3;
 }
 
 AgentResponseBlock ExecutionWidget .exec-header {
@@ -2693,10 +2699,10 @@ ThinkingSection .thinking-title {
 ThinkingSection .thinking-content {
     width: 100%;
     height: auto;
-    padding: 1 2 1 3;
+    padding: 1 2;
     background: transparent;
     border-left: solid $accent 40%;
-    margin: 0 0 1 2;
+    margin: 0 0 1 3;
     display: none;
     color: $text-muted;
 }
@@ -3557,9 +3563,47 @@ PlanStepWidget:focus {
 
 .plan-actions {
     margin-top: 1;
-    height: auto;
+    height: 1;
+    background: transparent;
 }
 
 .plan-actions Button {
     margin-right: 1;
+    height: 1;
+    min-width: 8;
+    border: none;
+    background: transparent;
+}
+
+.plan-actions Button.-primary {
+    color: $primary;
+    background: $layer-raised;
+}
+
+.plan-actions Button.-primary:hover {
+    color: $background;
+    background: $primary;
+    text-style: bold;
+}
+
+.plan-actions Button.-success {
+    color: $success;
+    background: $layer-raised;
+}
+
+.plan-actions Button.-success:hover {
+    color: $background;
+    background: $success;
+    text-style: bold;
+}
+
+.plan-actions Button.-error {
+    color: $error;
+    background: $layer-raised;
+}
+
+.plan-actions Button.-error:hover {
+    color: $background;
+    background: $error;
+    text-style: bold;
 }

@@ -1,6 +1,5 @@
 """Tests for the SSH add/edit host screen."""
 
-import pytest
 from unittest.mock import MagicMock, patch
 
 from screens.ssh_add import SSHAddScreen
@@ -378,12 +377,14 @@ class TestSSHAddScreenSaveHost:
                 hostname="example.com",
                 port=port_str,
             )
-            screen.query_one = MagicMock(side_effect=lambda sel, _: mock_inputs[sel])
+            screen.query_one = MagicMock(
+                side_effect=lambda sel, _, inputs=mock_inputs: inputs[sel]
+            )
 
             with patch.object(
                 type(screen),
                 "app",
-                new_callable=lambda: property(lambda self: mock_app),
+                new_callable=lambda app=mock_app: property(lambda self, app=app: app),
             ):
                 screen._save_host()
 

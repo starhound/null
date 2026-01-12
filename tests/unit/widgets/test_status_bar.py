@@ -583,10 +583,10 @@ class TestStatusBarOnMount:
         bar = StatusBar()
         with (
             patch.object(bar, "_update_mode_display") as mock_mode,
-            patch.object(bar, "_update_context_display") as mock_ctx,
-            patch.object(bar, "_update_provider_display") as mock_prov,
-            patch.object(bar, "_update_token_display") as mock_tok,
-            patch.object(bar, "_update_process_display") as mock_proc,
+            patch.object(bar, "_update_context_display"),
+            patch.object(bar, "_update_provider_display"),
+            patch.object(bar, "_update_token_display"),
+            patch.object(bar, "_update_process_display"),
         ):
             bar.on_mount()
             mock_mode.assert_called_once()

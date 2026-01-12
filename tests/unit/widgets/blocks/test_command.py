@@ -3,8 +3,6 @@
 import json
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from models import BlockState, BlockType
 from widgets.blocks.command import CommandBlock
 from widgets.blocks.parts import VizButton
@@ -254,7 +252,7 @@ class TestCommandBlockSwitchToTui:
 
         # Mock mount to avoid actual widget mounting
         with patch.object(widget, "mount"), patch.object(widget, "add_class"):
-            result = widget.switch_to_tui()
+            widget.switch_to_tui()
 
         assert widget._mode == "tui"
 

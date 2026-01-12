@@ -12,7 +12,7 @@ class AIBackground(CommandMixin):
 
     async def cmd_bg(self, args: list[str]):
         """Background agents. Usage: /bg <goal> | /bg list | /bg status <id> | /bg cancel <id> | /bg logs <id> | /bg clear"""
-        from managers.background import BackgroundAgentManager, TaskStatus
+        from managers.background import BackgroundAgentManager
 
         manager: BackgroundAgentManager = (
             getattr(self.app, "background_manager", None) or BackgroundAgentManager()
@@ -72,8 +72,6 @@ class AIBackground(CommandMixin):
         await self.show_output("/bg list", "\n".join(lines))
 
     async def _bg_status(self, manager, task_id: str):
-        from managers.background import TaskStatus
-
         task = manager.get_task(task_id)
         if not task:
             self.notify(f"Task not found: {task_id}", severity="error")

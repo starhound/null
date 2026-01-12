@@ -256,8 +256,9 @@ class TestProvidersScreenButtonHandling:
     @patch("screens.providers.Config")
     def test_close_button_dismisses_with_none(self, mock_config):
         """Close button should dismiss screen with None result."""
-        from screens.providers import ProvidersScreen
         from textual.widgets import Button
+
+        from screens.providers import ProvidersScreen
 
         mock_config.get.return_value = None
         screen = ProvidersScreen()
@@ -276,8 +277,9 @@ class TestProvidersScreenButtonHandling:
     @patch("screens.providers.Config")
     def test_configure_button_dismisses_with_configure_action(self, mock_config):
         """Configure button should dismiss with ('configure', provider_name)."""
-        from screens.providers import ProvidersScreen
         from textual.widgets import Button
+
+        from screens.providers import ProvidersScreen
 
         mock_config.get.return_value = None
         screen = ProvidersScreen()
@@ -298,8 +300,9 @@ class TestProvidersScreenButtonHandling:
         self, mock_settings_manager, mock_config
     ):
         """Activate button should set provider and dismiss with ('activated', provider_name)."""
-        from screens.providers import ProvidersScreen
         from textual.widgets import Button
+
+        from screens.providers import ProvidersScreen
 
         mock_config.get.return_value = None
         mock_config.set = MagicMock()
@@ -323,8 +326,9 @@ class TestProvidersScreenButtonHandling:
     @patch("screens.providers.Config")
     def test_unconfigure_button_removes_provider_config(self, mock_config):
         """Unconfigure button should remove provider config and dismiss."""
-        from screens.providers import ProvidersScreen
         from textual.widgets import Button
+
+        from screens.providers import ProvidersScreen
 
         mock_storage = MagicMock()
         mock_config.get.return_value = None
@@ -346,8 +350,9 @@ class TestProvidersScreenButtonHandling:
     @patch("screens.providers.Config")
     def test_button_with_none_id_is_ignored(self, mock_config):
         """Button with None id should not cause errors."""
-        from screens.providers import ProvidersScreen
         from textual.widgets import Button
+
+        from screens.providers import ProvidersScreen
 
         mock_config.get.return_value = None
         screen = ProvidersScreen()
@@ -430,7 +435,7 @@ class TestProvidersScreenActions:
     @patch("screens.providers.Config")
     def test_action_configure_focused_with_provider_row(self, mock_config):
         """action_configure_focused should dismiss with configure action for focused ProviderRow."""
-        from screens.providers import ProvidersScreen, ProviderRow
+        from screens.providers import ProviderRow, ProvidersScreen
 
         mock_config.get.return_value = None
         screen = ProvidersScreen()
@@ -453,8 +458,9 @@ class TestProvidersScreenActions:
         self, mock_config
     ):
         """action_configure_focused should do nothing if focused element is not ProviderRow."""
-        from screens.providers import ProvidersScreen
         from textual.widgets import Button
+
+        from screens.providers import ProvidersScreen
 
         mock_config.get.return_value = None
         screen = ProvidersScreen()

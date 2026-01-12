@@ -10,10 +10,9 @@ Tests focus on:
 
 import asyncio
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -240,7 +239,7 @@ class TestApplyCursorSettings:
         self, null_app_with_mocks, monkeypatch
     ):
         """_apply_cursor_settings should call apply_cursor_settings utility."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         mock_apply = MagicMock()
         monkeypatch.setattr("utils.terminal.apply_cursor_settings", mock_apply)
@@ -265,7 +264,7 @@ class TestIsBusy:
 
     def test_is_busy_false_when_no_workers_or_processes(self, null_app_with_mocks):
         """is_busy should return False when nothing running."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
         managers["process_manager"].get_count.return_value = 0
         app._active_worker = None
 
@@ -273,14 +272,14 @@ class TestIsBusy:
 
     def test_is_busy_true_when_process_running(self, null_app_with_mocks):
         """is_busy should return True when processes are running."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
         managers["process_manager"].get_count.return_value = 1
 
         assert app.is_busy() is True
 
     def test_is_busy_true_when_worker_active(self, null_app_with_mocks):
         """is_busy should return True when worker is active."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
         managers["process_manager"].get_count.return_value = 0
 
         mock_worker = MagicMock()
@@ -291,7 +290,7 @@ class TestIsBusy:
 
     def test_is_busy_false_when_worker_finished(self, null_app_with_mocks):
         """is_busy should return False when worker is finished."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
         managers["process_manager"].get_count.return_value = 0
 
         mock_worker = MagicMock()
@@ -306,7 +305,7 @@ class TestUpdateProcessCount:
 
     def test_update_process_count_handles_missing_widget(self, null_app_with_mocks):
         """_update_process_count should handle missing status bar gracefully."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
         # Should not raise - widgets aren't mounted
         app._update_process_count()
 
@@ -321,7 +320,7 @@ class TestDoExport:
 
     def test_do_export_warns_on_empty_blocks(self, null_app_with_mocks, monkeypatch):
         """_do_export should warn when blocks list is empty."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
         app.blocks = []
 
         mock_notify = MagicMock()
@@ -336,7 +335,7 @@ class TestDoExport:
 
     def test_do_export_calls_save_export(self, null_app_with_mocks, monkeypatch):
         """_do_export should call save_export with blocks."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         mock_block = MagicMock()
         app.blocks = [mock_block]
@@ -354,13 +353,13 @@ class TestDoExport:
 
     def test_do_export_handles_exception(self, null_app_with_mocks, monkeypatch):
         """_do_export should notify on exception."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         mock_block = MagicMock()
         app.blocks = [mock_block]
 
         def raise_error(*args, **kwargs):
-            raise IOError("Disk full")
+            raise OSError("Disk full")
 
         monkeypatch.setattr("models.save_export", raise_error)
 
@@ -379,7 +378,7 @@ class TestAutoSave:
 
     def test_auto_save_saves_session(self, null_app_with_mocks):
         """_auto_save should call save_current_session."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         mock_block = MagicMock()
         app.blocks = [mock_block]
@@ -393,7 +392,7 @@ class TestAutoSave:
 
     def test_auto_save_handles_exception(self, null_app_with_mocks):
         """_auto_save should handle exception gracefully."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         managers["storage"].save_current_session.side_effect = Exception("DB error")
 
@@ -410,7 +409,7 @@ class TestActionSmartQuit:
 
     def test_smart_quit_cancels_when_busy(self, null_app_with_mocks, monkeypatch):
         """action_smart_quit should cancel operation when busy."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         managers["process_manager"].get_count.return_value = 1
 
@@ -423,7 +422,7 @@ class TestActionSmartQuit:
 
     def test_smart_quit_quits_when_idle(self, null_app_with_mocks, monkeypatch):
         """action_smart_quit should quit when idle."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         managers["process_manager"].get_count.return_value = 0
         app._active_worker = None
@@ -443,7 +442,7 @@ class TestActionQuickExport:
         self, null_app_with_mocks, monkeypatch
     ):
         """action_quick_export should call _do_export with 'md' format."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         mock_do_export = MagicMock()
         monkeypatch.setattr(app, "_do_export", mock_do_export)
@@ -456,20 +455,31 @@ class TestActionQuickExport:
 class TestActionClearHistory:
     """Tests for NullApp.action_clear_history() method."""
 
-    def test_clear_history_calls_run_worker(self, null_app_with_mocks, monkeypatch):
-        """action_clear_history should schedule work via run_worker."""
-        app, managers, config, settings = null_app_with_mocks
+    def test_clear_history_clears_blocks_directly(
+        self, null_app_with_mocks, monkeypatch
+    ):
+        """action_clear_history should clear blocks and reset CLI state."""
+        app, _managers, _config, _settings = null_app_with_mocks
 
-        captured_coro = []
+        # Set up initial state
+        mock_block = MagicMock()
+        app.blocks = [mock_block]
+        app.current_cli_block = MagicMock()
+        app.current_cli_widget = MagicMock()
 
-        def capture_worker(coro):
-            captured_coro.append(coro)
-
-        monkeypatch.setattr(app, "run_worker", capture_worker)
+        # Mock notify to avoid widget access issues
+        mock_notify = MagicMock()
+        monkeypatch.setattr(app, "notify", mock_notify)
 
         app.action_clear_history()
 
-        assert len(captured_coro) == 1
+        # Verify blocks are cleared
+        assert app.blocks == []
+        # Verify CLI state is reset
+        assert app.current_cli_block is None
+        assert app.current_cli_widget is None
+        # Verify user notification
+        mock_notify.assert_called_once_with("History cleared")
 
 
 # ---------------------------------------------------------------------------
@@ -484,7 +494,7 @@ class TestFindWidgetForBlock:
         self, null_app_with_mocks, monkeypatch
     ):
         """_find_widget_for_block should handle query errors gracefully."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         # query_one will raise since widgets aren't mounted
         # But the method accesses query_one, so we mock it
@@ -504,7 +514,7 @@ class TestFindWidgetForBlock:
         self, null_app_with_mocks, monkeypatch
     ):
         """_find_widget_for_block should return matching widget."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         # Create mock widgets
         mock_block1 = MagicMock()
@@ -543,7 +553,7 @@ class TestPushScreenWait:
         self, null_app_with_mocks, monkeypatch
     ):
         """push_screen_wait should return the dismiss result."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         expected_result = {"key": "value"}
 
@@ -578,7 +588,7 @@ class TestPerformExit:
     @pytest.mark.asyncio
     async def test_perform_exit_closes_ai_manager(self, null_app_with_mocks):
         """_perform_exit should close AI manager."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         # Mock exit
         app.exit = MagicMock()
@@ -592,7 +602,7 @@ class TestPerformExit:
         self, null_app_with_mocks
     ):
         """_perform_exit should clear session when clear_session=True."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         # Mock exit
         app.exit = MagicMock()
@@ -604,7 +614,7 @@ class TestPerformExit:
     @pytest.mark.asyncio
     async def test_perform_exit_calls_exit(self, null_app_with_mocks):
         """_perform_exit should call app.exit()."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         app.exit = MagicMock()
 
@@ -624,7 +634,7 @@ class TestInitMCP:
     @pytest.mark.asyncio
     async def test_init_mcp_initializes_manager(self, null_app_with_mocks):
         """_init_mcp should call mcp_manager.initialize()."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         await app._init_mcp()
 
@@ -633,7 +643,7 @@ class TestInitMCP:
     @pytest.mark.asyncio
     async def test_init_mcp_notifies_on_tools(self, null_app_with_mocks, monkeypatch):
         """_init_mcp should notify when tools are available."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         managers["mcp_manager"].get_all_tools.return_value = [
             MagicMock(),
@@ -652,7 +662,7 @@ class TestInitMCP:
     @pytest.mark.asyncio
     async def test_init_mcp_handles_exception(self, null_app_with_mocks):
         """_init_mcp should handle exceptions gracefully."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         managers["mcp_manager"].initialize.side_effect = Exception("Connection failed")
 
@@ -665,7 +675,7 @@ class TestConnectNewMCPServer:
     @pytest.mark.asyncio
     async def test_connect_success_notifies(self, null_app_with_mocks, monkeypatch):
         """_connect_new_mcp_server should notify on success."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         managers["mcp_manager"].connect_server = AsyncMock(return_value=True)
 
@@ -685,7 +695,7 @@ class TestConnectNewMCPServer:
     @pytest.mark.asyncio
     async def test_connect_failure_warns(self, null_app_with_mocks, monkeypatch):
         """_connect_new_mcp_server should warn on failure."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         managers["mcp_manager"].connect_server = AsyncMock(return_value=False)
 
@@ -701,7 +711,7 @@ class TestConnectNewMCPServer:
     @pytest.mark.asyncio
     async def test_connect_exception_errors(self, null_app_with_mocks, monkeypatch):
         """_connect_new_mcp_server should error on exception."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         managers["mcp_manager"].connect_server = AsyncMock(
             side_effect=Exception("Timeout")
@@ -727,14 +737,14 @@ class TestUpdateHeader:
 
     def test_update_header_handles_missing_widget(self, null_app_with_mocks):
         """_update_header should handle missing header gracefully."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         # Should not raise - widget not mounted
         app._update_header("openai", "gpt-4", connected=True)
 
     def test_update_header_calls_widget_method(self, null_app_with_mocks, monkeypatch):
         """_update_header should call header.set_provider()."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         mock_header = MagicMock()
 
@@ -761,7 +771,7 @@ class TestCheckProviderHealth:
     @pytest.mark.asyncio
     async def test_check_health_updates_provider_reference(self, null_app_with_mocks):
         """_check_provider_health should refresh provider reference."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         mock_provider = MagicMock()
         mock_provider.model = "test-model"
@@ -784,7 +794,7 @@ class TestCheckProviderHealth:
         self, null_app_with_mocks, monkeypatch
     ):
         """_check_provider_health should handle no active provider."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         managers["ai_manager"].get_active_provider.return_value = None
 
@@ -807,7 +817,7 @@ class TestCheckProviderHealth:
         self, null_app_with_mocks, monkeypatch
     ):
         """_check_provider_health should handle exceptions."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         def raise_error(*args, **kwargs):
             raise Exception("Query failed")
@@ -828,7 +838,7 @@ class TestStopProcess:
     @pytest.mark.asyncio
     async def test_stop_process_calls_manager(self, null_app_with_mocks, monkeypatch):
         """_stop_process should call process_manager.stop()."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         managers["process_manager"].stop.return_value = True
 
@@ -845,7 +855,7 @@ class TestStopProcess:
         self, null_app_with_mocks, monkeypatch
     ):
         """_stop_process should reset CLI session if matching block."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         mock_block = MagicMock()
         mock_block.id = "block-123"
@@ -871,7 +881,7 @@ class TestStopProcess:
         self, null_app_with_mocks, monkeypatch
     ):
         """_stop_process should warn when no process to stop."""
-        app, managers, config, settings = null_app_with_mocks
+        app, managers, _config, _settings = null_app_with_mocks
 
         managers["process_manager"].stop.return_value = False
 
@@ -893,7 +903,7 @@ class TestShowCopyFeedback:
 
     def test_show_copy_feedback_handles_missing_widget(self, null_app_with_mocks):
         """_show_copy_feedback should handle missing widgets gracefully."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         # Should not raise - widget not mounted
         app._show_copy_feedback("block-123")
@@ -902,7 +912,7 @@ class TestShowCopyFeedback:
         self, null_app_with_mocks, monkeypatch
     ):
         """_show_copy_feedback should call action bar method."""
-        app, managers, config, settings = null_app_with_mocks
+        app, _managers, _config, _settings = null_app_with_mocks
 
         from widgets.blocks.actions import ActionBar
 

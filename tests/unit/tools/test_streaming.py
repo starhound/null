@@ -1,7 +1,6 @@
 """Tests for tools/streaming.py - Streaming tool execution with real-time progress."""
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -206,7 +205,7 @@ class TestProgressPatterns:
 
     def test_pattern_structure(self):
         """Each pattern should be (string, float) tuple."""
-        for cmd, patterns in PROGRESS_PATTERNS.items():
+        for _cmd, patterns in PROGRESS_PATTERNS.items():
             for pattern, progress in patterns:
                 assert isinstance(pattern, str)
                 assert isinstance(progress, float)
@@ -404,12 +403,13 @@ class TestRunCommandStreaming:
             await asyncio.sleep(0.05)
             tool_call.cancel()
 
-        asyncio.create_task(cancel_after_delay())
+        task = asyncio.create_task(cancel_after_delay())
 
         result = await run_command_streaming(
             "sleep 10",
             tool_call=tool_call,
         )
+        _ = task  # Keep reference to prevent garbage collection
 
         assert "Cancelled by user" in result
 
@@ -426,13 +426,14 @@ class TestRunCommandStreaming:
             await asyncio.sleep(0.05)
             tool_call.cancel()
 
-        asyncio.create_task(cancel_after_delay())
+        task = asyncio.create_task(cancel_after_delay())
 
         await run_command_streaming(
             "sleep 10",
             on_progress=on_progress,
             tool_call=tool_call,
         )
+        _ = task
 
         statuses = [p.status for p in progress_updates]
         assert ToolStatus.CANCELLED in statuses
@@ -583,10 +584,11 @@ class TestStreamCommand:
             await asyncio.sleep(0.05)
             tool_call.cancel()
 
-        asyncio.create_task(cancel_after_delay())
+        task = asyncio.create_task(cancel_after_delay())
 
         async for progress in stream_command("sleep 10", tool_call=tool_call):
             updates.append(progress)
+        _ = task
 
         assert any(p.status == ToolStatus.CANCELLED for p in updates)
         assert "Cancelled by user" in updates[-1].output

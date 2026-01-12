@@ -230,8 +230,9 @@ class TestApprovalScreen:
     @pytest.mark.asyncio
     async def test_approval_screen_has_buttons(self, running_app):
         pilot, app = running_app
-        from screens.approval import ToolApprovalScreen
         from textual.widgets import Button
+
+        from screens.approval import ToolApprovalScreen
 
         screen = ToolApprovalScreen(
             tool_calls=[{"name": "test_tool", "arguments": {}}],
@@ -281,8 +282,9 @@ class TestConfirmDialog:
     @pytest.mark.asyncio
     async def test_confirm_dialog_has_buttons(self, running_app):
         pilot, app = running_app
-        from screens.confirm import ConfirmDialog
         from textual.widgets import Button
+
+        from screens.confirm import ConfirmDialog
 
         screen = ConfirmDialog(
             title="Test",

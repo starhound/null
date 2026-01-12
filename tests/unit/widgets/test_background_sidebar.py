@@ -1,21 +1,19 @@
 """Tests for widgets/background_sidebar.py - BackgroundTasksSidebar and TaskItemWidget."""
 
-from datetime import datetime
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-from textual.widgets import Static, Button, ProgressBar
 from textual.containers import ScrollableContainer
+from textual.widgets import Static
 
-from managers.background import BackgroundTask, TaskStatus, BackgroundAgentManager
+from managers.background import BackgroundAgentManager, BackgroundTask, TaskStatus
 from widgets.background_sidebar import (
-    BackgroundTasksSidebar,
-    TaskItemWidget,
-    BackgroundTaskSelected,
     BackgroundTaskCancelRequested,
+    BackgroundTaskSelected,
+    BackgroundTasksSidebar,
     NewBackgroundTaskRequested,
+    TaskItemWidget,
 )
-
 
 # =============================================================================
 # Message Tests

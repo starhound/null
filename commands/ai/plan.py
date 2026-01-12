@@ -12,7 +12,7 @@ class AIPlan(CommandMixin):
 
     async def cmd_plan(self, args: list[str]):
         """Planning mode. Usage: /plan <goal> | /plan status | /plan approve [step_id|all] | /plan skip <step_id> | /plan cancel | /plan execute"""
-        from managers.planning import PlanManager, StepStatus
+        from managers.planning import PlanManager
 
         pm: PlanManager = getattr(self.app, "_plan_manager", None) or PlanManager()
         if not hasattr(self.app, "_plan_manager"):
@@ -136,8 +136,9 @@ class AIPlan(CommandMixin):
             self.notify("Could not cancel plan", severity="error")
 
     async def _plan_execute(self, pm):
-        from managers.planning import StepStatus, StepType
         import time
+
+        from managers.planning import StepType
 
         plan = pm.active_plan
         if not plan:
