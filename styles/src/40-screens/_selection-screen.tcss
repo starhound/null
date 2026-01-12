@@ -1,0 +1,369 @@
+/* ==========================================================================
+   Selection Screens
+   ========================================================================== */
+
+SelectionListScreen {
+    /* Inherits from ModalScreen */
+}
+
+SelectionListScreen #selection-container {
+    width: 40%;
+    min-width: 30;
+    height: auto;
+    max-height: 60%;
+    background: $surface;
+    border: solid $panel;
+    padding: 1 2;
+    layout: vertical;
+}
+
+SelectionListScreen #selection-container > Label {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+SelectionListScreen ListView {
+    height: auto;
+    max-height: 15;
+    margin: 0;
+    padding: 0;
+    background: $panel;
+}
+
+SelectionListScreen ListItem {
+    padding: 0 1;
+    height: 1;
+}
+
+SelectionListScreen ListItem:hover {
+    background: $surface;
+}
+
+SelectionListScreen #cancel_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+SelectionListScreen #cancel_btn:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   Model List Screen
+   ========================================================================== */
+
+ModelListScreen {
+    /* Inherits from ModalScreen */
+}
+
+ModelListScreen #model-selection-container {
+    width: 60%;
+    min-width: 50;
+    height: auto;
+    max-height: 80%;
+    background: $surface;
+    border: solid $panel;
+    padding: 1 2;
+    layout: vertical;
+}
+
+ModelListScreen #model-title {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+ModelListScreen #model-search {
+    margin-bottom: 1;
+    border: solid $panel;
+    background: $panel;
+    height: 3;
+}
+
+ModelListScreen #model-search:focus {
+    border: solid $primary;
+}
+
+ModelListScreen #loading-indicator {
+    height: 1;
+    color: $warning;
+    text-style: italic;
+    margin-bottom: 1;
+}
+
+ModelListScreen #loading-indicator.success {
+    color: $success;
+    text-style: bold;
+}
+
+ModelListScreen #loading-indicator.error {
+    color: $error;
+    text-style: bold;
+}
+
+ModelListScreen #model-scroll {
+    height: auto;
+    max-height: 25;
+    background: $panel;
+    padding: 0 1;
+}
+
+ModelListScreen Collapsible {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+}
+
+ModelListScreen CollapsibleTitle {
+    color: $accent;
+    text-style: bold;
+    padding: 0 1;
+}
+
+ModelListScreen CollapsibleTitle:hover {
+    background: $surface;
+}
+
+ModelListScreen .model-item {
+    padding: 0 2;
+    height: 1;
+    color: $text;
+}
+
+ModelListScreen .model-item:hover {
+    background: $primary 30%;
+    color: $text;
+    text-style: bold;
+}
+
+ModelListScreen .more-label {
+    color: $text-muted;
+    text-style: italic;
+    padding: 0 2;
+}
+
+ModelListScreen #cancel_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+ModelListScreen #cancel_btn:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   Prompt Editor Screen
+   ========================================================================== */
+
+PromptEditorScreen {
+    align: center middle;
+    background: $layer-void 80%;
+}
+
+PromptEditorScreen #editor-container {
+    width: 90%;
+    height: 90%;
+    background: $layer-base;
+    border: double $secondary $border-normal;
+    layout: horizontal;
+}
+
+/* Sidebar */
+PromptEditorScreen #sidebar {
+    width: 30%;
+    height: 100%;
+    border-right: solid $secondary $border-dim;
+    layout: vertical;
+}
+
+PromptEditorScreen #sidebar-title {
+    text-style: bold;
+    color: $secondary;
+    padding: 1;
+    text-align: center;
+    background: $layer-raised 30%;
+}
+
+PromptEditorScreen ListView {
+    height: 1fr;
+    background: $layer-raised 10%;
+}
+
+PromptEditorScreen PromptListItem {
+    padding: 1 2;
+    color: $text-muted;
+}
+
+PromptEditorScreen PromptListItem:hover {
+    background: $layer-raised 30%;
+    color: $text-bright;
+}
+
+PromptEditorScreen PromptListItem.--highlight {
+    background: $secondary 20%;
+    color: $text-bright;
+    text-style: bold;
+}
+
+PromptEditorScreen #sidebar-buttons {
+    height: auto;
+    padding: 1;
+    layout: horizontal;
+    align: center middle;
+    background: $layer-raised 20%;
+}
+
+PromptEditorScreen Button {
+    min-width: 8;
+    margin: 0 1;
+    border: none;
+}
+
+PromptEditorScreen #new-btn {
+    background: $success 20%;
+    color: $success;
+}
+PromptEditorScreen #new-btn:hover {
+    background: $success;
+    color: $layer-void;
+}
+
+/* Main Content */
+PromptEditorScreen #main-content {
+    width: 70%;
+    height: 100%;
+    layout: vertical;
+    padding: 1 2;
+}
+
+PromptEditorScreen .field-label {
+    color: $secondary;
+    text-style: bold;
+    margin-top: 1;
+}
+
+PromptEditorScreen Input {
+    background: $layer-raised 10%;
+    border: none;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+PromptEditorScreen TextArea {
+    height: 1fr;
+    background: $layer-raised 10%;
+    border: solid $secondary $border-dim;
+    margin-top: 1;
+}
+
+PromptEditorScreen TextArea:focus {
+    border: solid $secondary $border-normal;
+}
+
+PromptEditorScreen #footer-buttons {
+    height: 3;
+    margin-top: 1;
+    layout: horizontal;
+    align: right middle;
+}
+
+PromptEditorScreen #save-btn {
+    background: $success;
+    color: $layer-void;
+    margin-left: 2;
+}
+
+PromptEditorScreen #delete-btn {
+    background: $error;
+    color: $text-bright;
+    margin-right: 1; 
+}
+
+PromptEditorScreen .spacer {
+    width: 1fr;
+}
+
+PromptEditorScreen #close-btn {
+    background: $layer-raised;
+    color: $text-muted;
+}
+
+/* ==========================================================================
+   Todo Screen
+   ========================================================================== */
+
+TodoScreen {
+    align: center middle;
+    background: $layer-void 80%;
+}
+
+TodoScreen #todo-container {
+    width: 70%;
+    height: 80%;
+    background: $layer-base;
+    border: double $primary $border-normal;
+    layout: vertical;
+    padding: 1 2;
+}
+
+TodoScreen #title {
+    text-style: bold;
+    color: $primary;
+    text-align: center;
+    padding-bottom: 1;
+    border-bottom: solid $primary 20%;
+}
+
+TodoScreen DataTable {
+    height: 1fr;
+    background: $layer-raised 10%;
+    margin-bottom: 1;
+}
+
+TodoScreen DataTable > .datatable--header {
+    background: $layer-raised 30%;
+    color: $primary;
+    text-style: bold;
+}
+
+TodoScreen DataTable > .datatable--cursor {
+    background: $primary 30%;
+    color: $text-bright;
+}
+
+TodoScreen #input-area {
+    height: auto;
+    layout: horizontal;
+    align: center middle;
+    margin-top: 1;
+}
+
+TodoScreen Input {
+    width: 1fr;
+    margin-right: 1;
+}
+
+TodoScreen Button {
+    min-width: 8;
+}
+
+TodoScreen #add-btn {
+    background: $success;
+    color: $layer-void;
+}
+
+TodoScreen #close-btn {
+    background: $layer-raised;
+    margin-left: 1;
+}

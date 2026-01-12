@@ -1,0 +1,42 @@
+/* ==========================================================================
+   Terminal Block Widget - Interactive terminal/TUI mode styles
+   Extracted from main.tcss lines 1919-1938, 3040-3056
+   ========================================================================== */
+
+/* TUI Mode Styles for CommandBlock */
+CommandBlock.mode-tui {
+    border: double $accent;
+    background: #000000;
+}
+
+CommandBlock.mode-tui:focus-within {
+    border: double $accent;
+    background: #000000;
+}
+
+CommandBlock.mode-tui BlockHeader {
+    color: $accent;
+    border-bottom: solid $accent;
+}
+
+.prompt-symbol-tui {
+    color: $accent;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   TerminalBlock Widget
+   ========================================================================== */
+
+TerminalBlock {
+    height: 24;
+    max-height: 40;
+    background: #1a1b26;
+    color: #a9b1d6;
+    border: solid $primary;
+    overflow: hidden;
+}
+
+TerminalBlock:focus {
+    border: double $accent;
+}

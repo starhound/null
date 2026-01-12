@@ -1,0 +1,218 @@
+/* ==========================================================================
+   Config Screen (Settings) - Cyber Noir Settings Panel
+   ========================================================================== */
+
+ConfigScreen {
+    /* Inherits from ModalScreen */
+}
+
+ConfigScreen #config-outer {
+    width: 90%;
+    min-width: 70;
+    max-width: 120;
+    height: 90%;
+    min-height: 30;
+    background: $layer-base;
+    border: double $accent $border-normal;
+    padding: 1 2;
+    layout: vertical;
+}
+
+ConfigScreen #config-header {
+    height: 1;
+    padding: 0;
+    border-bottom: solid $accent 20%;
+}
+
+ConfigScreen #config-header Label {
+    text-style: bold;
+    color: $accent;
+}
+
+ConfigScreen TabbedContent {
+    height: 1fr;
+    min-height: 15;
+    background: transparent;
+}
+
+ConfigScreen TabPane {
+    height: 1fr;
+    padding: 0;
+    background: transparent;
+}
+
+ConfigScreen .settings-scroll {
+    height: 1fr;
+    padding: 0 1;
+    scrollbar-size-vertical: 1;
+    scrollbar-background: transparent;
+    scrollbar-color: $text-dim;
+    scrollbar-color-hover: $accent;
+}
+
+ConfigScreen .settings-header {
+    height: auto;
+    margin-top: 1;
+    margin-bottom: 0;
+    padding: 0;
+    color: $accent;
+    text-style: bold;
+    border-bottom: solid $accent 25%;
+}
+
+ConfigScreen .setting-row {
+    height: auto;
+    padding: 0;
+    margin-top: 1;
+    margin-bottom: 0;
+    border: none;
+    align-vertical: middle;
+}
+
+ConfigScreen .terminal-info {
+    background: $layer-raised 50%;
+    padding: 0 1;
+    height: auto;
+    margin-bottom: 1;
+    border-left: solid $primary $border-normal;
+}
+
+ConfigScreen .setting-info {
+    width: 1fr;
+    height: auto;
+    padding-right: 1;
+}
+
+ConfigScreen .setting-label {
+    color: $text-bright;
+    height: 1;
+}
+
+ConfigScreen .setting-hint {
+    color: $text-muted;
+    text-style: italic;
+    height: auto;
+}
+
+ConfigScreen .setting-warning {
+    color: $warning;
+    padding: 0;
+    margin: 0;
+    height: auto;
+}
+
+ConfigScreen .setting-control {
+    width: 40%;
+    max-width: 40;
+    height: auto;
+    align: right middle;
+}
+
+/* Compact inputs for config - HIGH VISIBILITY */
+ConfigScreen Input {
+    height: 1;
+    border: tall $primary 50%;
+    padding: 0;
+    margin: 0;
+    background: $surface;
+    color: $text;
+}
+
+ConfigScreen Input:focus {
+    border: tall $accent;
+    background: $surface;
+}
+
+/* Select widget - HIGH VISIBILITY */
+ConfigScreen Select {
+    width: 100%;
+    height: 1;
+    margin: 0;
+    border: tall $primary 50%;
+    background: $surface;
+}
+
+ConfigScreen Select:focus {
+    border: tall $accent;
+}
+
+ConfigScreen SelectOverlay {
+    max-height: 12;
+    background: $surface;
+    border: tall $accent;
+}
+
+/* Switch - HIGH VISIBILITY */
+ConfigScreen Switch {
+    height: 1;
+    width: auto;
+    min-width: 8;
+    margin: 0;
+    border: tall $primary 50%;
+    background: $surface;
+}
+
+ConfigScreen Switch:focus {
+    border: tall $accent;
+}
+
+ConfigScreen Switch.-on {
+    background: $success 30%;
+}
+
+ConfigScreen Switch.-on > .switch--slider {
+    color: $success;
+}
+
+ConfigScreen #config-footer {
+    height: auto;
+    padding: 1 1;
+    dock: bottom;
+    align: left middle;
+    border-top: solid $accent 15%;
+}
+
+ConfigScreen #config-footer Button {
+    height: 1;
+    min-width: 10;
+    margin-right: 1;
+    border: none;
+}
+
+ConfigScreen #save-btn {
+    background: $success;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ConfigScreen #save-btn:hover {
+    background: $success 85%;
+    tint: $success 10%;
+}
+
+ConfigScreen #cancel-btn {
+    background: $layer-raised;
+    color: $text-muted;
+}
+
+ConfigScreen #cancel-btn:hover {
+    background: $error;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ConfigScreen .spacer {
+    width: 1fr;
+}
+
+ConfigScreen #reset-btn {
+    color: $warning;
+    background: transparent;
+    border: solid $warning $border-dim;
+}
+
+ConfigScreen #reset-btn:hover {
+    background: $warning;
+    color: $layer-void;
+    text-style: bold;
+}

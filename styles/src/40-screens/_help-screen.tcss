@@ -1,0 +1,45 @@
+/* ==========================================================================
+   Help Screen
+   ========================================================================== */
+
+HelpScreen {
+    /* Inherits from ModalScreen */
+}
+
+HelpScreen #help-container {
+    width: 60%;
+    height: auto;
+    max-height: 80%;
+    background: $layer-base;
+    border: double $primary $border-normal;
+    padding: 1 2;
+}
+
+HelpScreen #help-container > Label {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+HelpScreen DataTable {
+    height: auto;
+    max-height: 20;
+    margin-bottom: 1;
+    background: $layer-raised 50%;
+}
+
+HelpScreen #close_btn {
+    width: 100%;
+    height: 1;
+    min-width: 8;
+    border: none;
+    background: $layer-raised;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+HelpScreen #close_btn:hover {
+    background: $primary;
+    color: $layer-void;
+    text-style: bold;
+}

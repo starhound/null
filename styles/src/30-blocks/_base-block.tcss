@@ -1,0 +1,187 @@
+/* ==========================================================================
+   Block Widgets & Parts - Cyber Noir Block System
+
+   Each block type has:
+   - Full rounded border frame (color-coded by type)
+   - Subtle background tint contained within border
+   - Focus states with intensified borders
+   - Transparent sub-components to prevent bleeding
+   ========================================================================== */
+
+/* --- Base Block Structure --- */
+
+BaseBlockWidget:focus-within {
+    border: round $primary $border-focus;
+    background: $primary $glow-subtle;
+    tint: $primary 2%;
+}
+
+/* --- Block Parts: Header --- */
+
+BlockHeader {
+    layout: horizontal;
+    height: auto;
+    min-height: 1;
+    dock: top;
+    background: transparent;
+    color: $text;
+    padding: 0;
+    margin-bottom: 0;
+}
+
+BlockHeader .prompt-symbol {
+    width: 3;
+    text-style: bold;
+}
+
+BlockHeader .prompt-symbol-cli {
+    color: $success;
+    text-style: bold;
+}
+
+BlockHeader .prompt-symbol-query {
+    color: $warning;
+    text-style: bold;
+}
+
+BlockHeader .prompt-symbol-response {
+    color: $primary;
+    text-style: bold;
+}
+
+BlockHeader .prompt-symbol-system {
+    color: $secondary;
+    text-style: bold;
+}
+
+BlockHeader .prompt-symbol-agent {
+    color: $secondary;
+    text-style: bold;
+}
+
+BlockHeader .header-text-agent {
+    color: $text;
+    width: 1fr;
+}
+
+BlockHeader .header-text {
+    color: $text;
+    width: 1fr;
+}
+
+BlockHeader .header-text-cli {
+    color: $text;
+    width: 1fr;
+    text-style: bold;
+}
+
+BlockHeader .header-text-ai {
+    color: $text-muted;
+    text-style: italic;
+    width: 1fr;
+}
+
+BlockHeader .header-text-system {
+    color: $secondary;
+    width: 1fr;
+    text-style: italic;
+}
+
+BlockHeader .timestamp {
+    color: $text-muted;
+    text-style: dim;
+    width: 6;
+    text-align: right;
+}
+
+/* --- Block Parts: Meta --- */
+
+BlockMeta {
+    layout: horizontal;
+    height: 1;
+    min-height: 1;
+    padding: 0 1;
+    margin: 0;
+    background: transparent;
+    color: $text-muted;
+}
+
+BlockMeta .meta-sep {
+    color: $text-muted;
+    text-style: dim;
+    margin: 0 1;
+}
+
+BlockMeta .meta-value {
+    color: $text-muted;
+    text-style: italic;
+}
+
+BlockMeta .meta-spacer {
+    width: 1fr;
+}
+
+BlockMeta .meta-action {
+    width: auto;
+    min-width: 4;
+    height: 1;
+    margin-left: 2;
+    color: $primary;
+}
+
+BlockMeta .meta-action:hover {
+    color: $primary;
+    text-style: bold;
+}
+
+/* --- Block Parts: Body --- */
+
+BlockBody {
+    height: auto;
+    min-height: 0;
+    padding: 1 2;
+    margin: 0;
+    color: $text;
+    background: transparent;
+}
+
+BlockBody #body-content {
+    width: 100%;
+    padding: 0;
+}
+
+/* --- Block Parts: Footer --- */
+
+BlockFooter {
+    layout: horizontal;
+    height: auto;
+    min-height: 0;
+    padding: 0 2;
+    background: transparent;
+    color: $text-muted;
+}
+
+BlockFooter.empty-footer {
+    display: none;
+}
+
+BlockFooter .exit-error {
+    color: $error;
+    text-style: bold;
+}
+
+BlockFooter .running-spinner {
+    color: $warning;
+    text-style: italic;
+}
+
+BlockFooter .stop-action {
+    color: $error;
+    text-style: bold;
+    margin-left: 2;
+}
+
+BlockFooter .stop-action:hover {
+    color: $error;
+    text-style: bold underline;
+}

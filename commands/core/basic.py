@@ -95,31 +95,6 @@ class BasicCommands(CommandMixin):
         result = await arch.analyze(path)
         await self.show_output("/map", result)
 
-    async def cmd_cmd(self, args: list[str]):
-        """Translate natural language to shell command."""
-        if not args:
-            self.notify("Usage: /cmd <description>", severity="warning")
-            return
-
-        description = " ".join(args)
-
-        if not self.app.ai_provider:
-            self.notify("AI provider not configured", severity="error")
-            return
-
-        from managers.nl2shell import NL2Shell
-
-        manager = NL2Shell()
-        cmd = await manager.translate(description, self.app.ai_provider)
-
-        if cmd:
-            # Insert into input buffer instead of executing
-            input_ctrl = self.app.query_one("#input")
-            input_ctrl.text = cmd
-            input_ctrl.focus()
-        else:
-            self.notify("Could not generate command", severity="error")
-
     async def cmd_explain(self, args: list[str]):
         """Explain a shell command."""
         if not args:

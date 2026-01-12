@@ -48,8 +48,34 @@ class GitCommands(CommandMixin):
         from managers.git import GitManager
 
         gm = GitManager()
-        status = await gm.get_status()
-        await self.show_output("/git status", status)
+        branch = await gm.get_branch()
+        staged = await gm.get_staged_files()
+        unstaged = await gm.get_unstaged_files()
+        untracked = await gm.get_untracked_files()
+
+        lines = [f"Branch: {branch or 'unknown'}"]
+        if staged:
+            lines.append(f"\nStaged ({len(staged)}):")
+            for f in staged[:10]:
+                lines.append(f"  + {f}")
+            if len(staged) > 10:
+                lines.append(f"  ... and {len(staged) - 10} more")
+        if unstaged:
+            lines.append(f"\nModified ({len(unstaged)}):")
+            for f in unstaged[:10]:
+                lines.append(f"  ~ {f}")
+            if len(unstaged) > 10:
+                lines.append(f"  ... and {len(unstaged) - 10} more")
+        if untracked:
+            lines.append(f"\nUntracked ({len(untracked)}):")
+            for f in untracked[:10]:
+                lines.append(f"  ? {f}")
+            if len(untracked) > 10:
+                lines.append(f"  ... and {len(untracked) - 10} more")
+        if not staged and not unstaged and not untracked:
+            lines.append("\nWorking tree clean")
+
+        await self.show_output("/git status", "\n".join(lines))
 
     async def _git_diff(self, args: list[str]):
         from managers.git import GitManager
@@ -58,13 +84,12 @@ class GitCommands(CommandMixin):
 
         file_path = args[0] if args else None
         gm = GitManager()
-        diff = await gm.get_diff(file_path)
+        diff = await gm.get_diff(file=file_path)
 
         if not diff:
             self.notify("No changes found")
             return
 
-        # Use DiffViewWidget for syntax highlighting
         history_vp = self.app.query_one("#history", HistoryViewport)
         widget = DiffViewWidget(diff, f"Diff: {file_path or 'All'}")
         await history_vp.mount(widget)
@@ -83,63 +108,70 @@ class GitCommands(CommandMixin):
                 return
 
             self.notify("Generating commit message...")
-            diff = await gm.get_diff(cached=True)  # Staged changes
+            diff = await gm.get_diff(staged=True)
             if not diff:
-                # Try unstaged if nothing staged
                 diff = await gm.get_diff()
                 if not diff:
                     self.notify("Nothing to commit", severity="warning")
                     return
-
-                # Auto-stage all for convenience if user didn't stage
                 await gm.stage_all()
 
-            msg = await gm.generate_commit_message(diff, self.app.ai_provider)
+            msg = await gm.generate_commit_message(self.app.ai_provider)
 
-        success, output = await gm.commit(msg)
-        if success:
+        result = await gm.commit(msg)
+        if result.success:
             self.notify(f"Committed: {msg}")
-            self.app._update_status_bar()  # Update git status
+            self.app._update_status_bar()
         else:
-            self.notify(f"Commit failed: {output}", severity="error")
+            self.notify(f"Commit failed: {result.error}", severity="error")
 
     async def _git_undo(self):
         from managers.git import GitManager
 
         gm = GitManager()
-        success, output = await gm.undo_last_commit()
+        success = await gm.undo_last_commit()
         if success:
             self.notify("Undid last commit (changes preserved)")
             self.app._update_status_bar()
         else:
-            self.notify(f"Undo failed: {output}", severity="error")
+            self.notify("Undo failed", severity="error")
 
     async def _git_log(self, args: list[str]):
         limit = int(args[0]) if args and args[0].isdigit() else 5
         from managers.git import GitManager
 
         gm = GitManager()
-        log = await gm.get_log(limit)
-        await self.show_output(f"/git log {limit}", log)
+        commits = await gm.get_recent_commits(limit)
+
+        if not commits:
+            self.notify("No commits found")
+            return
+
+        lines = []
+        for c in commits:
+            date_str = c.date.strftime("%Y-%m-%d %H:%M")
+            lines.append(f"{c.sha[:7]} {date_str} {c.message}")
+
+        await self.show_output(f"/git log {limit}", "\n".join(lines))
 
     async def _git_stash(self, msg: str):
         from managers.git import GitManager
 
         gm = GitManager()
-        success, output = await gm.stash(msg)
+        success = await gm.stash(msg if msg else None)
         if success:
             self.notify("Stashed changes")
             self.app._update_status_bar()
         else:
-            self.notify(f"Stash failed: {output}", severity="error")
+            self.notify("Stash failed", severity="error")
 
     async def _git_stash_pop(self):
         from managers.git import GitManager
 
         gm = GitManager()
-        success, output = await gm.stash_pop()
+        success = await gm.stash_pop()
         if success:
             self.notify("Applied stash")
             self.app._update_status_bar()
         else:
-            self.notify(f"Stash pop failed: {output}", severity="error")
+            self.notify("Stash pop failed", severity="error")

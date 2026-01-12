@@ -1,0 +1,136 @@
+/* ==========================================================================
+   Plan Block Styles - Step-by-step execution planning UI
+   Extracted from main.tcss lines 3490-3625
+   ========================================================================== */
+
+.plan-block {
+    background: $layer-base;
+    border: solid $primary $border-dim;
+    padding: 1 2;
+    margin: 1 0;
+}
+
+.plan-title {
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+.plan-progress {
+    margin: 1 0;
+}
+
+.plan-steps {
+    margin: 1 0;
+}
+
+.plan-step-row {
+    height: auto;
+}
+
+.step-number {
+    width: 4;
+    color: $text-muted;
+}
+
+.step-description {
+    color: $text-bright;
+}
+
+.step-tool {
+    color: $text-dim;
+    margin-left: 2;
+}
+
+.step-result {
+    color: $success;
+    margin-left: 2;
+}
+
+.step-error {
+    color: $error;
+    margin-left: 2;
+}
+
+PlanStepWidget {
+    padding: 0 1;
+    margin: 0;
+}
+
+PlanStepWidget:focus {
+    background: $primary $glow-medium;
+    border-left: solid $primary;
+}
+
+.step-pending .step-number {
+    color: $text-muted;
+}
+
+.step-approved .step-number {
+    color: $success;
+}
+
+.step-executing .step-number {
+    color: $warning;
+}
+
+.step-completed .step-number {
+    color: $success;
+    text-style: bold;
+}
+
+.step-skipped .step-number {
+    color: $text-dim;
+    text-style: italic;
+}
+
+.step-failed .step-number {
+    color: $error;
+}
+
+.plan-actions {
+    margin-top: 1;
+    height: 1;
+    background: transparent;
+}
+
+.plan-actions Button {
+    margin-right: 1;
+    height: 1;
+    min-width: 8;
+    border: none;
+    background: transparent;
+}
+
+.plan-actions Button.-primary {
+    color: $primary;
+    background: $layer-raised;
+}
+
+.plan-actions Button.-primary:hover {
+    color: $background;
+    background: $primary;
+    text-style: bold;
+}
+
+.plan-actions Button.-success {
+    color: $success;
+    background: $layer-raised;
+}
+
+.plan-actions Button.-success:hover {
+    color: $background;
+    background: $success;
+    text-style: bold;
+}
+
+.plan-actions Button.-error {
+    color: $error;
+    background: $layer-raised;
+}
+
+.plan-actions Button.-error:hover {
+    color: $background;
+    background: $error;
+    text-style: bold;
+}

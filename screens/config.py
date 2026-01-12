@@ -72,6 +72,10 @@ class ConfigScreen(ModalScreen):
                     with VerticalScroll(classes="settings-scroll"):
                         yield from self._ai_settings()
 
+                with TabPane("Voice", id="tab-voice"):
+                    with VerticalScroll(classes="settings-scroll"):
+                        yield from self._voice_settings()
+
             with Horizontal(id="config-footer"):
                 yield Button("Save", id="save-btn")
                 yield Button("Cancel", id="cancel-btn")
@@ -393,6 +397,54 @@ class ConfigScreen(ModalScreen):
             Input(value=s.embedding_endpoint, id="embedding_endpoint"),
         )
 
+    def _voice_settings(self) -> ComposeResult:
+        s = self.settings.voice
+
+        yield from self._setting_row(
+            "voice.enabled",
+            "Enable Voice Input",
+            "Allow voice-to-text input",
+            Switch(value=s.enabled, id="voice_enabled"),
+        )
+
+        yield from self._setting_row(
+            "voice.hotkey",
+            "Hotkey",
+            "Press Ctrl+M to start/stop recording",
+            Label(s.hotkey, id="voice_hotkey"),
+        )
+
+        stt_providers = [
+            ("OpenAI Whisper", "openai"),
+        ]
+        yield from self._setting_row(
+            "voice.stt_provider",
+            "Transcription Service",
+            "Service that converts speech to text",
+            Select(stt_providers, value=s.stt_provider, id="stt_provider"),
+        )
+
+        yield from self._setting_row(
+            "voice.stt_model",
+            "Model",
+            "Use 'whisper-1' for OpenAI (default)",
+            Input(value=s.stt_model or "", placeholder="whisper-1", id="stt_model"),
+        )
+
+        yield from self._setting_row(
+            "voice.language",
+            "Language",
+            "Two-letter code: en, es, fr, de, ja, zh, etc.",
+            Input(value=s.language or "", placeholder="en", id="voice_language"),
+        )
+
+        yield from self._setting_row(
+            "voice.push_to_talk",
+            "Push to Talk",
+            "Hold hotkey to record, release to stop",
+            Switch(value=s.push_to_talk, id="push_to_talk"),
+        )
+
     def _collect_values(self):
         """Collect all control values into settings structure."""
         from config import (
@@ -401,6 +453,7 @@ class ConfigScreen(ModalScreen):
             EditorSettings,
             Settings,
             TerminalSettings,
+            VoiceSettings,
         )
 
         def get_val(control: Any) -> Any:
@@ -501,7 +554,20 @@ class ConfigScreen(ModalScreen):
             ),
         )
 
-        return Settings(appearance=appearance, editor=editor, terminal=terminal, ai=ai)
+        voice = VoiceSettings(
+            enabled=get_bool(self.controls.get("voice.enabled"), False),
+            hotkey=self.settings.voice.hotkey,
+            stt_provider=str(
+                get_val(self.controls.get("voice.stt_provider")) or "openai"
+            ),
+            stt_model=str(get_val(self.controls.get("voice.stt_model")) or "whisper-1"),
+            language=str(get_val(self.controls.get("voice.language")) or "en"),
+            push_to_talk=get_bool(self.controls.get("voice.push_to_talk"), True),
+        )
+
+        return Settings(
+            appearance=appearance, editor=editor, terminal=terminal, ai=ai, voice=voice
+        )
 
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "save-btn":

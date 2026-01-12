@@ -30,6 +30,7 @@ from .settings import (
     Settings,
     SettingsManager,
     TerminalSettings,
+    VoiceSettings,
     get_settings,
     save_settings,
 )
@@ -72,6 +73,7 @@ __all__ = [
     "SettingsManager",
     "StorageManager",
     "TerminalSettings",
+    "VoiceSettings",
     "get_settings",
     "is_sensitive_key",
     "save_settings",

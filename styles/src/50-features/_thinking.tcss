@@ -1,0 +1,98 @@
+/* ==========================================================================
+   Thinking Widget - AI Reasoning Display
+   Collapsible window showing model's chain of thought
+   Extracted from main.tcss lines 394-491
+   ========================================================================== */
+
+ThinkingWidget {
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    margin: 0 0 1 0;
+    background: transparent;
+}
+
+ThinkingWidget.hidden {
+    display: none;
+}
+
+ThinkingWidget .thinking-header {
+    layout: horizontal;
+    height: 1;
+    min-height: 1;
+    width: 100%;
+    padding: 0 1;
+    margin-bottom: 0;
+    background: transparent;
+    border-left: solid $primary $border-dim;
+    transition: background 150ms in_out_cubic;
+}
+
+ThinkingWidget .thinking-header:hover {
+    background: $layer-raised 30%;
+    border-left: solid $primary $border-normal;
+}
+
+ThinkingWidget .spinner {
+    color: $primary;
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    text-align: center;
+}
+
+ThinkingWidget .spinner.complete {
+    color: $success;
+}
+
+ThinkingWidget .thinking-label {
+    color: $text-muted;
+    text-style: italic;
+    padding-left: 1;
+    width: 1fr;
+}
+
+ThinkingWidget .toggle-hint {
+    color: $text-dim;
+}
+
+ThinkingWidget .toggle-hint:hover {
+    color: $primary;
+    text-style: bold;
+}
+
+ThinkingWidget .peek-window {
+    height: auto;
+    min-height: 3;
+    max-height: 10;
+    margin: 0 1 1 3;
+    padding: 1 2;
+    background: transparent;
+    color: $text-muted;
+    scrollbar-size: 0 0;
+    border: none;
+    border-left: solid $primary $border-dim;
+}
+
+ThinkingWidget .peek-window.expanded {
+    height: auto;
+    min-height: 5;
+    max-height: 40;
+    scrollbar-size: 1 1;
+    overflow-y: auto;
+    background: $layer-raised 15%;
+    border-left: solid $primary $border-normal;
+    color: $text-bright;
+}
+
+ThinkingWidget .peek-content {
+    width: 100%;
+    padding: 0;
+}
+
+ThinkingWidget .peek-window.empty {
+    min-height: 0;
+    max-height: 1;
+    border: none;
+    background: transparent;
+}

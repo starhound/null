@@ -126,7 +126,7 @@ class NL2Shell:
         context = ShellContext()
 
         try:
-            context.cwd = os.getcwd()
+            context.cwd = await asyncio.to_thread(os.getcwd)
         except Exception:
             context.cwd = "unknown"
 
@@ -154,9 +154,10 @@ class NL2Shell:
         except Exception:
             pass
 
-        for tool in self._common_tools:
-            if shutil.which(tool):
-                context.available_tools.append(tool)
+        def check_tools():
+            return [t for t in self._common_tools if shutil.which(t)]
+
+        context.available_tools = await asyncio.to_thread(check_tools)
 
         return context
 

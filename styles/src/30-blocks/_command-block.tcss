@@ -1,0 +1,63 @@
+/* ==========================================================================
+   CommandBlock - CLI Execution (Matrix Green)
+   Sharp, technical, command-line aesthetic
+   ========================================================================== */
+
+CommandBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: $layer-base 50%;
+    color: $text-bright;
+    margin: 0 0 1 0;
+    padding: 0;
+    border: round $success $border-normal;
+    transition: background 200ms in_out_cubic, border 200ms in_out_cubic;
+}
+
+CommandBlock:focus-within {
+    border: round $success $border-focus;
+    background: $success $glow-medium;
+    tint: $success 4%;
+}
+
+CommandBlock BlockHeader {
+    background: transparent;
+    padding: 0 2;
+    color: $success;
+    border-bottom: solid $success 20%;
+}
+
+CommandBlock BlockBody {
+    background: transparent;
+    padding: 1 2;
+}
+
+CommandBlock BlockFooter {
+    background: transparent;
+    border-top: solid $success 15%;
+}
+
+/* ==========================================================================
+   TUI Mode Styles
+   ========================================================================== */
+
+CommandBlock.mode-tui {
+    border: double $accent;
+    background: #000000;
+}
+
+CommandBlock.mode-tui:focus-within {
+    border: double $accent;
+    background: #000000;
+}
+
+CommandBlock.mode-tui BlockHeader {
+    color: $accent;
+    border-bottom: solid $accent;
+}
+
+.prompt-symbol-tui {
+    color: $accent;
+    text-style: bold;
+}

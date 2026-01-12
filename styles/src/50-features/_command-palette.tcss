@@ -1,0 +1,115 @@
+/* ==========================================================================
+   Command Palette - Feature Styles
+   Extracted from main.tcss lines 1109-1223
+   ========================================================================== */
+
+CommandPalette {
+    layer: overlay;
+    align: center top;
+    width: 60%;
+    min-width: 50;
+    max-width: 80;
+    height: auto;
+    max-height: 50%;
+    margin-top: 3;
+    background: $surface;
+    border: solid $panel;
+    padding: 0;
+    display: none !important;
+}
+
+CommandPalette.visible {
+    display: block !important;
+}
+
+CommandPalette #palette-title {
+    width: 100%;
+    height: 1;
+    background: $primary;
+    color: $text;
+    text-style: bold;
+    padding: 0 1;
+}
+
+CommandPalette #palette-input {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $panel;
+    padding: 0 1;
+    margin: 1 1;
+}
+
+CommandPalette #palette-results {
+    width: 100%;
+    height: auto;
+    max-height: 15;
+    padding: 0 1;
+    overflow-y: auto;
+}
+
+CommandPalette #palette-hint {
+    width: 100%;
+    height: 1;
+    background: $surface;
+    color: $text-muted;
+    text-style: italic dim;
+    padding: 0 1;
+}
+
+CommandPalette .palette-item {
+    layout: horizontal;
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text;
+}
+
+CommandPalette .palette-item:hover {
+    background: $panel;
+}
+
+CommandPalette .palette-item.selected {
+    background: $primary;
+    color: $text;
+}
+
+CommandPalette .palette-item-name {
+    width: auto;
+    min-width: 20;
+    color: $text;
+    text-style: bold;
+}
+
+CommandPalette .palette-item.selected .palette-item-name {
+    color: $text;
+}
+
+CommandPalette .palette-item-desc {
+    width: 1fr;
+    color: $text-muted;
+    padding-left: 2;
+}
+
+CommandPalette .palette-item.selected .palette-item-desc {
+    color: $text;
+}
+
+CommandPalette .palette-item-shortcut {
+    width: auto;
+    color: $primary;
+    text-style: dim;
+}
+
+CommandPalette .palette-item.selected .palette-item-shortcut {
+    color: $text;
+    text-style: bold;
+}
+
+CommandPalette .palette-no-results {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text-muted;
+    text-style: italic;
+}

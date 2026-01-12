@@ -1,0 +1,307 @@
+/* ==========================================================================
+   SystemBlock - System Messages (Vivid Magenta)
+   Authoritative, informational, distinct
+   ========================================================================== */
+
+SystemBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: $layer-base 40%;
+    color: $text-bright;
+    margin: 0 0 1 0;
+    padding: 0;
+    border: round $secondary $border-normal;
+    transition: background 200ms in_out_cubic, border 200ms in_out_cubic;
+}
+
+SystemBlock:focus-within {
+    border: round $secondary $border-focus;
+    background: $secondary $glow-medium;
+    tint: $secondary 4%;
+}
+
+SystemBlock:focus-within {
+    border: round $secondary $border-focus;
+    background: $secondary $glow-subtle;
+    tint: $secondary 3%;
+}
+
+SystemBlock BlockHeader {
+    background: transparent;
+    padding: 0 2;
+    color: $secondary;
+    border-bottom: solid $secondary 18%;
+}
+
+SystemBlock BlockBody {
+    background: transparent;
+    padding: 1 2;
+}
+
+/* ==========================================================================
+   ToolCallBlock - Tool Execution (Accent Green)
+   Technical, functional, precise
+   ========================================================================== */
+
+ToolCallBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: $layer-base 40%;
+    color: $text-bright;
+    margin: 0 0 1 0;
+    padding: 0;
+    border: round $accent $border-normal;
+    transition: background 200ms in_out_cubic, border 200ms in_out_cubic;
+}
+
+ToolCallBlock:focus-within {
+    border: round $accent $border-focus;
+    background: $accent $glow-medium;
+    tint: $accent 4%;
+}
+
+ToolCallBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: $layer-base 40%;
+    color: $text-bright;
+    margin: 0 0 1 0;
+    padding: 0;
+    border: round $accent $border-normal;
+}
+
+ToolCallBlock:focus-within {
+    border: round $accent $border-focus;
+    background: $accent $glow-subtle;
+    tint: $accent 3%;
+}
+
+ToolCallBlock BlockHeader {
+    background: transparent;
+    padding: 0 2;
+    color: $accent;
+    border-bottom: solid $accent 18%;
+}
+
+ToolCallBlock BlockBody {
+    background: transparent;
+    padding: 1 2;
+}
+
+ToolCallBlock BlockMeta {
+    background: transparent;
+    padding: 0 2;
+    color: $text-dim;
+    border-top: solid $accent 12%;
+}
+
+/* ==========================================================================
+   ToolAccordion - Collapsible tool calls
+   ========================================================================== */
+
+ToolAccordion {
+    width: 100%;
+    height: auto;
+    background: transparent;
+    padding: 0;
+    margin: 0 0 1 0;
+}
+
+ToolAccordion.empty {
+    display: none;
+}
+
+ToolAccordionItem {
+    width: 100%;
+    height: auto;
+    border-bottom: none;
+    padding: 0 0 1 0;
+    margin-bottom: 0;
+}
+
+ToolAccordionItem:hover {
+    background: transparent;
+}
+
+/* ==========================================================================
+   Tool Header
+   ========================================================================== */
+
+ToolHeader {
+    width: 100%;
+    height: 1;
+    padding: 0 2;
+    layout: horizontal;
+    border-left: solid $text-dim;
+}
+
+ToolHeader:hover {
+    border-left: solid $accent;
+    background: $panel 15%;
+}
+
+ToolHeader .tool-icon {
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    color: $text-muted;
+    text-align: center;
+}
+
+ToolHeader .tool-icon.expanded {
+    color: $accent;
+}
+
+ToolHeader .tool-name {
+    color: $text;
+    text-style: bold;
+}
+
+ToolHeader .tool-status {
+    width: auto;
+    margin-left: 1;
+}
+
+ToolHeader .tool-status.pending {
+    color: $text-muted;
+}
+
+ToolHeader .tool-status.running {
+    color: $warning;
+}
+
+ToolHeader .tool-status.success {
+    color: $success;
+}
+
+ToolHeader .tool-status.error {
+    color: $error;
+}
+
+ToolHeader .tool-duration {
+    color: $text-muted;
+    text-style: dim;
+    width: 8;
+    text-align: right;
+}
+
+ToolHeader .tool-spacer {
+    width: 1fr;
+}
+
+/* ==========================================================================
+   Tool Output
+   ========================================================================== */
+
+ToolOutput {
+    width: 100%;
+    height: auto;
+    max-height: 20;
+    padding: 1 2;
+    background: transparent;
+    display: none;
+    border-left: solid $accent 40%;
+    margin-left: 3;
+}
+
+ToolOutput.visible {
+    display: block;
+}
+
+ToolOutput .tool-output-content {
+    width: 100%;
+}
+
+ToolOutput .tool-args {
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+ToolOutput .tool-result {
+    width: 100%;
+}
+
+ToolOutput .tool-result.streaming {
+    color: $text-bright;
+    background: $layer-void;
+    padding: 0 1;
+    height: auto;
+    max-height: 20;
+    overflow-y: auto;
+}
+
+/* ==========================================================================
+   ToolCallItem (in iterations)
+   ========================================================================== */
+
+ToolCallItem {
+    width: 100%;
+    height: 1;
+    padding: 0 2;
+    background: transparent;
+}
+
+ToolCallItem .tool-row {
+    width: 100%;
+    height: 1;
+    layout: horizontal;
+}
+
+ToolCallItem .tool-icon {
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    color: $text-muted;
+    text-align: center;
+}
+
+ToolCallItem .tool-icon.pending {
+    color: $text-muted;
+}
+
+ToolCallItem .tool-icon.running {
+    color: $warning;
+}
+
+ToolCallItem .tool-icon.success {
+    color: $success;
+}
+
+ToolCallItem .tool-icon.error {
+    color: $error;
+}
+
+ToolCallItem .tool-name {
+    color: $text;
+    text-style: bold;
+    width: 1fr;
+}
+
+ToolCallItem .tool-duration {
+    color: $text-muted;
+    text-style: dim;
+    width: 8;
+    text-align: right;
+}
+
+/* Container for tool calls within iteration */
+.iter-tools {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+/* Response fragment within iteration */
+.iter-response {
+    width: 100%;
+    height: auto;
+    padding: 1 2;
+    margin: 0;
+    color: $text;
+    background: transparent;
+}

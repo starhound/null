@@ -318,7 +318,7 @@ StatusBar {
     padding: 0 2;
     margin: 0;
     color: $text-muted;
-    border-top: solid $text-ghost;
+    border-top: solid $text-dim;
 }
 
 Footer {
@@ -1120,7 +1120,7 @@ CommandPalette {
     max-height: 50%;
     margin-top: 3;
     background: $surface;
-    border: solid $panel;
+    border: solid $primary $border-dim;
     padding: 0;
     display: none !important;
 }
@@ -1145,6 +1145,11 @@ CommandPalette #palette-input {
     background: $panel;
     padding: 0 1;
     margin: 1 1;
+}
+
+CommandPalette #palette-input:focus {
+    border: solid $primary;
+    background: $surface;
 }
 
 CommandPalette #palette-results {
@@ -1235,7 +1240,7 @@ SelectionListScreen #selection-container {
     height: auto;
     max-height: 60%;
     background: $surface;
-    border: solid $panel;
+    border: solid $primary $border-dim;
     padding: 1 2;
     layout: vertical;
 }
@@ -1251,7 +1256,8 @@ SelectionListScreen ListView {
     max-height: 15;
     margin: 0;
     padding: 0;
-    background: $panel;
+    background: $layer-raised 50%;
+    border: solid $text-dim;
 }
 
 SelectionListScreen ListItem {
@@ -1261,6 +1267,11 @@ SelectionListScreen ListItem {
 
 SelectionListScreen ListItem:hover {
     background: $surface;
+}
+
+SelectionListScreen ListItem:focus {
+    background: $primary 25%;
+    border-left: thick $primary;
 }
 
 SelectionListScreen #cancel_btn {
@@ -1291,7 +1302,7 @@ ModelListScreen #model-selection-container {
     height: auto;
     max-height: 80%;
     background: $surface;
-    border: solid $panel;
+    border: solid $primary $border-dim;
     padding: 1 2;
     layout: vertical;
 }
@@ -1304,7 +1315,7 @@ ModelListScreen #model-title {
 
 ModelListScreen #model-search {
     margin-bottom: 1;
-    border: solid $panel;
+    border: solid $text-dim;
     background: $panel;
     height: 3;
 }
@@ -1363,6 +1374,13 @@ ModelListScreen .model-item:hover {
     background: $primary 30%;
     color: $text;
     text-style: bold;
+}
+
+ModelListScreen .model-item:focus {
+    background: $primary 40%;
+    color: $text-bright;
+    text-style: bold;
+    border-left: thick $primary;
 }
 
 ModelListScreen .more-label {
@@ -1581,45 +1599,60 @@ ConfigScreen .setting-control {
     align: right middle;
 }
 
-/* Compact inputs for config */
+/* Compact inputs for config - HIGH VISIBILITY */
 ConfigScreen Input {
     height: 1;
-    border: solid $text-ghost;
+    border: tall $primary 50%;
     padding: 0;
     margin: 0;
-    background: $layer-raised;
+    background: $surface;
+    color: $text;
 }
 
 ConfigScreen Input:focus {
-    border: solid $accent $border-normal;
-    background: $layer-raised;
+    border: tall $accent;
+    background: $surface;
 }
 
-/* Select widget - inherits global styles, only override specifics */
+/* Select widget - HIGH VISIBILITY */
 ConfigScreen Select {
     width: 100%;
     height: 1;
     margin: 0;
-    border: solid $text-ghost;
-    background: $layer-raised;
+    border: tall $primary 50%;
+    background: $surface;
 }
 
 ConfigScreen Select:focus {
-    border: solid $accent $border-normal;
+    border: tall $accent;
 }
 
 ConfigScreen SelectOverlay {
     max-height: 12;
-    background: $layer-raised;
-    border: solid $accent $border-normal;
+    background: $surface;
+    border: tall $accent;
 }
 
+/* Switch - HIGH VISIBILITY */
 ConfigScreen Switch {
     height: 1;
     width: auto;
     min-width: 8;
     margin: 0;
-    border: none;
+    border: tall $primary 50%;
+    background: $surface;
+}
+
+ConfigScreen Switch:focus {
+    border: tall $accent;
+}
+
+ConfigScreen Switch.-on {
+    background: $success 30%;
+}
+
+ConfigScreen Switch.-on > .switch--slider {
+    color: $success;
 }
 
 ConfigScreen #config-footer {
@@ -1724,7 +1757,7 @@ ProvidersScreen .section-header {
     margin: 1 0 0 0;
     padding: 0 1;
     background: $layer-raised 30%;
-    border-bottom: solid $text-ghost;
+    border-bottom: solid $secondary $border-dim;
 }
 
 ProvidersScreen ProviderRow {
@@ -1846,7 +1879,7 @@ ToolsScreen #tools-container {
     width: 70%;
     height: 80%;
     background: $surface;
-    border: solid $panel;
+    border: solid $accent $border-dim;
     padding: 1 2;
 }
 
@@ -1855,14 +1888,14 @@ ToolsScreen #tools-title {
     text-align: center;
     color: $accent;
     text-style: bold;
-    border-bottom: solid $surface;
+    border-bottom: solid $accent $border-dim;
     padding-bottom: 1;
     margin-bottom: 1;
 }
 
 ToolsScreen .server-block {
     height: auto;
-    border: wide $panel;
+    border: wide $accent $border-dim;
     padding: 1;
     margin-bottom: 1;
     background: $panel;
@@ -1871,7 +1904,7 @@ ToolsScreen .server-block {
 ToolsScreen .server-header {
     text-style: bold;
     color: $text-muted;
-    border-bottom: solid $background;
+    border-bottom: solid $text-dim;
 }
 
 ToolsScreen .server-header.connected {
@@ -3154,7 +3187,7 @@ PromptEditorScreen #editor-container {
 PromptEditorScreen #sidebar {
     width: 30%;
     height: 100%;
-    border-right: solid $secondary $border-dim;
+    border-right: solid $secondary $border-normal;
     layout: vertical;
 }
 
@@ -3169,6 +3202,7 @@ PromptEditorScreen #sidebar-title {
 PromptEditorScreen ListView {
     height: 1fr;
     background: $layer-raised 10%;
+    border: solid $text-dim;
 }
 
 PromptEditorScreen PromptListItem {
@@ -3226,9 +3260,14 @@ PromptEditorScreen .field-label {
 
 PromptEditorScreen Input {
     background: $layer-raised 10%;
-    border: none;
+    border: solid $text-dim;
     padding: 0 1;
     margin-bottom: 1;
+}
+
+PromptEditorScreen Input:focus {
+    border: solid $secondary;
+    background: $layer-raised 30%;
 }
 
 PromptEditorScreen TextArea {
@@ -3323,6 +3362,12 @@ TodoScreen #input-area {
 TodoScreen Input {
     width: 1fr;
     margin-right: 1;
+    border: solid $text-dim;
+    background: $layer-raised 20%;
+}
+
+TodoScreen Input:focus {
+    border: solid $primary;
 }
 
 TodoScreen Button {

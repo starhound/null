@@ -17,7 +17,7 @@ from ai.factory import AIFactory
 from ai.manager import AIManager
 from config import Config, get_settings
 from handlers import ExecutionHandler, InputHandler, SlashCommandHandler
-from managers import AgentManager, BranchManager, ProcessManager
+from managers import AgentManager, BranchManager, ProcessManager, VoiceManager
 from mcp import MCPManager
 from models import BlockState, BlockType
 from screens import ConfirmDialog, HelpScreen, ModelListScreen
@@ -59,6 +59,7 @@ class NullApp(App):
         ("ctrl+t", "toggle_ai_mode", "Toggle AI Mode"),
         ("ctrl+backslash", "toggle_file_tree", "Files"),
         ("ctrl+b", "toggle_branches", "Branches"),
+        ("ctrl+m", "toggle_voice", "Voice Input"),
     ]
 
     def __init__(self):
@@ -131,6 +132,9 @@ class NullApp(App):
 
         # MCP Manager
         self.mcp_manager = MCPManager()
+
+        # Voice Manager
+        self.voice_manager = VoiceManager(get_settings().voice)
 
         # Initialize handlers
         self.command_handler = SlashCommandHandler(self)
@@ -313,6 +317,33 @@ class NullApp(App):
         except Exception:
             pass
         self.notify(f"Agent mode {'enabled' if new_value else 'disabled'}")
+
+    async def action_toggle_voice(self):
+        try:
+            status_bar = self.query_one("#status-bar", StatusBar)
+        except Exception:
+            status_bar = None
+
+        result = await self.voice_manager.toggle_recording()
+
+        if result is None:
+            if status_bar:
+                status_bar.set_recording(True)
+            self.notify("Recording started...")
+        elif result.text:
+            if status_bar:
+                status_bar.set_recording(False)
+            input_ctrl = self.query_one("#input", InputController)
+            input_ctrl.insert(result.text)
+            self.notify("Transcription complete")
+        elif result.error:
+            if status_bar:
+                status_bar.set_recording(False)
+            self.notify(f"Voice error: {result.error}", severity="error")
+        else:
+            if status_bar:
+                status_bar.set_recording(False)
+            self.notify("Recording stopped")
 
     def action_cancel_operation(self):
         """Cancel any running operation."""

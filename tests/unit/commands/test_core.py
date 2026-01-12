@@ -289,7 +289,11 @@ class TestCoreCommandsGit:
     @pytest.mark.asyncio
     async def test_cmd_git_not_a_repo(self, core_commands, mock_app):
         mock_gm = MagicMock()
-        mock_gm.get_status = AsyncMock(return_value="Not a git repository")
+        # Mock what actually gets called: get_branch and file status methods
+        mock_gm.get_branch = AsyncMock(return_value="")
+        mock_gm.get_staged_files = AsyncMock(return_value=[])
+        mock_gm.get_unstaged_files = AsyncMock(return_value=[])
+        mock_gm.get_untracked_files = AsyncMock(return_value=[])
 
         with (
             patch("managers.git.GitManager", return_value=mock_gm),
@@ -350,7 +354,10 @@ class TestGitHelperMethods:
     @pytest.mark.asyncio
     async def test_git_status_shows_branch(self, core_commands, mock_app):
         mock_gm = MagicMock()
-        mock_gm.get_status = AsyncMock(return_value="On branch main\nnothing to commit")
+        mock_gm.get_branch = AsyncMock(return_value="main")
+        mock_gm.get_staged_files = AsyncMock(return_value=[])
+        mock_gm.get_unstaged_files = AsyncMock(return_value=[])
+        mock_gm.get_untracked_files = AsyncMock(return_value=[])
 
         with (
             patch("managers.git.GitManager", return_value=mock_gm),
@@ -367,9 +374,10 @@ class TestGitHelperMethods:
     @pytest.mark.asyncio
     async def test_git_status_shows_staged_files(self, core_commands, mock_app):
         mock_gm = MagicMock()
-        mock_gm.get_status = AsyncMock(
-            return_value="On branch main\nChanges to be committed:\n  file1.py\n  file2.py"
-        )
+        mock_gm.get_branch = AsyncMock(return_value="main")
+        mock_gm.get_staged_files = AsyncMock(return_value=["file1.py", "file2.py"])
+        mock_gm.get_unstaged_files = AsyncMock(return_value=[])
+        mock_gm.get_untracked_files = AsyncMock(return_value=[])
 
         with (
             patch("managers.git.GitManager", return_value=mock_gm),

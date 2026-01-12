@@ -1,0 +1,181 @@
+/* ==========================================================================
+   Tool Approval Screen
+   ========================================================================== */
+
+ToolApprovalScreen {
+    align: center middle;
+    background: $layer-void 80%;
+}
+
+ToolApprovalScreen #approval-container {
+    width: 80;
+    max-width: 90%;
+    height: auto;
+    max-height: 80%;
+    background: $surface;
+    border: double $warning;
+    padding: 1 2;
+}
+
+ToolApprovalScreen #approval-title {
+    text-align: center;
+    text-style: bold;
+    color: $warning;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen #approval-subtitle {
+    text-align: center;
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen #tools-scroll {
+    width: 100%;
+    height: auto;
+    max-height: 20;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen ToolPreview {
+    width: 100%;
+    height: auto;
+    padding: 1;
+    background: $panel;
+    border: none;
+    border-left: thick $accent 50%;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen ToolPreview .tool-name {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen ToolPreview .tool-args {
+    width: 100%;
+    height: auto;
+    max-height: 10;
+}
+
+ToolApprovalScreen #approval-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+    layout: horizontal;
+}
+
+ToolApprovalScreen #approval-buttons Button {
+    margin: 0 1;
+}
+
+ToolApprovalScreen #approve {
+    background: $success;
+}
+
+ToolApprovalScreen #approve-all {
+    background: $primary;
+}
+
+ToolApprovalScreen #reject {
+    background: $warning;
+}
+
+ToolApprovalScreen #cancel {
+    background: $error;
+}
+
+ToolApprovalScreen #approval-hint {
+    text-align: center;
+    color: $text-muted;
+    text-style: dim;
+    margin-top: 1;
+}
+
+/* ==========================================================================
+   Confirm Dialog / Disclaimer Dialog
+   ========================================================================== */
+
+ConfirmDialog,
+DisclaimerScreen {
+    align: center middle;
+    background: $layer-void 80%;
+}
+
+ConfirmDialog #confirm-dialog {
+    width: 50;
+    max-width: 80%;
+    height: auto;
+    background: $surface;
+    border: double $warning;
+    padding: 1 2;
+}
+
+ConfirmDialog #confirm-content {
+    width: 100%;
+    height: auto;
+}
+
+ConfirmDialog #confirm-title {
+    text-align: center;
+    text-style: bold;
+    color: $warning;
+    margin-bottom: 1;
+}
+
+ConfirmDialog #confirm-message {
+    text-align: center;
+    margin-bottom: 1;
+    width: 100%;
+}
+
+ConfirmDialog #confirm-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+ConfirmDialog #confirm-buttons Button {
+    margin: 0 1;
+}
+
+/* ==========================================================================
+   Disclaimer Screen
+   ========================================================================== */
+
+DisclaimerScreen #disclaimer-dialog {
+    width: 80;
+    max-width: 90%;
+    height: auto;
+    background: $surface;
+    border: double $warning;
+    padding: 2 3;
+}
+
+DisclaimerScreen #disclaimer-content {
+    width: 100%;
+    height: auto;
+}
+
+DisclaimerScreen #disclaimer-title {
+    text-align: center;
+    text-style: bold;
+    color: $warning;
+    margin-bottom: 1;
+}
+
+DisclaimerScreen #disclaimer-message {
+    margin-bottom: 1;
+    width: 100%;
+}
+
+DisclaimerScreen #disclaimer-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+DisclaimerScreen #disclaimer-buttons Button {
+    margin: 0 1;
+}

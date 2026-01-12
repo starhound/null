@@ -1,0 +1,301 @@
+/* ==========================================================================
+   Provider Config Screen
+   ========================================================================== */
+
+ProviderConfigScreen {
+    /* Inherits from ModalScreen */
+}
+
+ProviderConfigScreen #config-container {
+    width: 50%;
+    min-width: 40;
+    height: auto;
+    background: $surface;
+    border: solid $panel;
+    padding: 1 2;
+    layout: vertical;
+}
+
+ProviderConfigScreen #config-container > Label:first-child {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+ProviderConfigScreen .input-label {
+    margin-top: 1;
+    margin-bottom: 0;
+    color: $text-muted;
+}
+
+ProviderConfigScreen Input {
+    margin-bottom: 0;
+}
+
+ProviderConfigScreen #buttons {
+    layout: horizontal;
+    align: center middle;
+    margin-top: 1;
+    height: 1;
+    width: 100%;
+}
+
+ProviderConfigScreen #save {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $success;
+    color: $text;
+    margin-right: 1;
+}
+
+ProviderConfigScreen #save:hover {
+    background: $success;
+    text-style: bold;
+}
+
+ProviderConfigScreen #cancel {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+}
+
+ProviderConfigScreen #cancel:hover {
+    background: $error;
+    color: $text;
+}
+
+ProviderConfigScreen #connection-status {
+    height: 1;
+    margin: 1 0;
+    color: $text-muted;
+    text-style: italic;
+}
+
+ProviderConfigScreen #connection-status.success {
+    color: $success;
+    text-style: bold;
+}
+
+ProviderConfigScreen #connection-status.error {
+    color: $error;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   Providers Screen - Cyber Noir Provider Management
+   ========================================================================== */
+
+ProvidersScreen {
+    /* Inherits from ModalScreen */
+}
+
+ProvidersScreen #providers-container {
+    width: 70%;
+    min-width: 60;
+    height: auto;
+    max-height: 80%;
+    background: $layer-base;
+    border: double $secondary $border-normal;
+    padding: 1 2;
+    layout: vertical;
+}
+
+ProvidersScreen #providers-title {
+    text-style: bold;
+    color: $secondary;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 1;
+}
+
+ProvidersScreen #active-provider-label {
+    color: $success;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 1;
+    background: $success 8%;
+    border-left: solid $success $border-dim;
+}
+
+ProvidersScreen #providers-list {
+    height: auto;
+    max-height: 20;
+    padding: 0;
+    background: $layer-raised 40%;
+}
+
+ProvidersScreen .section-header {
+    color: $text-muted;
+    text-style: bold;
+    margin: 1 0 0 0;
+    padding: 0 1;
+    background: $layer-raised 30%;
+    border-bottom: solid $text-ghost;
+}
+
+ProvidersScreen ProviderRow {
+    height: 1;
+    width: 100%;
+    padding: 0 1;
+    margin: 0;
+}
+
+ProvidersScreen ProviderRow:hover {
+    background: $layer-raised 60%;
+}
+
+ProvidersScreen ProviderRow:focus {
+    background: $secondary 15%;
+    border-left: thick $secondary;
+}
+
+ProvidersScreen .provider-status {
+    width: 3;
+    text-style: bold;
+}
+
+ProvidersScreen .provider-status.active {
+    color: $success;
+}
+
+ProvidersScreen .provider-status.configured {
+    color: $warning;
+}
+
+ProvidersScreen .provider-status.unconfigured {
+    color: $text-dim;
+}
+
+ProvidersScreen .provider-name {
+    width: 15;
+    color: $text-bright;
+    text-style: bold;
+}
+
+ProvidersScreen .provider-desc {
+    width: 1fr;
+    color: $text-muted;
+}
+
+ProvidersScreen .provider-btn {
+    width: auto;
+    min-width: 10;
+    height: 1;
+    background: $layer-raised;
+    color: $text-muted;
+    border: none;
+    margin-left: 1;
+}
+
+ProvidersScreen .provider-btn:hover {
+    background: $secondary;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ProvidersScreen .provider-btn-active {
+    width: auto;
+    min-width: 10;
+    height: 1;
+    background: $success 40%;
+    color: $text-bright;
+    border: none;
+    margin-left: 1;
+}
+
+ProvidersScreen .provider-btn-active:hover {
+    background: $success;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ProvidersScreen .provider-btn-remove {
+    width: auto;
+    min-width: 8;
+    height: 1;
+    background: $error 25%;
+    color: $text-muted;
+    border: none;
+    margin-left: 1;
+}
+
+ProvidersScreen .provider-btn-remove:hover {
+    background: $error;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ProvidersScreen #close_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $layer-raised;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+ProvidersScreen #close_btn:hover {
+    background: $error;
+    color: $layer-void;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   Tools Screen
+   ========================================================================== */
+
+ToolsScreen {
+    background: $layer-void 80%;
+}
+
+ToolsScreen #tools-container {
+    width: 70%;
+    height: 80%;
+    background: $surface;
+    border: solid $panel;
+    padding: 1 2;
+}
+
+ToolsScreen #tools-title {
+    width: 100%;
+    text-align: center;
+    color: $accent;
+    text-style: bold;
+    border-bottom: solid $surface;
+    padding-bottom: 1;
+    margin-bottom: 1;
+}
+
+ToolsScreen .server-block {
+    height: auto;
+    border: wide $panel;
+    padding: 1;
+    margin-bottom: 1;
+    background: $panel;
+}
+
+ToolsScreen .server-header {
+    text-style: bold;
+    color: $text-muted;
+    border-bottom: solid $background;
+}
+
+ToolsScreen .server-header.connected {
+    color: $success;
+}
+
+ToolsScreen #close_btn {
+    dock: bottom;
+    width: 100%;
+    margin-top: 1;
+    background: $panel;
+}
+
+ToolsScreen #close_btn:hover {
+    background: $error;
+    color: $background;
+    text-style: bold;
+}

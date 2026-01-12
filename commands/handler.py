@@ -153,17 +153,6 @@ class SlashCommandHandler:
                     ],
                 ),
             ),
-            "cmd": (
-                self._core.cmd_cmd,
-                CommandInfo(
-                    "cmd",
-                    "Translate natural language to shell command",
-                    "",
-                    subcommands=[
-                        ("<description>", "Describe what you want to do"),
-                    ],
-                ),
-            ),
             "explain": (
                 self._core.cmd_explain,
                 CommandInfo(

@@ -1,0 +1,112 @@
+/* ==========================================================================
+   AIResponseBlock - Chat Mode (Electric Cyan)
+   Conversational, flowing, intelligent aesthetic
+   ========================================================================== */
+
+AIResponseBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: $layer-base 45%;
+    color: $text-bright;
+    margin: 0 0 1 0;
+    padding: 0;
+    border: round $primary $border-normal;
+    transition: background 200ms in_out_cubic, border 200ms in_out_cubic;
+}
+
+AIResponseBlock:focus-within {
+    border: round $primary $border-focus;
+    background: $primary $glow-medium;
+    tint: $primary 4%;
+}
+
+AIResponseBlock BlockHeader {
+    background: transparent;
+    padding: 0 2;
+    color: $primary;
+    border-bottom: solid $primary 18%;
+}
+
+AIResponseBlock BlockBody {
+    background: transparent;
+    padding: 1 2;
+}
+
+AIResponseBlock BlockMeta {
+    height: auto;
+    min-height: 1;
+    background: transparent;
+    padding: 0 2;
+    margin: 0;
+    color: $text-dim;
+    border-top: solid $primary 12%;
+}
+
+/* ==========================================================================
+   AIResponseBlock (Chat Mode) - Subtle, Conversational Styling
+   ========================================================================== */
+
+AIResponseBlock BlockHeader .prompt-symbol {
+    color: $primary;
+}
+
+AIResponseBlock BlockHeader .header-text {
+    color: $text-muted;
+    text-style: italic;
+}
+
+AIResponseBlock ThinkingWidget .spinner {
+    color: $primary 80%;
+}
+
+AIResponseBlock ThinkingWidget .peek-window {
+    border: none;
+    border-left: solid $primary 40%;
+}
+
+AIResponseBlock ToolAccordion {
+    margin: 0 1 0 3;
+}
+
+AIResponseBlock ToolAccordionItem:hover {
+    background: $primary 3%;
+}
+
+AIResponseBlock ToolHeader .tool-icon.expanded {
+    color: $primary;
+}
+
+AIResponseBlock ToolOutput {
+    border-left: solid $primary 30%;
+}
+
+AIResponseBlock ResponseWidget .response-container {
+    border: none;
+    border-left: thick $primary 30%;
+    margin-left: 3;
+}
+
+AIResponseBlock ResponseWidget .response-header {
+    border-bottom: none;
+    color: $primary 70%;
+}
+
+AIResponseBlock ResponseWidget .response-icon {
+    color: $primary;
+}
+
+AIResponseBlock ResponseWidget .response-title {
+    color: $primary;
+}
+
+AIResponseBlock ActionBar {
+    border-top: none;
+}
+
+AIResponseBlock ActionButton:hover {
+    color: $primary;
+    background: $layer-raised;
+    text-style: bold;
+    border-bottom: solid $primary;
+}

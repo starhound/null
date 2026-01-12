@@ -14,6 +14,7 @@ class StatusBar(Static):
     provider_status = reactive("unknown")
     mcp_count = reactive(0)
     process_count = reactive(0)
+    is_recording = reactive(False)
     git_branch = reactive("")
     git_dirty = reactive(False)
     # Token usage tracking
@@ -31,6 +32,8 @@ class StatusBar(Static):
         yield Label("", id="mcp-indicator", classes="status-section")
         yield Label("|", classes="status-sep")
         yield Label("", id="process-indicator", classes="status-section")
+        yield Label("|", classes="status-sep")
+        yield Label("", id="voice-indicator", classes="status-section")
         yield Label("", classes="spacer")
         # Token usage indicator
         yield Label("", id="token-indicator", classes="status-section")
@@ -72,6 +75,9 @@ class StatusBar(Static):
     def watch_process_count(self, count: int):
         self._update_process_display()
 
+    def watch_is_recording(self, recording: bool):
+        self._update_voice_display()
+
     def watch_git_branch(self, branch: str):
         self._update_git_display()
 
@@ -112,6 +118,20 @@ class StatusBar(Static):
             else:
                 indicator.update("󰅖 PROC: 0")
                 indicator.add_class("process-inactive")
+        except Exception:
+            pass
+
+    def _update_voice_display(self):
+        try:
+            indicator = self.query_one("#voice-indicator", Label)
+            indicator.remove_class("voice-active", "voice-inactive")
+
+            if self.is_recording:
+                indicator.update("● REC")
+                indicator.add_class("voice-active")
+            else:
+                indicator.update("")
+                indicator.add_class("voice-inactive")
         except Exception:
             pass
 
@@ -273,6 +293,9 @@ class StatusBar(Static):
     def set_process_count(self, count: int):
         """Set number of active processes."""
         self.process_count = count
+
+    def set_recording(self, recording: bool):
+        self.is_recording = recording
 
     def set_git_status(self, branch: str, is_dirty: bool):
         self.git_branch = branch

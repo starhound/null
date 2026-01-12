@@ -1,0 +1,212 @@
+/* ==========================================================================
+   Agent Iterations - Structured Think -> Tool -> Response Flow
+   Extracted from main.tcss lines 2598-2809
+   ========================================================================== */
+
+/* --- IterationContainer --- */
+IterationContainer {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+IterationContainer.empty {
+    display: none;
+}
+
+/* --- IterationWidget --- */
+IterationWidget {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+/* --- IterationHeader --- */
+IterationHeader {
+    width: 100%;
+    height: 1;
+    padding: 0 2;
+    layout: horizontal;
+    background: transparent;
+}
+
+IterationHeader .iter-status {
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    color: $text-muted;
+    text-align: center;
+}
+
+IterationHeader .iter-status.pending {
+    color: $text-muted;
+}
+
+IterationHeader .iter-status.thinking {
+    color: $warning;
+}
+
+IterationHeader .iter-status.executing {
+    color: $accent;
+}
+
+IterationHeader .iter-status.waiting_approval {
+    color: $primary;
+}
+
+IterationHeader .iter-status.complete {
+    color: $success;
+}
+
+IterationHeader .iter-label {
+    color: $accent;
+    text-style: bold;
+    width: 1fr;
+}
+
+IterationHeader .iter-duration {
+    color: $text-muted;
+    text-style: dim;
+    width: 8;
+    text-align: right;
+}
+
+/* --- ThinkingSection --- */
+ThinkingSection {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+ThinkingSection .thinking-toggle {
+    width: 100%;
+    height: 1;
+    padding: 0 2;
+    color: $text-muted;
+    layout: horizontal;
+    background: transparent;
+}
+
+ThinkingSection .thinking-toggle:hover {
+    background: $accent 10%;
+}
+
+ThinkingSection .thinking-icon {
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    color: $text-muted;
+    text-align: center;
+}
+
+ThinkingSection .thinking-icon.expanded {
+    color: $accent;
+}
+
+ThinkingSection .thinking-title {
+    color: $text-muted;
+    text-style: italic;
+    width: 1fr;
+}
+
+ThinkingSection .thinking-content {
+    width: 100%;
+    height: auto;
+    padding: 1 2;
+    background: transparent;
+    border-left: solid $accent 40%;
+    margin: 0 0 1 3;
+    display: none;
+    color: $text-muted;
+}
+
+ThinkingSection .thinking-content.visible {
+    display: block;
+}
+
+/* --- ToolCallItem (in iterations) --- */
+ToolCallItem {
+    width: 100%;
+    height: 1;
+    padding: 0 2;
+    background: transparent;
+}
+
+ToolCallItem .tool-row {
+    width: 100%;
+    height: 1;
+    layout: horizontal;
+}
+
+ToolCallItem .tool-icon {
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    color: $text-muted;
+    text-align: center;
+}
+
+ToolCallItem .tool-icon.pending {
+    color: $text-muted;
+}
+
+ToolCallItem .tool-icon.running {
+    color: $warning;
+}
+
+ToolCallItem .tool-icon.success {
+    color: $success;
+}
+
+ToolCallItem .tool-icon.error {
+    color: $error;
+}
+
+ToolCallItem .tool-name {
+    color: $text;
+    text-style: bold;
+    width: 1fr;
+}
+
+ToolCallItem .tool-duration {
+    color: $text-muted;
+    text-style: dim;
+    width: 8;
+    text-align: right;
+}
+
+/* Container for tool calls within iteration */
+.iter-tools {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+/* Response fragment within iteration */
+.iter-response {
+    width: 100%;
+    height: auto;
+    padding: 1 2;
+    margin: 0;
+    color: $text;
+    background: transparent;
+}
+
+/* --- IterationSeparator --- */
+IterationSeparator {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text-dim;
+    text-style: dim;
+    text-align: center;
+    background: transparent;
+}

@@ -1,0 +1,39 @@
+/* ==========================================================================
+   Color Variables - Layered Noir Palette
+   ========================================================================== */
+
+/* Text hierarchy - from bright to ghosted */
+$text-bright: $foreground;
+$text-muted: $foreground 70%;
+$text-dim: $foreground 45%;
+$text-ghost: $foreground 25%;
+
+/* Background layers - progressive depth */
+$layer-void: $background;           /* Deepest - app background */
+$layer-base: $surface;              /* Block backgrounds */
+$layer-raised: $panel;              /* Elevated content */
+$layer-float: $panel;               /* Floating elements */
+
+/* Border accent opacities */
+$border-dim: 35%;
+$border-normal: 55%;
+$border-focus: 85%;
+$border-full: 100%;
+
+/* Glow/tint intensities for focus states */
+$glow-subtle: 5%;
+$glow-medium: 10%;
+$glow-strong: 15%;
+
+/* Contrast system - accessibility-friendly boundaries */
+$contrast-border: $primary 50%;
+$contrast-border-focus: $accent;
+$contrast-bg: $surface;
+$contrast-bg-hover: $panel;
+
+/* Form control states */
+$input-border: $primary 50%;
+$input-bg: $surface;
+$input-focus-border: $accent;
+$switch-on-bg: $success 30%;
+$switch-on-color: $success;

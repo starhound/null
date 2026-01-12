@@ -1,0 +1,321 @@
+/* ==========================================================================
+   AgentResponseBlock - Cyber Noir Agent Mode (Vivid Magenta)
+   Bold, active, autonomous execution aesthetic with double border frame
+   ========================================================================== */
+
+AgentResponseBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: $layer-base 50%;
+    color: $text-bright;
+    margin: 0 0 1 0;
+    padding: 0;
+    border: double $secondary $border-normal;
+}
+
+AgentResponseBlock:focus-within {
+    border: double $secondary $border-focus;
+    background: $secondary $glow-subtle;
+    tint: $secondary 4%;
+}
+
+AgentResponseBlock BlockHeader {
+    background: transparent;
+    padding: 0 2;
+    color: $secondary;
+    border-bottom: solid $secondary 22%;
+}
+
+AgentResponseBlock BlockHeader .prompt-symbol {
+    color: $secondary;
+    text-style: bold;
+}
+
+AgentResponseBlock BlockHeader .header-text {
+    color: $text-bright;
+    text-style: bold;
+}
+
+AgentResponseBlock BlockHeader .timestamp {
+    color: $secondary 70%;
+}
+
+AgentResponseBlock BlockMeta {
+    background: transparent;
+    border-top: solid $secondary 15%;
+}
+
+/* ==========================================================================
+   Agent Iterations - Structured Workflow Display
+   ========================================================================== */
+
+AgentResponseBlock IterationContainer {
+    background: transparent;
+    border-top: none;
+    padding-top: 1;
+    margin: 1 0;
+}
+
+AgentResponseBlock IterationHeader {
+    background: $secondary 3%;
+    border-bottom: none;
+}
+
+AgentResponseBlock IterationHeader .iter-label {
+    color: $secondary;
+    text-style: bold;
+}
+
+AgentResponseBlock IterationHeader .iter-status.thinking {
+    color: $secondary;
+}
+
+AgentResponseBlock IterationHeader .iter-status.executing {
+    color: $warning;
+}
+
+AgentResponseBlock IterationHeader .iter-status.complete {
+    color: $success;
+}
+
+AgentResponseBlock ThinkingSection .thinking-icon.expanded {
+    color: $secondary;
+}
+
+AgentResponseBlock ThinkingSection .thinking-toggle:hover {
+    background: $secondary 10%;
+}
+
+AgentResponseBlock ThinkingSection .thinking-content {
+    border-left: solid $secondary 50%;
+    background: $secondary 2%;
+}
+
+AgentResponseBlock ToolCallItem .tool-name {
+    color: $secondary;
+}
+
+AgentResponseBlock IterationSeparator {
+    color: $secondary 50%;
+    border-top: none;
+}
+
+/* ==========================================================================
+   Agent Response Widget
+   ========================================================================== */
+
+AgentResponseBlock ResponseWidget .response-container {
+    border: none;
+    border-left: thick $secondary 50%;
+    background: $secondary 2%;
+    margin-left: 3;
+}
+
+AgentResponseBlock ResponseWidget .response-header {
+    border-bottom: none;
+    color: $secondary;
+    background: transparent;
+}
+
+AgentResponseBlock ResponseWidget .response-icon {
+    color: $secondary;
+    text-style: bold;
+}
+
+AgentResponseBlock ResponseWidget .response-title {
+    color: $secondary;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   Agent Action Bar
+   ========================================================================== */
+
+AgentResponseBlock ActionBar {
+    border-top: none;
+    background: transparent;
+}
+
+AgentResponseBlock ActionButton:hover {
+    color: $secondary;
+    background: $layer-raised;
+    text-style: bold;
+    border-bottom: solid $secondary;
+}
+
+AgentResponseBlock ActionBar .action-meta {
+    color: $secondary 70%;
+}
+
+/* ==========================================================================
+   Agent Execution Widget
+   ========================================================================== */
+
+AgentResponseBlock ExecutionWidget #exec-container {
+    background: transparent;
+    border: none;
+    border-left: solid $secondary 40%;
+    margin-left: 3;
+}
+
+AgentResponseBlock ExecutionWidget .exec-header {
+    border-bottom: none;
+    background: transparent;
+}
+
+AgentResponseBlock ExecutionWidget .exec-title {
+    color: $secondary 80%;
+    text-style: bold;
+}
+
+AgentResponseBlock ExecutionWidget .toggle-icon {
+    color: $secondary;
+}
+
+AgentResponseBlock ExecutionWidget .exec-header:hover {
+    background: $secondary 8%;
+    color: $secondary;
+}
+
+/* ==========================================================================
+   Agent Iterations - Structured Think -> Tool -> Response Flow
+   ========================================================================== */
+
+/* --- IterationContainer --- */
+IterationContainer {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+IterationContainer.empty {
+    display: none;
+}
+
+/* --- IterationWidget --- */
+IterationWidget {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+/* --- IterationHeader --- */
+IterationHeader {
+    width: 100%;
+    height: 1;
+    padding: 0 2;
+    layout: horizontal;
+    background: transparent;
+}
+
+IterationHeader .iter-status {
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    color: $text-muted;
+    text-align: center;
+}
+
+IterationHeader .iter-status.pending {
+    color: $text-muted;
+}
+
+IterationHeader .iter-status.thinking {
+    color: $warning;
+}
+
+IterationHeader .iter-status.executing {
+    color: $accent;
+}
+
+IterationHeader .iter-status.waiting_approval {
+    color: $primary;
+}
+
+IterationHeader .iter-status.complete {
+    color: $success;
+}
+
+IterationHeader .iter-label {
+    color: $accent;
+    text-style: bold;
+    width: 1fr;
+}
+
+IterationHeader .iter-duration {
+    color: $text-muted;
+    text-style: dim;
+    width: 8;
+    text-align: right;
+}
+
+/* --- ThinkingSection --- */
+ThinkingSection {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+ThinkingSection .thinking-toggle {
+    width: 100%;
+    height: 1;
+    padding: 0 2;
+    color: $text-muted;
+    layout: horizontal;
+    background: transparent;
+}
+
+ThinkingSection .thinking-toggle:hover {
+    background: $accent 10%;
+}
+
+ThinkingSection .thinking-icon {
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    color: $text-muted;
+    text-align: center;
+}
+
+ThinkingSection .thinking-icon.expanded {
+    color: $accent;
+}
+
+ThinkingSection .thinking-title {
+    color: $text-muted;
+    text-style: italic;
+    width: 1fr;
+}
+
+ThinkingSection .thinking-content {
+    width: 100%;
+    height: auto;
+    padding: 1 2;
+    background: transparent;
+    border-left: solid $accent 40%;
+    margin: 0 0 1 3;
+    display: none;
+    color: $text-muted;
+}
+
+ThinkingSection .thinking-content.visible {
+    display: block;
+}
+
+/* --- IterationSeparator --- */
+IterationSeparator {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text-dim;
+    text-style: dim;
+    text-align: center;
+    background: transparent;
+}

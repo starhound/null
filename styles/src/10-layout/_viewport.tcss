@@ -1,0 +1,105 @@
+/* ==========================================================================
+   Viewport Layout - History and Input Areas
+   ========================================================================== */
+
+/* ==========================================================================
+   History Viewport - Main Content Area
+   ========================================================================== */
+
+HistoryViewport {
+    height: 1fr;
+    padding: 1 2 0 2;
+    margin: 0;
+    background: $layer-void;
+    scrollbar-size-vertical: 1;
+    scrollbar-background: transparent;
+    scrollbar-color: $text-ghost;
+    scrollbar-color-hover: $primary 50%;
+    scrollbar-color-active: $primary;
+    min-height: 10;
+    overflow-y: auto;
+}
+
+/* ==========================================================================
+   Input Area - Active Command Entry Zone
+   The input area should feel energized and distinct from passive content
+   ========================================================================== */
+
+#input-container {
+    height: auto;
+    min-height: 4;
+    width: 100%;
+    margin-top: 0;
+    padding: 1 2;
+    background: $layer-base 60%;
+    border-top: solid $accent $border-dim;
+}
+
+#input-container:focus-within {
+    background: $layer-raised 50%;
+    border-top: solid $accent $border-focus;
+    tint: $accent 2%;
+}
+
+#input-container.ai-mode {
+    border-top: solid $primary $border-normal;
+}
+
+#input-container.ai-mode:focus-within {
+    background: $layer-raised 50%;
+    border-top: solid $primary $border-focus;
+    tint: $primary 3%;
+}
+
+#prompt-line {
+    height: 1;
+    padding: 0 0;
+    margin-bottom: 1;
+    color: $accent;
+    text-style: bold;
+}
+
+#prompt-line.ai-mode {
+    color: $primary;
+}
+
+/* ==========================================================================
+   InputController - Text Entry Widget
+   ========================================================================== */
+
+InputController {
+    width: 100%;
+    height: auto;
+    min-height: 1;
+    max-height: 8;
+    border: none;
+    padding: 0 1;
+    background: transparent;
+    color: $text-bright;
+}
+
+InputController > .text-area--cursor-line {
+    background: $layer-raised 20%;
+}
+
+InputController > .text-area--selection {
+    background: $primary 35%;
+}
+
+/* Cursor style variants - neon glow effect */
+InputController.cursor-block > .text-area--cursor {
+    background: $primary;
+    color: $background;
+}
+
+InputController.cursor-beam > .text-area--cursor {
+    background: transparent;
+    color: $text-bright;
+    border-left: tall $primary;
+}
+
+InputController.cursor-underline > .text-area--cursor {
+    background: transparent;
+    color: $text-bright;
+    text-style: underline;
+}

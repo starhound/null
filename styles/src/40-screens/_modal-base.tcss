@@ -1,0 +1,10 @@
+/* ==========================================================================
+   Modal Screens - Base Styles
+   Dark overlays with neon-bordered containers
+   ========================================================================== */
+
+/* Base modal - dark void overlay */
+ModalScreen {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.7);
+}

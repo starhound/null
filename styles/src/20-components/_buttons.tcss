@@ -1,0 +1,563 @@
+/* ==========================================================================
+   Buttons - All Button Styles
+   
+   Extracted from main.tcss for modular organization.
+   Includes action buttons, stop buttons, screen buttons, and plan actions.
+   ========================================================================== */
+
+/* ==========================================================================
+   ActionButton - Action Buttons for AI Blocks
+   ========================================================================== */
+
+ActionButton {
+    width: auto;
+    min-width: 0;
+    height: 1;
+    padding: 0 1;
+    margin: 0 1 0 0;
+    border: none;
+    color: $text-muted;
+    background: transparent;
+}
+
+ActionButton:hover {
+    color: $accent;
+    background: $panel;
+    text-style: bold;
+    border: none;
+}
+
+ActionButton:focus {
+    border: none;
+    text-style: bold;
+}
+
+ActionButton.-disabled,
+ActionButton:disabled {
+    color: $text-dim;
+    background: transparent;
+}
+
+ActionButton.copied {
+    color: $success;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   StopButton - Stop/Cancel Operations
+   ========================================================================== */
+
+StopButton {
+    width: auto;
+    height: 1;
+    padding: 0 1;
+    color: $error;
+    text-style: bold;
+}
+
+StopButton:hover {
+    background: $error 15%;
+    text-style: bold underline;
+}
+
+/* ==========================================================================
+   ConfigScreen Buttons - Settings Panel Actions
+   ========================================================================== */
+
+ConfigScreen #config-footer Button {
+    height: 1;
+    min-width: 12;
+    margin-right: 2;
+    border: none;
+}
+
+ConfigScreen #save-btn {
+    background: $success;
+    color: $layer-void;
+    text-style: bold;
+    border-bottom: solid $success 50%;
+}
+
+ConfigScreen #save-btn:hover {
+    background: $success 85%;
+    tint: $success 10%;
+    border-bottom: solid $success;
+}
+
+ConfigScreen #cancel-btn {
+    background: $layer-raised;
+    border: solid $text-dim;
+    color: $text-bright;
+}
+
+ConfigScreen #cancel-btn:hover {
+    background: $error;
+    color: $layer-void;
+    text-style: bold;
+    border: solid $error;
+}
+
+ConfigScreen #reset-btn {
+    color: $warning;
+    background: transparent;
+    border: solid $warning;
+}
+
+ConfigScreen #reset-btn:hover {
+    background: $warning;
+    color: $layer-void;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   HelpScreen Buttons
+   ========================================================================== */
+
+HelpScreen #close_btn {
+    width: 100%;
+    height: 1;
+    min-width: 8;
+    border: none;
+    background: $layer-raised;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+HelpScreen #close_btn:hover {
+    background: $primary;
+    color: $layer-void;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   SelectionListScreen Buttons
+   ========================================================================== */
+
+SelectionListScreen #cancel_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+SelectionListScreen #cancel_btn:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   ModelListScreen Buttons
+   ========================================================================== */
+
+ModelListScreen #cancel_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+ModelListScreen #cancel_btn:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   ProviderConfigScreen Buttons
+   ========================================================================== */
+
+ProviderConfigScreen #buttons {
+    layout: horizontal;
+    align: center middle;
+    margin-top: 1;
+    height: 1;
+    width: 100%;
+}
+
+ProviderConfigScreen #save {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $success;
+    color: $text;
+    margin-right: 1;
+}
+
+ProviderConfigScreen #save:hover {
+    background: $success;
+    text-style: bold;
+}
+
+ProviderConfigScreen #cancel {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+}
+
+ProviderConfigScreen #cancel:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   ProvidersScreen Buttons
+   ========================================================================== */
+
+ProvidersScreen .provider-btn {
+    width: auto;
+    min-width: 10;
+    height: 1;
+    background: $layer-raised;
+    color: $text-muted;
+    border: none;
+    margin-left: 1;
+}
+
+ProvidersScreen .provider-btn:hover {
+    background: $secondary;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ProvidersScreen .provider-btn-active {
+    width: auto;
+    min-width: 10;
+    height: 1;
+    background: $success 40%;
+    color: $text-bright;
+    border: none;
+    margin-left: 1;
+}
+
+ProvidersScreen .provider-btn-active:hover {
+    background: $success;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ProvidersScreen .provider-btn-remove {
+    width: auto;
+    min-width: 8;
+    height: 1;
+    background: $error 25%;
+    color: $text-muted;
+    border: none;
+    margin-left: 1;
+}
+
+ProvidersScreen .provider-btn-remove:hover {
+    background: $error;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ProvidersScreen #close_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $layer-raised;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+ProvidersScreen #close_btn:hover {
+    background: $error;
+    color: $layer-void;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   ToolsScreen Buttons
+   ========================================================================== */
+
+ToolsScreen #close_btn {
+    dock: bottom;
+    width: 100%;
+    margin-top: 1;
+    background: $panel;
+}
+
+ToolsScreen #close_btn:hover {
+    background: $error;
+    color: $background;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   ToolApprovalScreen Buttons
+   ========================================================================== */
+
+ToolApprovalScreen #approval-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+    layout: horizontal;
+}
+
+ToolApprovalScreen #approval-buttons Button {
+    margin: 0 1;
+}
+
+ToolApprovalScreen #approve {
+    background: $success;
+}
+
+ToolApprovalScreen #approve-all {
+    background: $primary;
+}
+
+ToolApprovalScreen #reject {
+    background: $warning;
+}
+
+ToolApprovalScreen #cancel {
+    background: $error;
+}
+
+/* ==========================================================================
+   ConfirmDialog Buttons
+   ========================================================================== */
+
+ConfirmDialog #confirm-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+ConfirmDialog #confirm-buttons Button {
+    margin: 0 1;
+}
+
+/* ==========================================================================
+   DisclaimerScreen Buttons
+   ========================================================================== */
+
+DisclaimerScreen #disclaimer-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+DisclaimerScreen #disclaimer-buttons Button {
+    margin: 0 1;
+}
+
+/* ==========================================================================
+   PromptEditorScreen Buttons
+   ========================================================================== */
+
+PromptEditorScreen Button {
+    min-width: 8;
+    margin: 0 1;
+    border: none;
+}
+
+PromptEditorScreen #new-btn {
+    background: $success 20%;
+    color: $success;
+}
+PromptEditorScreen #new-btn:hover {
+    background: $success;
+    color: $layer-void;
+}
+
+PromptEditorScreen #save-btn {
+    background: $success;
+    color: $layer-void;
+    margin-left: 2;
+}
+
+PromptEditorScreen #delete-btn {
+    background: $error;
+    color: $text-bright;
+    margin-right: 1; 
+}
+
+PromptEditorScreen #close-btn {
+    background: $layer-raised;
+    color: $text-muted;
+}
+
+/* ==========================================================================
+   TodoScreen Buttons
+   ========================================================================== */
+
+TodoScreen Button {
+    min-width: 8;
+}
+
+TodoScreen #add-btn {
+    background: $success;
+    color: $layer-void;
+}
+
+TodoScreen #close-btn {
+    background: $layer-raised;
+    margin-left: 1;
+}
+
+/* ==========================================================================
+   ExecutionWidget Copy Button
+   ========================================================================== */
+
+ExecutionWidget .copy-btn {
+    width: 6;
+    min-width: 6;
+    content-align: center middle;
+    color: $text-muted;
+    background: transparent;
+    border: none;
+}
+
+ExecutionWidget .copy-btn:hover {
+    color: $success;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   Code Block Action Buttons
+   ========================================================================== */
+
+.code-action {
+    margin-left: 1;
+    color: $text-dim;
+}
+
+.code-action:hover {
+    color: $accent;
+    text-style: bold;
+}
+
+.code-action-run:hover {
+    color: $success;
+}
+
+/* ==========================================================================
+   Tool Streaming Cancel Button
+   ========================================================================== */
+
+.tool-cancel-btn {
+    width: 3;
+    min-width: 3;
+    height: 1;
+    border: none;
+    background: transparent;
+    color: $error;
+    margin-left: 1;
+    display: none;
+}
+
+.tool-cancel-btn:hover {
+    background: $error;
+    color: $background;
+}
+
+/* ==========================================================================
+   Plan Actions Buttons
+   ========================================================================== */
+
+.plan-actions {
+    margin-top: 1;
+    height: 1;
+    background: transparent;
+}
+
+.plan-actions Button {
+    margin-right: 1;
+    height: 1;
+    min-width: 8;
+    border: none;
+    background: transparent;
+}
+
+.plan-actions Button.-primary {
+    color: $primary;
+    background: $layer-raised;
+}
+
+.plan-actions Button.-primary:hover {
+    color: $background;
+    background: $primary;
+    text-style: bold;
+}
+
+.plan-actions Button.-success {
+    color: $success;
+    background: $layer-raised;
+}
+
+.plan-actions Button.-success:hover {
+    color: $background;
+    background: $success;
+    text-style: bold;
+}
+
+.plan-actions Button.-error {
+    color: $error;
+    background: $layer-raised;
+}
+
+.plan-actions Button.-error:hover {
+    color: $background;
+    background: $error;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   Block Footer Action Buttons
+   ========================================================================== */
+
+BlockFooter .stop-action {
+    color: $error;
+    text-style: bold;
+    margin-left: 2;
+}
+
+BlockFooter .stop-action:hover {
+    color: $error;
+    text-style: bold underline;
+}
+
+/* ==========================================================================
+   Block Meta Action Buttons
+   ========================================================================== */
+
+BlockMeta .meta-action {
+    width: auto;
+    min-width: 4;
+    height: 1;
+    margin-left: 2;
+    color: $primary;
+}
+
+BlockMeta .meta-action:hover {
+    color: $primary;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   AIResponseBlock Action Button Overrides
+   ========================================================================== */
+
+AIResponseBlock ActionButton:hover {
+    color: $primary;
+    background: $layer-raised;
+    text-style: bold;
+    border-bottom: solid $primary;
+}
+
+/* ==========================================================================
+   AgentResponseBlock Action Button Overrides
+   ========================================================================== */
+
+AgentResponseBlock ActionButton:hover {
+    color: $secondary;
+    background: $layer-raised;
+    text-style: bold;
+    border-bottom: solid $secondary;
+}

@@ -1,0 +1,35 @@
+/* ==========================================================================
+   Global Scrollbar Styles - Minimal Neon Accents
+   ========================================================================== */
+
+VerticalScroll, HorizontalScroll {
+    scrollbar-size: 1 1;
+    scrollbar-background: transparent;
+    scrollbar-color: $text-ghost;
+    scrollbar-color-hover: $primary 60%;
+    scrollbar-color-active: $primary;
+}
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+
+/* Main app - fill entire terminal */
+NullApp {
+    width: 100%;
+    height: 100%;
+    background: $background;
+}
+
+/* Main app screen - not modal screens */
+NullApp > Screen {
+    layout: vertical;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    background: $background;
+    overflow: hidden;
+}
+
+/* Modal screens - handled in Modal Screens section */

@@ -81,6 +81,18 @@ class AISettings:
 
 
 @dataclass
+class VoiceSettings:
+    """Voice input settings."""
+
+    enabled: bool = False
+    hotkey: str = "ctrl+m"
+    stt_provider: str = "openai"
+    stt_model: str = "whisper-1"
+    language: str = "en"
+    push_to_talk: bool = True
+
+
+@dataclass
 class Settings:
     """Application settings container."""
 
@@ -88,6 +100,7 @@ class Settings:
     editor: EditorSettings = field(default_factory=EditorSettings)
     terminal: TerminalSettings = field(default_factory=TerminalSettings)
     ai: AISettings = field(default_factory=AISettings)
+    voice: VoiceSettings = field(default_factory=VoiceSettings)
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
@@ -96,6 +109,7 @@ class Settings:
             "editor": asdict(self.editor),
             "terminal": asdict(self.terminal),
             "ai": asdict(self.ai),
+            "voice": asdict(self.voice),
         }
 
     @classmethod
@@ -122,6 +136,11 @@ class Settings:
             for key, value in data["ai"].items():
                 if hasattr(settings.ai, key):
                     setattr(settings.ai, key, value)
+
+        if "voice" in data:
+            for key, value in data["voice"].items():
+                if hasattr(settings.voice, key):
+                    setattr(settings.voice, key, value)
 
         return settings
 
