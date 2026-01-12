@@ -1056,7 +1056,7 @@ BlockFooter .stop-action:hover {
 /* Base modal - dark void overlay */
 ModalScreen {
     align: center middle;
-    background: $layer-void 92%;
+    background: $layer-void 80%;
 }
 
 /* --- Help Screen --- */
@@ -1839,8 +1839,7 @@ ProvidersScreen #close_btn:hover {
    ========================================================================== */
 
 ToolsScreen {
-    /* Inherits from ModalScreen - uses 70% opacity */
-    background: $background 70%;
+    background: $layer-void 80%;
 }
 
 ToolsScreen #tools-container {
@@ -2793,6 +2792,7 @@ IterationSeparator {
 
 ToolApprovalScreen {
     align: center middle;
+    background: $layer-void 80%;
 }
 
 ToolApprovalScreen #approval-container {
@@ -2886,6 +2886,7 @@ ToolApprovalScreen #approval-hint {
 ConfirmDialog,
 DisclaimerScreen {
     align: center middle;
+    background: $layer-void 80%;
 }
 
 ConfirmDialog #confirm-dialog {
@@ -3132,9 +3133,7 @@ FrameSeparator.agent {
 
 PromptEditorScreen {
     align: center middle;
-    /* Use transparent background to inherit overlay dimming if desired, 
-       but here we set a specific void background */
-    background: $layer-void 90%;
+    background: $layer-void 80%;
 }
 
 PromptEditorScreen #editor-container {

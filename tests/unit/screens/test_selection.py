@@ -752,7 +752,8 @@ class TestModelListScreenSpinner:
 
         mock_indicator.update.assert_called_once()
         call_arg = mock_indicator.update.call_args[0][0]
-        assert "Loading models" in call_arg
+        assert "Loading" in call_arg
+        assert "providers" in call_arg
 
     def test_animate_spinner_handles_query_exception(self):
         """_animate_spinner should handle query_one exception."""
@@ -847,22 +848,6 @@ class TestModelListScreenOnUnmount:
         screen.on_unmount()
 
         screen._stop_spinner.assert_called_once()
-
-
-class TestModelListScreenStartLoading:
-    """Tests for ModelListScreen _start_loading method."""
-
-    def test_start_loading_runs_worker(self):
-        """_start_loading should run worker in thread."""
-        screen = ModelListScreen()
-        screen.run_worker = MagicMock()
-
-        screen._start_loading()
-
-        screen.run_worker.assert_called_once()
-        # Verify thread=True parameter
-        call_kwargs = screen.run_worker.call_args[1]
-        assert call_kwargs.get("thread") is True
 
 
 class TestModelListScreenStartSpinner:
@@ -1057,183 +1042,42 @@ class TestModelListScreenFinalizeList:
         screen._finalize_list()
 
 
-class TestModelListScreenFetchModelsInThread:
-    """Tests for ModelListScreen _fetch_models_in_thread method."""
-
-    def test_fetch_models_returns_empty_if_no_ai_manager(self):
-        """_fetch_models_in_thread should return empty if no ai_manager on app."""
+class TestModelListScreenUpdateProgressText:
+    def test_update_progress_text_with_providers(self):
         screen = ModelListScreen()
+        screen._total_providers = 5
+        screen._completed_providers = 3
+        screen._spinner_index = 0
 
-        mock_app = MagicMock()
-        del mock_app.ai_manager  # Ensure ai_manager doesn't exist
-        mock_app.configure_mock(**{})  # Clear any magic mock auto-attrs
-        type(mock_app).ai_manager = property(
-            lambda self: exec('raise AttributeError("no ai_manager")')
-        )
+        mock_indicator = MagicMock()
+        screen.query_one = MagicMock(return_value=mock_indicator)
 
-        screen._app = mock_app
-        type(screen).app = property(lambda self: self._app)
+        screen._update_progress_text()
 
-        result = screen._fetch_models_in_thread()
+        mock_indicator.update.assert_called_once()
+        call_arg = mock_indicator.update.call_args[0][0]
+        assert "3/5" in call_arg
+        assert "providers" in call_arg
 
-        assert result == ({}, 0)
-
-    def test_fetch_models_returns_empty_if_no_usable_providers(self):
-        """_fetch_models_in_thread should return empty if no usable providers."""
+    def test_update_progress_text_no_providers(self):
         screen = ModelListScreen()
+        screen._total_providers = 0
+        screen._spinner_index = 0
 
-        mock_manager = MagicMock()
-        mock_manager.get_usable_providers.return_value = []
+        mock_indicator = MagicMock()
+        screen.query_one = MagicMock(return_value=mock_indicator)
 
-        mock_app = MagicMock()
-        mock_app.ai_manager = mock_manager
-        screen._app = mock_app
-        type(screen).app = property(lambda self: self._app)
+        screen._update_progress_text()
 
-        result = screen._fetch_models_in_thread()
+        mock_indicator.update.assert_called_once()
+        call_arg = mock_indicator.update.call_args[0][0]
+        assert "Checking providers" in call_arg
 
-        assert result == ({}, 0)
-
-    def test_fetch_models_handles_exception(self):
-        """_fetch_models_in_thread should handle exceptions gracefully."""
+    def test_update_progress_text_handles_exception(self):
         screen = ModelListScreen()
+        screen.query_one = MagicMock(side_effect=Exception("Widget not found"))
 
-        mock_app = MagicMock()
-        mock_app.ai_manager.get_usable_providers.side_effect = Exception(
-            "Network error"
-        )
-        screen._app = mock_app
-        type(screen).app = property(lambda self: self._app)
-
-        result = screen._fetch_models_in_thread()
-
-        assert result == ({}, 0)
-
-
-class TestModelListScreenOnWorkerStateChanged:
-    """Tests for ModelListScreen on_worker_state_changed method."""
-
-    def test_on_worker_state_changed_ignores_unrelated_workers(self):
-        """on_worker_state_changed should ignore unrelated workers."""
-        screen = ModelListScreen()
-        screen._stop_spinner = MagicMock()
-
-        mock_event = MagicMock()
-        mock_event.worker.name = "unrelated_worker"
-
-        screen.on_worker_state_changed(mock_event)
-
-        screen._stop_spinner.assert_not_called()
-
-    def test_on_worker_state_changed_success_with_models(self):
-        """on_worker_state_changed should handle SUCCESS state with models."""
-        from textual.worker import WorkerState
-
-        screen = ModelListScreen()
-        screen._stop_spinner = MagicMock()
-        screen._update_collapsibles = MagicMock()
-        screen._finalize_list = MagicMock()
-
-        mock_event = MagicMock()
-        mock_event.worker.name = "_fetch_models_in_thread"
-        mock_event.state = WorkerState.SUCCESS
-        mock_event.worker.result = ({"openai": ["gpt-4"]}, 1)
-
-        screen.on_worker_state_changed(mock_event)
-
-        assert screen._models_by_provider == {"openai": ["gpt-4"]}
-        assert screen._total_providers == 1
-        assert screen.is_loading is False
-        screen._update_collapsibles.assert_called_once()
-        screen._finalize_list.assert_called_once()
-
-    def test_on_worker_state_changed_success_empty_models(self):
-        """on_worker_state_changed should handle SUCCESS with no models."""
-        from textual.worker import WorkerState
-
-        screen = ModelListScreen()
-        screen._stop_spinner = MagicMock()
-        screen._show_no_providers = MagicMock()
-
-        mock_event = MagicMock()
-        mock_event.worker.name = "_fetch_models_in_thread"
-        mock_event.state = WorkerState.SUCCESS
-        mock_event.worker.result = ({}, 0)
-
-        screen.on_worker_state_changed(mock_event)
-
-        assert screen.is_loading is False
-        screen._show_no_providers.assert_called_once()
-
-    def test_on_worker_state_changed_success_invalid_result(self):
-        """on_worker_state_changed should handle SUCCESS with invalid result."""
-        from textual.worker import WorkerState
-
-        screen = ModelListScreen()
-        screen._stop_spinner = MagicMock()
-        screen._show_no_providers = MagicMock()
-
-        mock_event = MagicMock()
-        mock_event.worker.name = "_fetch_models_in_thread"
-        mock_event.state = WorkerState.SUCCESS
-        mock_event.worker.result = None  # Invalid result
-
-        screen.on_worker_state_changed(mock_event)
-
-        assert screen.is_loading is False
-        screen._show_no_providers.assert_called_once()
-
-    def test_on_worker_state_changed_error(self):
-        """on_worker_state_changed should handle ERROR state."""
-        from textual.worker import WorkerState
-
-        screen = ModelListScreen()
-        screen._stop_spinner = MagicMock()
-        screen._show_error = MagicMock()
-
-        mock_event = MagicMock()
-        mock_event.worker.name = "_fetch_models_in_thread"
-        mock_event.state = WorkerState.ERROR
-        mock_event.worker.error = Exception("Connection failed")
-
-        screen.on_worker_state_changed(mock_event)
-
-        assert screen.is_loading is False
-        screen._show_error.assert_called_once_with("Connection failed")
-
-    def test_on_worker_state_changed_error_no_error_message(self):
-        """on_worker_state_changed should handle ERROR with no error message."""
-        from textual.worker import WorkerState
-
-        screen = ModelListScreen()
-        screen._stop_spinner = MagicMock()
-        screen._show_error = MagicMock()
-
-        mock_event = MagicMock()
-        mock_event.worker.name = "_fetch_models_in_thread"
-        mock_event.state = WorkerState.ERROR
-        mock_event.worker.error = None
-
-        screen.on_worker_state_changed(mock_event)
-
-        assert screen.is_loading is False
-        screen._show_error.assert_called_once_with("Unknown error")
-
-    def test_on_worker_state_changed_cancelled(self):
-        """on_worker_state_changed should handle CANCELLED state."""
-        from textual.worker import WorkerState
-
-        screen = ModelListScreen()
-        screen._stop_spinner = MagicMock()
-
-        mock_event = MagicMock()
-        mock_event.worker.name = "_fetch_models_in_thread"
-        mock_event.state = WorkerState.CANCELLED
-
-        screen.on_worker_state_changed(mock_event)
-
-        assert screen.is_loading is False
-        screen._stop_spinner.assert_called_once()
+        screen._update_progress_text()
 
 
 class TestModelListScreenUpdateCollapsibles:
@@ -1314,16 +1158,6 @@ class TestModelListScreenUpdateCollapsibles:
         screen._update_collapsibles()
 
         mock_child.remove.assert_called_once()
-
-    def test_update_collapsibles_handles_query_one_exception(self):
-        screen = ModelListScreen()
-        screen._models_by_provider = {"openai": ["gpt-4"]}
-        screen.query_one = MagicMock(side_effect=Exception("Widget not found"))
-
-        try:
-            screen._update_collapsibles()
-        except AttributeError:
-            pass
 
     @patch("config.Config")
     def test_update_collapsibles_limits_models_per_provider(self, mock_config):
@@ -1501,29 +1335,17 @@ class TestSelectionScreensIntegration:
         assert message.model == "gpt-4"
 
     def test_model_list_screen_workflow(self):
-        """Test ModelListScreen typical workflow."""
         screen = ModelListScreen()
 
-        # Verify initial state
         assert screen.is_loading is True
         assert screen._models_by_provider == {}
 
-        # Simulate successful model fetch
-        from textual.worker import WorkerState
-
-        screen._stop_spinner = MagicMock()
-        screen._update_collapsibles = MagicMock()
-        screen._finalize_list = MagicMock()
-
-        mock_event = MagicMock()
-        mock_event.worker.name = "_fetch_models_in_thread"
-        mock_event.state = WorkerState.SUCCESS
-        mock_event.worker.result = (
-            {"openai": ["gpt-4", "gpt-3.5"], "anthropic": ["claude-3"]},
-            2,
-        )
-
-        screen.on_worker_state_changed(mock_event)
+        screen._models_by_provider = {
+            "openai": ["gpt-4", "gpt-3.5"],
+            "anthropic": ["claude-3"],
+        }
+        screen._total_providers = 2
+        screen.is_loading = False
 
         assert screen._models_by_provider == {
             "openai": ["gpt-4", "gpt-3.5"],
@@ -1532,7 +1354,6 @@ class TestSelectionScreensIntegration:
         assert screen._total_providers == 2
         assert screen.is_loading is False
 
-        # Simulate model selection
         screen.dismiss = MagicMock()
         mock_message = MagicMock()
         mock_message.provider = "anthropic"

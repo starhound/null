@@ -148,6 +148,8 @@ class ModelItem(Static):
 
 
 class ModelListScreen(ModalScreen):
+    """Screen to select a model from available providers."""
+
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("escape", "dismiss", "Close"),
         Binding("up", "focus_prev", "Previous", show=False),
@@ -175,6 +177,8 @@ class ModelListScreen(ModalScreen):
         self._spinner_timer: Timer | None = None
         self._models_by_provider: dict[str, list[str]] = {}
         self._total_providers = 0
+        self._completed_providers = 0
+        self._fetch_task: object | None = None
 
     def compose(self) -> ComposeResult:
         with Container(id="model-selection-container"):
@@ -186,26 +190,76 @@ class ModelListScreen(ModalScreen):
             yield Button("Cancel [Esc]", variant="default", id="cancel_btn")
 
     def on_mount(self):
-        """Start loading models after screen is rendered."""
         self._start_spinner()
-        self.set_timer(0.1, self._start_loading)
+        self._fetch_task = self.run_worker(self._fetch_models_streaming, exclusive=True)
 
     def on_unmount(self) -> None:
         self._stop_spinner()
+        if self._fetch_task:
+            try:
+                self._fetch_task.cancel()
+            except Exception:
+                pass
 
     def on_input_changed(self, event: Input.Changed):
-        """Handle search input changes."""
         if event.input.id == "model-search":
             self.search_query = event.value.lower()
             if not self.is_loading:
                 self._update_collapsibles()
 
-    def _start_loading(self):
-        """Start the model loading worker in a thread."""
-        self.run_worker(self._fetch_models_in_thread, thread=True)
+    async def _fetch_models_streaming(self) -> None:
+        try:
+            if not hasattr(self.app, "ai_manager"):
+                self._show_no_providers()
+                return
+
+            manager = self.app.ai_manager
+            usable = manager.get_usable_providers()
+
+            if not usable:
+                self._show_no_providers()
+                return
+
+            self._total_providers = len(usable)
+            self._completed_providers = 0
+
+            async for (
+                provider_name,
+                models,
+                error,
+                completed,
+                total,
+            ) in manager.list_all_models_streaming():
+                self._completed_providers = completed
+                self._update_progress_text()
+
+                if models:
+                    self._models_by_provider[provider_name] = models
+                    self._update_collapsibles()
+
+            self._stop_spinner()
+            self.is_loading = False
+            self._finalize_list()
+
+        except Exception as e:
+            self._stop_spinner()
+            self.is_loading = False
+            self._show_error(str(e)[:50])
+
+    def _update_progress_text(self):
+        try:
+            indicator = self.query_one("#loading-indicator", Label)
+            spinner = self.SPINNER_FRAMES[self._spinner_index]
+            if self._total_providers > 0:
+                indicator.update(
+                    f"{spinner} Loading... ({self._completed_providers}/{self._total_providers} providers)"
+                )
+            else:
+                indicator.update(f"{spinner} Checking providers...")
+        except Exception:
+            pass
 
     def _start_spinner(self):
-        """Start the loading spinner animation."""
         try:
             indicator = self.query_one("#loading-indicator", Label)
             indicator.update(f"{self.SPINNER_FRAMES[0]} Checking providers...")
@@ -214,89 +268,13 @@ class ModelListScreen(ModalScreen):
             pass
 
     def _stop_spinner(self):
-        """Stop the spinner."""
         if self._spinner_timer:
             self._spinner_timer.stop()
             self._spinner_timer = None
 
     def _animate_spinner(self):
-        """Animate the spinner frame."""
         self._spinner_index = (self._spinner_index + 1) % len(self.SPINNER_FRAMES)
-        try:
-            indicator = self.query_one("#loading-indicator", Label)
-            if self._total_providers > 0:
-                indicator.update(
-                    f"{self.SPINNER_FRAMES[self._spinner_index]} Loading models..."
-                )
-            else:
-                indicator.update(
-                    f"{self.SPINNER_FRAMES[self._spinner_index]} Checking providers..."
-                )
-        except Exception:
-            pass
-
-    def _fetch_models_in_thread(self) -> tuple[dict[str, list[str]], int]:
-        """Synchronous model fetching - runs in a separate thread."""
-        import asyncio
-
-        try:
-            if not hasattr(self.app, "ai_manager"):
-                return {}, 0
-
-            manager = self.app.ai_manager
-            usable = manager.get_usable_providers()
-            if not usable:
-                return {}, 0
-
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-            try:
-                result = loop.run_until_complete(manager.list_all_models())
-                return result, len(usable)
-            finally:
-                loop.close()
-
-        except Exception:
-            return {}, 0
-
-    def on_worker_state_changed(self, event) -> None:
-        """Handle worker completion - update UI with results."""
-        from textual.worker import WorkerState
-
-        if "_fetch_models" not in str(event.worker.name):
-            return
-
-        if event.state == WorkerState.SUCCESS:
-            result = event.worker.result
-            if result and isinstance(result, tuple) and len(result) == 2:
-                self._models_by_provider, self._total_providers = result
-
-                if not self._models_by_provider:
-                    self._stop_spinner()
-                    self.is_loading = False
-                    self._show_no_providers()
-                    return
-
-                self._update_collapsibles()
-                self._stop_spinner()
-                self.is_loading = False
-                self._finalize_list()
-            else:
-                self._stop_spinner()
-                self.is_loading = False
-                self._show_no_providers()
-
-        elif event.state == WorkerState.ERROR:
-            self._stop_spinner()
-            self.is_loading = False
-            self._show_error(
-                str(event.worker.error) if event.worker.error else "Unknown error"
-            )
-
-        elif event.state == WorkerState.CANCELLED:
-            self._stop_spinner()
-            self.is_loading = False
+        self._update_progress_text()
 
     def _update_collapsibles(self):
         """Update the collapsible sections with models."""
@@ -364,7 +342,10 @@ class ModelListScreen(ModalScreen):
                 scroll.mount(collapsible)
 
         except Exception as e:
-            self.log.error(f"Failed to update model list: {e}")
+            try:
+                self.log.error(f"Failed to update model list: {e}")
+            except Exception:
+                pass
             self._show_error(f"Failed to display models: {str(e)[:50]}")
 
     def _finalize_list(self):

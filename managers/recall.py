@@ -1,4 +1,7 @@
+import logging
 import json
+
+logger = logging.getLogger(__name__)
 from pathlib import Path
 from typing import Any
 
@@ -60,8 +63,8 @@ class RecallManager:
                         vector=vector,
                     )
                     self.vector_store.add([chunk])
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to index interaction: {e}")
 
     async def _get_embedding_provider(self):
         """Get a provider capable of embeddings."""
@@ -78,7 +81,7 @@ class RecallManager:
                 provider_name = profile_ai.get("embedding_provider")
 
             if not provider_name:
-                provider_name = Config.get("ai.embedding_provider", "ollama")
+                provider_name = Config.get("ai.embedding_provider")
 
             model = None
             endpoint = None
@@ -109,7 +112,8 @@ class RecallManager:
             }
 
             return AIFactory.get_provider(config)
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to get embedding provider: {e}")
             return None
 
     async def search(self, query: str, limit: int = 5) -> list[dict[str, Any]]:

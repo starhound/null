@@ -6,6 +6,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class AgentState(Enum):
     IDLE = "idle"
@@ -282,8 +286,8 @@ class AgentManager:
                     task.add_done_callback(self._background_tasks.discard)
                 else:
                     callback(self.state)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Error in state callback: {e}")
 
     def _get_sessions_dir(self) -> Path:
         sessions_dir = Path.home() / ".null" / "agent_sessions"
@@ -321,8 +325,10 @@ class AgentManager:
                 try:
                     data = json.loads(filepath.read_text(encoding="utf-8"))
                     return AgentSession.from_dict(data)
-                except Exception:
+                except Exception as e:
+                    logger.warning(f"Failed to load session {filepath}: {e}")
                     return None
+        return None
         return None
 
     def list_saved_sessions(self) -> list[dict[str, Any]]:
@@ -343,8 +349,8 @@ class AgentManager:
                         "path": str(filepath),
                     }
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to read session {filepath}: {e}")
 
         return sessions[:20]
 

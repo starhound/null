@@ -63,7 +63,7 @@ class TerminalSettings:
 class AISettings:
     """AI provider settings."""
 
-    provider: str = "ollama"
+    provider: str = ""
     default_model: str = ""
     active_prompt: str = "default"
     context_window: int = 4000
@@ -73,9 +73,9 @@ class AISettings:
     autocomplete_enabled: bool = False
     autocomplete_provider: str = ""
     autocomplete_model: str = ""
-    embedding_provider: str = "ollama"
-    embedding_model: str = "nomic-embed-text"
-    embedding_endpoint: str = "http://localhost:11434"
+    embedding_provider: str = ""
+    embedding_model: str = ""
+    embedding_endpoint: str = ""
     use_rag: bool = False
     rag_top_k: int = 3
 

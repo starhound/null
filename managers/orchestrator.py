@@ -167,8 +167,7 @@ class AgentOrchestrator:
         self, goal: str, provider: LLMProvider
     ) -> list[tuple[AgentRole, str]]:
         """Coordinator analyzes goal and creates a plan."""
-        # Implementation
-        pass
+        raise NotImplementedError("Coordinator agent not yet implemented")
 
     async def _run_agent(self, subtask: SubTask, provider: LLMProvider) -> str:
         """Run a single agent on a subtask."""
@@ -176,15 +175,13 @@ class AgentOrchestrator:
         if not profile:
             return "No profile for agent"
 
-        # Implementation
-        pass
+        raise NotImplementedError("Agent execution not yet implemented")
 
     async def _aggregate_results(
         self, subtasks: list[SubTask], provider: LLMProvider
     ) -> str:
         """Aggregate results from all agents."""
-        # Implementation
-        pass
+        raise NotImplementedError("Result aggregation not yet implemented")
 
     def stop(self) -> None:
         self.is_running = False

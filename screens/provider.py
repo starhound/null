@@ -95,6 +95,9 @@ class ProviderConfigScreen(ModalScreen):
         },
     }
 
+    # OAuth providers that need browser login flow instead of form fields
+    OAUTH_PROVIDERS: ClassVar[set[str]] = {"claude_oauth", "antigravity"}
+
     def __init__(self, provider: str, current_config: dict[str, Any]):
         super().__init__()
         self.provider = provider
@@ -109,36 +112,45 @@ class ProviderConfigScreen(ModalScreen):
         provider_info = AIFactory.get_provider_info(self.provider)
         title = provider_info.get("name", self.provider.title())
         description = provider_info.get("description", "")
+        is_oauth = self.provider in self.OAUTH_PROVIDERS
 
         with Container(id="config-container"):
             yield Label(f"Configure {title}", id="config-title")
             if description:
                 yield Label(description, classes="input-hint")
 
-            # Get fields for this provider
-            fields = self.PROVIDER_FIELDS.get(self.provider, {})
-
-            for field_key, (label, placeholder, is_password) in fields.items():
-                yield Label(label, classes="input-label")
-                # Use current config value if set, otherwise use placeholder as default
-                # This ensures local providers have their endpoints saved properly
-                current_value = self.current_config.get(field_key, "")
-                initial_value = current_value if current_value else placeholder
-                inp = Input(
-                    placeholder=placeholder,
-                    password=is_password,
-                    id=field_key,
-                    value=initial_value if not is_password else current_value,
+            if is_oauth:
+                yield Label(
+                    "This provider uses browser-based OAuth authentication.",
+                    classes="input-hint",
                 )
-                self.inputs[field_key] = inp
-                yield inp
+                yield Label("", id="connection-status", classes="connection-status")
+                with Container(id="buttons"):
+                    yield Button(
+                        "Login with Browser", variant="default", id="oauth-login"
+                    )
+                    yield Button("Cancel", variant="default", id="cancel")
+            else:
+                fields = self.PROVIDER_FIELDS.get(self.provider, {})
 
-            # Status indicator for connection testing
-            yield Label("", id="connection-status", classes="connection-status")
+                for field_key, (label, placeholder, is_password) in fields.items():
+                    yield Label(label, classes="input-label")
+                    current_value = self.current_config.get(field_key, "")
+                    initial_value = current_value if current_value else placeholder
+                    inp = Input(
+                        placeholder=placeholder,
+                        password=is_password,
+                        id=field_key,
+                        value=initial_value if not is_password else current_value,
+                    )
+                    self.inputs[field_key] = inp
+                    yield inp
 
-            with Container(id="buttons"):
-                yield Button("Save & Connect", variant="default", id="save")
-                yield Button("Cancel", variant="default", id="cancel")
+                yield Label("", id="connection-status", classes="connection-status")
+
+                with Container(id="buttons"):
+                    yield Button("Save & Connect", variant="default", id="save")
+                    yield Button("Cancel", variant="default", id="cancel")
 
     def on_mount(self) -> None:
         if self.inputs:
@@ -155,8 +167,22 @@ class ProviderConfigScreen(ModalScreen):
         if event.button.id == "save":
             if not self.is_connecting:
                 self._test_connection()
+        elif event.button.id == "oauth-login":
+            if not self.is_connecting:
+                self._start_oauth_login()
         else:
             self.dismiss(None)
+
+    def _start_oauth_login(self):
+        self.is_connecting = True
+        self._start_spinner()
+        try:
+            status = self.query_one("#connection-status", Label)
+            status.update("Opening browser for authentication...")
+            status.remove_class("error", "success")
+        except Exception:
+            pass
+        self.run_worker(self._do_oauth_login())
 
     def _test_connection(self):
         """Test connection to the provider."""
@@ -249,8 +275,53 @@ class ProviderConfigScreen(ModalScreen):
             except Exception:
                 pass
 
+    async def _do_oauth_login(self):
+        from ai.factory import AIFactory
+
+        try:
+            provider_config = {"provider": self.provider}
+            provider = AIFactory.get_provider(provider_config)
+
+            if hasattr(provider, "login"):
+                success = await provider.login()
+
+                self._stop_spinner()
+                self.is_connecting = False
+
+                status = self.query_one("#connection-status", Label)
+
+                if success:
+                    status.update("✓ Authenticated successfully!")
+                    status.add_class("success")
+                    status.remove_class("error")
+                    await self._delay_and_dismiss({})
+                else:
+                    status.update("✗ Authentication failed or cancelled.")
+                    status.add_class("error")
+                    status.remove_class("success")
+            else:
+                self._stop_spinner()
+                self.is_connecting = False
+                status = self.query_one("#connection-status", Label)
+                status.update("✗ Provider does not support OAuth.")
+                status.add_class("error")
+
+        except Exception as e:
+            self._stop_spinner()
+            self.is_connecting = False
+
+            try:
+                status = self.query_one("#connection-status", Label)
+                error_msg = str(e)
+                if len(error_msg) > 50:
+                    error_msg = error_msg[:50] + "..."
+                status.update(f"✗ Error: {error_msg}")
+                status.add_class("error")
+                status.remove_class("success")
+            except Exception:
+                pass
+
     async def _delay_and_dismiss(self, result: dict):
-        """Brief delay to show success message, then dismiss."""
         import asyncio
 
         await asyncio.sleep(0.5)

@@ -133,7 +133,7 @@ class TestAISettings:
     def test_default_values(self):
         """AISettings should have expected defaults."""
         settings = AISettings()
-        assert settings.provider == "ollama"
+        assert settings.provider == ""
         assert settings.default_model == ""
         assert settings.active_prompt == "default"
         assert settings.context_window == 4000
@@ -143,6 +143,9 @@ class TestAISettings:
         assert settings.autocomplete_enabled is False
         assert settings.autocomplete_provider == ""
         assert settings.autocomplete_model == ""
+        assert settings.embedding_provider == ""
+        assert settings.embedding_model == ""
+        assert settings.embedding_endpoint == ""
 
     def test_custom_values(self):
         """AISettings should accept custom values."""
@@ -190,7 +193,7 @@ class TestSettings:
 
         assert d["appearance"]["theme"] == "null-dark"
         assert d["editor"]["tab_size"] == 4
-        assert d["ai"]["provider"] == "ollama"
+        assert d["ai"]["provider"] == ""
 
     def test_from_dict_with_all_sections(self):
         """from_dict() should restore settings from dict."""
@@ -216,11 +219,9 @@ class TestSettings:
 
         settings = Settings.from_dict(data)
         assert settings.appearance.theme == "custom"
-        # Other appearance settings should be defaults
         assert settings.appearance.font_size == 14
-        # Other sections should be defaults
         assert settings.editor.tab_size == 4
-        assert settings.ai.provider == "ollama"
+        assert settings.ai.provider == ""
 
     def test_from_dict_empty(self):
         """from_dict() with empty dict should return defaults."""

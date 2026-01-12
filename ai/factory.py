@@ -208,7 +208,7 @@ class AIFactory:
     @staticmethod
     def get_provider(config: dict[str, Any]) -> LLMProvider:
         """Create a provider instance from config."""
-        provider_name = config.get("provider", "ollama")
+        provider_name = config.get("provider", "")
 
         def get(k: str, d: Any) -> Any:
             return AIFactory._get_or_default(config, k, d)

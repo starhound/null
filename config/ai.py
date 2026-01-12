@@ -45,7 +45,7 @@ class Config:
             "yes",
         )
 
-        embedding_provider = sm.get_config("ai.embedding_provider", "ollama")
+        embedding_provider = sm.get_config("ai.embedding_provider", "")
         embedding_model = sm.get_config(
             f"ai.embedding.{embedding_provider}.model", "nomic-embed-text"
         )

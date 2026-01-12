@@ -296,17 +296,18 @@ class ConfigScreen(ModalScreen):
 
         s = self.settings.ai
 
-        # Build provider list from factory metadata
-        providers = []
+        providers = [("Not configured", "")]
         for key in AIFactory.list_providers():
             info = AIFactory.get_provider_info(key)
             providers.append((info.get("name", key), key))
+
+        provider_value = s.provider if s.provider else ""
 
         yield from self._setting_row(
             "ai.provider",
             "Default Provider",
             "Default AI provider to use",
-            Select(providers, value=s.provider, id="ai_provider"),
+            Select(providers, value=provider_value, id="ai_provider"),
         )
 
         yield from self._setting_row(
@@ -369,11 +370,13 @@ class ConfigScreen(ModalScreen):
 
         yield Static("Embedding Settings", classes="settings-header")
 
+        embedding_provider_value = s.embedding_provider if s.embedding_provider else ""
+
         yield from self._setting_row(
             "ai.embedding_provider",
             "Embedding Provider",
             "Provider for semantic search embeddings",
-            Select(providers, value=s.embedding_provider, id="embedding_provider"),
+            Select(providers, value=embedding_provider_value, id="embedding_provider"),
         )
 
         yield from self._setting_row(
@@ -475,7 +478,7 @@ class ConfigScreen(ModalScreen):
         )
 
         ai = AISettings(
-            provider=str(get_val(self.controls.get("ai.provider")) or "ollama"),
+            provider=str(get_val(self.controls.get("ai.provider")) or ""),
             context_window=int(get_val(self.controls.get("ai.context_window")) or 4000),
             max_tokens=int(get_val(self.controls.get("ai.max_tokens")) or 2048),
             temperature=float(get_val(self.controls.get("ai.temperature")) or 0.7),
@@ -490,14 +493,11 @@ class ConfigScreen(ModalScreen):
                 get_val(self.controls.get("ai.autocomplete_model")) or ""
             ),
             embedding_provider=str(
-                get_val(self.controls.get("ai.embedding_provider")) or "ollama"
+                get_val(self.controls.get("ai.embedding_provider")) or ""
             ),
-            embedding_model=str(
-                get_val(self.controls.get("ai.embedding_model")) or "nomic-embed-text"
-            ),
+            embedding_model=str(get_val(self.controls.get("ai.embedding_model")) or ""),
             embedding_endpoint=str(
-                get_val(self.controls.get("ai.embedding_endpoint"))
-                or "http://localhost:11434"
+                get_val(self.controls.get("ai.embedding_endpoint")) or ""
             ),
         )
 

@@ -97,17 +97,13 @@ class AIManager:
         """Get list of providers that have required config.
 
         For cloud providers: requires API key
-        For local providers (ollama, lm_studio): requires explicit endpoint config or being active
+        For local/endpoint providers: requires explicit endpoint config or being active
+        For OAuth providers: only if active (token validation happens at use time)
         For AWS (bedrock): only if active (uses AWS credential chain)
         """
         usable = []
         all_types = AIFactory.list_providers()
         active = Config.get("ai.provider")
-
-        # Local providers that don't need API keys
-        local_providers = {"ollama", "lm_studio"}
-        # AWS provider that uses credential chain
-        aws_providers = {"bedrock"}
 
         for p_name in all_types:
             info = AIFactory.get_provider_info(p_name)
@@ -115,22 +111,26 @@ class AIManager:
             # Cloud providers: require API key
             if info.get("requires_api_key"):
                 key = Config.get(f"ai.{p_name}.api_key")
-                if not key:
-                    continue
-                usable.append(p_name)
+                if key:
+                    usable.append(p_name)
 
-            # Local providers: only include if explicitly configured or active
-            elif p_name in local_providers:
+            # Endpoint-based local providers: require endpoint config or being active
+            elif info.get("requires_endpoint") and not info.get("requires_api_key"):
                 endpoint = Config.get(f"ai.{p_name}.endpoint")
                 if endpoint or p_name == active:
                     usable.append(p_name)
 
-            # AWS providers: only include if active (avoids slow credential checks)
-            elif p_name in aws_providers:
+            # OAuth providers: only include if active (avoids unnecessary token checks)
+            elif info.get("requires_oauth"):
                 if p_name == active:
                     usable.append(p_name)
 
-        # Ensure active provider is always included
+            # AWS/GCP providers without API key: only if active
+            elif p_name in {"bedrock", "google_vertex"}:
+                if p_name == active:
+                    usable.append(p_name)
+
+        # Ensure active provider is always included (if set)
         if active and active not in usable:
             usable.append(active)
 

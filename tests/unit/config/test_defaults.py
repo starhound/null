@@ -74,8 +74,8 @@ class TestAIProviderDefaults:
         assert isinstance(DEFAULT_AI_PROVIDER, str)
 
     def test_default_ai_provider_value(self):
-        """DEFAULT_AI_PROVIDER should be 'ollama'."""
-        assert DEFAULT_AI_PROVIDER == "ollama"
+        """DEFAULT_AI_PROVIDER should be empty (user must configure)."""
+        assert DEFAULT_AI_PROVIDER == ""
 
     def test_default_ai_model_exists(self):
         """DEFAULT_AI_MODEL should be defined."""
@@ -86,8 +86,8 @@ class TestAIProviderDefaults:
         assert isinstance(DEFAULT_AI_MODEL, str)
 
     def test_default_ai_model_value(self):
-        """DEFAULT_AI_MODEL should be 'llama3'."""
-        assert DEFAULT_AI_MODEL == "llama3"
+        """DEFAULT_AI_MODEL should be empty (user must configure)."""
+        assert DEFAULT_AI_MODEL == ""
 
     def test_default_ai_endpoint_exists(self):
         """DEFAULT_AI_ENDPOINT should be defined."""
@@ -97,14 +97,9 @@ class TestAIProviderDefaults:
         """DEFAULT_AI_ENDPOINT should be a string."""
         assert isinstance(DEFAULT_AI_ENDPOINT, str)
 
-    def test_default_ai_endpoint_is_url(self):
-        """DEFAULT_AI_ENDPOINT should be a valid URL."""
-        assert DEFAULT_AI_ENDPOINT.startswith("http")
-        assert "localhost" in DEFAULT_AI_ENDPOINT or "127.0.0.1" in DEFAULT_AI_ENDPOINT
-
-    def test_default_ai_endpoint_value(self):
-        """DEFAULT_AI_ENDPOINT should be the Ollama default."""
-        assert DEFAULT_AI_ENDPOINT == "http://localhost:11434"
+    def test_default_ai_endpoint_is_empty(self):
+        """DEFAULT_AI_ENDPOINT should be empty (user must configure)."""
+        assert DEFAULT_AI_ENDPOINT == ""
 
     def test_default_ai_active_prompt_exists(self):
         """DEFAULT_AI_ACTIVE_PROMPT should be defined."""
@@ -198,20 +193,17 @@ class TestTemperatureDefaults:
 class TestDefaultsConsistency:
     """Tests for consistency between related defaults."""
 
-    def test_ollama_provider_matches_endpoint(self):
-        """Default provider 'ollama' should have matching endpoint."""
-        # Ollama default port is 11434
-        assert DEFAULT_AI_PROVIDER == "ollama"
-        assert "11434" in DEFAULT_AI_ENDPOINT
+    def test_ai_defaults_are_empty(self):
+        """AI provider/model/endpoint defaults should be empty (user must configure)."""
+        assert DEFAULT_AI_PROVIDER == ""
+        assert DEFAULT_AI_MODEL == ""
+        assert DEFAULT_AI_ENDPOINT == ""
 
     def test_all_defaults_have_values(self):
         """All default values should be non-None."""
         defaults = [
             DEFAULT_THEME,
             DEFAULT_SHELL,
-            DEFAULT_AI_PROVIDER,
-            DEFAULT_AI_MODEL,
-            DEFAULT_AI_ENDPOINT,
             DEFAULT_AI_ACTIVE_PROMPT,
             DEFAULT_CONTEXT_WINDOW,
             DEFAULT_MAX_TOKENS,
@@ -220,14 +212,11 @@ class TestDefaultsConsistency:
         for default in defaults:
             assert default is not None
 
-    def test_defaults_are_not_empty_strings(self):
-        """String defaults should not be empty."""
+    def test_required_defaults_are_not_empty_strings(self):
+        """Required string defaults should not be empty."""
         string_defaults = [
             DEFAULT_THEME,
             DEFAULT_SHELL,
-            DEFAULT_AI_PROVIDER,
-            DEFAULT_AI_MODEL,
-            DEFAULT_AI_ENDPOINT,
             DEFAULT_AI_ACTIVE_PROMPT,
         ]
         for default in string_defaults:

@@ -250,13 +250,11 @@ class TestAIFactoryGetProvider:
         with pytest.raises(ValueError, match="Unknown provider"):
             AIFactory.get_provider(config)
 
-    def test_empty_config_defaults_to_ollama(self):
-        """Empty config should default to ollama provider."""
-        from ai.ollama import OllamaProvider
-
+    def test_empty_config_raises_error(self):
+        """Empty config should raise ValueError (no default provider)."""
         config = {}
-        provider = AIFactory.get_provider(config)
-        assert isinstance(provider, OllamaProvider)
+        with pytest.raises(ValueError, match="Unknown provider"):
+            AIFactory.get_provider(config)
 
     def test_google_provider_creation(self):
         """Should create GoogleAIProvider for 'google' provider."""

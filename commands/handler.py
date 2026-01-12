@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shlex
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -515,7 +516,15 @@ class SlashCommandHandler:
 
     async def handle(self, text: str):
         """Route and execute a slash command."""
-        parts = text.split()
+        try:
+            parts = shlex.split(text)
+        except ValueError as e:
+            self.app.notify(f"Invalid command syntax: {e}", severity="error")
+            return
+
+        if not parts:
+            return
+
         command = parts[0][1:]  # strip /
         args = parts[1:]
 

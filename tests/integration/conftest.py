@@ -10,12 +10,18 @@ import pytest
 @pytest.fixture(autouse=True)
 def mock_ai_components(monkeypatch):
     """Mock AI components to prevent network calls during integration tests."""
+
+    async def mock_list_all_models_streaming():
+        yield ("openai", ["gpt-4", "gpt-3.5-turbo"], None, 1, 2)
+        yield ("anthropic", ["claude-3-sonnet"], None, 2, 2)
+
     # Mock AIManager
     mock_ai_manager = MagicMock()
     mock_ai_manager.get_active_provider.return_value = None
     mock_ai_manager.get_provider.return_value = None
     mock_ai_manager.get_usable_providers.return_value = []
     mock_ai_manager.list_all_models = AsyncMock(return_value={})
+    mock_ai_manager.list_all_models_streaming = mock_list_all_models_streaming
     mock_ai_manager._fetch_models_for_provider = AsyncMock(
         return_value=("test", [], None)
     )

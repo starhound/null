@@ -3,6 +3,7 @@
 import pytest
 
 from screens import ConfirmDialog, HelpScreen
+from screens.selection import ThemeSelectionScreen
 
 
 class TestHelpScreen:
@@ -148,22 +149,17 @@ class TestConfirmDialog:
 
 
 class TestModelListScreen:
-    """Tests for model selection screen."""
-
     @pytest.mark.asyncio
     async def test_model_screen_opens_with_f2(self, running_app):
-        """F2 should open model selection screen."""
         pilot, app = running_app
 
         await pilot.press("f2")
         await pilot.pause()
 
-        # Model screen should be on stack
         assert len(app.screen_stack) > 1
 
     @pytest.mark.asyncio
     async def test_model_screen_closes_with_escape(self, running_app):
-        """Escape should close model selection screen."""
         pilot, app = running_app
 
         await pilot.press("f2")
@@ -173,6 +169,69 @@ class TestModelListScreen:
         await pilot.pause()
 
         assert len(app.screen_stack) == 1
+
+    @pytest.mark.asyncio
+    async def test_model_screen_shows_loading_indicator(self, running_app):
+        pilot, app = running_app
+
+        await pilot.press("f2")
+        await pilot.pause()
+
+        from screens.selection import ModelListScreen
+
+        screen = app.screen_stack[-1]
+        assert isinstance(screen, ModelListScreen)
+
+        indicator = screen.query_one("#loading-indicator")
+        assert indicator is not None
+
+    @pytest.mark.asyncio
+    async def test_model_screen_has_search_input(self, running_app):
+        pilot, app = running_app
+
+        await pilot.press("f2")
+        await pilot.pause()
+
+        from textual.widgets import Input
+
+        from screens.selection import ModelListScreen
+
+        screen = app.screen_stack[-1]
+        assert isinstance(screen, ModelListScreen)
+
+        search_input = screen.query_one("#model-search", Input)
+        assert search_input is not None
+        assert search_input.placeholder == "Search models..."
+
+    @pytest.mark.asyncio
+    async def test_model_screen_shows_no_providers_message(self, running_app):
+        pilot, app = running_app
+
+        await pilot.press("f2")
+        await pilot.pause()
+
+        from screens.selection import ModelListScreen
+
+        screen = app.screen_stack[-1]
+        assert isinstance(screen, ModelListScreen)
+        assert screen._models_by_provider == {}
+
+    @pytest.mark.asyncio
+    async def test_model_screen_has_cancel_button(self, running_app):
+        pilot, app = running_app
+
+        await pilot.press("f2")
+        await pilot.pause()
+
+        from textual.widgets import Button
+
+        from screens.selection import ModelListScreen
+
+        screen = app.screen_stack[-1]
+        assert isinstance(screen, ModelListScreen)
+
+        cancel_btn = screen.query_one("#cancel_btn", Button)
+        assert cancel_btn is not None
 
 
 class TestCommandPalette:
@@ -263,3 +322,253 @@ class TestBlockSearch:
 
         search = app.query_one("#block-search")
         assert "visible" not in search.classes
+
+
+class TestThemeSelectionScreen:
+    """Tests for theme selection screen."""
+
+    @pytest.mark.asyncio
+    async def test_theme_screen_opens_with_f3(self, running_app):
+        """F3 should open theme selection screen."""
+        pilot, app = running_app
+
+        await pilot.press("f3")
+        await pilot.pause()
+
+        assert len(app.screen_stack) > 1
+        assert isinstance(app.screen_stack[-1], ThemeSelectionScreen)
+
+    @pytest.mark.asyncio
+    async def test_theme_screen_closes_with_escape(self, running_app):
+        """Escape should close theme screen and restore original theme."""
+        pilot, app = running_app
+
+        original_theme = app.theme
+        await pilot.press("f3")
+        await pilot.pause()
+
+        await pilot.press("escape")
+        await pilot.pause()
+
+        assert len(app.screen_stack) == 1
+        assert app.theme == original_theme
+
+    @pytest.mark.asyncio
+    async def test_theme_screen_has_theme_list(self, running_app):
+        """Theme screen should display available themes."""
+        pilot, app = running_app
+
+        await pilot.press("f3")
+        await pilot.pause()
+
+        from textual.widgets import ListView
+
+        screen = app.screen_stack[-1]
+        assert isinstance(screen, ThemeSelectionScreen)
+
+        listview = screen.query_one("#item_list", ListView)
+        assert listview is not None
+
+    @pytest.mark.asyncio
+    async def test_theme_screen_has_cancel_button(self, running_app):
+        """Theme screen should have cancel button."""
+        pilot, app = running_app
+
+        await pilot.press("f3")
+        await pilot.pause()
+
+        from textual.widgets import Button
+
+        screen = app.screen_stack[-1]
+        cancel_btn = screen.query_one("#cancel_btn", Button)
+        assert cancel_btn is not None
+
+    @pytest.mark.asyncio
+    async def test_theme_screen_shows_null_themes(self, running_app):
+        """Theme screen should include null-dark and null-light themes."""
+        pilot, app = running_app
+
+        await pilot.press("f3")
+        await pilot.pause()
+
+        screen = app.screen_stack[-1]
+        assert isinstance(screen, ThemeSelectionScreen)
+        assert "null-dark" in screen.items
+        assert "null-light" in screen.items
+
+
+class TestProviderSelectionScreen:
+    """Tests for AI provider selection screen (F4).
+
+    Note: F4 opens a SelectionListScreen for provider selection, not ProvidersScreen.
+    ProvidersScreen is a separate management screen accessed via /providers command.
+    """
+
+    @pytest.mark.asyncio
+    async def test_provider_selection_opens_with_f4(self, running_app):
+        """F4 should open provider selection screen."""
+        pilot, app = running_app
+
+        await pilot.press("f4")
+        await pilot.pause()
+
+        from screens.selection import SelectionListScreen
+
+        assert len(app.screen_stack) > 1
+        assert isinstance(app.screen_stack[-1], SelectionListScreen)
+
+    @pytest.mark.asyncio
+    async def test_provider_selection_closes_with_escape(self, running_app):
+        """Escape should close provider selection screen."""
+        pilot, app = running_app
+
+        await pilot.press("f4")
+        await pilot.pause()
+
+        await pilot.press("escape")
+        await pilot.pause()
+
+        assert len(app.screen_stack) == 1
+
+    @pytest.mark.asyncio
+    async def test_provider_selection_has_title(self, running_app):
+        """Provider selection screen should have title."""
+        pilot, app = running_app
+
+        await pilot.press("f4")
+        await pilot.pause()
+
+        from screens.selection import SelectionListScreen
+
+        screen = app.screen_stack[-1]
+        assert isinstance(screen, SelectionListScreen)
+        assert screen._screen_title == "Select Provider"
+
+    @pytest.mark.asyncio
+    async def test_provider_selection_has_items(self, running_app):
+        """Provider selection should show available providers."""
+        pilot, app = running_app
+
+        await pilot.press("f4")
+        await pilot.pause()
+
+        from screens.selection import SelectionListScreen
+
+        screen = app.screen_stack[-1]
+        assert isinstance(screen, SelectionListScreen)
+        assert len(screen.items) > 0
+
+    @pytest.mark.asyncio
+    async def test_provider_selection_has_list_view(self, running_app):
+        """Provider selection should have ListView widget."""
+        pilot, app = running_app
+
+        await pilot.press("f4")
+        await pilot.pause()
+
+        from textual.widgets import ListView
+
+        screen = app.screen_stack[-1]
+        listview = screen.query_one("#item_list", ListView)
+        assert listview is not None
+
+    @pytest.mark.asyncio
+    async def test_provider_selection_has_cancel_button(self, running_app):
+        """Provider selection should have cancel button."""
+        pilot, app = running_app
+
+        await pilot.press("f4")
+        await pilot.pause()
+
+        from textual.widgets import Button
+
+        screen = app.screen_stack[-1]
+        cancel_btn = screen.query_one("#cancel_btn", Button)
+        assert cancel_btn is not None
+
+
+class TestSettingsScreen:
+    """Tests for settings configuration screen."""
+
+    @pytest.mark.asyncio
+    async def test_settings_command_opens_screen(self, running_app):
+        """/settings command should open config screen."""
+        pilot, app = running_app
+
+        input_widget = app.query_one("#input")
+        input_widget.text = "/settings"
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        from screens.config import ConfigScreen
+
+        assert len(app.screen_stack) > 1
+        assert isinstance(app.screen_stack[-1], ConfigScreen)
+
+    @pytest.mark.asyncio
+    async def test_settings_screen_closes_with_escape(self, running_app):
+        """Escape should close settings screen."""
+        pilot, app = running_app
+
+        input_widget = app.query_one("#input")
+        input_widget.text = "/settings"
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        await pilot.press("escape")
+        await pilot.pause()
+
+        assert len(app.screen_stack) == 1
+
+    @pytest.mark.asyncio
+    async def test_settings_screen_has_tabs(self, running_app):
+        """/settings screen should have tabbed content."""
+        pilot, app = running_app
+
+        input_widget = app.query_one("#input")
+        input_widget.text = "/settings"
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        from textual.widgets import TabbedContent
+
+        screen = app.screen_stack[-1]
+        tabbed = screen.query_one(TabbedContent)
+        assert tabbed is not None
+
+    @pytest.mark.asyncio
+    async def test_settings_screen_has_save_button(self, running_app):
+        """Settings screen should have save button."""
+        pilot, app = running_app
+
+        input_widget = app.query_one("#input")
+        input_widget.text = "/settings"
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        from textual.widgets import Button
+
+        screen = app.screen_stack[-1]
+        save_btn = screen.query_one("#save-btn", Button)
+        assert save_btn is not None
+
+    @pytest.mark.asyncio
+    async def test_settings_screen_has_cancel_button(self, running_app):
+        """Settings screen should have cancel button."""
+        pilot, app = running_app
+
+        input_widget = app.query_one("#input")
+        input_widget.text = "/settings"
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        from textual.widgets import Button
+
+        screen = app.screen_stack[-1]
+        cancel_btn = screen.query_one("#cancel-btn", Button)
+        assert cancel_btn is not None

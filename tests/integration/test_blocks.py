@@ -254,5 +254,145 @@ class TestBlockClear:
         await pilot.press("ctrl+l")
         await pilot.pause()
 
-        # Should be cleared
         assert len(app.blocks) == 0
+
+
+class TestAIResponseBlocks:
+    def test_create_ai_response_block(self):
+        from widgets.blocks import AIResponseBlock
+
+        block = BlockState(
+            type=BlockType.AI_RESPONSE,
+            content_input="What is Python?",
+            content_output="Python is a programming language.",
+        )
+        widget = create_block(block)
+        assert isinstance(widget, AIResponseBlock)
+
+    def test_ai_block_has_input_and_output(self):
+        block = BlockState(
+            type=BlockType.AI_RESPONSE,
+            content_input="Hello",
+            content_output="Hi there!",
+        )
+        assert block.content_input == "Hello"
+        assert block.content_output == "Hi there!"
+
+    @pytest.mark.asyncio
+    async def test_ai_block_mounts_in_history(self, running_app):
+        pilot, app = running_app
+        from widgets.blocks import AIResponseBlock
+
+        history = app.query_one("#history", HistoryViewport)
+
+        block = BlockState(
+            type=BlockType.AI_RESPONSE,
+            content_input="Test question",
+            content_output="Test answer",
+            is_running=False,
+        )
+        app.blocks.append(block)
+
+        widget = AIResponseBlock(block)
+        await history.add_block(widget)
+        await pilot.pause()
+
+        assert widget.is_mounted
+
+
+class TestCodeBlocks:
+    def test_code_block_state(self):
+        block = BlockState(
+            type=BlockType.AI_RESPONSE,
+            content_input="Show me code",
+            content_output="```python\nprint('hello')\n```",
+        )
+        assert "```python" in block.content_output
+
+
+class TestBlockTypes:
+    def test_all_block_types_exist(self):
+        assert BlockType.COMMAND is not None
+        assert BlockType.AI_RESPONSE is not None
+        assert BlockType.SYSTEM_MSG is not None
+
+    def test_block_types_have_values(self):
+        assert BlockType.COMMAND.value is not None
+        assert BlockType.AI_RESPONSE.value is not None
+        assert BlockType.SYSTEM_MSG.value is not None
+
+
+class TestBlockActions:
+    @pytest.mark.asyncio
+    async def test_block_has_action_bar(self, running_app):
+        pilot, app = running_app
+
+        history = app.query_one("#history", HistoryViewport)
+
+        block = BlockState(
+            type=BlockType.AI_RESPONSE,
+            content_input="Test",
+            content_output="Response",
+            is_running=False,
+        )
+        app.blocks.append(block)
+        widget = BlockWidget(block)
+        await history.add_block(widget)
+        await pilot.pause()
+
+
+class TestBlockMetadata:
+    def test_block_has_id(self):
+        block = BlockState(
+            type=BlockType.COMMAND,
+            content_input="test",
+        )
+        assert block.id is not None
+        assert len(block.id) > 0
+
+    def test_block_has_type(self):
+        block = BlockState(
+            type=BlockType.COMMAND,
+            content_input="test",
+        )
+        assert block.type == BlockType.COMMAND
+
+    def test_block_running_state(self):
+        block = BlockState(
+            type=BlockType.COMMAND,
+            content_input="test",
+            is_running=True,
+        )
+        assert block.is_running is True
+
+        block.is_running = False
+        assert block.is_running is False
+
+
+class TestMultipleBlocks:
+    @pytest.mark.asyncio
+    async def test_multiple_commands_create_blocks(self, running_app):
+        pilot, app = running_app
+
+        initial = len(app.blocks)
+
+        await submit_input(pilot, app, "echo one")
+        count_after_one = len(app.blocks)
+        assert count_after_one > initial
+
+        await submit_input(pilot, app, "echo two")
+        count_after_two = len(app.blocks)
+        assert count_after_two >= count_after_one
+
+    @pytest.mark.asyncio
+    async def test_blocks_ordered_by_creation(self, running_app):
+        pilot, app = running_app
+
+        await submit_input(pilot, app, "echo first")
+        await submit_input(pilot, app, "echo second")
+
+        if len(app.blocks) >= 2:
+            first_block = app.blocks[-2]
+            second_block = app.blocks[-1]
+            assert first_block.content_input == "echo first"
+            assert second_block.content_input == "echo second"

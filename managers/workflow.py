@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 import json
+
+logger = logging.getLogger(__name__)
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -81,8 +84,10 @@ class WorkflowManager:
                             workflow = self.parse_yaml(content)
                             workflow.source = "local"
                             self.workflows[workflow.id] = workflow
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to load local workflow {yaml_file}: {e}"
+                        )
 
         # Load builtin workflows
         builtin_dir = self.workflows_dir / "builtin"
@@ -94,8 +99,8 @@ class WorkflowManager:
                         workflow = self.parse_yaml(content)
                         workflow.source = "builtin"
                         self.workflows[workflow.id] = workflow
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Failed to load builtin workflow {yaml_file}: {e}")
 
     def save_workflow(self, workflow: Workflow) -> Path:
         """Save a workflow to YAML file.

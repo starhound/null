@@ -183,3 +183,148 @@ class TestAppModes:
         await pilot.pause()
 
         assert input_widget.is_ai_mode == initial_mode
+
+
+class TestStatusBar:
+    """Tests for status bar widget behavior."""
+
+    @pytest.mark.asyncio
+    async def test_status_bar_has_mode_indicator(self, running_app):
+        """Status bar should have mode indicator."""
+        _pilot, app = running_app
+        status = app.query_one("#status-bar", StatusBar)
+        mode_indicator = status.query_one("#mode-indicator", Label)
+        assert mode_indicator is not None
+
+    @pytest.mark.asyncio
+    async def test_status_bar_has_provider_indicator(self, running_app):
+        """Status bar should have provider indicator."""
+        _pilot, app = running_app
+        status = app.query_one("#status-bar", StatusBar)
+        provider_indicator = status.query_one("#provider-indicator", Label)
+        assert provider_indicator is not None
+
+    @pytest.mark.asyncio
+    async def test_status_bar_has_context_indicator(self, running_app):
+        """Status bar should have context indicator."""
+        _pilot, app = running_app
+        status = app.query_one("#status-bar", StatusBar)
+        context_indicator = status.query_one("#context-indicator", Label)
+        assert context_indicator is not None
+
+    @pytest.mark.asyncio
+    async def test_status_bar_mode_updates_on_toggle(self, running_app):
+        """Status bar mode should update when AI mode is toggled."""
+        pilot, app = running_app
+        status = app.query_one("#status-bar", StatusBar)
+
+        initial_mode = status.mode
+        assert initial_mode == "CLI"
+
+        app.action_toggle_ai_mode()
+        await pilot.pause()
+
+        assert status.mode == "AI"
+
+    @pytest.mark.asyncio
+    async def test_status_bar_has_git_indicator(self, running_app):
+        """Status bar should have git branch indicator."""
+        _pilot, app = running_app
+        status = app.query_one("#status-bar", StatusBar)
+        git_indicator = status.query_one("#git-indicator", Label)
+        assert git_indicator is not None
+
+    @pytest.mark.asyncio
+    async def test_status_bar_has_mcp_indicator(self, running_app):
+        """Status bar should have MCP tools indicator."""
+        _pilot, app = running_app
+        status = app.query_one("#status-bar", StatusBar)
+        mcp_indicator = status.query_one("#mcp-indicator", Label)
+        assert mcp_indicator is not None
+
+    @pytest.mark.asyncio
+    async def test_status_bar_has_process_indicator(self, running_app):
+        """Status bar should have process count indicator."""
+        _pilot, app = running_app
+        status = app.query_one("#status-bar", StatusBar)
+        process_indicator = status.query_one("#process-indicator", Label)
+        assert process_indicator is not None
+
+
+class TestSidebar:
+    """Tests for sidebar toggle and display."""
+
+    @pytest.mark.asyncio
+    async def test_sidebar_initially_hidden(self, running_app):
+        """Sidebar should be hidden by default."""
+        _pilot, app = running_app
+        sidebar = app.query_one("#sidebar")
+        assert sidebar.display is False
+
+    @pytest.mark.asyncio
+    async def test_sidebar_toggles_with_action(self, running_app):
+        """toggle_file_tree action should show/hide sidebar."""
+        pilot, app = running_app
+        sidebar = app.query_one("#sidebar")
+
+        assert sidebar.display is False
+
+        app.action_toggle_file_tree()
+        await pilot.pause()
+
+        assert sidebar.display is True
+
+    @pytest.mark.asyncio
+    async def test_sidebar_toggles_back(self, running_app):
+        """Toggling sidebar twice should hide it again."""
+        pilot, app = running_app
+        sidebar = app.query_one("#sidebar")
+
+        app.action_toggle_file_tree()
+        await pilot.pause()
+        assert sidebar.display is True
+
+        app.action_toggle_file_tree()
+        await pilot.pause()
+        assert sidebar.display is False
+
+    @pytest.mark.asyncio
+    async def test_sidebar_has_directory_tree(self, running_app):
+        """Sidebar should contain directory tree when visible."""
+        pilot, app = running_app
+        from textual.widgets import DirectoryTree
+
+        app.action_toggle_file_tree()
+        await pilot.pause()
+
+        sidebar = app.query_one("#sidebar")
+        tree = sidebar.query_one(DirectoryTree)
+        assert tree is not None
+
+
+class TestAppHeader:
+    """Tests for app header widget."""
+
+    @pytest.mark.asyncio
+    async def test_header_has_title(self, running_app):
+        """App header should display title."""
+        _pilot, app = running_app
+        header = app.query_one("#app-header", AppHeader)
+        title_label = header.query_one(".header-title", Label)
+        assert title_label is not None
+
+    @pytest.mark.asyncio
+    async def test_header_has_left_section(self, running_app):
+        """App header should have left section with icon/provider."""
+        _pilot, app = running_app
+        header = app.query_one("#app-header", AppHeader)
+        left_label = header.query_one(".header-left", Label)
+        assert left_label is not None
+
+    @pytest.mark.asyncio
+    async def test_header_has_clock(self, running_app):
+        """App header should display clock."""
+        _pilot, app = running_app
+        header = app.query_one("#app-header", AppHeader)
+        clock_label = header.query_one("#header-clock", Label)
+        assert clock_label is not None

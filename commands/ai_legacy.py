@@ -53,7 +53,6 @@ class AICommands(CommandMixin):
                 self._open_provider_config(provider_name)
 
             elif action == "activated":
-                # Provider was set as active
                 self.notify(f"Switched to {provider_name}")
                 try:
                     self.app.config = Config.load_all()
@@ -62,6 +61,7 @@ class AICommands(CommandMixin):
                         provider_name
                     )
                     self.app._update_status_bar()
+                    self.app.action_select_model()
                 except Exception as e:
                     self.notify(f"Error initializing provider: {e}", severity="error")
 
@@ -95,7 +95,6 @@ class AICommands(CommandMixin):
                     Config.set(f"ai.{provider_name}.{k}", v)
 
                 Config.set("ai.provider", provider_name)
-                # Also sync to JSON settings
                 from config import SettingsManager
 
                 SettingsManager().set("ai", "provider", provider_name)
@@ -108,6 +107,7 @@ class AICommands(CommandMixin):
                         provider_name
                     )
                     self.app._update_status_bar()
+                    self.app.action_select_model()
                 except Exception as e:
                     self.notify(f"Error initializing provider: {e}", severity="error")
 
@@ -162,13 +162,15 @@ class AICommands(CommandMixin):
 
     async def _model_embedding(self, args: list[str]):
         if not args:
-            provider = Config.get("ai.embedding_provider", "ollama")
-            model = Config.get(f"ai.embedding.{provider}.model", "nomic-embed-text")
-            endpoint = Config.get(
-                f"ai.embedding.{provider}.endpoint", "http://localhost:11434"
-            )
-            self.notify(f"Embedding: {provider}/{model}")
-            self.notify(f"Endpoint: {endpoint}")
+            provider = Config.get("ai.embedding_provider")
+            if not provider:
+                self.notify("No embedding provider configured")
+                return
+            model = Config.get(f"ai.embedding.{provider}.model", "")
+            endpoint = Config.get(f"ai.embedding.{provider}.endpoint", "")
+            self.notify(f"Embedding: {provider}/{model or 'default'}")
+            if endpoint:
+                self.notify(f"Endpoint: {endpoint}")
             return
 
         if len(args) == 1:
@@ -240,11 +242,11 @@ class AICommands(CommandMixin):
     async def _model_status(self):
         lines = ["Model Configuration:", ""]
 
-        provider = Config.get("ai.provider", "ollama")
+        provider = Config.get("ai.provider") or "not configured"
         model = Config.get(f"ai.{provider}.model", Config.get("ai.model", ""))
         lines.append(f"  Main LLM:      {provider}/{model or 'default'}")
 
-        emb_provider = Config.get("ai.embedding_provider", "ollama")
+        emb_provider = Config.get("ai.embedding_provider") or "not configured"
         emb_model = Config.get(f"ai.embedding.{emb_provider}.model", "nomic-embed-text")
         lines.append(f"  Embedding:     {emb_provider}/{emb_model}")
 

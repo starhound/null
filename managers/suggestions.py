@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import os
+import logging
 from dataclasses import dataclass, field
+
+logger = logging.getLogger(__name__)
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
@@ -237,13 +240,18 @@ class SuggestionEngine:
 
         try:
             context.cwd = os.getcwd()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to get CWD: {e}")
 
         try:
             context.directory_contents = os.listdir(".")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to list directory: {e}")
+
+        try:
+            context.directory_contents = os.listdir(".")
+        except Exception as e:
+            logger.debug(f"Failed to list directory: {e}")
 
         try:
             proc = await asyncio.create_subprocess_exec(
@@ -269,8 +277,8 @@ class SuggestionEngine:
                 context.git_dirty = bool(stdout.strip())
         except (FileNotFoundError, asyncio.TimeoutError):
             pass
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Git status check failed: {e}")
 
         return context
 
@@ -300,8 +308,8 @@ class SuggestionEngine:
                     input_text, context, ai_provider, limit=2
                 )
                 all_suggestions.extend(ai_suggestions)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"AI suggestion failed: {e}")
 
         seen = set()
         unique: list[Suggestion] = []
