@@ -6,19 +6,36 @@ from typing import ClassVar, cast
 
 from textual.app import ComposeResult
 from textual.binding import Binding, BindingType
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.widgets import (
     Button,
+    Collapsible,
     Input,
     Label,
     ListItem,
     ListView,
+    Markdown,
     Static,
     TextArea,
 )
 
 from prompts import get_prompt_manager
+from prompts.engine import get_template_engine
 from screens.base import ModalScreen
+
+
+class VariableButton(Static):
+    """Clickable variable button for insertion."""
+
+    def __init__(self, var_name: str, description: str):
+        super().__init__(f"{{{{{var_name}}}}}")
+        self.var_name = var_name
+        self.tooltip = description
+
+    def on_click(self) -> None:
+        screen = self.screen
+        if isinstance(screen, PromptEditorScreen):
+            screen.insert_variable(self.var_name)
 
 
 class PromptListItem(ListItem):
@@ -43,13 +60,18 @@ class PromptEditorScreen(ModalScreen):
         Binding("ctrl+s", "save_prompt", "Save"),
         Binding("ctrl+n", "new_prompt", "New"),
         Binding("ctrl+d", "delete_prompt", "Delete"),
+        Binding("ctrl+p", "toggle_preview", "Preview"),
+        Binding("ctrl+h", "toggle_help", "Help"),
     ]
 
     def __init__(self):
         super().__init__()
         self.pm = get_prompt_manager()
+        self.engine = get_template_engine()
         self.current_key: str | None = None
         self.is_dirty = False
+        self.show_preview = False
+        self.show_help = False
 
     def compose(self) -> ComposeResult:
         with Container(id="editor-container"):
@@ -68,16 +90,29 @@ class PromptEditorScreen(ModalScreen):
                 yield Label("Description", classes="field-label")
                 yield Input(id="prompt-desc-input", placeholder="Brief description...")
 
+                with Collapsible(title="Template Variables", collapsed=True, id="var-toolbar"):
+                    yield Static("Click to insert. Use {{#if var}}...{{/if}} for conditionals.", classes="var-hint")
+                    with Horizontal(classes="var-buttons"):
+                        for name, var in sorted(self.engine.get_all_variables().items()):
+                            yield VariableButton(name, var.description)
+
                 yield Label("System Prompt", classes="field-label")
                 yield TextArea.code_editor(
                     "", language="markdown", id="prompt-content-area"
                 )
+
+                with Collapsible(title="Preview", collapsed=True, id="preview-panel"):
+                    yield Markdown("", id="preview-content")
+
+                with Collapsible(title="Variable Reference", collapsed=True, id="help-panel"):
+                    yield Markdown(self.engine.get_variable_reference(), id="help-content")
 
                 with Horizontal(id="footer-buttons"):
                     yield Button(
                         "Delete", id="delete-btn", variant="error", disabled=True
                     )
                     yield Static("", classes="spacer")
+                    yield Button("Preview", id="preview-btn")
                     yield Button("Close", id="close-btn")
                     yield Button("Save", id="save-btn", variant="success")
 
@@ -187,6 +222,51 @@ class PromptEditorScreen(ModalScreen):
         else:
             self.notify("Cannot delete built-in prompt", severity="error")
 
+    def insert_variable(self, var_name: str) -> None:
+        """Insert a template variable at the cursor position."""
+        area = self.query_one("#prompt-content-area", TextArea)
+        area.insert(f"{{{{{var_name}}}}}")
+        area.focus()
+
+    def update_preview(self) -> None:
+        """Update the preview panel with rendered template."""
+        content = self.query_one("#prompt-content-area", TextArea).text
+        preview_md = self.query_one("#preview-content", Markdown)
+
+        errors = self.engine.validate_template(content)
+        if errors:
+            preview_md.update(f"**Errors:**\n" + "\n".join(f"- {e}" for e in errors))
+            return
+
+        preview_context = {
+            "model": "gpt-4o",
+            "provider": "openai",
+            "agent_mode": True,
+            "prompt_name": self.current_key or "custom",
+        }
+        rendered = self.engine.preview(content, preview_context)
+        preview_md.update(f"```\n{rendered}\n```")
+
+    def action_toggle_preview(self) -> None:
+        """Toggle the preview panel."""
+        panel = self.query_one("#preview-panel", Collapsible)
+        panel.collapsed = not panel.collapsed
+        if not panel.collapsed:
+            self.update_preview()
+
+    def action_toggle_help(self) -> None:
+        """Toggle the help/reference panel."""
+        panel = self.query_one("#help-panel", Collapsible)
+        panel.collapsed = not panel.collapsed
+
+    def on_text_area_changed(self, event: TextArea.Changed) -> None:
+        """Update preview when content changes."""
+        if event.text_area.id == "prompt-content-area":
+            self.is_dirty = True
+            preview_panel = self.query_one("#preview-panel", Collapsible)
+            if not preview_panel.collapsed:
+                self.update_preview()
+
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "new-btn":
             self.action_new_prompt()
@@ -196,3 +276,5 @@ class PromptEditorScreen(ModalScreen):
             self.action_delete_prompt()
         elif event.button.id == "close-btn":
             self.dismiss()
+        elif event.button.id == "preview-btn":
+            self.action_toggle_preview()

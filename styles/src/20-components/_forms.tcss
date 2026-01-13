@@ -44,6 +44,9 @@ SelectCurrent.-has-value #label {
 }
 
 /* --- Dropdown Arrow Indicator --- */
+/* The arrow (▼) serves as visual hint that the Select is expandable.
+   Textual does not support ::after pseudo-elements, so the built-in
+   arrow is the primary affordance for click/Enter to expand. */
 
 SelectCurrent .arrow {
     color: $text-muted;
@@ -113,6 +116,16 @@ ConfigScreen Input:focus {
     tint: $accent 5%;
 }
 
+ConfigScreen Input.input-invalid {
+    border: solid $error;
+    background: $error 10%;
+}
+
+ConfigScreen Input.input-invalid:focus {
+    border: solid $error;
+    tint: $error 10%;
+}
+
 /* --- ConfigScreen Select --- */
 
 ConfigScreen Select {
@@ -169,6 +182,34 @@ HistorySearch .search-input {
     background: $panel;
     padding: 0 1;
     margin: 1 0;
+}
+
+HistorySearch .search-status {
+    color: $text-dim;
+    padding: 0 1;
+    height: 1;
+}
+
+HistorySearch .search-result {
+    padding: 0 1;
+    height: 1;
+}
+
+HistorySearch .search-result.selected {
+    background: $primary 30%;
+    color: $text-bright;
+}
+
+HistorySearch .search-header {
+    color: $text-ghost;
+    padding: 0 1;
+    height: 1;
+}
+
+HistorySearch .no-results {
+    color: $text-dim;
+    padding: 0 1;
+    text-style: italic;
 }
 
 /* ==========================================================================

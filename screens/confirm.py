@@ -53,3 +53,6 @@ class ConfirmDialog(ModalScreen[bool]):
 
     def action_cancel(self):
         self.dismiss(False)
+
+
+ConfirmScreen = ConfirmDialog

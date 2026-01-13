@@ -1,6 +1,59 @@
 from textual.app import ComposeResult
+from textual.message import Message
 from textual.reactive import reactive
 from textual.widgets import Label, Static
+
+
+class ClickableSection(Static):
+    """A clickable status bar section that emits click events."""
+
+    DEFAULT_CSS = """
+    ClickableSection {
+        width: auto;
+        height: 1;
+        padding: 0 1;
+    }
+
+    ClickableSection:hover {
+        background: $surface-lighten-1;
+    }
+
+    ClickableSection.clickable {
+        text-style: none;
+    }
+
+    ClickableSection.clickable:hover {
+        text-style: underline;
+    }
+    """
+
+    class Clicked(Message):
+        """Posted when a section is clicked."""
+
+        def __init__(self, section_id: str) -> None:
+            self.section_id = section_id
+            super().__init__()
+
+    def __init__(
+        self,
+        content: str = "",
+        *,
+        section_id: str = "",
+        clickable: bool = True,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+    ) -> None:
+        super().__init__(content, name=name, id=id, classes=classes)
+        self.section_id = section_id or (id or "")
+        self._clickable = clickable
+        if clickable:
+            self.add_class("clickable")
+
+    def on_click(self) -> None:
+        """Handle click events."""
+        if self._clickable:
+            self.post_message(self.Clicked(self.section_id))
 
 
 class StatusBar(Static):
@@ -18,6 +71,7 @@ class StatusBar(Static):
     context_limit = reactive(4000)
     provider_name = reactive("")
     provider_status = reactive("unknown")
+    provider_latency = reactive("")
     mcp_count = reactive(0)
     process_count = reactive(0)
     is_recording = reactive(False)
@@ -27,35 +81,98 @@ class StatusBar(Static):
     session_input_tokens = reactive(0)
     session_output_tokens = reactive(0)
     session_cost = reactive(0.0)
+    # Streaming token tracking (real-time updates during generation)
+    streaming_output_chars = reactive(0)
+    is_streaming = reactive(False)
+    # New indicators
+    network_status = reactive("unknown")  # "online", "offline", "unknown"
+    memory_percent = reactive(0.0)
+    cpu_percent = reactive(0.0)
+    keyboard_mode = reactive("")  # "INSERT", "NORMAL", "" (empty if not vim mode)
+    vim_mode_enabled = reactive(False)
 
     def compose(self) -> ComposeResult:
-        yield Label("", id="mode-indicator", classes="status-section")
+        # Mode indicator (click to toggle CLI/AI)
+        yield ClickableSection(
+            "", section_id="mode", id="mode-indicator", classes="status-section"
+        )
         yield Label("|", classes="status-sep")
-        yield Label("", id="git-indicator", classes="status-section")
+
+        # Keyboard mode indicator (vim mode)
+        yield ClickableSection(
+            "", section_id="keyboard", id="keyboard-indicator", classes="status-section"
+        )
+        yield Label("|", id="keyboard-sep", classes="status-sep")
+
+        # Git branch indicator (click to switch branch)
+        yield ClickableSection(
+            "", section_id="git", id="git-indicator", classes="status-section"
+        )
+        yield Label("|", id="git-sep", classes="status-sep")
+
+        # Provider indicator (click to change provider)
+        yield ClickableSection(
+            "", section_id="provider", id="provider-indicator", classes="status-section"
+        )
         yield Label("|", classes="status-sep")
-        yield Label("", id="provider-indicator", classes="status-section")
+
+        # MCP indicator (click to manage MCP)
+        yield ClickableSection(
+            "", section_id="mcp", id="mcp-indicator", classes="status-section"
+        )
         yield Label("|", classes="status-sep")
-        yield Label("", id="mcp-indicator", classes="status-section")
+
+        # Process indicator (click to view processes)
+        yield ClickableSection(
+            "", section_id="process", id="process-indicator", classes="status-section"
+        )
         yield Label("|", classes="status-sep")
-        yield Label("", id="process-indicator", classes="status-section")
-        yield Label("|", classes="status-sep")
-        yield Label("", id="voice-indicator", classes="status-section")
+
+        # Recording indicator (click to toggle)
+        yield ClickableSection(
+            "", section_id="voice", id="voice-indicator", classes="status-section"
+        )
+
+        # Spacer to push right-side indicators
         yield Label("", classes="spacer")
-        # Token usage indicator
-        yield Label("", id="token-indicator", classes="status-section")
+
+        # Network status indicator (click to refresh)
+        yield ClickableSection(
+            "", section_id="network", id="network-indicator", classes="status-section"
+        )
+        yield Label("|", id="network-sep", classes="status-sep")
+
+        # System stats indicator (click for details)
+        yield ClickableSection(
+            "", section_id="system", id="system-indicator", classes="status-section"
+        )
+        yield Label("|", id="system-sep", classes="status-sep")
+
+        # Token usage indicator (click to reset/view details)
+        yield ClickableSection(
+            "", section_id="token", id="token-indicator", classes="status-section"
+        )
         yield Label("|", id="token-sep", classes="status-sep")
-        # Context indicator
-        yield Label(
-            "ctx: ~0 / 1k", id="context-indicator", classes="status-section context-low"
+
+        # Context indicator (click to view context)
+        yield ClickableSection(
+            "ctx: ~0 / 1k",
+            section_id="context",
+            id="context-indicator",
+            classes="status-section context-low",
         )
 
     def on_mount(self):
         """Initialize display."""
         self._update_mode_display()
+        self._update_keyboard_display()
+        self._update_git_display()
         self._update_context_display()
         self._update_provider_display()
         self._update_token_display()
         self._update_process_display()
+        self._update_network_display()
+        self._update_system_display()
 
     def watch_mode(self, mode: str):
         self._update_mode_display()
@@ -73,6 +190,9 @@ class StatusBar(Static):
         self._update_provider_display()
 
     def watch_provider_name(self, name: str):
+        self._update_provider_display()
+
+    def watch_provider_latency(self, latency: str):
         self._update_provider_display()
 
     def watch_mcp_count(self, count: int):
@@ -99,9 +219,119 @@ class StatusBar(Static):
     def watch_session_cost(self, cost: float):
         self._update_token_display()
 
+    def watch_streaming_output_chars(self, chars: int):
+        self._update_token_display()
+
+    def watch_is_streaming(self, streaming: bool):
+        self._update_token_display()
+
+    def watch_network_status(self, status: str):
+        self._update_network_display()
+
+    def watch_memory_percent(self, percent: float):
+        self._update_system_display()
+
+    def watch_cpu_percent(self, percent: float):
+        self._update_system_display()
+
+    def watch_keyboard_mode(self, mode: str):
+        self._update_keyboard_display()
+
+    def watch_vim_mode_enabled(self, enabled: bool):
+        self._update_keyboard_display()
+
+    def _update_keyboard_display(self):
+        """Update keyboard mode indicator (vim mode)."""
+        try:
+            indicator = self.query_one("#keyboard-indicator", ClickableSection)
+            sep = self.query_one("#keyboard-sep", Label)
+            indicator.remove_class("vim-insert", "vim-normal", "vim-visual")
+
+            if not self.vim_mode_enabled or not self.keyboard_mode:
+                indicator.update("")
+                indicator.display = False
+                sep.display = False
+                return
+
+            indicator.display = True
+            sep.display = True
+
+            mode_upper = self.keyboard_mode.upper()
+            if mode_upper == "INSERT":
+                indicator.update("󰌌 INS")
+                indicator.add_class("vim-insert")
+            elif mode_upper == "NORMAL":
+                indicator.update("󰌌 NOR")
+                indicator.add_class("vim-normal")
+            elif mode_upper == "VISUAL":
+                indicator.update("󰌌 VIS")
+                indicator.add_class("vim-visual")
+            else:
+                indicator.update(f"󰌌 {mode_upper[:3]}")
+        except Exception as e:
+            self._safe_log_warning(f"Status update failed: {e}")
+
+    def _update_network_display(self):
+        """Update network status indicator."""
+        try:
+            indicator = self.query_one("#network-indicator", ClickableSection)
+            sep = self.query_one("#network-sep", Label)
+            indicator.remove_class("network-online", "network-offline", "network-unknown")
+
+            if self.network_status == "online":
+                indicator.update("󰖩 ")
+                indicator.add_class("network-online")
+                indicator.display = True
+                sep.display = True
+            elif self.network_status == "offline":
+                indicator.update("󰖪 ")
+                indicator.add_class("network-offline")
+                indicator.display = True
+                sep.display = True
+            else:
+                # Hide when unknown
+                indicator.update("")
+                indicator.display = False
+                sep.display = False
+        except Exception as e:
+            self._safe_log_warning(f"Status update failed: {e}")
+
+    def _update_system_display(self):
+        """Update memory/CPU usage indicator."""
+        try:
+            indicator = self.query_one("#system-indicator", ClickableSection)
+            sep = self.query_one("#system-sep", Label)
+            indicator.remove_class("system-low", "system-medium", "system-high")
+
+            # Only show if we have data
+            if self.memory_percent == 0 and self.cpu_percent == 0:
+                indicator.update("")
+                indicator.display = False
+                sep.display = False
+                return
+
+            indicator.display = True
+            sep.display = True
+
+            # Format: CPU/MEM
+            cpu_str = f"{self.cpu_percent:.0f}"
+            mem_str = f"{self.memory_percent:.0f}"
+            indicator.update(f"󰍛 {cpu_str}%/{mem_str}%")
+
+            # Color based on highest usage
+            max_usage = max(self.cpu_percent, self.memory_percent)
+            if max_usage < 50:
+                indicator.add_class("system-low")
+            elif max_usage < 80:
+                indicator.add_class("system-medium")
+            else:
+                indicator.add_class("system-high")
+        except Exception as e:
+            self._safe_log_warning(f"Status update failed: {e}")
+
     def _update_mcp_display(self):
         try:
-            indicator = self.query_one("#mcp-indicator", Label)
+            indicator = self.query_one("#mcp-indicator", ClickableSection)
             indicator.remove_class("mcp-active", "mcp-inactive")
 
             if self.mcp_count > 0:
@@ -115,7 +345,7 @@ class StatusBar(Static):
 
     def _update_process_display(self):
         try:
-            indicator = self.query_one("#process-indicator", Label)
+            indicator = self.query_one("#process-indicator", ClickableSection)
             indicator.remove_class("process-active", "process-inactive")
 
             if self.process_count > 0:
@@ -129,7 +359,7 @@ class StatusBar(Static):
 
     def _update_voice_display(self):
         try:
-            indicator = self.query_one("#voice-indicator", Label)
+            indicator = self.query_one("#voice-indicator", ClickableSection)
             indicator.remove_class("voice-active", "voice-inactive")
 
             if self.is_recording:
@@ -143,14 +373,19 @@ class StatusBar(Static):
 
     def _update_git_display(self):
         try:
-            indicator = self.query_one("#git-indicator", Label)
+            indicator = self.query_one("#git-indicator", ClickableSection)
+            sep = self.query_one("#git-sep", Label)
             indicator.remove_class("git-dirty", "git-clean")
 
             if not self.git_branch:
                 indicator.update("")
+                indicator.display = False
+                sep.display = False
                 return
 
-            icon = "±" if self.git_dirty else ""
+            indicator.display = True
+            sep.display = True
+            icon = "±" if self.git_dirty else ""
             text = f"{icon} {self.git_branch}"
             indicator.update(text)
 
@@ -163,11 +398,11 @@ class StatusBar(Static):
 
     def _update_mode_display(self):
         try:
-            indicator = self.query_one("#mode-indicator", Label)
+            indicator = self.query_one("#mode-indicator", ClickableSection)
             indicator.remove_class("mode-cli", "mode-ai", "mode-agent")
 
             if self.mode == "CLI":
-                indicator.update(" CLI")
+                indicator.update(" CLI")
                 indicator.add_class("mode-cli")
             else:
                 if self.agent_mode:
@@ -181,7 +416,7 @@ class StatusBar(Static):
 
     def _update_context_display(self):
         try:
-            indicator = self.query_one("#context-indicator", Label)
+            indicator = self.query_one("#context-indicator", ClickableSection)
             indicator.remove_class("context-low", "context-medium", "context-high")
 
             pct = (
@@ -212,9 +447,13 @@ class StatusBar(Static):
 
     def _update_provider_display(self):
         try:
-            indicator = self.query_one("#provider-indicator", Label)
+            indicator = self.query_one("#provider-indicator", ClickableSection)
             indicator.remove_class(
-                "provider-connected", "provider-disconnected", "provider-checking"
+                "provider-connected",
+                "provider-disconnected",
+                "provider-checking",
+                "provider-slow",
+                "provider-fast",
             )
 
             name = self.provider_name or ""
@@ -222,11 +461,27 @@ class StatusBar(Static):
                 indicator.update("")
                 return
 
+            latency_str = f" {self.provider_latency}" if self.provider_latency else ""
+
             if self.provider_status == "connected":
-                indicator.update(f"{name} 󰄬")
+                indicator.update(f"{name} 󰄬{latency_str}")
                 indicator.add_class("provider-connected")
+                if self.provider_latency:
+                    try:
+                        ms = int(
+                            self.provider_latency.replace("ms", "").replace("s", "000")
+                        )
+                        if ms < 500:
+                            indicator.add_class("provider-fast")
+                        elif ms > 2000:
+                            indicator.add_class("provider-slow")
+                    except ValueError:
+                        pass
             elif self.provider_status == "disconnected":
                 indicator.update(f"{name} 󰅖")
+                indicator.add_class("provider-disconnected")
+            elif self.provider_status == "error":
+                indicator.update(f"{name} ✗")
                 indicator.add_class("provider-disconnected")
             else:
                 indicator.update(name)
@@ -235,40 +490,45 @@ class StatusBar(Static):
             self._safe_log_warning(f"Status update failed: {e}")
 
     def _update_token_display(self):
-        """Update the token usage and cost display."""
         try:
-            indicator = self.query_one("#token-indicator", Label)
+            indicator = self.query_one("#token-indicator", ClickableSection)
             sep = self.query_one("#token-sep", Label)
 
             total_tokens = self.session_input_tokens + self.session_output_tokens
+            streaming_tokens = self.streaming_output_chars // 4
 
-            if total_tokens == 0:
-                # Hide token display when no tokens used
+            if total_tokens == 0 and not self.is_streaming:
                 indicator.update("")
                 sep.display = False
                 return
 
             sep.display = True
 
-            # Format token count (e.g., 1.2k, 15k, 1.5M)
-            if total_tokens >= 1_000_000:
-                token_str = f"{total_tokens / 1_000_000:.1f}M"
-            elif total_tokens >= 1000:
-                token_str = f"{total_tokens / 1000:.1f}k"
+            if self.is_streaming:
+                display_tokens = total_tokens + streaming_tokens
+                if display_tokens >= 1_000_000:
+                    token_str = f"~{display_tokens / 1_000_000:.1f}M"
+                elif display_tokens >= 1000:
+                    token_str = f"~{display_tokens / 1000:.1f}k"
+                else:
+                    token_str = f"~{display_tokens}"
+                indicator.update(f"󱓞 tok: {token_str} ...")
             else:
-                token_str = str(total_tokens)
+                if total_tokens >= 1_000_000:
+                    token_str = f"{total_tokens / 1_000_000:.1f}M"
+                elif total_tokens >= 1000:
+                    token_str = f"{total_tokens / 1000:.1f}k"
+                else:
+                    token_str = str(total_tokens)
 
-            # Format cost
-            if self.session_cost >= 1.0:
-                cost_str = f"${self.session_cost:.2f}"
-            elif self.session_cost >= 0.01:
-                cost_str = f"${self.session_cost:.2f}"
-            elif self.session_cost > 0:
-                cost_str = f"${self.session_cost:.4f}"
-            else:
-                cost_str = "$0"
+                if self.session_cost >= 0.01:
+                    cost_str = f"${self.session_cost:.2f}"
+                elif self.session_cost > 0:
+                    cost_str = f"${self.session_cost:.4f}"
+                else:
+                    cost_str = "$0"
 
-            indicator.update(f"󱓞 tok: {token_str} / {cost_str}")
+                indicator.update(f"󱓞 tok: {token_str} / {cost_str}")
 
         except Exception as e:
             self._safe_log_warning(f"Status update failed: {e}")
@@ -286,10 +546,11 @@ class StatusBar(Static):
         self.context_chars = chars
         self.context_limit = limit
 
-    def set_provider(self, name: str, status: str = "unknown"):
-        """Set provider name and status."""
+    def set_provider(self, name: str, status: str = "unknown", latency: str = ""):
+        """Set provider name, status, and latency."""
         self.provider_name = name
         self.provider_status = status
+        self.provider_latency = latency
 
     def set_mcp_status(self, count: int):
         """Set number of active MCP servers."""
@@ -313,7 +574,36 @@ class StatusBar(Static):
         self.session_cost += cost
 
     def reset_token_usage(self):
-        """Reset session token usage (e.g., on clear)."""
         self.session_input_tokens = 0
         self.session_output_tokens = 0
         self.session_cost = 0.0
+        self.streaming_output_chars = 0
+        self.is_streaming = False
+
+    def start_streaming(self):
+        self.streaming_output_chars = 0
+        self.is_streaming = True
+
+    def update_streaming_tokens(self, output_chars: int):
+        self.streaming_output_chars = output_chars
+
+    def stop_streaming(self):
+        self.is_streaming = False
+        self.streaming_output_chars = 0
+
+    def set_network_status(self, status: str):
+        """Set network status (online, offline, unknown)."""
+        self.network_status = status
+
+    def set_system_stats(self, cpu_percent: float, memory_percent: float):
+        """Set CPU and memory usage percentages."""
+        self.cpu_percent = cpu_percent
+        self.memory_percent = memory_percent
+
+    def set_keyboard_mode(self, mode: str):
+        """Set keyboard mode (INSERT, NORMAL, VISUAL, etc.)."""
+        self.keyboard_mode = mode
+
+    def set_vim_mode(self, enabled: bool):
+        """Enable/disable vim mode indicator."""
+        self.vim_mode_enabled = enabled

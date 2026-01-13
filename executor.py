@@ -57,6 +57,8 @@ class ExecutionEngine:
         self._detection_buffer = b""
         # Incremental UTF-8 decoder to handle multibyte chars split across reads
         self._decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+        # Store exit status when reaped via WNOHANG to avoid losing it
+        self._reaped_status: int | None = None
 
     @property
     def pid(self) -> int | None:
@@ -134,7 +136,7 @@ class ExecutionEngine:
         self._cancelled = False
         self._in_tui_mode = False
         self._detection_buffer = b""
-        # Reset decoder for new command
+        self._reaped_status = None
         self._decoder.reset()
 
         # Build environment with color support
@@ -274,12 +276,11 @@ class ExecutionEngine:
                         callback(decoded)
                         buffer = b""
 
-                # Now check for exit or sleep
                 if not data_read:
-                    # No data was read in this cycle, check if process died
                     try:
-                        pid_result = os.waitpid(pid, os.WNOHANG)  # noqa: ASYNC222
-                        if pid_result[0] != 0:
+                        reaped_pid, status = os.waitpid(pid, os.WNOHANG)  # noqa: ASYNC222
+                        if reaped_pid != 0:
+                            self._reaped_status = status
                             break
                     except ChildProcessError:
                         break
@@ -315,15 +316,19 @@ class ExecutionEngine:
                     pass
                 return -1
 
-            try:
-                _, status = await loop.run_in_executor(None, _waitpid_blocking, pid)
-                if os.WIFEXITED(status):
-                    return os.WEXITSTATUS(status)
-                elif os.WIFSIGNALED(status):
-                    return 128 + os.WTERMSIG(status)
-                return 255
-            except ChildProcessError:
-                return 0
+            if self._reaped_status is not None:
+                status = self._reaped_status
+            else:
+                try:
+                    _, status = await loop.run_in_executor(None, _waitpid_blocking, pid)
+                except ChildProcessError:
+                    return 0
+
+            if os.WIFEXITED(status):
+                return os.WEXITSTATUS(status)
+            elif os.WIFSIGNALED(status):
+                return 128 + os.WTERMSIG(status)
+            return 255
 
         except Exception as e:
             callback(f"Error executing command: {e}\n")

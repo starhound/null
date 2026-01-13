@@ -21,6 +21,15 @@ from .defaults import (
     DEFAULT_TEMPERATURE,
     DEFAULT_THEME,
 )
+from .keybindings import (
+    DEFAULT_KEYBINDINGS,
+    KEYBINDINGS_PATH,
+    KeyBinding,
+    KeybindingManager,
+    KeyConflict,
+    get_keybinding_manager,
+    reload_keybindings,
+)
 from .keys import SENSITIVE_KEYS, ConfigKeys, is_sensitive_key
 from .settings import (
     CONFIG_PATH,
@@ -30,6 +39,7 @@ from .settings import (
     Settings,
     SettingsManager,
     TerminalSettings,
+    ValidationError,
     VoiceSettings,
     get_settings,
     save_settings,
@@ -37,6 +47,7 @@ from .settings import (
 from .storage import (
     APP_NAME,
     DB_PATH,
+    HISTORY_LIMIT,
     KEYRING_SERVICE_NAME,
     SecurityManager,
     StorageManager,
@@ -44,9 +55,7 @@ from .storage import (
 
 __all__ = [
     "APP_NAME",
-    # Settings
     "CONFIG_PATH",
-    # Storage
     "DB_PATH",
     "DEFAULT_AGENT_MODE",
     "DEFAULT_AI_ACTIVE_PROMPT",
@@ -54,27 +63,33 @@ __all__ = [
     "DEFAULT_AI_MODEL",
     "DEFAULT_AI_PROVIDER",
     "DEFAULT_CONTEXT_WINDOW",
+    "DEFAULT_KEYBINDINGS",
     "DEFAULT_MAX_TOKENS",
     "DEFAULT_SHELL",
     "DEFAULT_TEMPERATURE",
-    # Defaults
     "DEFAULT_THEME",
+    "HISTORY_LIMIT",
+    "KEYBINDINGS_PATH",
     "KEYRING_SERVICE_NAME",
-    # Keys
     "SENSITIVE_KEYS",
     "AISettings",
     "AppearanceSettings",
-    # AI Configuration
     "Config",
     "ConfigKeys",
     "EditorSettings",
+    "KeyBinding",
+    "KeybindingManager",
+    "KeyConflict",
     "SecurityManager",
     "Settings",
     "SettingsManager",
     "StorageManager",
     "TerminalSettings",
+    "ValidationError",
     "VoiceSettings",
+    "get_keybinding_manager",
     "get_settings",
     "is_sensitive_key",
+    "reload_keybindings",
     "save_settings",
 ]

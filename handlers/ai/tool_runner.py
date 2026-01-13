@@ -23,6 +23,16 @@ class ToolRunner:
     def __init__(self, app: NullApp):
         self.app = app
         self._tool_registry: ToolRegistry | None = None
+        self._session_approved_tools: set[str] = set()
+
+    def reset_session_approvals(self) -> None:
+        self._session_approved_tools.clear()
+
+    def is_tool_session_approved(self, tool_name: str) -> bool:
+        return tool_name in self._session_approved_tools
+
+    def add_session_approved_tools(self, tool_names: list[str]) -> None:
+        self._session_approved_tools.update(tool_names)
 
     def get_registry(self) -> ToolRegistry:
         """Get or create the tool registry."""
@@ -40,17 +50,45 @@ class ToolRunner:
     async def request_approval(
         self, tool_calls: list, iteration_number: int = 1
     ) -> str:
-        """Request user approval for tool execution."""
         from screens import ToolApprovalScreen
 
-        tool_data = [{"name": tc.name, "arguments": tc.arguments} for tc in tool_calls]
+        tool_names = [tc.name for tc in tool_calls]
+
+        unapproved_tools = [
+            tc for tc in tool_calls if not self.is_tool_session_approved(tc.name)
+        ]
+
+        if not unapproved_tools:
+            return "approve"
+
+        tool_data = [
+            {"name": tc.name, "arguments": tc.arguments} for tc in unapproved_tools
+        ]
+
+        ai_config = self.app.config.get("ai", {})
+        timeout = ai_config.get("agent_approval_timeout", 60)
 
         screen = ToolApprovalScreen(
-            tool_calls=tool_data, iteration_number=iteration_number
+            tool_calls=tool_data,
+            iteration_number=iteration_number,
+            timeout_seconds=timeout,
         )
 
-        # Wait for user decision
         result = await self.app.push_screen_wait(screen)
+
+        if result == "timeout":
+            self.app.notify(
+                f"Tool approval timed out after {timeout}s - auto-rejected",
+                severity="warning",
+            )
+            return "reject"
+
+        if result == "approve-session":
+            self.add_session_approved_tools(
+                [tc.get("name", "") for tc in tool_data if tc.get("name")]
+            )
+            return "approve"
+
         return result or "cancel"
 
     async def execute_streaming_command(

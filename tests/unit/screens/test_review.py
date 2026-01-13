@@ -768,27 +768,16 @@ class TestReviewScreenWithEmptyManager:
 
 
 class TestReviewScreenCSS:
-    """Test that CSS classes are properly defined."""
+    """Test that CSS attributes exist (styles moved to main.tcss)."""
 
-    def test_hunk_widget_has_default_css(self):
-        assert HunkWidget.DEFAULT_CSS is not None
-        assert len(HunkWidget.DEFAULT_CSS) > 0
+    def test_hunk_widget_has_default_css_attr(self):
+        assert hasattr(HunkWidget, "DEFAULT_CSS")
 
-    def test_hunk_widget_css_contains_status_classes(self):
-        css = HunkWidget.DEFAULT_CSS
-        assert ".pending" in css or "HunkWidget.pending" in css
-        assert ".accepted" in css or "HunkWidget.accepted" in css
-        assert ".rejected" in css or "HunkWidget.rejected" in css
+    def test_file_change_widget_has_default_css_attr(self):
+        assert hasattr(FileChangeWidget, "DEFAULT_CSS")
 
-    def test_file_change_widget_has_default_css(self):
-        assert FileChangeWidget.DEFAULT_CSS is not None
-        assert len(FileChangeWidget.DEFAULT_CSS) > 0
-
-    def test_review_screen_has_default_css(self):
-        manager = ReviewManager()
-        ReviewScreen(manager)
-        assert ReviewScreen.DEFAULT_CSS is not None
-        assert len(ReviewScreen.DEFAULT_CSS) > 0
+    def test_review_screen_has_default_css_attr(self):
+        assert hasattr(ReviewScreen, "DEFAULT_CSS")
 
 
 class TestReviewScreenWithNewFile:

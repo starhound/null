@@ -2,7 +2,8 @@
 
 from models import BlockState, BlockType
 
-from .actions import ActionBar, ActionButton
+from .actions import ActionBar, ActionButton, CopyMenu
+from .copy_types import CopyType
 from .agent_response import AgentResponseBlock
 from .ai_response import AIResponseBlock
 from .base import BaseBlockWidget
@@ -16,6 +17,7 @@ from .command import CommandBlock
 from .commit_block import CommitBlockWidget
 from .correction_block import CorrectionLoopBlock
 from .diff_view import DiffViewWidget
+from .error import ErrorBlock, create_error_block
 from .execution import ExecutionWidget
 from .frame import BlockFrame, FrameSeparator
 from .iteration import (
@@ -67,6 +69,8 @@ __all__ = [
     "ActionBar",
     "ActionButton",
     "AgentResponseBlock",
+    "CopyMenu",
+    "CopyType",
     "BaseBlockWidget",
     "BlockBody",
     "BlockFooter",
@@ -79,6 +83,7 @@ __all__ = [
     "CommitBlockWidget",
     "CorrectionLoopBlock",
     "DiffViewWidget",
+    "ErrorBlock",
     "ExecutionWidget",
     "FrameSeparator",
     "IterationContainer",
@@ -96,6 +101,7 @@ __all__ = [
     "ToolCallBlock",
     "ToolCallItem",
     "create_block",
+    "create_error_block",
     "execute_code",
     "extract_code_blocks",
     "get_file_extension",

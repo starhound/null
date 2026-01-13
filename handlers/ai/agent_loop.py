@@ -11,7 +11,7 @@ from ai.base import Message, TokenUsage
 from config import Config
 from managers.agent import AgentState
 from models import AgentIteration, BlockState
-from widgets import AgentResponseBlock, BaseBlockWidget
+from widgets import AgentResponseBlock, BaseBlockWidget, StatusBar
 
 if TYPE_CHECKING:
     from app import NullApp
@@ -24,6 +24,45 @@ class AgentLoop:
     def __init__(self, app: NullApp, tool_runner: ToolRunner):
         self.app = app
         self.tool_runner = tool_runner
+
+    def _get_status_bar(self) -> StatusBar | None:
+        try:
+            return self.app.query_one("#status-bar", StatusBar)
+        except Exception:
+            return None
+
+    def _append_summary(
+        self, widget: BaseBlockWidget, block_state: BlockState, summary: dict
+    ):
+        lines = [
+            "\n\n---",
+            f"**Agent Summary** | Steps: {summary['steps']} | "
+            f"Duration: {summary['duration']:.1f}s",
+        ]
+
+        if summary["tokens"]["total"] > 0:
+            cost_str = f"${summary['cost']:.4f}" if summary["cost"] > 0 else "free"
+            lines.append(
+                f"Tokens: {summary['tokens']['total']:,} "
+                f"({summary['tokens']['input']:,} in / {summary['tokens']['output']:,} out) | "
+                f"Cost: {cost_str}"
+            )
+
+        if summary["tools"]["total_calls"] > 0:
+            tool_parts = [
+                f"{name}: {count}"
+                for name, count in summary["tools"]["by_type"].items()
+            ]
+            lines.append(
+                f"Tools ({summary['tools']['total_calls']}): {', '.join(tool_parts)}"
+            )
+
+        if summary["errors"] > 0:
+            lines.append(f"Errors: {summary['errors']}")
+
+        summary_text = "\n".join(lines)
+        block_state.content_output += summary_text
+        widget.update_output(block_state.content_output)
 
     async def run_loop(
         self,
@@ -70,7 +109,13 @@ class AgentLoop:
 
         agent_manager = self.app.agent_manager
         task_preview = prompt[:100] + ("..." if len(prompt) > 100 else "")
-        agent_manager.start_session(task_preview)
+        agent_manager.start_session(
+            task_preview,
+            max_iterations=max_iterations,
+            model_name=model_name,
+        )
+
+        self.tool_runner.reset_session_approvals()
 
         while iteration_num < max_iterations:
             if agent_manager.should_cancel():
@@ -105,7 +150,10 @@ class AgentLoop:
             if agent_widget:
                 agent_widget.add_iteration(iteration)
 
-            # Stream AI response
+            status_bar = self._get_status_bar()
+            if status_bar:
+                status_bar.start_streaming()
+
             async for chunk in ai_provider.generate_with_tools(
                 prompt if iteration_num == 1 else "",
                 current_messages,
@@ -121,14 +169,11 @@ class AgentLoop:
                         agent_widget.update_iteration(iteration.id, status="complete")
                     break
 
-                # Handle text content
                 if chunk.text:
                     raw_response += chunk.text
 
-                    # Extract thinking using strategy
                     thinking, remaining = strategy.extract_thinking(raw_response)
 
-                    # Update iteration thinking
                     if thinking:
                         iteration.thinking = thinking
                         if agent_widget:
@@ -136,16 +181,16 @@ class AgentLoop:
                                 iteration.id, thinking=thinking
                             )
 
-                    # Update main response (non-thinking content)
                     full_response = remaining if thinking else raw_response
                     block_state.content_output = full_response
                     widget.update_output(full_response)
 
-                # Collect tool calls
+                    if status_bar:
+                        status_bar.update_streaming_tokens(len(full_response))
+
                 if chunk.tool_calls:
                     pending_tool_calls.extend(chunk.tool_calls)
 
-                # Track token usage
                 if chunk.is_complete and chunk.usage:
                     if total_usage is None:
                         total_usage = chunk.usage
@@ -154,6 +199,9 @@ class AgentLoop:
 
                 if chunk.is_complete:
                     break
+
+            if status_bar:
+                status_bar.stop_streaming()
 
             # Check for cancellation
             if self.app._ai_cancelled:
@@ -285,10 +333,14 @@ class AgentLoop:
 
         if total_usage:
             agent_manager.record_tokens(
-                total_usage.input_tokens + total_usage.output_tokens
+                total_usage.input_tokens + total_usage.output_tokens,
+                input_tokens=total_usage.input_tokens,
+                output_tokens=total_usage.output_tokens,
             )
 
-        agent_manager.end_session(cancelled=self.app._ai_cancelled)
+        summary = agent_manager.end_session(cancelled=self.app._ai_cancelled)
+        if summary and not self.app._ai_cancelled:
+            self._append_summary(widget, block_state, summary)
 
         finalize_callback(
             block_state, widget, full_response, messages, max_tokens, total_usage

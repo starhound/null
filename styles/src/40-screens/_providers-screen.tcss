@@ -175,6 +175,42 @@ ProvidersScreen .provider-name {
     text-style: bold;
 }
 
+ProvidersScreen .provider-health {
+    width: 12;
+    color: $text-dim;
+    text-align: right;
+    margin-right: 1;
+}
+
+ProvidersScreen .provider-health.health-good {
+    color: $success;
+}
+
+ProvidersScreen .provider-health.health-slow {
+    color: $warning;
+}
+
+ProvidersScreen .provider-health.health-bad {
+    color: $error;
+}
+
+ProvidersScreen .provider-health.health-offline {
+    color: $text-dim;
+}
+
+ProvidersScreen .provider-health.health-error {
+    color: $error;
+}
+
+ProvidersScreen .provider-health.health-checking {
+    color: $primary;
+    text-style: italic;
+}
+
+ProvidersScreen .provider-health.health-none {
+    color: transparent;
+}
+
 ProvidersScreen .provider-desc {
     width: 1fr;
     color: $text-muted;

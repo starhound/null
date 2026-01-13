@@ -310,6 +310,87 @@ class TestStorageManagerHistory:
         results = mock_storage.search_history("docker")
         assert results == []
 
+    def test_add_history_consecutive_duplicate_skipped(self, mock_storage):
+        """add_history() should skip consecutive duplicate commands."""
+        mock_storage.add_history("dedup_test_cmd")
+        mock_storage.add_history("dedup_test_cmd")  # Should be skipped
+        mock_storage.add_history("dedup_test_cmd")  # Should be skipped
+
+        history = mock_storage.get_last_history(1000)
+        dedup_cmds = [h for h in history if h == "dedup_test_cmd"]
+        assert len(dedup_cmds) == 1
+
+    def test_add_history_non_consecutive_duplicate_allowed(self, mock_storage):
+        """add_history() should allow non-consecutive duplicates."""
+        mock_storage.add_history("nonconsec_test_cmd")
+        mock_storage.add_history("other_command")
+        mock_storage.add_history("nonconsec_test_cmd")  # Should be allowed
+
+        history = mock_storage.get_last_history(1000)
+        nonconsec_cmds = [h for h in history if h == "nonconsec_test_cmd"]
+        assert len(nonconsec_cmds) == 2
+
+    def test_add_history_limit_enforcement(self, mock_storage):
+        """add_history() should enforce HISTORY_LIMIT."""
+        from config.storage import HISTORY_LIMIT
+
+        # Add more than the limit
+        for i in range(HISTORY_LIMIT + 50):
+            mock_storage.add_history(f"limit_test_cmd_{i}")
+
+        # Count should not exceed limit
+        count = mock_storage.get_history_count()
+        assert count <= HISTORY_LIMIT
+
+    def test_load_history_returns_list(self, mock_storage):
+        """load_history() should return list of commands."""
+        mock_storage.add_history("load_test_1")
+        mock_storage.add_history("load_test_2")
+
+        history = mock_storage.load_history()
+        assert isinstance(history, list)
+        assert "load_test_1" in history
+        assert "load_test_2" in history
+
+    def test_load_history_with_custom_limit(self, mock_storage):
+        """load_history() should respect custom limit."""
+        for i in range(20):
+            mock_storage.add_history(f"load_limit_test_{i}")
+
+        history = mock_storage.load_history(limit=5)
+        assert len(history) <= 5
+
+    def test_get_history_count(self, mock_storage):
+        """get_history_count() should return accurate count."""
+        initial_count = mock_storage.get_history_count()
+
+        mock_storage.add_history("count_test_1")
+        mock_storage.add_history("count_test_2")
+        mock_storage.add_history("count_test_3")
+
+        final_count = mock_storage.get_history_count()
+        assert final_count == initial_count + 3
+
+    def test_clear_history(self, mock_storage):
+        """clear_history() should remove all history."""
+        mock_storage.add_history("clear_test_1")
+        mock_storage.add_history("clear_test_2")
+
+        deleted_count = mock_storage.clear_history()
+        assert deleted_count >= 2
+
+        count = mock_storage.get_history_count()
+        assert count == 0
+
+    def test_save_history_bulk(self, mock_storage):
+        """save_history() should bulk save commands."""
+        commands = ["bulk_save_1", "bulk_save_2", "bulk_save_3"]
+        mock_storage.save_history(commands)
+
+        history = mock_storage.get_last_history(100)
+        for cmd in commands:
+            assert cmd in history
+
 
 class TestStorageManagerSSH:
     """Tests for StorageManager SSH host operations."""

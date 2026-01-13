@@ -1,6 +1,7 @@
 from .agent import AgentManager, AgentSession, AgentState, AgentStats
 from .branch import BranchManager
 from .process import ProcessInfo, ProcessManager
+from .ssh import SSHConnectionInfo, SSHConnectionPool, SSHConnectionState
 from .voice import RecordingState, TranscriptionResult, VoiceManager
 
 __all__ = [
@@ -12,6 +13,9 @@ __all__ = [
     "ProcessInfo",
     "ProcessManager",
     "RecordingState",
+    "SSHConnectionInfo",
+    "SSHConnectionPool",
+    "SSHConnectionState",
     "TranscriptionResult",
     "VoiceManager",
 ]

@@ -1,6 +1,8 @@
 """Selection list screens."""
 
+import json
 from collections.abc import Callable
+from pathlib import Path
 from typing import ClassVar
 
 from textual.binding import BindingType
@@ -15,23 +17,102 @@ from .base import (
     Button,
     ComposeResult,
     Container,
+    Horizontal,
     Label,
     ListItem,
     ListView,
     ModalScreen,
+    Vertical,
 )
 
 
-class ThemeSelectionScreen(ModalScreen):
-    """Screen to select a theme with live preview on highlight."""
+class ThemeColorPalette(Static):
+    """Displays 6 color swatches from a theme for visual preview."""
 
-    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "dismiss", "Close")]
+    def __init__(self, theme_name: str, **kwargs):
+        super().__init__(**kwargs)
+        self._theme_name = theme_name
+        self._colors = self._load_theme_colors()
+
+    def _load_theme_colors(self) -> list[str]:
+        from themes import BUILTIN_THEMES_DIR, USER_THEMES_DIR
+
+        for themes_dir in [USER_THEMES_DIR, BUILTIN_THEMES_DIR]:
+            if themes_dir.exists():
+                for theme_file in themes_dir.glob("*.json"):
+                    try:
+                        with open(theme_file) as f:
+                            data = json.load(f)
+                        if data.get("name") == self._theme_name:
+                            return [
+                                data.get("primary", "#808080"),
+                                data.get("accent", "#808080"),
+                                data.get("background", "#808080"),
+                                data.get("success", "#808080"),
+                                data.get("warning", "#808080"),
+                                data.get("error", "#808080"),
+                            ]
+                    except Exception:
+                        continue
+        return ["#808080"] * 6
+
+    def compose(self) -> ComposeResult:
+        with Horizontal(classes="palette-swatches"):
+            for i, color in enumerate(self._colors[:6]):
+                yield Static("", classes=f"palette-swatch ps-{i}")
+
+    def on_mount(self) -> None:
+        for i, color in enumerate(self._colors[:6]):
+            try:
+                swatch = self.query_one(f".ps-{i}")
+                swatch.styles.background = color
+            except Exception:
+                pass
+
+
+class ThemeListItem(Static):
+    """Focusable theme item with name and color palette preview."""
+
+    can_focus = True
+
+    class Selected(Message):
+        def __init__(self, theme_name: str):
+            super().__init__()
+            self.theme_name = theme_name
+
+    def __init__(self, theme_name: str, **kwargs):
+        super().__init__(**kwargs)
+        self._theme_name = theme_name
+        self.add_class("theme-list-item")
+
+    def compose(self) -> ComposeResult:
+        with Horizontal(classes="theme-item-row"):
+            yield Label(self._theme_name, classes="theme-name")
+            yield ThemeColorPalette(self._theme_name, classes="theme-palette")
+
+    def on_click(self) -> None:
+        self.post_message(self.Selected(self._theme_name))
+
+    def on_key(self, event) -> None:
+        if event.key == "enter":
+            self.post_message(self.Selected(self._theme_name))
+            event.stop()
+
+
+class ThemeSelectionScreen(ModalScreen):
+    """Theme selector with live preview and color palette display."""
+
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("escape", "dismiss", "Close"),
+        Binding("e", "edit_theme", "Edit Theme"),
+    ]
 
     def __init__(self, title: str, items: list[str]):
         super().__init__()
         self._screen_title = title
         self.items = items
         self._original_theme: str | None = None
+        self._highlighted_theme: str | None = None
 
     def compose(self) -> ComposeResult:
         with Container(id="selection-container"):
@@ -39,50 +120,56 @@ class ThemeSelectionScreen(ModalScreen):
             if not self.items:
                 yield Label("No themes found.", classes="empty-msg")
             else:
-                yield ListView(
-                    *[ListItem(Label(m)) for m in self.items], id="item_list"
-                )
-            yield Button("Cancel [Esc]", variant="default", id="cancel_btn")
+                with VerticalScroll(id="theme-list-scroll"):
+                    for theme_name in self.items:
+                        yield ThemeListItem(theme_name, id=f"theme-{theme_name}")
+            with Horizontal(classes="theme-buttons"):
+                yield Button("Cancel [Esc]", variant="default", id="cancel_btn")
+                yield Button("Edit [E]", variant="primary", id="edit-theme-btn")
 
-    def on_mount(self):
-        """Store the original theme when screen opens."""
+    def on_mount(self) -> None:
         self._original_theme = self.app.theme
-
-    def on_list_view_highlighted(self, message: ListView.Highlighted):
-        """Preview theme when item is highlighted."""
-        if message.item is None:
-            return
-
-        listview = self.query_one("#item_list", ListView)
-        index = listview.index
-
-        if index is not None and 0 <= index < len(self.items):
-            theme_name = self.items[index]
-            # Apply theme for preview (don't save to config)
+        if self.items:
             try:
-                self.app.theme = theme_name
+                first_item = self.query_one(f"#theme-{self.items[0]}", ThemeListItem)
+                first_item.focus()
             except Exception:
                 pass
 
-    def on_list_view_selected(self, message: ListView.Selected):
-        """Apply theme permanently when selected."""
-        index = self.query_one("#item_list", ListView).index
-        if index is not None and 0 <= index < len(self.items):
-            self.dismiss(str(self.items[index]))
-        else:
-            # Restore original on invalid selection
+    def on_theme_list_item_selected(self, message: ThemeListItem.Selected) -> None:
+        self.dismiss(message.theme_name)
+
+    def on_descendant_focus(self, event) -> None:
+        widget = event.widget
+        if isinstance(widget, ThemeListItem):
+            self._highlighted_theme = widget._theme_name
+            try:
+                self.app.theme = widget._theme_name
+            except Exception:
+                pass
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "cancel_btn":
             if self._original_theme:
                 self.app.theme = self._original_theme
             self.dismiss(None)
+        elif event.button.id == "edit-theme-btn":
+            self.action_edit_theme()
 
-    def on_button_pressed(self, event: Button.Pressed):
-        """Restore original theme on cancel."""
-        if self._original_theme:
-            self.app.theme = self._original_theme
-        self.dismiss(None)
+    def action_edit_theme(self) -> None:
+        from .theme_editor import ThemeEditorScreen
+
+        base_theme = self._highlighted_theme or self._original_theme
+
+        def on_editor_dismiss(result: str | None) -> None:
+            if result:
+                self.dismiss(result)
+            elif self._original_theme:
+                self.app.theme = self._original_theme
+
+        self.app.push_screen(ThemeEditorScreen(base_theme), on_editor_dismiss)
 
     async def action_dismiss(self, result: object = None) -> None:
-        """Restore original theme on escape."""
         if self._original_theme:
             self.app.theme = self._original_theme
         self.dismiss(None)

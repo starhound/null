@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from textual.worker import Worker
 
 from textual.app import App, ComposeResult
-from textual.binding import BindingType
+from textual.binding import Binding, BindingType
 from textual.containers import Container, Horizontal
 from textual.widgets import DirectoryTree, Footer, Label, TextArea
 
@@ -45,21 +45,29 @@ class NullApp(App):
     LAYERS: ClassVar[list[str]] = ["base", "overlay"]
 
     BINDINGS: ClassVar[list[BindingType]] = [
-        ("escape", "cancel_operation", "Cancel"),
-        ("ctrl+l", "clear_history", "Clear History"),
-        ("ctrl+s", "quick_export", "Export"),
-        ("ctrl+r", "search_history", "Search History"),
-        ("ctrl+f", "search_blocks", "Search Blocks"),
-        ("ctrl+p", "open_command_palette", "Command Palette"),
-        ("f1", "open_help", "Help"),
-        ("f2", "select_model", "Select Model"),
-        ("f3", "select_theme", "Change Theme"),
-        ("f4", "select_provider", "Select Provider"),
-        ("ctrl+space", "toggle_ai_mode", "Toggle AI Mode"),
-        ("ctrl+t", "toggle_ai_mode", "Toggle AI Mode"),
-        ("ctrl+backslash", "toggle_file_tree", "Files"),
-        ("ctrl+b", "toggle_branches", "Branches"),
-        ("ctrl+m", "toggle_voice", "Voice Input"),
+        Binding("escape", "cancel_operation", "Cancel", id="cancel"),
+        Binding("ctrl+l", "clear_history", "Clear History", id="clear_history"),
+        Binding("ctrl+s", "quick_export", "Export", id="quick_export"),
+        Binding("ctrl+r", "search_history", "Search History", id="search_history"),
+        Binding("ctrl+f", "search_blocks", "Search Blocks", id="search_blocks"),
+        Binding(
+            "ctrl+p", "open_command_palette", "Command Palette", id="command_palette"
+        ),
+        Binding("f1", "open_help", "Help", id="help"),
+        Binding("f2", "select_model", "Select Model", id="select_model"),
+        Binding("f3", "select_theme", "Change Theme", id="select_theme"),
+        Binding("f4", "select_provider", "Select Provider", id="select_provider"),
+        Binding("ctrl+space", "toggle_ai_mode", "Toggle AI Mode", id="toggle_ai_mode"),
+        Binding(
+            "ctrl+t",
+            "toggle_ai_mode",
+            "Toggle AI Mode",
+            show=False,
+            id="toggle_ai_mode_alt",
+        ),
+        Binding("ctrl+backslash", "toggle_file_tree", "Files", id="toggle_file_tree"),
+        Binding("ctrl+b", "toggle_branches", "Branches", id="toggle_branches"),
+        Binding("ctrl+m", "toggle_voice", "Voice Input", id="toggle_voice"),
     ]
 
     def __init__(self):
@@ -142,6 +150,7 @@ class NullApp(App):
         self.input_handler = InputHandler(self)
 
         self._register_internal_commands()
+        self._apply_custom_keybindings()
 
     def _register_internal_commands(self):
         commands = [
@@ -149,6 +158,16 @@ class NullApp(App):
             for cmd in self.command_handler.get_all_commands()
         ]
         self.suggestion_engine.set_internal_commands(commands)
+
+    def _apply_custom_keybindings(self):
+        from config import get_keybinding_manager
+
+        manager = get_keybinding_manager()
+        keymap = manager.get_keymap()
+        if keymap:
+            result = self._bindings.apply_keymap(keymap)
+            if result.clashed_bindings:
+                self.log(f"Keybinding conflicts detected: {result.clashed_bindings}")
 
     def compose(self) -> ComposeResult:
         yield AppHeader(id="app-header")
@@ -166,7 +185,7 @@ class NullApp(App):
         with Container(id="input-container"):
             yield Label(self._get_prompt_text(), id="prompt-line")
             input_widget = InputController(placeholder="Type a command...", id="input")
-            input_widget.cmd_history = Config._get_storage().get_last_history()
+            input_widget.cmd_history = Config._get_storage().load_history()
             yield input_widget
 
         yield StatusBar(id="status-bar")
@@ -850,19 +869,45 @@ class NullApp(App):
             self.notify(f"Copy failed: {e}", severity="error")
 
         if copied:
-            self._show_copy_feedback(message.block_id)
+            self._show_copy_feedback(message.block_id, message.copy_type)
 
-    def _show_copy_feedback(self, block_id: str) -> None:
+    def _show_copy_feedback(self, block_id: str, copy_type: str = "full") -> None:
         from widgets.blocks.actions import ActionBar
+        from widgets.blocks.copy_types import CopyType
+
+        type_labels = {
+            CopyType.FULL: "Copied",
+            CopyType.CODE: "Code copied",
+            CopyType.MARKDOWN: "Markdown copied",
+            CopyType.RAW: "Raw text copied",
+        }
+        label = type_labels.get(copy_type, "Copied")
 
         try:
             history = self.query_one("#history")
             for widget in history.query("ActionBar"):
                 if isinstance(widget, ActionBar) and widget.block_id == block_id:
-                    widget.show_copy_feedback()
+                    widget.show_copy_feedback(label)
                     break
         except Exception:
-            pass  # ActionBar may not exist for this block
+            pass
+
+    async def on_base_block_widget_copy_menu_requested(
+        self, message: BaseBlockWidget.CopyMenuRequested
+    ):
+        from widgets.blocks.actions import ActionBar
+
+        try:
+            history = self.query_one("#history")
+            for widget in history.query("ActionBar"):
+                if (
+                    isinstance(widget, ActionBar)
+                    and widget.block_id == message.block_id
+                ):
+                    widget.show_copy_menu()
+                    break
+        except Exception:
+            pass
 
     async def on_base_block_widget_fork_requested(
         self, message: BaseBlockWidget.ForkRequested

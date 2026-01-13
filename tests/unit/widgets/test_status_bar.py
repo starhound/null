@@ -3,9 +3,52 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from textual.widgets import Label
+from textual.widgets import Label, Static
 
-from widgets.status_bar import StatusBar
+from widgets.status_bar import ClickableSection, StatusBar
+
+
+class TestClickableSection:
+    """Test ClickableSection widget."""
+
+    def test_default_init(self):
+        """Default initialization should be clickable."""
+        section = ClickableSection("test")
+        assert section._clickable is True
+        assert "clickable" in section.classes
+
+    def test_init_with_section_id(self):
+        """Section ID should be set from parameter."""
+        section = ClickableSection("test", section_id="my-section")
+        assert section.section_id == "my-section"
+
+    def test_init_section_id_from_widget_id(self):
+        """Section ID should fallback to widget id."""
+        section = ClickableSection("test", id="widget-id")
+        assert section.section_id == "widget-id"
+
+    def test_init_not_clickable(self):
+        """Non-clickable section should not have clickable class."""
+        section = ClickableSection("test", clickable=False)
+        assert section._clickable is False
+        assert "clickable" not in section.classes
+
+    def test_on_click_posts_message(self):
+        """Clicking should post Clicked message."""
+        section = ClickableSection("test", section_id="test-section")
+        with patch.object(section, "post_message") as mock_post:
+            section.on_click()
+            mock_post.assert_called_once()
+            message = mock_post.call_args[0][0]
+            assert isinstance(message, ClickableSection.Clicked)
+            assert message.section_id == "test-section"
+
+    def test_on_click_not_clickable(self):
+        """Non-clickable section should not post message on click."""
+        section = ClickableSection("test", clickable=False)
+        with patch.object(section, "post_message") as mock_post:
+            section.on_click()
+            mock_post.assert_not_called()
 
 
 class TestStatusBarInit:
@@ -95,13 +138,15 @@ class TestStatusBarInit:
 class TestStatusBarCompose:
     """Test compose method yields correct widgets."""
 
-    def test_compose_yields_labels(self):
-        """Compose should yield Label widgets."""
+    def test_compose_yields_widgets(self):
+        """Compose should yield widgets."""
         bar = StatusBar()
         children = list(bar.compose())
 
-        assert len(children) == 15
-        assert all(isinstance(child, Label) for child in children)
+        # Should have more widgets now (added network, system, keyboard indicators)
+        assert len(children) == 23
+        # Mix of ClickableSection and Label
+        assert all(isinstance(child, (ClickableSection, Label)) for child in children)
 
     def test_compose_mode_indicator(self):
         """Mode indicator should have correct id."""
@@ -111,22 +156,34 @@ class TestStatusBarCompose:
         mode_indicator = children[0]
         assert mode_indicator.id == "mode-indicator"
         assert "status-section" in mode_indicator.classes
+        assert isinstance(mode_indicator, ClickableSection)
+
+    def test_compose_keyboard_indicator(self):
+        """Keyboard indicator should have correct id."""
+        bar = StatusBar()
+        children = list(bar.compose())
+
+        keyboard_indicator = children[2]
+        assert keyboard_indicator.id == "keyboard-indicator"
+        assert "status-section" in keyboard_indicator.classes
+        assert isinstance(keyboard_indicator, ClickableSection)
 
     def test_compose_git_indicator(self):
         """Git indicator should have correct id."""
         bar = StatusBar()
         children = list(bar.compose())
 
-        git_indicator = children[2]
+        git_indicator = children[4]
         assert git_indicator.id == "git-indicator"
         assert "status-section" in git_indicator.classes
+        assert isinstance(git_indicator, ClickableSection)
 
     def test_compose_provider_indicator(self):
         """Provider indicator should have correct id."""
         bar = StatusBar()
         children = list(bar.compose())
 
-        provider_indicator = children[4]
+        provider_indicator = children[6]
         assert provider_indicator.id == "provider-indicator"
         assert "status-section" in provider_indicator.classes
 
@@ -135,7 +192,7 @@ class TestStatusBarCompose:
         bar = StatusBar()
         children = list(bar.compose())
 
-        mcp_indicator = children[6]
+        mcp_indicator = children[8]
         assert mcp_indicator.id == "mcp-indicator"
         assert "status-section" in mcp_indicator.classes
 
@@ -144,7 +201,7 @@ class TestStatusBarCompose:
         bar = StatusBar()
         children = list(bar.compose())
 
-        process_indicator = children[8]
+        process_indicator = children[10]
         assert process_indicator.id == "process-indicator"
         assert "status-section" in process_indicator.classes
 
@@ -153,7 +210,7 @@ class TestStatusBarCompose:
         bar = StatusBar()
         children = list(bar.compose())
 
-        voice_indicator = children[10]
+        voice_indicator = children[12]
         assert voice_indicator.id == "voice-indicator"
         assert "status-section" in voice_indicator.classes
 
@@ -162,15 +219,33 @@ class TestStatusBarCompose:
         bar = StatusBar()
         children = list(bar.compose())
 
-        spacer = children[11]
+        spacer = children[13]
         assert "spacer" in spacer.classes
+
+    def test_compose_network_indicator(self):
+        """Network indicator should have correct id."""
+        bar = StatusBar()
+        children = list(bar.compose())
+
+        network_indicator = children[14]
+        assert network_indicator.id == "network-indicator"
+        assert "status-section" in network_indicator.classes
+
+    def test_compose_system_indicator(self):
+        """System indicator should have correct id."""
+        bar = StatusBar()
+        children = list(bar.compose())
+
+        system_indicator = children[16]
+        assert system_indicator.id == "system-indicator"
+        assert "status-section" in system_indicator.classes
 
     def test_compose_token_indicator(self):
         """Token indicator should have correct id."""
         bar = StatusBar()
         children = list(bar.compose())
 
-        token_indicator = children[12]
+        token_indicator = children[18]
         assert token_indicator.id == "token-indicator"
         assert "status-section" in token_indicator.classes
 
@@ -179,7 +254,7 @@ class TestStatusBarCompose:
         bar = StatusBar()
         children = list(bar.compose())
 
-        context_indicator = children[14]
+        context_indicator = children[22]
         assert context_indicator.id == "context-indicator"
         assert "status-section" in context_indicator.classes
         assert "context-low" in context_indicator.classes
@@ -189,7 +264,7 @@ class TestStatusBarCompose:
         bar = StatusBar()
         children = list(bar.compose())
 
-        separators = [children[1], children[3], children[5], children[7]]
+        separators = [children[1], children[5], children[7], children[9]]
         for sep in separators:
             assert "status-sep" in sep.classes
 
@@ -197,7 +272,7 @@ class TestStatusBarCompose:
         """Token separator should have correct id."""
         bar = StatusBar()
         children = list(bar.compose())
-        token_sep = [c for c in children if c.id == "token-sep"]
+        token_sep = [c for c in children if hasattr(c, 'id') and c.id == "token-sep"]
         assert len(token_sep) == 1
         assert "status-sep" in token_sep[0].classes
 
@@ -1441,3 +1516,368 @@ class TestStatusBarClassManagement:
         bar._update_git_display()
 
         mock_label.remove_class.assert_called_with("git-dirty", "git-clean")
+
+
+class TestStatusBarNewIndicators:
+    """Test new indicators (network, system, keyboard)."""
+
+    def test_default_network_status(self):
+        """Default network_status should be 'unknown'."""
+        bar = StatusBar()
+        assert bar.network_status == "unknown"
+
+    def test_default_memory_percent(self):
+        """Default memory_percent should be 0.0."""
+        bar = StatusBar()
+        assert bar.memory_percent == 0.0
+
+    def test_default_cpu_percent(self):
+        """Default cpu_percent should be 0.0."""
+        bar = StatusBar()
+        assert bar.cpu_percent == 0.0
+
+    def test_default_keyboard_mode(self):
+        """Default keyboard_mode should be empty."""
+        bar = StatusBar()
+        assert bar.keyboard_mode == ""
+
+    def test_default_vim_mode_enabled(self):
+        """Default vim_mode_enabled should be False."""
+        bar = StatusBar()
+        assert bar.vim_mode_enabled is False
+
+    def test_set_network_status(self):
+        """Setting network status."""
+        bar = StatusBar()
+        bar.set_network_status("online")
+        assert bar.network_status == "online"
+
+    def test_set_system_stats(self):
+        """Setting system stats."""
+        bar = StatusBar()
+        bar.set_system_stats(50.5, 75.3)
+        assert bar.cpu_percent == 50.5
+        assert bar.memory_percent == 75.3
+
+    def test_set_keyboard_mode(self):
+        """Setting keyboard mode."""
+        bar = StatusBar()
+        bar.set_keyboard_mode("INSERT")
+        assert bar.keyboard_mode == "INSERT"
+
+    def test_set_vim_mode(self):
+        """Setting vim mode."""
+        bar = StatusBar()
+        bar.set_vim_mode(True)
+        assert bar.vim_mode_enabled is True
+
+
+class TestStatusBarWatchNewIndicators:
+    """Test watchers for new indicators."""
+
+    def test_watch_network_status_calls_update(self):
+        """watch_network_status should call _update_network_display."""
+        bar = StatusBar()
+        with patch.object(bar, "_update_network_display") as mock_update:
+            bar.watch_network_status("online")
+            mock_update.assert_called_once()
+
+    def test_watch_memory_percent_calls_update(self):
+        """watch_memory_percent should call _update_system_display."""
+        bar = StatusBar()
+        with patch.object(bar, "_update_system_display") as mock_update:
+            bar.watch_memory_percent(50.0)
+            mock_update.assert_called_once()
+
+    def test_watch_cpu_percent_calls_update(self):
+        """watch_cpu_percent should call _update_system_display."""
+        bar = StatusBar()
+        with patch.object(bar, "_update_system_display") as mock_update:
+            bar.watch_cpu_percent(75.0)
+            mock_update.assert_called_once()
+
+    def test_watch_keyboard_mode_calls_update(self):
+        """watch_keyboard_mode should call _update_keyboard_display."""
+        bar = StatusBar()
+        with patch.object(bar, "_update_keyboard_display") as mock_update:
+            bar.watch_keyboard_mode("NORMAL")
+            mock_update.assert_called_once()
+
+    def test_watch_vim_mode_enabled_calls_update(self):
+        """watch_vim_mode_enabled should call _update_keyboard_display."""
+        bar = StatusBar()
+        with patch.object(bar, "_update_keyboard_display") as mock_update:
+            bar.watch_vim_mode_enabled(True)
+            mock_update.assert_called_once()
+
+
+class TestStatusBarUpdateNetworkDisplay:
+    """Test _update_network_display method."""
+
+    def test_update_network_display_online(self):
+        """Online status should show online icon and class."""
+        bar = StatusBar()
+        bar.network_status = "online"
+
+        mock_indicator = MagicMock(spec=Static)
+        mock_sep = MagicMock(spec=Label)
+
+        def query_side_effect(selector, typ=None):
+            if "network-indicator" in selector:
+                return mock_indicator
+            elif "network-sep" in selector:
+                return mock_sep
+            raise Exception("Unknown selector")
+
+        bar.query_one = MagicMock(side_effect=query_side_effect)
+        bar._update_network_display()
+
+        mock_indicator.add_class.assert_called_with("network-online")
+        assert mock_indicator.display is True
+
+    def test_update_network_display_offline(self):
+        """Offline status should show offline icon and class."""
+        bar = StatusBar()
+        bar.network_status = "offline"
+
+        mock_indicator = MagicMock(spec=Static)
+        mock_sep = MagicMock(spec=Label)
+
+        def query_side_effect(selector, typ=None):
+            if "network-indicator" in selector:
+                return mock_indicator
+            elif "network-sep" in selector:
+                return mock_sep
+            raise Exception("Unknown selector")
+
+        bar.query_one = MagicMock(side_effect=query_side_effect)
+        bar._update_network_display()
+
+        mock_indicator.add_class.assert_called_with("network-offline")
+
+    def test_update_network_display_unknown_hides(self):
+        """Unknown status should hide indicator."""
+        bar = StatusBar()
+        bar.network_status = "unknown"
+
+        mock_indicator = MagicMock(spec=Static)
+        mock_sep = MagicMock(spec=Label)
+
+        def query_side_effect(selector, typ=None):
+            if "network-indicator" in selector:
+                return mock_indicator
+            elif "network-sep" in selector:
+                return mock_sep
+            raise Exception("Unknown selector")
+
+        bar.query_one = MagicMock(side_effect=query_side_effect)
+        bar._update_network_display()
+
+        assert mock_indicator.display is False
+        assert mock_sep.display is False
+
+
+class TestStatusBarUpdateSystemDisplay:
+    """Test _update_system_display method."""
+
+    def test_update_system_display_low_usage(self):
+        """Low usage should add system-low class."""
+        bar = StatusBar()
+        bar.cpu_percent = 25.0
+        bar.memory_percent = 30.0
+
+        mock_indicator = MagicMock(spec=Static)
+        mock_sep = MagicMock(spec=Label)
+
+        def query_side_effect(selector, typ=None):
+            if "system-indicator" in selector:
+                return mock_indicator
+            elif "system-sep" in selector:
+                return mock_sep
+            raise Exception("Unknown selector")
+
+        bar.query_one = MagicMock(side_effect=query_side_effect)
+        bar._update_system_display()
+
+        mock_indicator.add_class.assert_called_with("system-low")
+
+    def test_update_system_display_medium_usage(self):
+        """Medium usage should add system-medium class."""
+        bar = StatusBar()
+        bar.cpu_percent = 60.0
+        bar.memory_percent = 55.0
+
+        mock_indicator = MagicMock(spec=Static)
+        mock_sep = MagicMock(spec=Label)
+
+        def query_side_effect(selector, typ=None):
+            if "system-indicator" in selector:
+                return mock_indicator
+            elif "system-sep" in selector:
+                return mock_sep
+            raise Exception("Unknown selector")
+
+        bar.query_one = MagicMock(side_effect=query_side_effect)
+        bar._update_system_display()
+
+        mock_indicator.add_class.assert_called_with("system-medium")
+
+    def test_update_system_display_high_usage(self):
+        """High usage should add system-high class."""
+        bar = StatusBar()
+        bar.cpu_percent = 90.0
+        bar.memory_percent = 85.0
+
+        mock_indicator = MagicMock(spec=Static)
+        mock_sep = MagicMock(spec=Label)
+
+        def query_side_effect(selector, typ=None):
+            if "system-indicator" in selector:
+                return mock_indicator
+            elif "system-sep" in selector:
+                return mock_sep
+            raise Exception("Unknown selector")
+
+        bar.query_one = MagicMock(side_effect=query_side_effect)
+        bar._update_system_display()
+
+        mock_indicator.add_class.assert_called_with("system-high")
+
+    def test_update_system_display_zero_hides(self):
+        """Zero values should hide indicator."""
+        bar = StatusBar()
+        bar.cpu_percent = 0.0
+        bar.memory_percent = 0.0
+
+        mock_indicator = MagicMock(spec=Static)
+        mock_sep = MagicMock(spec=Label)
+
+        def query_side_effect(selector, typ=None):
+            if "system-indicator" in selector:
+                return mock_indicator
+            elif "system-sep" in selector:
+                return mock_sep
+            raise Exception("Unknown selector")
+
+        bar.query_one = MagicMock(side_effect=query_side_effect)
+        bar._update_system_display()
+
+        assert mock_indicator.display is False
+        assert mock_sep.display is False
+
+
+class TestStatusBarUpdateKeyboardDisplay:
+    """Test _update_keyboard_display method."""
+
+    def test_update_keyboard_display_insert(self):
+        """Insert mode should show INS and add vim-insert class."""
+        bar = StatusBar()
+        bar.vim_mode_enabled = True
+        bar.keyboard_mode = "INSERT"
+
+        mock_indicator = MagicMock(spec=Static)
+        mock_sep = MagicMock(spec=Label)
+
+        def query_side_effect(selector, typ=None):
+            if "keyboard-indicator" in selector:
+                return mock_indicator
+            elif "keyboard-sep" in selector:
+                return mock_sep
+            raise Exception("Unknown selector")
+
+        bar.query_one = MagicMock(side_effect=query_side_effect)
+        bar._update_keyboard_display()
+
+        call_arg = mock_indicator.update.call_args[0][0]
+        assert "INS" in call_arg
+        mock_indicator.add_class.assert_called_with("vim-insert")
+
+    def test_update_keyboard_display_normal(self):
+        """Normal mode should show NOR and add vim-normal class."""
+        bar = StatusBar()
+        bar.vim_mode_enabled = True
+        bar.keyboard_mode = "NORMAL"
+
+        mock_indicator = MagicMock(spec=Static)
+        mock_sep = MagicMock(spec=Label)
+
+        def query_side_effect(selector, typ=None):
+            if "keyboard-indicator" in selector:
+                return mock_indicator
+            elif "keyboard-sep" in selector:
+                return mock_sep
+            raise Exception("Unknown selector")
+
+        bar.query_one = MagicMock(side_effect=query_side_effect)
+        bar._update_keyboard_display()
+
+        call_arg = mock_indicator.update.call_args[0][0]
+        assert "NOR" in call_arg
+        mock_indicator.add_class.assert_called_with("vim-normal")
+
+    def test_update_keyboard_display_visual(self):
+        """Visual mode should show VIS and add vim-visual class."""
+        bar = StatusBar()
+        bar.vim_mode_enabled = True
+        bar.keyboard_mode = "VISUAL"
+
+        mock_indicator = MagicMock(spec=Static)
+        mock_sep = MagicMock(spec=Label)
+
+        def query_side_effect(selector, typ=None):
+            if "keyboard-indicator" in selector:
+                return mock_indicator
+            elif "keyboard-sep" in selector:
+                return mock_sep
+            raise Exception("Unknown selector")
+
+        bar.query_one = MagicMock(side_effect=query_side_effect)
+        bar._update_keyboard_display()
+
+        call_arg = mock_indicator.update.call_args[0][0]
+        assert "VIS" in call_arg
+        mock_indicator.add_class.assert_called_with("vim-visual")
+
+    def test_update_keyboard_display_disabled_hides(self):
+        """Disabled vim mode should hide indicator."""
+        bar = StatusBar()
+        bar.vim_mode_enabled = False
+        bar.keyboard_mode = "INSERT"
+
+        mock_indicator = MagicMock(spec=Static)
+        mock_sep = MagicMock(spec=Label)
+
+        def query_side_effect(selector, typ=None):
+            if "keyboard-indicator" in selector:
+                return mock_indicator
+            elif "keyboard-sep" in selector:
+                return mock_sep
+            raise Exception("Unknown selector")
+
+        bar.query_one = MagicMock(side_effect=query_side_effect)
+        bar._update_keyboard_display()
+
+        assert mock_indicator.display is False
+        assert mock_sep.display is False
+
+    def test_update_keyboard_display_empty_mode_hides(self):
+        """Empty keyboard mode should hide indicator."""
+        bar = StatusBar()
+        bar.vim_mode_enabled = True
+        bar.keyboard_mode = ""
+
+        mock_indicator = MagicMock(spec=Static)
+        mock_sep = MagicMock(spec=Label)
+
+        def query_side_effect(selector, typ=None):
+            if "keyboard-indicator" in selector:
+                return mock_indicator
+            elif "keyboard-sep" in selector:
+                return mock_sep
+            raise Exception("Unknown selector")
+
+        bar.query_one = MagicMock(side_effect=query_side_effect)
+        bar._update_keyboard_display()
+
+        assert mock_indicator.display is False
+        assert mock_sep.display is False

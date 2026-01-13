@@ -1,40 +1,18 @@
 /* ==========================================================================
-   Null Terminal - Cyber Noir Style System
-
-   A rich, layered visual design with neon accents against deep darkness.
-   Blocks are wrapped with visible borders, nested content uses progressive
-   shading, and focus states create dramatic glow effects.
-
-   Theme colors ($primary, $secondary, $accent, $success, etc.) drive the
-   palette. Change themes with F3 or /theme command.
+   Null Terminal - Generated Stylesheet
+   
+   AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
+   Edit source files in styles/src/ and run: python styles/bundle.py
+   
+   Generated: 2026-01-13 16:33:55 UTC
    ========================================================================== */
+
 
 /* ==========================================================================
-   Color Variables - Layered Noir Palette
+   BASE (2 files)
    ========================================================================== */
 
-/* Text hierarchy - from bright to ghosted */
-$text-bright: $foreground;
-$text-muted: $foreground 70%;
-$text-dim: $foreground 45%;
-$text-ghost: $foreground 25%;
-
-/* Background layers - progressive depth */
-$layer-void: $background;           /* Deepest - app background */
-$layer-base: $surface;              /* Block backgrounds */
-$layer-raised: $panel;              /* Elevated content */
-$layer-float: $panel;               /* Floating elements */
-
-/* Border accent opacities */
-$border-dim: 35%;
-$border-normal: 55%;
-$border-focus: 85%;
-$border-full: 100%;
-
-/* Glow/tint intensities for focus states */
-$glow-subtle: 5%;
-$glow-medium: 10%;
-$glow-strong: 15%;
+/* --- _reset.tcss --- */
 
 /* ==========================================================================
    Global Scrollbar Styles - Minimal Neon Accents
@@ -72,6 +50,558 @@ NullApp > Screen {
 
 /* Modal screens - handled in Modal Screens section */
 
+/* --- _variables.tcss --- */
+
+/* ==========================================================================
+   Color Variables - Layered Noir Palette
+   ========================================================================== */
+
+/* Text hierarchy - from bright to ghosted */
+$text-bright: $foreground;
+$text-muted: $foreground 70%;
+$text-dim: $foreground 45%;
+$text-ghost: $foreground 25%;
+
+/* Background layers - progressive depth */
+$layer-void: $background;           /* Deepest - app background */
+$layer-base: $surface;              /* Block backgrounds */
+$layer-raised: $panel;              /* Elevated content */
+$layer-float: $panel;               /* Floating elements */
+
+/* Border accent opacities */
+$border-dim: 35%;
+$border-normal: 55%;
+$border-focus: 85%;
+$border-full: 100%;
+
+/* Glow/tint intensities for focus states */
+$glow-subtle: 5%;
+$glow-medium: 10%;
+$glow-strong: 15%;
+
+/* Contrast system - accessibility-friendly boundaries */
+$contrast-border: $primary 50%;
+$contrast-border-focus: $accent;
+$contrast-bg: $surface;
+$contrast-bg-hover: $panel;
+
+/* Form control states */
+$input-border: $primary 50%;
+$input-bg: $surface;
+$input-focus-border: $accent;
+$switch-on-bg: $success 30%;
+$switch-on-color: $success;
+
+
+/* ==========================================================================
+   LAYOUT (3 files)
+   ========================================================================== */
+
+/* --- _app.tcss --- */
+
+/* ==========================================================================
+   App Layout - Main Application Structure
+   ========================================================================== */
+
+/* Main app - fill entire terminal */
+NullApp {
+    width: 100%;
+    height: 100%;
+    background: $background;
+}
+
+/* Main app screen - not modal screens */
+NullApp > Screen {
+    layout: vertical;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    background: $background;
+    overflow: hidden;
+}
+
+/* Modal screens - handled in Modal Screens section */
+
+/* ==========================================================================
+   AppHeader Widget
+   ========================================================================== */
+
+AppHeader {
+    dock: top;
+    width: 100%;
+    height: auto;
+    min-height: 1;
+    layout: grid;
+    grid-size: 3 1;
+    grid-columns: 1fr auto 1fr;
+    background: $layer-raised;
+    color: $text;
+    border-bottom: solid $primary;
+}
+
+AppHeader .header-left {
+    column-span: 1;
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $primary;
+}
+
+AppHeader .header-icon {
+    color: $success;
+    text-style: bold;
+}
+
+AppHeader.-disconnected .header-icon {
+    color: $error;
+}
+
+AppHeader .header-title {
+    column-span: 1;
+    width: 100%;
+    height: 1;
+    text-align: center;
+    text-style: bold;
+    color: $text-bright;
+}
+
+AppHeader .header-right {
+    column-span: 1;
+    width: 100%;
+    height: 1;
+    text-align: right;
+    padding: 0 1;
+    color: $text-muted;
+}
+
+/* --- _sidebar.tcss --- */
+
+/* ==========================================================================
+   Sidebar Layout - File Browser and Navigation
+   ========================================================================== */
+
+Sidebar {
+    width: 30;
+    min-width: 25;
+    max-width: 50;
+    height: 100%;
+    dock: left;
+    background: $layer-base 80%;
+    border-right: solid $border-dim;
+    display: none;
+    padding: 0;
+}
+
+Sidebar #sidebar-content {
+    height: 100%;
+    width: 100%;
+}
+
+Sidebar TabbedContent {
+    height: 1fr;
+}
+
+Sidebar ContentSwitcher {
+    height: 1fr;
+}
+
+Sidebar TabPane {
+    padding: 0;
+    height: 1fr;
+}
+
+/* ==========================================================================
+   DirectoryTree - File Browser
+   ========================================================================== */
+
+Sidebar DirectoryTree {
+    background: transparent;
+    border: none;
+    width: 100%;
+    height: 100%;
+}
+
+/* ==========================================================================
+   DataTable - Sidebar Tables
+   ========================================================================== */
+
+Sidebar DataTable {
+    background: transparent;
+    border: none;
+    width: 100%;
+    height: 100%;
+    color: $text;
+}
+
+Sidebar DataTable > .datatable--header {
+    background: $layer-raised 30%;
+    color: $secondary;
+}
+
+Sidebar DataTable > .datatable--cursor {
+    background: $primary 30%;
+    color: $text-bright;
+}
+
+Sidebar DataTable > .datatable--row {
+    background: transparent;
+    color: $text;
+}
+
+Sidebar DataTable > .datatable--row-hover {
+    background: $layer-raised 20%;
+}
+
+/* ==========================================================================
+   Tabs - Sidebar Navigation
+   ========================================================================== */
+
+Sidebar Tabs {
+    dock: top;
+    height: 1;
+    min-height: 1;
+    background: $layer-raised 50%;
+}
+
+Sidebar Tab {
+    height: 1;
+    padding: 0 1;
+    min-width: 6;
+}
+
+/* ==========================================================================
+   AgentStatusWidget - Agent State Display
+   ========================================================================== */
+
+AgentStatusWidget {
+    width: 100%;
+    height: auto;
+    padding: 1;
+}
+
+AgentStatusWidget Label {
+    width: 100%;
+    height: auto;
+    color: $text;
+    padding: 0;
+}
+
+AgentStatusWidget #agent-state-label {
+    text-style: bold;
+    color: $primary;
+}
+
+AgentStatusWidget #agent-recent-tools {
+    margin-top: 1;
+    color: $text-dim;
+}
+
+/* ==========================================================================
+   ProcessListWidget - Running Processes Display
+   ========================================================================== */
+
+ProcessListWidget {
+    width: 100%;
+    height: 100%;
+    padding: 1;
+}
+
+ProcessListWidget .process-list-header {
+    width: 100%;
+    height: auto;
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+ProcessListWidget #process-count {
+    width: 100%;
+    height: auto;
+    color: $text-dim;
+    margin-bottom: 1;
+}
+
+ProcessListWidget #process-items {
+    width: 100%;
+    height: 1fr;
+    background: transparent;
+}
+
+ProcessListWidget #process-placeholder {
+    width: 100%;
+    height: auto;
+    color: $text-ghost;
+    text-align: center;
+    padding: 2;
+}
+
+ProcessListWidget .process-list-actions {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    padding-top: 1;
+    border-top: solid $panel;
+}
+
+ProcessListWidget .action-btn {
+    min-width: 8;
+    height: 1;
+    padding: 0 1;
+    margin-right: 1;
+    background: $layer-raised;
+    color: $text;
+    border: none;
+}
+
+ProcessListWidget .action-btn:hover {
+    background: $primary 30%;
+    color: $text-bright;
+}
+
+ProcessListWidget .action-btn.danger {
+    color: $error;
+}
+
+ProcessListWidget .action-btn.danger:hover {
+    background: $error 30%;
+    color: $error;
+}
+
+/* ==========================================================================
+   ProcessItemWidget - Individual Process Display
+   ========================================================================== */
+
+.process-item {
+    width: 100%;
+    height: auto;
+    margin-bottom: 1;
+    padding: 1;
+    background: $layer-raised 50%;
+    border: solid $panel;
+}
+
+.process-item:hover {
+    background: $layer-raised 70%;
+    border: solid $primary $border-dim;
+}
+
+.process-item-content {
+    width: 100%;
+    height: auto;
+}
+
+.process-header {
+    width: 100%;
+    height: 1;
+    margin-bottom: 0;
+}
+
+.process-pid {
+    width: auto;
+    color: $primary;
+    text-style: bold;
+    margin-right: 1;
+}
+
+.process-duration {
+    width: auto;
+    color: $text-dim;
+    margin-right: 1;
+}
+
+.process-tui-indicator {
+    width: auto;
+    color: $accent;
+}
+
+.process-command {
+    width: 100%;
+    height: auto;
+    color: $text-muted;
+    overflow: hidden;
+}
+
+.process-resources {
+    width: 100%;
+    height: auto;
+    color: $text-dim;
+    margin-top: 0;
+}
+
+.process-actions {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+}
+
+.process-btn {
+    min-width: 6;
+    height: 1;
+    padding: 0 1;
+    margin-right: 1;
+    background: $layer-base;
+    color: $text;
+    border: none;
+}
+
+.process-btn:hover {
+    background: $primary 30%;
+    color: $text-bright;
+}
+
+.process-btn.danger {
+    color: $error;
+}
+
+.process-btn.danger:hover {
+    background: $error 30%;
+}
+
+/* ==========================================================================
+   FileBrowserWidget - Enhanced File Browser
+   ========================================================================== */
+
+FileBrowserWidget {
+    width: 100%;
+    height: 100%;
+}
+
+#file-browser-container {
+    width: 100%;
+    height: 100%;
+}
+
+/* ==========================================================================
+   FileTreeWidget - File Tree with Navigation
+   ========================================================================== */
+
+FileTreeWidget {
+    width: 100%;
+    height: 1fr;
+}
+
+#file-tree-container {
+    width: 100%;
+    height: 100%;
+}
+
+#file-tree-toolbar {
+    width: 100%;
+    height: 1;
+    background: $layer-raised 30%;
+    padding: 0;
+}
+
+.file-tree-btn {
+    width: 4;
+    min-width: 4;
+    height: 1;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    color: $text-muted;
+    border: none;
+    text-align: center;
+}
+
+.file-tree-btn:hover {
+    background: $primary 30%;
+    color: $text-bright;
+}
+
+.file-tree-btn:focus {
+    color: $primary;
+}
+
+#current-path-label {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text-dim;
+    background: $layer-raised 20%;
+    text-style: italic;
+}
+
+#dir-tree {
+    width: 100%;
+    height: 1fr;
+    background: transparent;
+    border: none;
+}
+
+/* ==========================================================================
+   RecentFilesWidget - Recently Accessed Files
+   ========================================================================== */
+
+RecentFilesWidget {
+    width: 100%;
+    height: auto;
+    max-height: 12;
+    margin-bottom: 1;
+    border-bottom: solid $panel;
+}
+
+#recent-files-container {
+    width: 100%;
+    height: auto;
+}
+
+#recent-files-header {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $primary;
+    text-style: bold;
+    background: $layer-raised 30%;
+}
+
+#recent-files-list {
+    width: 100%;
+    height: auto;
+    max-height: 10;
+    background: transparent;
+}
+
+#recent-files-placeholder {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text-ghost;
+    text-style: italic;
+}
+
+.recent-file-item {
+    width: 100%;
+    height: auto;
+    padding: 0 1;
+    background: transparent;
+}
+
+.recent-file-item:hover {
+    background: $primary 20%;
+    cursor: pointer;
+}
+
+.recent-file-name {
+    width: 100%;
+    height: 1;
+    color: $text-bright;
+}
+
+.recent-file-path {
+    width: 100%;
+    height: 1;
+    color: $text-ghost;
+    padding-left: 2;
+}
+
+/* --- _viewport.tcss --- */
+
+/* ==========================================================================
+   Viewport Layout - History and Input Areas
+   ========================================================================== */
+
 /* ==========================================================================
    History Viewport - Main Content Area
    ========================================================================== */
@@ -89,9 +619,6 @@ HistoryViewport {
     min-height: 10;
     overflow-y: auto;
 }
-/* ==========================================================================
-   Input Area
-   ========================================================================== */
 
 /* ==========================================================================
    Input Area - Active Command Entry Zone
@@ -136,6 +663,10 @@ HistoryViewport {
     color: $primary;
 }
 
+/* ==========================================================================
+   InputController - Text Entry Widget
+   ========================================================================== */
+
 InputController {
     width: 100%;
     height: auto;
@@ -172,59 +703,1546 @@ InputController.cursor-underline > .text-area--cursor {
     color: $text-bright;
     text-style: underline;
 }
+
+
 /* ==========================================================================
-   Secondary Widgets
+   COMPONENTS (6 files)
    ========================================================================== */
 
-/* --- Command Suggester --- */
+/* --- _button-system.tcss --- */
 
-CommandSuggester {
-    layer: overlay;
-    dock: bottom;
-    margin-bottom: 7;
-    margin-left: 2;
-    margin-right: 2;
-    width: auto;
-    max-width: 60;
-    height: auto;
-    max-height: 12;
-    background: $surface;
-    border: solid $panel;
-    display: none;
-    padding: 0 1;
-    overflow-y: auto;
+/* ==========================================================================
+   BUTTON SYSTEM
+   Consistent button classes for all interactive elements
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   BASE BUTTON
+   -------------------------------------------------------------------------- */
+
+.btn {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    border: round $panel;
+    background: $layer-raised;
+    color: $text-bright;
+    text-style: none;
+    transition: background 150ms, border 150ms;
 }
 
-CommandSuggester ListView {
-    height: auto;
-    max-height: 10;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    background: transparent;
-    overflow-y: auto;
+.btn:hover {
+    background: $layer-raised 120%;
+    text-style: bold;
+    border: round $primary $border-dim;
 }
 
-CommandSuggester ListItem {
-    padding: 0 1;
-    height: 1;
-    color: $text-muted;
+.btn:focus {
+    background: $layer-raised 110%;
+    border: round $primary $border-normal;
 }
 
-CommandSuggester ListItem:hover {
-    background: $surface;
-    color: $text;
+.btn:disabled,
+.btn.-disabled {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
 }
 
-CommandSuggester ListView > ListItem.--highlight {
+.btn:disabled:hover,
+.btn.-disabled:hover {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   PRIMARY BUTTON
+   Main call-to-action
+   -------------------------------------------------------------------------- */
+
+.btn-primary {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
     background: $primary;
-    color: $text;
+    color: $layer-void;
+    border: round $primary;
+    text-style: bold;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-primary:hover {
+    background: $primary 130%;
+    border: round $primary 130%;
+    tint: $primary 15%;
     text-style: bold;
 }
 
-/* --- Select Widget (Dropdowns) --- */
+.btn-primary:focus {
+    background: $primary 120%;
+    border: round $primary $border-normal;
+    tint: $primary 10%;
+}
 
-/* Global Select styles - apply to all modals unless overridden */
+.btn-primary:disabled,
+.btn-primary.-disabled {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-primary:disabled:hover,
+.btn-primary.-disabled:hover {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   SECONDARY BUTTON
+   Alternate action with border emphasis
+   -------------------------------------------------------------------------- */
+
+.btn-secondary {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: $layer-raised;
+    color: $primary;
+    border: round $primary;
+    text-style: none;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-secondary:hover {
+    background: $layer-raised 120%;
+    border: round $primary 130%;
+    tint: $primary 10%;
+    text-style: bold;
+}
+
+.btn-secondary:focus {
+    background: $layer-raised 110%;
+    border: round $primary $border-normal;
+    tint: $primary 5%;
+}
+
+.btn-secondary:disabled,
+.btn-secondary.-disabled {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-secondary:disabled:hover,
+.btn-secondary.-disabled:hover {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   SUCCESS BUTTON
+   -------------------------------------------------------------------------- */
+
+.btn-success {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: $success;
+    color: $layer-void;
+    border: round $success;
+    text-style: bold;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-success:hover {
+    background: $success 130%;
+    border: round $success 130%;
+    tint: $success 15%;
+    text-style: bold;
+}
+
+.btn-success:focus {
+    background: $success 120%;
+    border: round $success $border-normal;
+    tint: $success 10%;
+}
+
+.btn-success:disabled,
+.btn-success.-disabled {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-success:disabled:hover,
+.btn-success.-disabled:hover {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   DANGER BUTTON
+   -------------------------------------------------------------------------- */
+
+.btn-danger {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: $error;
+    color: $layer-void;
+    border: round $error;
+    text-style: bold;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-danger:hover {
+    background: $error 130%;
+    border: round $error 130%;
+    tint: $error 15%;
+    text-style: bold;
+}
+
+.btn-danger:focus {
+    background: $error 120%;
+    border: round $error $border-normal;
+    tint: $error 10%;
+}
+
+.btn-danger:disabled,
+.btn-danger.-disabled {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-danger:disabled:hover,
+.btn-danger.-disabled:hover {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   WARNING BUTTON
+   -------------------------------------------------------------------------- */
+
+.btn-warning {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: $warning;
+    color: $layer-void;
+    border: round $warning;
+    text-style: bold;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-warning:hover {
+    background: $warning 130%;
+    border: round $warning 130%;
+    tint: $warning 15%;
+    text-style: bold;
+}
+
+.btn-warning:focus {
+    background: $warning 120%;
+    border: round $warning $border-normal;
+    tint: $warning 10%;
+}
+
+.btn-warning:disabled,
+.btn-warning.-disabled {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-warning:disabled:hover,
+.btn-warning.-disabled:hover {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   GHOST BUTTON
+   Minimal, transparent style
+   -------------------------------------------------------------------------- */
+
+.btn-ghost {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: transparent;
+    color: $text-muted;
+    border: round transparent;
+    text-style: none;
+    transition: background 150ms, color 150ms;
+}
+
+.btn-ghost:hover {
+    background: $layer-raised 50%;
+    color: $text-bright;
+    text-style: bold;
+    border: round $primary $border-dim;
+}
+
+.btn-ghost:focus {
+    background: $layer-raised 30%;
+    color: $text-bright;
+    border: round $primary $border-normal;
+}
+
+.btn-ghost:disabled,
+.btn-ghost.-disabled {
+    background: transparent;
+    color: $text-ghost;
+    border: round transparent;
+    text-style: none;
+}
+
+.btn-ghost:disabled:hover,
+.btn-ghost.-disabled:hover {
+    background: transparent;
+    color: $text-ghost;
+    border: round transparent;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   OUTLINE BUTTONS
+   Border-only variants
+   -------------------------------------------------------------------------- */
+
+/* Outline Primary */
+.btn-outline-primary {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: transparent;
+    color: $primary;
+    border: round $primary;
+    text-style: none;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-outline-primary:hover {
+    background: $primary 20%;
+    border: round $primary 130%;
+    tint: $primary 10%;
+    text-style: bold;
+}
+
+.btn-outline-primary:focus {
+    background: $primary 15%;
+    border: round $primary $border-normal;
+    tint: $primary 5%;
+}
+
+.btn-outline-primary:disabled,
+.btn-outline-primary.-disabled {
+    background: transparent;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-outline-primary:disabled:hover,
+.btn-outline-primary.-disabled:hover {
+    background: transparent;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* Outline Danger */
+.btn-outline-danger {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: transparent;
+    color: $error;
+    border: round $error;
+    text-style: none;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-outline-danger:hover {
+    background: $error 20%;
+    border: round $error 130%;
+    tint: $error 10%;
+    text-style: bold;
+}
+
+.btn-outline-danger:focus {
+    background: $error 15%;
+    border: round $error $border-normal;
+    tint: $error 5%;
+}
+
+.btn-outline-danger:disabled,
+.btn-outline-danger.-disabled {
+    background: transparent;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-outline-danger:disabled:hover,
+.btn-outline-danger.-disabled:hover {
+    background: transparent;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* Outline Success */
+.btn-outline-success {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: transparent;
+    color: $success;
+    border: round $success;
+    text-style: none;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-outline-success:hover {
+    background: $success 20%;
+    border: round $success 130%;
+    tint: $success 10%;
+    text-style: bold;
+}
+
+.btn-outline-success:focus {
+    background: $success 15%;
+    border: round $success $border-normal;
+    tint: $success 5%;
+}
+
+.btn-outline-success:disabled,
+.btn-outline-success.-disabled {
+    background: transparent;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-outline-success:disabled:hover,
+.btn-outline-success.-disabled:hover {
+    background: transparent;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   BUTTON SIZE MODIFIERS
+   -------------------------------------------------------------------------- */
+
+.btn-sm {
+    padding: 0 1;
+    height: 1;
+    min-width: 6;
+}
+
+.btn-lg {
+    padding: 0 3;
+    height: 5;
+    min-width: 14;
+}
+
+/* --------------------------------------------------------------------------
+   BUTTON UTILITY MODIFIERS
+   -------------------------------------------------------------------------- */
+
+.btn-block {
+    width: 100%;
+}
+
+.btn-icon {
+    min-width: 3;
+    padding: 0;
+}
+
+/* --- _buttons.tcss --- */
+
+/* ==========================================================================
+   Buttons - All Button Styles
+   
+   Extracted from main.tcss for modular organization.
+   Includes action buttons, stop buttons, screen buttons, and plan actions.
+   ========================================================================== */
+
+/* ==========================================================================
+   ActionButton - Action Buttons for AI Blocks
+   ========================================================================== */
+
+ActionButton {
+    width: auto;
+    min-width: 0;
+    height: 1;
+    padding: 0 1;
+    margin: 0 1 0 0;
+    border: none;
+    color: $text-muted;
+    background: transparent;
+}
+
+ActionButton:hover {
+    color: $accent;
+    background: $panel;
+    text-style: bold;
+    border: none;
+}
+
+ActionButton:focus {
+    border: none;
+    text-style: bold;
+}
+
+ActionButton.-disabled,
+ActionButton:disabled {
+    color: $text-dim;
+    background: transparent;
+}
+
+ActionButton.copied {
+    color: $success;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   StopButton - Stop/Cancel Operations
+   ========================================================================== */
+
+StopButton {
+    width: auto;
+    height: 1;
+    padding: 0 1;
+    color: $error;
+    text-style: bold;
+}
+
+StopButton:hover {
+    background: $error 15%;
+    text-style: bold underline;
+}
+
+/* ==========================================================================
+   ConfigScreen Buttons - Settings Panel Actions
+   ========================================================================== */
+
+ConfigScreen #config-footer Button {
+    height: 1;
+    min-width: 12;
+    margin-right: 2;
+    border: none;
+}
+
+ConfigScreen #save-btn {
+    background: $success;
+    color: $layer-void;
+    text-style: bold;
+    border-bottom: solid $success 50%;
+}
+
+ConfigScreen #save-btn:hover {
+    background: $success 85%;
+    tint: $success 10%;
+    border-bottom: solid $success;
+}
+
+ConfigScreen #cancel-btn {
+    background: $layer-raised;
+    border: solid $text-dim;
+    color: $text-bright;
+}
+
+ConfigScreen #cancel-btn:hover {
+    background: $error;
+    color: $layer-void;
+    text-style: bold;
+    border: solid $error;
+}
+
+ConfigScreen #reset-btn {
+    color: $warning;
+    background: transparent;
+    border: solid $warning;
+}
+
+ConfigScreen #reset-btn:hover {
+    background: $warning;
+    color: $layer-void;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   HelpScreen Buttons
+   ========================================================================== */
+
+HelpScreen #close_btn {
+    width: 100%;
+    height: 1;
+    min-width: 8;
+    border: none;
+    background: $layer-raised;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+HelpScreen #close_btn:hover {
+    background: $primary;
+    color: $layer-void;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   SelectionListScreen Buttons
+   ========================================================================== */
+
+SelectionListScreen #cancel_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+SelectionListScreen #cancel_btn:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   ModelListScreen Buttons
+   ========================================================================== */
+
+ModelListScreen #cancel_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+ModelListScreen #cancel_btn:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   ProviderConfigScreen Buttons
+   ========================================================================== */
+
+ProviderConfigScreen #buttons {
+    layout: horizontal;
+    align: center middle;
+    margin-top: 1;
+    height: 1;
+    width: 100%;
+}
+
+ProviderConfigScreen #save {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $success;
+    color: $text;
+    margin-right: 1;
+}
+
+ProviderConfigScreen #save:hover {
+    background: $success;
+    text-style: bold;
+}
+
+ProviderConfigScreen #cancel {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+}
+
+ProviderConfigScreen #cancel:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   ProvidersScreen Buttons
+   ========================================================================== */
+
+ProvidersScreen .provider-btn {
+    width: auto;
+    min-width: 10;
+    height: 1;
+    background: $layer-raised;
+    color: $text-muted;
+    border: none;
+    margin-left: 1;
+}
+
+ProvidersScreen .provider-btn:hover {
+    background: $secondary;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ProvidersScreen .provider-btn-active {
+    width: auto;
+    min-width: 10;
+    height: 1;
+    background: $success 40%;
+    color: $text-bright;
+    border: none;
+    margin-left: 1;
+}
+
+ProvidersScreen .provider-btn-active:hover {
+    background: $success;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ProvidersScreen .provider-btn-remove {
+    width: auto;
+    min-width: 8;
+    height: 1;
+    background: $error 25%;
+    color: $text-muted;
+    border: none;
+    margin-left: 1;
+}
+
+ProvidersScreen .provider-btn-remove:hover {
+    background: $error;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ProvidersScreen #close_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $layer-raised;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+ProvidersScreen #close_btn:hover {
+    background: $error;
+    color: $layer-void;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   ToolsScreen Buttons
+   ========================================================================== */
+
+ToolsScreen #close_btn {
+    dock: bottom;
+    width: 100%;
+    margin-top: 1;
+    background: $panel;
+}
+
+ToolsScreen #close_btn:hover {
+    background: $error;
+    color: $background;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   ToolApprovalScreen Buttons
+   ========================================================================== */
+
+ToolApprovalScreen #approval-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+    layout: horizontal;
+}
+
+ToolApprovalScreen #approval-buttons Button {
+    margin: 0 1;
+}
+
+ToolApprovalScreen #approve {
+    background: $success;
+}
+
+ToolApprovalScreen #approve-all {
+    background: $primary;
+}
+
+ToolApprovalScreen #reject {
+    background: $warning;
+}
+
+ToolApprovalScreen #cancel {
+    background: $error;
+}
+
+/* ==========================================================================
+   ConfirmDialog Buttons
+   ========================================================================== */
+
+ConfirmDialog #confirm-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+ConfirmDialog #confirm-buttons Button {
+    margin: 0 1;
+}
+
+/* ==========================================================================
+   DisclaimerScreen Buttons
+   ========================================================================== */
+
+DisclaimerScreen #disclaimer-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+DisclaimerScreen #disclaimer-buttons Button {
+    margin: 0 1;
+}
+
+/* ==========================================================================
+   PromptEditorScreen Buttons
+   ========================================================================== */
+
+PromptEditorScreen Button {
+    min-width: 8;
+    margin: 0 1;
+    border: none;
+}
+
+PromptEditorScreen #new-btn {
+    background: $success 20%;
+    color: $success;
+}
+PromptEditorScreen #new-btn:hover {
+    background: $success;
+    color: $layer-void;
+}
+
+PromptEditorScreen #save-btn {
+    background: $success;
+    color: $layer-void;
+    margin-left: 2;
+}
+
+PromptEditorScreen #delete-btn {
+    background: $error;
+    color: $text-bright;
+    margin-right: 1; 
+}
+
+PromptEditorScreen #close-btn {
+    background: $layer-raised;
+    color: $text-muted;
+}
+
+/* ==========================================================================
+   TodoScreen Buttons
+   ========================================================================== */
+
+TodoScreen Button {
+    min-width: 8;
+}
+
+TodoScreen #add-btn {
+    background: $success;
+    color: $layer-void;
+}
+
+TodoScreen #close-btn {
+    background: $layer-raised;
+    margin-left: 1;
+}
+
+/* ==========================================================================
+   ExecutionWidget Copy Button
+   ========================================================================== */
+
+ExecutionWidget .copy-btn {
+    width: 6;
+    min-width: 6;
+    content-align: center middle;
+    color: $text-muted;
+    background: transparent;
+    border: none;
+}
+
+ExecutionWidget .copy-btn:hover {
+    color: $success;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   Code Block Action Buttons
+   ========================================================================== */
+
+.code-action {
+    margin-left: 1;
+    color: $text-dim;
+}
+
+.code-action:hover {
+    color: $accent;
+    text-style: bold;
+}
+
+.code-action-run:hover {
+    color: $success;
+}
+
+/* ==========================================================================
+   Tool Streaming Cancel Button
+   ========================================================================== */
+
+.tool-cancel-btn {
+    width: 3;
+    min-width: 3;
+    height: 1;
+    border: none;
+    background: transparent;
+    color: $error;
+    margin-left: 1;
+    display: none;
+}
+
+.tool-cancel-btn:hover {
+    background: $error;
+    color: $background;
+}
+
+/* ==========================================================================
+   Plan Actions Buttons
+   ========================================================================== */
+
+.plan-actions {
+    margin-top: 1;
+    height: 1;
+    background: transparent;
+}
+
+.plan-actions Button {
+    margin-right: 1;
+    height: 1;
+    min-width: 8;
+    border: none;
+    background: transparent;
+}
+
+.plan-actions Button.-primary {
+    color: $primary;
+    background: $layer-raised;
+}
+
+.plan-actions Button.-primary:hover {
+    color: $background;
+    background: $primary;
+    text-style: bold;
+}
+
+.plan-actions Button.-success {
+    color: $success;
+    background: $layer-raised;
+}
+
+.plan-actions Button.-success:hover {
+    color: $background;
+    background: $success;
+    text-style: bold;
+}
+
+.plan-actions Button.-error {
+    color: $error;
+    background: $layer-raised;
+}
+
+.plan-actions Button.-error:hover {
+    color: $background;
+    background: $error;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   Block Footer Action Buttons
+   ========================================================================== */
+
+BlockFooter .stop-action {
+    color: $error;
+    text-style: bold;
+    margin-left: 2;
+}
+
+BlockFooter .stop-action:hover {
+    color: $error;
+    text-style: bold underline;
+}
+
+/* ==========================================================================
+   Block Meta Action Buttons
+   ========================================================================== */
+
+BlockMeta .meta-action {
+    width: auto;
+    min-width: 4;
+    height: 1;
+    margin-left: 2;
+    color: $primary;
+}
+
+BlockMeta .meta-action:hover {
+    color: $primary;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   AIResponseBlock Action Button Overrides
+   ========================================================================== */
+
+AIResponseBlock ActionButton:hover {
+    color: $primary;
+    background: $layer-raised;
+    text-style: bold;
+    border-bottom: solid $primary;
+}
+
+/* ==========================================================================
+   AgentResponseBlock Action Button Overrides
+   ========================================================================== */
+
+AgentResponseBlock ActionButton:hover {
+    color: $secondary;
+    background: $layer-raised;
+    text-style: bold;
+    border-bottom: solid $secondary;
+}
+
+/* ==========================================================================
+   Copy Menu Popup
+   ========================================================================== */
+
+.copy-menu {
+    layer: above;
+    dock: top;
+    width: 24;
+    height: auto;
+    max-height: 10;
+    background: $layer-float;
+    border: round $primary $border-normal;
+    padding: 0;
+    margin: 0;
+    offset: 0 -1;
+}
+
+.copy-menu:focus-within {
+    border: round $primary $border-focus;
+}
+
+.copy-menu-title {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text-dim;
+    text-style: italic;
+    background: transparent;
+}
+
+.copy-menu-item {
+    width: 100%;
+    height: 1;
+    min-height: 1;
+    padding: 0 1;
+    background: transparent;
+    color: $text-muted;
+    border: none;
+    text-align: left;
+}
+
+.copy-menu-item:hover {
+    background: $primary $glow-medium;
+    color: $text-bright;
+}
+
+.copy-menu-item:focus {
+    background: $primary $glow-strong;
+    color: $text-bright;
+    text-style: bold;
+}
+
+/* --- _cards.tcss --- */
+
+/* ==========================================================================
+   Cards - Panel and Card Component Styles
+   
+   Modular card system with semantic variants and focus states.
+   Cards are container components for grouping related content.
+   ========================================================================== */
+
+/* ==========================================================================
+   Base Card
+   ========================================================================== */
+
+.card {
+    border: round $panel;
+    background: $layer-base;
+    padding: 1 2;
+    margin: 0;
+    height: auto;
+    width: 100%;
+}
+
+.card:focus-within {
+    border: round $primary $border-normal;
+    tint: $primary $glow-subtle;
+}
+
+/* ==========================================================================
+   Card Structure Parts
+   ========================================================================== */
+
+/* --- Card Header --- */
+
+.card-header {
+    layout: horizontal;
+    height: auto;
+    min-height: 1;
+    padding: 0 0 1 0;
+    margin-bottom: 1;
+    border-bottom: solid $text-ghost;
+    background: transparent;
+    color: $text-bright;
+}
+
+.card-header:focus-within {
+    border-bottom: solid $primary $border-normal;
+    color: $text-bright;
+}
+
+/* --- Card Body --- */
+
+.card-body {
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    color: $text-muted;
+}
+
+/* --- Card Footer --- */
+
+.card-footer {
+    layout: horizontal;
+    height: auto;
+    min-height: 1;
+    padding: 1 0 0 0;
+    margin-top: 1;
+    border-top: solid $text-ghost;
+    background: transparent;
+    color: $text-dim;
+}
+
+.card-footer:focus-within {
+    border-top: solid $primary $border-normal;
+}
+
+/* ==========================================================================
+   Semantic Card Variants - Border Colors
+   ========================================================================== */
+
+/* --- Primary (Cyan) --- */
+
+.card-primary {
+    border: round $primary $border-normal;
+}
+
+.card-primary:focus-within {
+    border: round $primary $border-focus;
+    background: $primary $glow-subtle;
+    tint: $primary 3%;
+}
+
+.card-primary .card-header {
+    border-bottom: solid $primary $border-dim;
+}
+
+.card-primary:focus-within .card-header {
+    border-bottom: solid $primary $border-normal;
+}
+
+.card-primary .card-footer {
+    border-top: solid $primary $border-dim;
+}
+
+.card-primary:focus-within .card-footer {
+    border-top: solid $primary $border-normal;
+}
+
+/* --- Success (Green) --- */
+
+.card-success {
+    border: round $success $border-normal;
+}
+
+.card-success:focus-within {
+    border: round $success $border-focus;
+    background: $success $glow-subtle;
+    tint: $success 3%;
+}
+
+.card-success .card-header {
+    border-bottom: solid $success $border-dim;
+}
+
+.card-success:focus-within .card-header {
+    border-bottom: solid $success $border-normal;
+}
+
+.card-success .card-footer {
+    border-top: solid $success $border-dim;
+}
+
+.card-success:focus-within .card-footer {
+    border-top: solid $success $border-normal;
+}
+
+/* --- Warning (Yellow) --- */
+
+.card-warning {
+    border: round $warning $border-normal;
+}
+
+.card-warning:focus-within {
+    border: round $warning $border-focus;
+    background: $warning $glow-subtle;
+    tint: $warning 3%;
+}
+
+.card-warning .card-header {
+    border-bottom: solid $warning $border-dim;
+}
+
+.card-warning:focus-within .card-header {
+    border-bottom: solid $warning $border-normal;
+}
+
+.card-warning .card-footer {
+    border-top: solid $warning $border-dim;
+}
+
+.card-warning:focus-within .card-footer {
+    border-top: solid $warning $border-normal;
+}
+
+/* --- Error (Red) --- */
+
+.card-error {
+    border: round $error $border-normal;
+}
+
+.card-error:focus-within {
+    border: round $error $border-focus;
+    background: $error $glow-subtle;
+    tint: $error 3%;
+}
+
+.card-error .card-header {
+    border-bottom: solid $error $border-dim;
+}
+
+.card-error:focus-within .card-header {
+    border-bottom: solid $error $border-normal;
+}
+
+.card-error .card-footer {
+    border-top: solid $error $border-dim;
+}
+
+.card-error:focus-within .card-footer {
+    border-top: solid $error $border-normal;
+}
+
+/* --- Info (Magenta/Secondary) --- */
+
+.card-info {
+    border: round $secondary $border-normal;
+}
+
+.card-info:focus-within {
+    border: round $secondary $border-focus;
+    background: $secondary $glow-subtle;
+    tint: $secondary 3%;
+}
+
+.card-info .card-header {
+    border-bottom: solid $secondary $border-dim;
+}
+
+.card-info:focus-within .card-header {
+    border-bottom: solid $secondary $border-normal;
+}
+
+.card-info .card-footer {
+    border-top: solid $secondary $border-dim;
+}
+
+.card-info:focus-within .card-footer {
+    border-top: solid $secondary $border-normal;
+}
+
+/* ==========================================================================
+   Card Style Variants
+   ========================================================================== */
+
+/* --- Elevated Card (Floating Appearance) --- */
+
+.card-elevated {
+    background: $layer-float;
+    border: round $accent $border-normal;
+    padding: 2 3;
+}
+
+.card-elevated:focus-within {
+    border: round $accent $border-focus;
+    background: $accent $glow-medium;
+    tint: $accent 4%;
+}
+
+.card-elevated .card-header {
+    border-bottom: solid $accent $border-dim;
+    color: $text-bright;
+    text-style: bold;
+}
+
+.card-elevated:focus-within .card-header {
+    border-bottom: solid $accent $border-normal;
+}
+
+.card-elevated .card-body {
+    padding: 1 0;
+}
+
+.card-elevated .card-footer {
+    border-top: solid $accent $border-dim;
+}
+
+.card-elevated:focus-within .card-footer {
+    border-top: solid $accent $border-normal;
+}
+
+/* --- Flat Card (Minimal/Subtle) --- */
+
+.card-flat {
+    border: none;
+    background: $layer-base 50%;
+    padding: 1 2;
+}
+
+.card-flat:focus-within {
+    border: none;
+    background: $layer-raised;
+    tint: $primary 2%;
+}
+
+.card-flat .card-header {
+    border-bottom: dashed $text-ghost;
+    padding-bottom: 1;
+}
+
+.card-flat:focus-within .card-header {
+    border-bottom: dashed $text-dim;
+}
+
+.card-flat .card-body {
+    color: $text-dim;
+}
+
+.card-flat:focus-within .card-body {
+    color: $text-muted;
+}
+
+.card-flat .card-footer {
+    border-top: dashed $text-ghost;
+    padding-top: 1;
+}
+
+.card-flat:focus-within .card-footer {
+    border-top: dashed $text-dim;
+}
+
+/* ==========================================================================
+   Card Utility Classes
+   ========================================================================== */
+
+/* Compact card with less padding */
+.card-compact {
+    padding: 0 1;
+}
+
+.card-compact .card-header {
+    padding: 0;
+    margin-bottom: 0;
+}
+
+.card-compact .card-footer {
+    padding: 0;
+    margin-top: 0;
+}
+
+/* Card with no internal spacing */
+.card-flush {
+    padding: 0;
+}
+
+.card-flush .card-header {
+    padding: 1 2 1 2;
+    margin-bottom: 0;
+}
+
+.card-flush .card-body {
+    padding: 1 2;
+}
+
+.card-flush .card-footer {
+    padding: 1 2 1 2;
+    margin-top: 0;
+}
+
+/* --- _code-block.tcss --- */
+
+/* ==========================================================================
+   Code Block Widget - Syntax Highlighted Code Display
+   Deep background with accent border and action buttons
+   ========================================================================== */
+
+.code-block-container {
+    margin: 1 0;
+    border: solid $accent $border-normal;
+    background: $layer-void 80%;
+    padding: 0;
+}
+
+.code-block-container:focus-within {
+    border: solid $accent $border-focus;
+    tint: $accent 3%;
+}
+
+.code-block-header {
+    height: 1;
+    padding: 0 1;
+    background: $layer-raised 40%;
+    border-bottom: solid $accent 30%;
+    layout: horizontal;
+}
+
+.code-lang-label {
+    color: $accent;
+    text-style: bold;
+}
+
+.code-header-spacer {
+    width: 1fr;
+}
+
+.code-action {
+    margin-left: 1;
+    min-width: 6;
+    padding: 0 1;
+    color: $text-muted;
+    background: transparent;
+    border: none;
+}
+
+.code-action:hover {
+    color: $accent;
+    background: $layer-raised;
+    text-style: bold;
+}
+
+.code-action:focus {
+    color: $accent;
+    text-style: bold;
+}
+
+.code-action-copy {
+    color: $text-dim;
+}
+
+.code-action-copy:hover {
+    color: $primary;
+    background: $primary 10%;
+}
+
+.code-action-copy.copied {
+    color: $success;
+    text-style: bold;
+}
+
+.code-action-run:hover {
+    color: $success;
+    background: $success 10%;
+}
+
+.code-block-content {
+    padding: 1 2;
+    background: $layer-void 90%;
+    color: $text-bright;
+}
+
+/* --- _forms.tcss --- */
+
+/* ==========================================================================
+   Forms - All Form Control Styles
+   
+   Extracted from main.tcss for modular organization.
+   Includes Input, Select, Switch, and TextArea widgets.
+   ========================================================================== */
+
+/* ==========================================================================
+   Select Widget - Global Dropdown Styles
+   ========================================================================== */
+
 Select {
     height: auto;
     min-height: 1;
@@ -237,7 +2255,8 @@ Select:focus {
     border: tall $accent;
 }
 
-/* Current selection display */
+/* --- Current Selection Display --- */
+
 SelectCurrent {
     height: 1;
     padding: 0 1;
@@ -249,32 +2268,30 @@ SelectCurrent:hover {
     background: $surface;
 }
 
-/* Label showing current value */
-SelectCurrent Static {
-    color: $text-bright;
+SelectCurrent #label {
+    color: $text;
 }
 
-/* Ensure selected value is clearly visible */
-SelectCurrent.-has-value Static {
-    color: $text-bright;
+SelectCurrent.-has-value #label {
+    color: $text;
     text-style: bold;
 }
 
-/* Dropdown arrow indicators - accent colored and visible */
+/* --- Dropdown Arrow Indicator --- */
+/* The arrow (▼) serves as visual hint that the Select is expandable.
+   Textual does not support ::after pseudo-elements, so the built-in
+   arrow is the primary affordance for click/Enter to expand. */
+
 SelectCurrent .arrow {
-    color: $accent;
-    text-style: bold;
-    padding: 0 1;
+    color: $text-muted;
 }
 
-SelectCurrent .down-arrow,
-SelectCurrent .up-arrow {
+Select:focus SelectCurrent .arrow {
     color: $accent;
-    text-style: bold;
-    padding: 0 1;
 }
 
-/* Dropdown overlay (the list that appears) */
+/* --- Dropdown Overlay (List) --- */
+
 SelectOverlay {
     border: tall $text-dim;
     background: $panel;
@@ -285,7 +2302,8 @@ SelectOverlay:focus {
     border: tall $accent;
 }
 
-/* Options in the dropdown */
+/* --- Options in Dropdown --- */
+
 SelectOverlay > OptionList {
     background: $panel;
     padding: 0;
@@ -311,337 +2329,86 @@ SelectOverlay > OptionList > .option-list--option-disabled {
     color: $text-dim;
 }
 
-/* --- Switch Widget (Global Toggles) --- */
-
-/* Base switch styling */
-Switch {
-    height: auto;
-    width: auto;
-    border: tall $text-dim;
-    background: $panel;
-    padding: 0 2;
-}
-
-Switch:focus {
-    border: tall $accent;
-}
-
-/* Off state - muted slider */
-Switch > .switch--slider {
-    color: $text-muted;
-    background: $panel;
-}
-
-/* On state - success/green slider */
-Switch.-on {
-    border: tall $success 60%;
-    background: $panel;
-}
-
-Switch.-on > .switch--slider {
-    color: $success;
-    background: $panel;
-}
-
-Switch.-on:focus {
-    border: tall $success;
-}
-
-/* --- Input Widget (Global Text Fields) --- */
-
-/* Base input styling */
-Input {
-    height: 1;
-    border: tall $text-dim;
-    padding: 0 1;
-    background: $panel;
-    color: $text;
-}
-
-Input:focus {
-    border: tall $accent;
-    background: $surface;
-}
-
-/* Placeholder text styling */
-Input.-placeholder {
-    color: $text-dim;
-    text-style: italic;
-}
-
-Input > .input--placeholder {
-    color: $text-dim;
-    text-style: italic;
-}
-
-/* --- Button Widget (Global Disabled State) --- */
-
-/* Disabled buttons should be visually muted */
-Button:disabled {
-    opacity: 50%;
-    color: $text-dim;
-    text-style: none;
-}
-
-Button:disabled:hover {
-    opacity: 50%;
-}
-
 /* ==========================================================================
-   Status Bar - Cyber Noir Information Display
+   ConfigScreen Form Controls
    ========================================================================== */
 
-StatusBar {
-    dock: bottom;
+/* --- ConfigScreen Input --- */
+
+ConfigScreen Input {
     height: 1;
-    background: $layer-raised 70%;
-    layout: horizontal;
-    padding: 0 2;
-    margin: 0;
-    color: $text-muted;
-    border-top: solid $text-dim;
-}
-
-Footer {
-    dock: bottom;
-    height: 1;
-    margin: 0;
-    padding: 0;
-    background: $layer-raised 50%;
-}
-
-StatusBar .status-sep {
-    color: $text-ghost;
-    margin: 0 1;
-}
-
-StatusBar .status-section {
-    text-style: dim;
-}
-
-StatusBar .mode-cli {
-    color: $accent;
-    text-style: bold;
-}
-
-StatusBar .mode-ai {
-    color: $primary;
-    text-style: bold;
-}
-
-StatusBar .mode-agent {
-    color: $secondary;
-    text-style: bold;
-}
-
-#context-indicator {
-    min-width: 18;
-}
-
-StatusBar .context-low {
-    color: $text-muted;
-}
-
-StatusBar .context-medium {
-    color: $warning;
-}
-
-StatusBar .context-high {
-    color: $error;
-    text-style: bold;
-}
-
-StatusBar .provider-connected {
-    color: $success;
-}
-
-StatusBar .provider-disconnected {
-    color: $error;
-}
-
-StatusBar .provider-checking {
-    color: $text-dim;
-    text-style: italic;
-}
-
-StatusBar .spacer {
-    width: 1fr;
-}
-
-#token-indicator {
-    color: $text-dim;
-}
-
-/* ==========================================================================
-   Thinking Widget - AI Reasoning Display
-   Collapsible window showing model's chain of thought
-   ========================================================================== */
-
-ThinkingWidget {
-    height: auto;
-    min-height: 0;
-    padding: 0;
-    margin: 0 0 1 0;
-    background: transparent;
-}
-
-ThinkingWidget.hidden {
-    display: none;
-}
-
-ThinkingWidget .thinking-header {
-    layout: horizontal;
-    height: 1;
-    min-height: 1;
-    width: 100%;
+    border: solid $primary;
     padding: 0 1;
-    margin-bottom: 0;
-    background: transparent;
-    border-left: solid $primary $border-dim;
-    transition: background 150ms in_out_cubic;
-}
-
-ThinkingWidget .thinking-header:hover {
-    background: $layer-raised 30%;
-    border-left: solid $primary $border-normal;
-}
-
-ThinkingWidget .spinner {
-    color: $primary;
-    width: 2;
-    min-width: 2;
-    max-width: 2;
-    text-align: center;
-}
-
-ThinkingWidget .spinner.complete {
-    color: $success;
-}
-
-ThinkingWidget .thinking-label {
-    color: $text-muted;
-    text-style: italic;
-    padding-left: 1;
-    width: 1fr;
-}
-
-ThinkingWidget .toggle-hint {
-    color: $text-dim;
-}
-
-ThinkingWidget .toggle-hint:hover {
-    color: $primary;
-    text-style: bold;
-}
-
-ThinkingWidget .peek-window {
-    height: auto;
-    min-height: 3;
-    max-height: 10;
-    margin: 0 1 1 3;
-    padding: 1 2;
-    background: transparent;
-    color: $text-muted;
-    scrollbar-size: 0 0;
-    border: none;
-    border-left: solid $primary $border-dim;
-}
-
-ThinkingWidget .peek-window.expanded {
-    height: auto;
-    min-height: 5;
-    max-height: 40;
-    scrollbar-size: 1 1;
-    overflow-y: auto;
-    background: $layer-raised 15%;
-    border-left: solid $primary $border-normal;
+    margin: 0;
+    background: $layer-void;
     color: $text-bright;
 }
 
-ThinkingWidget .peek-content {
+ConfigScreen Input:focus {
+    border: solid $accent;
+    background: $layer-void;
+    tint: $accent 5%;
+}
+
+ConfigScreen Input.input-invalid {
+    border: solid $error;
+    background: $error 10%;
+}
+
+ConfigScreen Input.input-invalid:focus {
+    border: solid $error;
+    tint: $error 10%;
+}
+
+/* --- ConfigScreen Select --- */
+
+ConfigScreen Select {
     width: 100%;
+    height: 1;
+    margin: 0;
+    border: solid $primary;
+    background: $layer-void;
+}
+
+ConfigScreen Select > SelectCurrent {
+    background: transparent;
+    color: $text-bright;
+}
+
+ConfigScreen Select > SelectCurrent .arrow {
+    color: $accent;
+}
+
+ConfigScreen Select:focus {
+    border: solid $accent;
+}
+
+ConfigScreen SelectOverlay {
+    max-height: 12;
+    background: $layer-raised;
+    border: solid $accent;
+}
+
+/* --- ConfigScreen Switch --- */
+
+ConfigScreen Switch {
+    height: 1;
+    width: auto;
+    min-width: 8;
+    margin: 0;
+    border: solid $text-dim;
+    background: $surface;
     padding: 0;
 }
 
-ThinkingWidget .peek-window.empty {
-    min-height: 0;
-    max-height: 1;
-    border: none;
-    background: transparent;
+ConfigScreen Switch:focus {
+    border: solid $accent;
+    tint: $accent 5%;
 }
 
 /* ==========================================================================
-   Code Block Widget - Syntax Highlighted Code Display
-   Deep background with accent border and action buttons
+   HistorySearch Input
    ========================================================================== */
-
-.code-block-container {
-    margin: 1 0;
-    border: round $accent $border-dim;
-    background: transparent;
-}
-
-.code-block-header {
-    height: 1;
-    padding: 0 1;
-    background: transparent;
-    border-bottom: solid $accent 20%;
-}
-
-.code-lang-label {
-    color: $accent;
-    text-style: bold;
-}
-
-.code-header-spacer {
-    width: 1fr;
-}
-
-.code-action {
-    margin-left: 1;
-    color: $text-dim;
-}
-
-.code-action:hover {
-    color: $accent;
-    text-style: bold;
-}
-
-.code-action-run:hover {
-    color: $success;
-}
-
-.code-block-content {
-    padding: 1 1;
-    background: $layer-void 50%;
-}
-
-/* --- Execution Widget --- */
-
-
-
-/* --- History Search --- */
-
-HistorySearch {
-    height: auto;
-    max-height: 15;
-    background: $surface;
-    border-top: solid $primary;
-    padding: 0 1;
-    display: none;
-}
-
-HistorySearch.visible {
-    display: block;
-}
-
-HistorySearch .search-header {
-    height: 1;
-    background: $primary;
-    color: $text;
-    padding: 0 1;
-    margin-bottom: 0;
-}
 
 HistorySearch .search-input {
     height: 1;
@@ -651,59 +2418,37 @@ HistorySearch .search-input {
     margin: 1 0;
 }
 
-HistorySearch .search-results {
-    height: auto;
-    max-height: 10;
-    padding: 0;
+HistorySearch .search-status {
+    color: $text-dim;
+    padding: 0 1;
+    height: 1;
 }
 
 HistorySearch .search-result {
-    height: 1;
     padding: 0 1;
-    color: $text;
+    height: 1;
 }
 
 HistorySearch .search-result.selected {
-    background: $primary;
-    color: $text;
-    text-style: bold;
+    background: $primary 30%;
+    color: $text-bright;
 }
 
-HistorySearch .search-result:hover {
-    background: $surface;
+HistorySearch .search-header {
+    color: $text-ghost;
+    padding: 0 1;
+    height: 1;
 }
 
 HistorySearch .no-results {
-    height: 1;
+    color: $text-dim;
     padding: 0 1;
-    color: $text-muted;
     text-style: italic;
 }
 
-/* --- Block Search --- */
-
-BlockSearch {
-    layer: overlay;
-    dock: top;
-    height: auto;
-    max-height: 15;
-    background: $surface;
-    border-bottom: solid $primary;
-    padding: 0 1;
-    display: none;
-}
-
-BlockSearch.visible {
-    display: block;
-}
-
-BlockSearch .search-header {
-    height: 1;
-    background: $primary;
-    color: $text;
-    padding: 0 1;
-    margin-bottom: 0;
-}
+/* ==========================================================================
+   BlockSearch Input
+   ========================================================================== */
 
 BlockSearch .search-input {
     height: 1;
@@ -713,67 +2458,220 @@ BlockSearch .search-input {
     margin: 1 0;
 }
 
-BlockSearch .search-results {
-    height: auto;
-    max-height: 8;
-    padding: 0;
-}
+/* ==========================================================================
+   ModelListScreen Form Controls
+   ========================================================================== */
 
-BlockSearch .search-result {
-    height: 1;
-    padding: 0 1;
-    color: $text;
-}
-
-BlockSearch .search-result.selected {
-    background: $primary;
-    color: $text;
-    text-style: bold;
-}
-
-BlockSearch .search-result:hover {
+ModelListScreen #model-search {
+    margin-bottom: 1;
+    border: solid $panel;
     background: $panel;
+    height: 3;
 }
 
-BlockSearch .no-results {
-    height: 1;
-    padding: 0 1;
+ModelListScreen #model-search:focus {
+    border: solid $primary;
+}
+
+/* ==========================================================================
+   ProviderConfigScreen Form Controls
+   ========================================================================== */
+
+ProviderConfigScreen .input-label {
+    margin-top: 1;
+    margin-bottom: 0;
     color: $text-muted;
-    text-style: italic;
 }
 
-/* Search highlight on matched blocks */
-.search-match {
-    border: wide $warning;
-}
-
-.search-highlight {
-    border: wide $primary;
-}
-/* ==========================================================================
-   Block Widgets & Parts - Cyber Noir Block System
-
-   Each block type has:
-   - Full rounded border frame (color-coded by type)
-   - Subtle background tint contained within border
-   - Focus states with intensified borders
-   - Transparent sub-components to prevent bleeding
-   ========================================================================== */
-
-/* --- Base Block Structure --- */
-
-BaseBlockWidget:focus-within {
-    border: round $primary $border-focus;
-    background: $primary $glow-subtle;
-    tint: $primary 2%;
+ProviderConfigScreen Input {
+    margin-bottom: 0;
 }
 
 /* ==========================================================================
-   CommandBlock - CLI Execution (Matrix Green)
-   Sharp, technical, command-line aesthetic
+   CommandPalette Input
    ========================================================================== */
 
-CommandBlock {
+CommandPalette #palette-input {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $panel;
+    padding: 0 1;
+    margin: 1 1;
+}
+
+/* ==========================================================================
+   PromptEditorScreen Form Controls
+   ========================================================================== */
+
+/* --- PromptEditorScreen Input --- */
+
+PromptEditorScreen Input {
+    background: $layer-raised 10%;
+    border: none;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+/* --- PromptEditorScreen TextArea --- */
+
+PromptEditorScreen TextArea {
+    height: 1fr;
+    background: $layer-raised 10%;
+    border: solid $secondary $border-dim;
+    margin-top: 1;
+}
+
+PromptEditorScreen TextArea:focus {
+    border: solid $secondary $border-normal;
+}
+
+/* ==========================================================================
+   TodoScreen Form Controls
+   ========================================================================== */
+
+TodoScreen Input {
+    width: 1fr;
+    margin-right: 1;
+}
+
+/* ==========================================================================
+   InputController - Main Input Area TextArea
+   ========================================================================== */
+
+InputController {
+    width: 100%;
+    height: auto;
+    min-height: 1;
+    max-height: 8;
+    border: none;
+    padding: 0 1;
+    background: transparent;
+    color: $text-bright;
+}
+
+InputController > .text-area--cursor-line {
+    background: $layer-raised 20%;
+}
+
+InputController > .text-area--selection {
+    background: $primary 35%;
+}
+
+/* --- Cursor Style Variants --- */
+
+InputController.cursor-block > .text-area--cursor {
+    background: $primary;
+    color: $background;
+}
+
+InputController.cursor-beam > .text-area--cursor {
+    background: transparent;
+    color: $text-bright;
+    border-left: tall $primary;
+}
+
+InputController.cursor-underline > .text-area--cursor {
+    background: transparent;
+    color: $text-bright;
+    text-style: underline;
+}
+
+/* --- _tabs.tcss --- */
+
+/* ==========================================================================
+   Tab System - TabbedContent Active Tab Indicators
+   Global styles for Tab, Tabs, and TabbedContent widgets
+   ========================================================================== */
+
+/* ==========================================================================
+   Tabs Container
+   ========================================================================== */
+
+Tabs {
+    height: auto;
+    min-height: 1;
+    background: transparent;
+}
+
+/* ==========================================================================
+   Individual Tab - Base State
+   ========================================================================== */
+
+Tab {
+    padding: 0 2;
+    color: $text-muted;
+    background: transparent;
+    border-bottom: solid $text-ghost;
+}
+
+/* ==========================================================================
+   Tab - Hover State
+   ========================================================================== */
+
+Tab:hover {
+    color: $text;
+    background: $layer-raised 30%;
+}
+
+/* ==========================================================================
+   Tab - Active State
+   Stronger indicator with thick bottom border and bright color
+   ========================================================================== */
+
+Tab.-active {
+    color: $text-bright;
+    text-style: bold;
+    border-bottom: thick $primary;
+}
+
+/* ==========================================================================
+   Tab - Focus State
+   Accent border for keyboard navigation
+   ========================================================================== */
+
+Tab:focus {
+    border-bottom: thick $accent;
+}
+
+/* ==========================================================================
+   TabbedContent Container
+   ========================================================================== */
+
+TabbedContent {
+    background: transparent;
+}
+
+/* ==========================================================================
+   ContentSwitcher (Tab Panel Container)
+   ========================================================================== */
+
+ContentSwitcher {
+    background: transparent;
+}
+
+/* ==========================================================================
+   TabPane - Individual Tab Content Area
+   ========================================================================== */
+
+TabPane {
+    padding: 1 0;
+    background: transparent;
+}
+
+
+/* ==========================================================================
+   BLOCKS (6 files)
+   ========================================================================== */
+
+/* --- _agent-block.tcss --- */
+
+/* ==========================================================================
+   AgentResponseBlock - Cyber Noir Agent Mode (Vivid Magenta)
+   Bold, active, autonomous execution aesthetic with double border frame
+   ========================================================================== */
+
+AgentResponseBlock {
     layout: vertical;
     height: auto;
     min-height: 0;
@@ -781,32 +2679,316 @@ CommandBlock {
     color: $text-bright;
     margin: 0 0 1 0;
     padding: 0;
-    border: round $success $border-normal;
-    transition: background 200ms in_out_cubic, border 200ms in_out_cubic;
+    border: double $secondary $border-normal;
 }
 
-CommandBlock:focus-within {
-    border: round $success $border-focus;
-    background: $success $glow-medium;
-    tint: $success 4%;
+AgentResponseBlock:focus-within {
+    border: double $secondary $border-focus;
+    background: $secondary $glow-subtle;
+    tint: $secondary 4%;
 }
 
-CommandBlock BlockHeader {
+AgentResponseBlock BlockHeader {
     background: transparent;
     padding: 0 2;
+    color: $secondary;
+    border-bottom: solid $secondary 22%;
+}
+
+AgentResponseBlock BlockHeader .prompt-symbol {
+    color: $secondary;
+    text-style: bold;
+}
+
+AgentResponseBlock BlockHeader .header-text {
+    color: $text-bright;
+    text-style: bold;
+}
+
+AgentResponseBlock BlockHeader .timestamp {
+    color: $secondary 70%;
+}
+
+AgentResponseBlock BlockMeta {
+    background: transparent;
+    border-top: solid $secondary 15%;
+}
+
+/* ==========================================================================
+   Agent Iterations - Structured Workflow Display
+   ========================================================================== */
+
+AgentResponseBlock IterationContainer {
+    background: transparent;
+    border-top: none;
+    padding-top: 1;
+    margin: 1 0;
+}
+
+AgentResponseBlock IterationHeader {
+    background: $secondary 3%;
+    border-bottom: none;
+}
+
+AgentResponseBlock IterationHeader .iter-label {
+    color: $secondary;
+    text-style: bold;
+}
+
+AgentResponseBlock IterationHeader .iter-status.thinking {
+    color: $secondary;
+}
+
+AgentResponseBlock IterationHeader .iter-status.executing {
+    color: $warning;
+}
+
+AgentResponseBlock IterationHeader .iter-status.complete {
     color: $success;
-    border-bottom: solid $success 20%;
 }
 
-CommandBlock BlockBody {
+AgentResponseBlock ThinkingSection .thinking-icon.expanded {
+    color: $secondary;
+}
+
+AgentResponseBlock ThinkingSection .thinking-toggle:hover {
+    background: $secondary 10%;
+}
+
+AgentResponseBlock ThinkingSection .thinking-content {
+    border-left: solid $secondary 50%;
+    background: $secondary 2%;
+}
+
+AgentResponseBlock ToolCallItem .tool-name {
+    color: $secondary;
+}
+
+AgentResponseBlock IterationSeparator {
+    color: $secondary 50%;
+    border-top: none;
+}
+
+/* ==========================================================================
+   Agent Response Widget
+   ========================================================================== */
+
+AgentResponseBlock ResponseWidget .response-container {
+    border: none;
+    border-left: thick $secondary 50%;
+    background: $secondary 2%;
+    margin-left: 3;
+}
+
+AgentResponseBlock ResponseWidget .response-header {
+    border-bottom: none;
+    color: $secondary;
     background: transparent;
+}
+
+AgentResponseBlock ResponseWidget .response-icon {
+    color: $secondary;
+    text-style: bold;
+}
+
+AgentResponseBlock ResponseWidget .response-title {
+    color: $secondary;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   Agent Action Bar
+   ========================================================================== */
+
+AgentResponseBlock ActionBar {
+    border-top: none;
+    background: transparent;
+}
+
+AgentResponseBlock ActionButton:hover {
+    color: $secondary;
+    background: $layer-raised;
+    text-style: bold;
+    border-bottom: solid $secondary;
+}
+
+AgentResponseBlock ActionBar .action-meta {
+    color: $secondary 70%;
+}
+
+/* ==========================================================================
+   Agent Execution Widget
+   ========================================================================== */
+
+AgentResponseBlock ExecutionWidget #exec-container {
+    background: transparent;
+    border: none;
+    border-left: solid $secondary 40%;
+    margin-left: 3;
+}
+
+AgentResponseBlock ExecutionWidget .exec-header {
+    border-bottom: none;
+    background: transparent;
+}
+
+AgentResponseBlock ExecutionWidget .exec-title {
+    color: $secondary 80%;
+    text-style: bold;
+}
+
+AgentResponseBlock ExecutionWidget .toggle-icon {
+    color: $secondary;
+}
+
+AgentResponseBlock ExecutionWidget .exec-header:hover {
+    background: $secondary 8%;
+    color: $secondary;
+}
+
+/* ==========================================================================
+   Agent Iterations - Structured Think -> Tool -> Response Flow
+   ========================================================================== */
+
+/* --- IterationContainer --- */
+IterationContainer {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+IterationContainer.empty {
+    display: none;
+}
+
+/* --- IterationWidget --- */
+IterationWidget {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+/* --- IterationHeader --- */
+IterationHeader {
+    width: 100%;
+    height: 1;
+    padding: 0 2;
+    layout: horizontal;
+    background: transparent;
+}
+
+IterationHeader .iter-status {
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    color: $text-muted;
+    text-align: center;
+}
+
+IterationHeader .iter-status.pending {
+    color: $text-muted;
+}
+
+IterationHeader .iter-status.thinking {
+    color: $warning;
+}
+
+IterationHeader .iter-status.executing {
+    color: $accent;
+}
+
+IterationHeader .iter-status.waiting_approval {
+    color: $primary;
+}
+
+IterationHeader .iter-status.complete {
+    color: $success;
+}
+
+IterationHeader .iter-label {
+    color: $accent;
+    text-style: bold;
+    width: 1fr;
+}
+
+IterationHeader .iter-duration {
+    color: $text-muted;
+    text-style: dim;
+    width: 8;
+    text-align: right;
+}
+
+/* --- ThinkingSection --- */
+ThinkingSection {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+ThinkingSection .thinking-toggle {
+    width: 100%;
+    height: 1;
+    padding: 0 2;
+    color: $text-muted;
+    layout: horizontal;
+    background: transparent;
+}
+
+ThinkingSection .thinking-toggle:hover {
+    background: $accent 10%;
+}
+
+ThinkingSection .thinking-icon {
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    color: $text-muted;
+    text-align: center;
+}
+
+ThinkingSection .thinking-icon.expanded {
+    color: $accent;
+}
+
+ThinkingSection .thinking-title {
+    color: $text-muted;
+    text-style: italic;
+    width: 1fr;
+}
+
+ThinkingSection .thinking-content {
+    width: 100%;
+    height: auto;
     padding: 1 2;
+    background: transparent;
+    border-left: solid $accent 40%;
+    margin: 0 0 1 3;
+    display: none;
+    color: $text-muted;
 }
 
-CommandBlock BlockFooter {
-    background: transparent;
-    border-top: solid $success 15%;
+ThinkingSection .thinking-content.visible {
+    display: block;
 }
+
+/* --- IterationSeparator --- */
+IterationSeparator {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text-dim;
+    text-style: dim;
+    text-align: center;
+    background: transparent;
+}
+
+/* --- _ai-block.tcss --- */
 
 /* ==========================================================================
    AIResponseBlock - Chat Mode (Electric Cyan)
@@ -854,79 +3036,91 @@ AIResponseBlock BlockMeta {
 }
 
 /* ==========================================================================
-   SystemBlock - System Messages (Vivid Magenta)
-   Authoritative, informational, distinct
+   AIResponseBlock (Chat Mode) - Subtle, Conversational Styling
    ========================================================================== */
 
-SystemBlock {
-    layout: vertical;
-    height: auto;
-    min-height: 0;
-    background: $layer-base 40%;
-    color: $text-bright;
-    margin: 0 0 1 0;
-    padding: 0;
-    border: round $secondary $border-normal;
-    transition: background 200ms in_out_cubic, border 200ms in_out_cubic;
+AIResponseBlock BlockHeader .prompt-symbol {
+    color: $primary;
 }
 
-SystemBlock:focus-within {
-    border: round $secondary $border-focus;
-    background: $secondary $glow-medium;
-    tint: $secondary 4%;
+AIResponseBlock BlockHeader .header-text {
+    color: $text-muted;
+    text-style: italic;
 }
+
+AIResponseBlock ThinkingWidget .spinner {
+    color: $primary 80%;
+}
+
+AIResponseBlock ThinkingWidget .peek-window {
+    border: none;
+    border-left: solid $primary 40%;
+}
+
+AIResponseBlock ToolAccordion {
+    margin: 0 1 0 3;
+}
+
+AIResponseBlock ToolAccordionItem:hover {
+    background: $primary 3%;
+}
+
+AIResponseBlock ToolHeader .tool-icon.expanded {
+    color: $primary;
+}
+
+AIResponseBlock ToolOutput {
+    border-left: solid $primary 30%;
+}
+
+AIResponseBlock ResponseWidget .response-container {
+    border: none;
+    border-left: thick $primary 30%;
+    margin-left: 3;
+}
+
+AIResponseBlock ResponseWidget .response-header {
+    border-bottom: none;
+    color: $primary 70%;
+}
+
+AIResponseBlock ResponseWidget .response-icon {
+    color: $primary;
+}
+
+AIResponseBlock ResponseWidget .response-title {
+    color: $primary;
+}
+
+AIResponseBlock ActionBar {
+    border-top: none;
+}
+
+AIResponseBlock ActionButton:hover {
+    color: $primary;
+    background: $layer-raised;
+    text-style: bold;
+    border-bottom: solid $primary;
+}
+
+/* --- _base-block.tcss --- */
 
 /* ==========================================================================
-   ToolCallBlock - Tool Execution (Accent Green)
-   Technical, functional, precise
+   Block Widgets & Parts - Cyber Noir Block System
+
+   Each block type has:
+   - Full rounded border frame (color-coded by type)
+   - Subtle background tint contained within border
+   - Focus states with intensified borders
+   - Transparent sub-components to prevent bleeding
    ========================================================================== */
 
-ToolCallBlock {
-    layout: vertical;
-    height: auto;
-    min-height: 0;
-    background: $layer-base 40%;
-    color: $text-bright;
-    margin: 0 0 1 0;
-    padding: 0;
-    border: round $accent $border-normal;
-}
+/* --- Base Block Structure --- */
 
-ToolCallBlock:focus-within {
-    border: round $accent $border-focus;
-    background: $accent $glow-subtle;
-    tint: $accent 3%;
-}
-
-SystemBlock BlockHeader {
-    background: transparent;
-    padding: 0 2;
-    color: $secondary;
-    border-bottom: solid $secondary 18%;
-}
-
-SystemBlock BlockBody {
-    background: transparent;
-    padding: 1 2;
-}
-
-ToolCallBlock BlockHeader {
-    background: transparent;
-    padding: 0 2;
-    color: $accent;
-    border-bottom: solid $accent 18%;
-}
-
-ToolCallBlock BlockBody {
-    background: transparent;
-    padding: 1 2;
-}
-
-ToolCallBlock BlockMeta {
-    background: transparent;
-    padding: 0 2;
-    color: $text-dim;
-    border-top: solid $accent 12%;
+BaseBlockWidget:focus-within {
+    border: round $primary $border-focus;
+    background: $primary $glow-subtle;
+    tint: $primary 2%;
 }
 
 /* --- Block Parts: Header --- */
@@ -1099,446 +3293,702 @@ BlockFooter .stop-action:hover {
     text-style: bold underline;
 }
 
+/* --- _command-block.tcss --- */
+
 /* ==========================================================================
-   Modal Screens - Cyber Noir Floating Panels
-   Dark overlays with neon-bordered containers
+   CommandBlock - CLI Execution (Matrix Green)
+   Sharp, technical, command-line aesthetic
    ========================================================================== */
 
-/* Base modal - dark void overlay */
-ModalScreen {
-    align: center middle;
-    background: rgba(0, 0, 0, 0.7);
-}
-
-/* --- Help Screen --- */
-
-HelpScreen {
-    /* Inherits from ModalScreen */
-}
-
-HelpScreen #help-container {
-    width: 60%;
+CommandBlock {
+    layout: vertical;
     height: auto;
-    max-height: 80%;
-    background: $layer-base;
-    border: double $primary $border-normal;
+    min-height: 0;
+    background: $layer-base 50%;
+    color: $text-bright;
+    margin: 0 0 1 0;
+    padding: 0;
+    border: round $success $border-normal;
+    transition: background 200ms in_out_cubic, border 200ms in_out_cubic;
+}
+
+CommandBlock:focus-within {
+    border: round $success $border-focus;
+    background: $success $glow-medium;
+    tint: $success 4%;
+}
+
+CommandBlock BlockHeader {
+    background: transparent;
+    padding: 0 2;
+    color: $success;
+    border-bottom: solid $success 20%;
+}
+
+CommandBlock BlockBody {
+    background: transparent;
     padding: 1 2;
 }
 
-HelpScreen #help-container > Label {
-    margin-bottom: 1;
+CommandBlock BlockFooter {
+    background: transparent;
+    border-top: solid $success 15%;
+}
+
+/* ==========================================================================
+   TUI Mode Styles
+   ========================================================================== */
+
+CommandBlock.mode-tui {
+    border: double $accent;
+    background: #000000;
+}
+
+CommandBlock.mode-tui:focus-within {
+    border: double $accent;
+    background: #000000;
+}
+
+CommandBlock.mode-tui BlockHeader {
+    color: $accent;
+    border-bottom: solid $accent;
+}
+
+.prompt-symbol-tui {
+    color: $accent;
     text-style: bold;
+}
+
+/* --- _error-block.tcss --- */
+
+/* ==========================================================================
+   ErrorBlock - Structured Error Display with Severity Colors
+   ========================================================================== */
+
+ErrorBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    margin: 0 0 1 0;
+    padding: 0;
+}
+
+/* ==========================================================================
+   Error Container - Severity-Based Styling
+   ========================================================================== */
+
+.error-block-container {
+    border: round $error $border-normal;
+    background: $layer-base 50%;
+    padding: 0;
+}
+
+.error-block-container:focus-within {
+    border: round $error $border-focus;
+    tint: $error 5%;
+}
+
+/* --- Info Severity --- */
+
+.error-severity-info {
+    border: round $primary $border-normal;
+}
+
+.error-severity-info:focus-within {
+    border: round $primary $border-focus;
+    tint: $primary 5%;
+}
+
+.error-severity-info .error-icon {
     color: $primary;
 }
 
-HelpScreen DataTable {
-    height: auto;
-    max-height: 20;
-    margin-bottom: 1;
-    background: $layer-raised 50%;
+.error-severity-info .error-type {
+    color: $primary;
 }
 
-HelpScreen #close_btn {
-    width: 100%;
+/* --- Warning Severity --- */
+
+.error-severity-warning {
+    border: round $warning $border-normal;
+}
+
+.error-severity-warning:focus-within {
+    border: round $warning $border-focus;
+    tint: $warning 5%;
+}
+
+.error-severity-warning .error-icon {
+    color: $warning;
+}
+
+.error-severity-warning .error-type {
+    color: $warning;
+}
+
+/* --- Error Severity (Default) --- */
+
+.error-severity-error {
+    border: round $error $border-normal;
+}
+
+.error-severity-error:focus-within {
+    border: round $error $border-focus;
+    tint: $error 5%;
+}
+
+.error-severity-error .error-icon {
+    color: $error;
+}
+
+.error-severity-error .error-type {
+    color: $error;
+}
+
+/* --- Critical Severity --- */
+
+.error-severity-critical {
+    border: double $error $border-focus;
+    background: $error 8%;
+}
+
+.error-severity-critical:focus-within {
+    border: double $error;
+    tint: $error 10%;
+}
+
+.error-severity-critical .error-icon {
+    color: $error;
+    text-style: bold;
+}
+
+.error-severity-critical .error-type {
+    color: $error;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   Error Header
+   ========================================================================== */
+
+.error-header {
+    layout: horizontal;
+    height: 1;
+    padding: 0 2;
+    background: transparent;
+    border-bottom: solid $text-ghost;
+}
+
+.error-icon {
+    width: 2;
+    text-style: bold;
+}
+
+.error-type {
+    text-style: bold;
+    margin-left: 1;
+}
+
+.error-spacer {
+    width: 1fr;
+}
+
+.error-timestamp {
+    color: $text-dim;
+}
+
+/* ==========================================================================
+   Error Body
+   ========================================================================== */
+
+.error-body {
+    padding: 1 2;
+}
+
+.error-message {
+    color: $text-bright;
+    margin-bottom: 1;
+}
+
+/* --- Details Section --- */
+
+.error-details-section {
+    margin-top: 1;
+    padding: 1;
+    background: $layer-void 50%;
+    border-left: solid $text-dim;
+}
+
+.error-section-label {
+    color: $text-muted;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.error-details {
+    color: $text-muted;
+}
+
+/* --- Suggestion Section --- */
+
+.error-suggestion-section {
+    layout: horizontal;
+    margin-top: 1;
+    padding: 1;
+    background: $success 5%;
+    border-left: solid $success;
+}
+
+.suggestion-icon {
+    width: 2;
+    color: $success;
+}
+
+.error-suggestion {
+    color: $success;
+}
+
+/* --- Context Section --- */
+
+.error-context-section {
+    margin-top: 1;
+    padding: 1;
+    background: $layer-void 50%;
+    border-left: solid $text-dim;
+}
+
+.error-context-item {
+    color: $text-dim;
+}
+
+/* ==========================================================================
+   Stack Trace Section (Collapsible)
+   ========================================================================== */
+
+.stack-trace-section {
+    margin: 0;
+    padding: 0;
+    border-top: solid $text-ghost;
+}
+
+.stack-trace-header {
+    layout: horizontal;
+    height: 1;
+    padding: 0 2;
+    background: $layer-raised 30%;
+    color: $text-muted;
+}
+
+.stack-trace-header:hover {
+    background: $layer-raised 50%;
+    color: $text-bright;
+}
+
+.stack-icon {
+    width: 2;
+    color: $text-dim;
+}
+
+.stack-icon.expanded {
+    color: $error;
+}
+
+.stack-label {
+    color: $text-muted;
+}
+
+.stack-content {
+    display: none;
+    height: 0;
+    max-height: 20;
+    padding: 0 2;
+    background: $layer-void;
+    overflow-y: auto;
+}
+
+.stack-content.visible {
+    display: block;
+    height: auto;
+    padding: 1 2;
+}
+
+.stack-text {
+    color: $text-dim;
+}
+
+/* ==========================================================================
+   Error Footer - Actions
+   ========================================================================== */
+
+.error-footer {
+    layout: horizontal;
+    height: auto;
+    min-height: 1;
+    padding: 1 2;
+    background: $layer-raised 20%;
+    border-top: solid $text-ghost;
+}
+
+.error-copy-btn {
     height: 1;
     min-width: 8;
+    padding: 0 2;
     border: none;
     background: $layer-raised;
     color: $text-muted;
-    margin-top: 1;
+    margin-right: 1;
 }
 
-HelpScreen #close_btn:hover {
+.error-copy-btn:hover {
     background: $primary;
     color: $layer-void;
     text-style: bold;
 }
 
-/* --- Selection Screens --- */
-/* (Currently handled inline or by generic widget styles, placeholder for future) */
-
-/* ==========================================================================
-   Command Palette
-   ========================================================================== */
-
-CommandPalette {
-    layer: overlay;
-    align: center top;
-    width: 60%;
-    min-width: 50;
-    max-width: 80;
-    height: auto;
-    max-height: 50%;
-    margin-top: 3;
-    background: $surface;
-    border: solid $primary $border-dim;
-    padding: 0;
-    display: none !important;
-}
-
-CommandPalette.visible {
-    display: block !important;
-}
-
-CommandPalette #palette-title {
-    width: 100%;
-    height: 1;
-    background: $primary;
-    color: $text;
-    text-style: bold;
-    padding: 0 1;
-}
-
-CommandPalette #palette-input {
-    width: 100%;
-    height: 1;
+.error-copy-btn:focus {
     border: none;
-    background: $panel;
-    padding: 0 1;
-    margin: 1 1;
+    background: $primary 80%;
+    color: $layer-void;
 }
 
-CommandPalette #palette-input:focus {
-    border: solid $primary;
-    background: $surface;
-}
-
-CommandPalette #palette-results {
-    width: 100%;
-    height: auto;
-    max-height: 15;
-    padding: 0 1;
-    overflow-y: auto;
-}
-
-CommandPalette #palette-hint {
-    width: 100%;
+.error-report-btn {
     height: 1;
-    background: $surface;
-    color: $text-muted;
-    text-style: italic dim;
-    padding: 0 1;
-}
-
-CommandPalette .palette-item {
-    layout: horizontal;
-    width: 100%;
-    height: 1;
-    padding: 0 1;
-    color: $text;
-}
-
-CommandPalette .palette-item:hover {
-    background: $panel;
-}
-
-CommandPalette .palette-item.selected {
-    background: $primary;
-    color: $text;
-}
-
-CommandPalette .palette-item-name {
-    width: auto;
-    min-width: 20;
-    color: $text;
-    text-style: bold;
-}
-
-CommandPalette .palette-item.selected .palette-item-name {
-    color: $text;
-}
-
-CommandPalette .palette-item-desc {
-    width: 1fr;
-    color: $text-muted;
-    padding-left: 2;
-}
-
-CommandPalette .palette-item.selected .palette-item-desc {
-    color: $text;
-}
-
-CommandPalette .palette-item-shortcut {
-    width: auto;
-    color: $primary;
-    text-style: dim;
-}
-
-CommandPalette .palette-item.selected .palette-item-shortcut {
-    color: $text;
-    text-style: bold;
-}
-
-CommandPalette .palette-no-results {
-    width: 100%;
-    height: 1;
-    padding: 0 1;
-    color: $text-muted;
-    text-style: italic;
-}
-
-/* ==========================================================================
-   Selection Screens
-   ========================================================================== */
-
-SelectionListScreen {
-    /* Inherits from ModalScreen */
-}
-
-SelectionListScreen #selection-container {
-    width: 40%;
-    min-width: 30;
-    height: auto;
-    max-height: 60%;
-    background: $surface;
-    border: solid $primary $border-dim;
-    padding: 1 2;
-    layout: vertical;
-}
-
-SelectionListScreen #selection-container > Label {
-    margin-bottom: 1;
-    text-style: bold;
-    color: $primary;
-}
-
-SelectionListScreen ListView {
-    height: auto;
-    max-height: 15;
-    margin: 0;
-    padding: 0;
-    background: $layer-raised 50%;
-    border: solid $text-dim;
-}
-
-SelectionListScreen ListItem {
-    padding: 0 1;
-    height: 1;
-}
-
-SelectionListScreen ListItem:hover {
-    background: $surface;
-}
-
-SelectionListScreen ListItem:focus {
-    background: $primary 25%;
-    border-left: thick $primary;
-}
-
-SelectionListScreen #cancel_btn {
-    width: 100%;
-    height: 1;
+    min-width: 12;
+    padding: 0 2;
     border: none;
-    background: $panel;
-    color: $text-muted;
-    margin-top: 1;
-}
-
-SelectionListScreen #cancel_btn:hover {
-    background: $error;
-    color: $text;
-}
-
-/* ==========================================================================
-   Model List Screen
-   ========================================================================== */
-
-ModelListScreen {
-    /* Inherits from ModalScreen */
-}
-
-ModelListScreen #model-selection-container {
-    width: 60%;
-    min-width: 50;
-    height: auto;
-    max-height: 80%;
-    background: $surface;
-    border: solid $primary $border-dim;
-    padding: 1 2;
-    layout: vertical;
-}
-
-ModelListScreen #model-title {
-    margin-bottom: 1;
-    text-style: bold;
-    color: $primary;
-}
-
-ModelListScreen #model-search {
-    margin-bottom: 1;
-    border: solid $text-dim;
-    background: $panel;
-    height: 3;
-}
-
-ModelListScreen #model-search:focus {
-    border: solid $primary;
-}
-
-ModelListScreen #loading-indicator {
-    height: 1;
+    background: $warning 20%;
     color: $warning;
-    text-style: italic;
-    margin-bottom: 1;
+    margin-left: 1;
 }
 
-ModelListScreen #loading-indicator.success {
-    color: $success;
+.error-report-btn:hover {
+    background: $warning;
+    color: $layer-void;
     text-style: bold;
 }
 
-ModelListScreen #loading-indicator.error {
-    color: $error;
-    text-style: bold;
+.error-report-btn:focus {
+    border: none;
+    background: $warning 80%;
+    color: $layer-void;
 }
 
-ModelListScreen #model-scroll {
+/* --- _tool-block.tcss --- */
+
+/* ==========================================================================
+   SystemBlock - System Messages (Vivid Magenta)
+   Authoritative, informational, distinct
+   ========================================================================== */
+
+SystemBlock {
+    layout: vertical;
     height: auto;
-    max-height: 25;
-    background: $panel;
-    padding: 0 1;
+    min-height: 0;
+    background: $layer-base 40%;
+    color: $text-bright;
+    margin: 0 0 1 0;
+    padding: 0;
+    border: round $secondary $border-normal;
+    transition: background 200ms in_out_cubic, border 200ms in_out_cubic;
 }
 
-ModelListScreen Collapsible {
-    margin: 0;
+SystemBlock:focus-within {
+    border: round $secondary $border-focus;
+    background: $secondary $glow-medium;
+    tint: $secondary 4%;
+}
+
+SystemBlock:focus-within {
+    border: round $secondary $border-focus;
+    background: $secondary $glow-subtle;
+    tint: $secondary 3%;
+}
+
+SystemBlock BlockHeader {
+    background: transparent;
+    padding: 0 2;
+    color: $secondary;
+    border-bottom: solid $secondary 18%;
+}
+
+SystemBlock BlockBody {
+    background: transparent;
+    padding: 1 2;
+}
+
+/* ==========================================================================
+   ToolCallBlock - Tool Execution (Accent Green)
+   Technical, functional, precise
+   ========================================================================== */
+
+ToolCallBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: $layer-base 40%;
+    color: $text-bright;
+    margin: 0 0 1 0;
     padding: 0;
+    border: round $accent $border-normal;
+    transition: background 200ms in_out_cubic, border 200ms in_out_cubic;
+}
+
+ToolCallBlock:focus-within {
+    border: round $accent $border-focus;
+    background: $accent $glow-medium;
+    tint: $accent 4%;
+}
+
+ToolCallBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    background: $layer-base 40%;
+    color: $text-bright;
+    margin: 0 0 1 0;
+    padding: 0;
+    border: round $accent $border-normal;
+}
+
+ToolCallBlock:focus-within {
+    border: round $accent $border-focus;
+    background: $accent $glow-subtle;
+    tint: $accent 3%;
+}
+
+ToolCallBlock BlockHeader {
+    background: transparent;
+    padding: 0 2;
+    color: $accent;
+    border-bottom: solid $accent 18%;
+}
+
+ToolCallBlock BlockBody {
+    background: transparent;
+    padding: 1 2;
+}
+
+ToolCallBlock BlockMeta {
+    background: transparent;
+    padding: 0 2;
+    color: $text-dim;
+    border-top: solid $accent 12%;
+}
+
+/* ==========================================================================
+   ToolAccordion - Collapsible tool calls
+   ========================================================================== */
+
+ToolAccordion {
+    width: 100%;
+    height: auto;
+    background: transparent;
+    padding: 0;
+    margin: 0 0 1 0;
+}
+
+ToolAccordion.empty {
+    display: none;
+}
+
+ToolAccordionItem {
+    width: 100%;
+    height: auto;
+    border-bottom: none;
+    padding: 0 0 1 0;
+    margin-bottom: 0;
+}
+
+ToolAccordionItem:hover {
     background: transparent;
 }
 
-ModelListScreen CollapsibleTitle {
-    color: $accent;
-    text-style: bold;
-    padding: 0 1;
-}
+/* ==========================================================================
+   Tool Header
+   ========================================================================== */
 
-ModelListScreen CollapsibleTitle:hover {
-    background: $surface;
-}
-
-ModelListScreen .model-item {
-    padding: 0 2;
-    height: 1;
-    color: $text;
-}
-
-ModelListScreen .model-item:hover {
-    background: $primary 30%;
-    color: $text;
-    text-style: bold;
-}
-
-ModelListScreen .model-item:focus {
-    background: $primary 40%;
-    color: $text-bright;
-    text-style: bold;
-    border-left: thick $primary;
-}
-
-ModelListScreen .more-label {
-    color: $text-muted;
-    text-style: italic;
-    padding: 0 2;
-}
-
-ModelListScreen #cancel_btn {
+ToolHeader {
     width: 100%;
     height: 1;
-    border: none;
-    background: $panel;
-    color: $text-muted;
-    margin-top: 1;
+    padding: 0 2;
+    layout: horizontal;
+    border-left: solid $text-dim;
 }
 
-ModelListScreen #cancel_btn:hover {
-    background: $error;
+ToolHeader:hover {
+    border-left: solid $accent;
+    background: $panel 15%;
+}
+
+ToolHeader .tool-icon {
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    color: $text-muted;
+    text-align: center;
+}
+
+ToolHeader .tool-icon.expanded {
+    color: $accent;
+}
+
+ToolHeader .tool-name {
     color: $text;
+    text-style: bold;
+}
+
+ToolHeader .tool-status {
+    width: auto;
+    margin-left: 1;
+}
+
+ToolHeader .tool-status.pending {
+    color: $text-muted;
+}
+
+ToolHeader .tool-status.running {
+    color: $warning;
+}
+
+ToolHeader .tool-status.success {
+    color: $success;
+}
+
+ToolHeader .tool-status.error {
+    color: $error;
+}
+
+ToolHeader .tool-duration {
+    color: $text-muted;
+    text-style: dim;
+    width: 8;
+    text-align: right;
+}
+
+ToolHeader .tool-spacer {
+    width: 1fr;
 }
 
 /* ==========================================================================
-   Provider Config Screen
+   Tool Output
    ========================================================================== */
 
-ProviderConfigScreen {
-    /* Inherits from ModalScreen */
-}
-
-ProviderConfigScreen #config-container {
-    width: 50%;
-    min-width: 40;
+ToolOutput {
+    width: 100%;
     height: auto;
-    background: $surface;
-    border: solid $panel;
+    max-height: 20;
     padding: 1 2;
-    layout: vertical;
+    background: transparent;
+    display: none;
+    border-left: solid $accent 40%;
+    margin-left: 3;
 }
 
-ProviderConfigScreen #config-container > Label:first-child {
-    margin-bottom: 1;
-    text-style: bold;
-    color: $primary;
+ToolOutput.visible {
+    display: block;
 }
 
-ProviderConfigScreen .input-label {
-    margin-top: 1;
-    margin-bottom: 0;
-    color: $text-muted;
-}
-
-ProviderConfigScreen Input {
-    margin-bottom: 0;
-}
-
-ProviderConfigScreen #buttons {
-    layout: horizontal;
-    align: center middle;
-    margin-top: 1;
-    height: 1;
+ToolOutput .tool-output-content {
     width: 100%;
 }
 
-ProviderConfigScreen #save {
-    width: 1fr;
-    height: 1;
-    border: none;
-    background: $success;
-    color: $text;
-    margin-right: 1;
+ToolOutput .tool-args {
+    color: $text-muted;
+    margin-bottom: 1;
 }
 
-ProviderConfigScreen #save:hover {
-    background: $success;
-    text-style: bold;
+ToolOutput .tool-result {
+    width: 100%;
 }
 
-ProviderConfigScreen #cancel {
-    width: 1fr;
+ToolOutput .tool-result.streaming {
+    color: $text-bright;
+    background: $layer-void;
+    padding: 0 1;
+    height: auto;
+    max-height: 20;
+    overflow-y: auto;
+}
+
+/* ==========================================================================
+   ToolCallItem (in iterations)
+   ========================================================================== */
+
+ToolCallItem {
+    width: 100%;
     height: 1;
-    border: none;
-    background: $panel;
+    padding: 0 2;
+    background: transparent;
+}
+
+ToolCallItem .tool-row {
+    width: 100%;
+    height: 1;
+    layout: horizontal;
+}
+
+ToolCallItem .tool-icon {
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    color: $text-muted;
+    text-align: center;
+}
+
+ToolCallItem .tool-icon.pending {
     color: $text-muted;
 }
 
-ProviderConfigScreen #cancel:hover {
-    background: $error;
-    color: $text;
+ToolCallItem .tool-icon.running {
+    color: $warning;
 }
 
-ProviderConfigScreen #connection-status {
-    height: 1;
-    margin: 1 0;
-    color: $text-muted;
-    text-style: italic;
-}
-
-ProviderConfigScreen #connection-status.success {
+ToolCallItem .tool-icon.success {
     color: $success;
-    text-style: bold;
 }
 
-ProviderConfigScreen #connection-status.error {
+ToolCallItem .tool-icon.error {
     color: $error;
-    text-style: bold;
 }
+
+ToolCallItem .tool-name {
+    color: $text;
+    text-style: bold;
+    width: 1fr;
+}
+
+ToolCallItem .tool-duration {
+    color: $text-muted;
+    text-style: dim;
+    width: 8;
+    text-align: right;
+}
+
+/* Container for tool calls within iteration */
+.iter-tools {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+/* Response fragment within iteration */
+.iter-response {
+    width: 100%;
+    height: auto;
+    padding: 1 2;
+    margin: 0;
+    color: $text;
+    background: transparent;
+}
+
+
+/* ==========================================================================
+   SCREENS (9 files)
+   ========================================================================== */
+
+/* --- _config-screen.tcss --- */
 
 /* ==========================================================================
    Config Screen (Settings) - Cyber Noir Settings Panel
@@ -1650,9 +4100,60 @@ ConfigScreen .setting-control {
     align: right middle;
 }
 
-/* Config Screen - use global Input/Select/Switch styles, only set width */
+/* Compact inputs for config - HIGH VISIBILITY */
+ConfigScreen Input {
+    height: 1;
+    border: tall $primary 50%;
+    padding: 0;
+    margin: 0;
+    background: $surface;
+    color: $text;
+}
+
+ConfigScreen Input:focus {
+    border: tall $accent;
+    background: $surface;
+}
+
+/* Select widget - HIGH VISIBILITY */
 ConfigScreen Select {
     width: 100%;
+    height: 1;
+    margin: 0;
+    border: tall $primary 50%;
+    background: $surface;
+}
+
+ConfigScreen Select:focus {
+    border: tall $accent;
+}
+
+ConfigScreen SelectOverlay {
+    max-height: 12;
+    background: $surface;
+    border: tall $accent;
+}
+
+/* Switch - HIGH VISIBILITY */
+ConfigScreen Switch {
+    height: 1;
+    width: auto;
+    min-width: 8;
+    margin: 0;
+    border: tall $primary 50%;
+    background: $surface;
+}
+
+ConfigScreen Switch:focus {
+    border: tall $accent;
+}
+
+ConfigScreen Switch.-on {
+    background: $success 30%;
+}
+
+ConfigScreen Switch.-on > .switch--slider {
+    color: $success;
 }
 
 ConfigScreen #config-footer {
@@ -1708,6 +4209,726 @@ ConfigScreen #reset-btn:hover {
     text-style: bold;
 }
 
+/* --- _dialogs.tcss --- */
+
+/* ==========================================================================
+   Tool Approval Screen
+   ========================================================================== */
+
+ToolApprovalScreen {
+    align: center middle;
+    background: $layer-void 80%;
+}
+
+ToolApprovalScreen #approval-container {
+    width: 80;
+    max-width: 90%;
+    height: auto;
+    max-height: 80%;
+    background: $surface;
+    border: double $warning;
+    padding: 1 2;
+}
+
+ToolApprovalScreen #approval-title {
+    text-align: center;
+    text-style: bold;
+    color: $warning;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen #approval-subtitle {
+    text-align: center;
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen #tools-scroll {
+    width: 100%;
+    height: auto;
+    max-height: 20;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen ToolPreview {
+    width: 100%;
+    height: auto;
+    padding: 1;
+    background: $panel;
+    border: none;
+    border-left: thick $accent 50%;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen ToolPreview .tool-name {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+ToolApprovalScreen ToolPreview .tool-args {
+    width: 100%;
+    height: auto;
+    max-height: 10;
+}
+
+ToolApprovalScreen #approval-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+    layout: horizontal;
+}
+
+ToolApprovalScreen #approval-buttons Button {
+    margin: 0 1;
+}
+
+ToolApprovalScreen #approve {
+    background: $success;
+}
+
+ToolApprovalScreen #approve-all {
+    background: $primary;
+}
+
+ToolApprovalScreen #reject {
+    background: $warning;
+}
+
+ToolApprovalScreen #cancel {
+    background: $error;
+}
+
+ToolApprovalScreen #approval-hint {
+    text-align: center;
+    color: $text-muted;
+    text-style: dim;
+    margin-top: 1;
+}
+
+/* ==========================================================================
+   Confirm Dialog / Disclaimer Dialog
+   ========================================================================== */
+
+ConfirmDialog,
+DisclaimerScreen {
+    align: center middle;
+    background: $layer-void 80%;
+}
+
+ConfirmDialog #confirm-dialog {
+    width: 50;
+    max-width: 80%;
+    height: auto;
+    background: $surface;
+    border: double $warning;
+    padding: 1 2;
+}
+
+ConfirmDialog #confirm-content {
+    width: 100%;
+    height: auto;
+}
+
+ConfirmDialog #confirm-title {
+    text-align: center;
+    text-style: bold;
+    color: $warning;
+    margin-bottom: 1;
+}
+
+ConfirmDialog #confirm-message {
+    text-align: center;
+    margin-bottom: 1;
+    width: 100%;
+}
+
+ConfirmDialog #confirm-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+ConfirmDialog #confirm-buttons Button {
+    margin: 0 1;
+}
+
+/* ==========================================================================
+   Disclaimer Screen
+   ========================================================================== */
+
+DisclaimerScreen #disclaimer-dialog {
+    width: 80;
+    max-width: 90%;
+    height: auto;
+    background: $surface;
+    border: double $warning;
+    padding: 2 3;
+}
+
+DisclaimerScreen #disclaimer-content {
+    width: 100%;
+    height: auto;
+}
+
+DisclaimerScreen #disclaimer-title {
+    text-align: center;
+    text-style: bold;
+    color: $warning;
+    margin-bottom: 1;
+}
+
+DisclaimerScreen #disclaimer-message {
+    margin-bottom: 1;
+    width: 100%;
+}
+
+DisclaimerScreen #disclaimer-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+DisclaimerScreen #disclaimer-buttons Button {
+    margin: 0 1;
+}
+
+/* --- _diff-screen.tcss --- */
+
+/* ==========================================================================
+   Branch Diff Screen - Syntax-highlighted diff viewer
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Main Container
+   -------------------------------------------------------------------------- */
+
+#diff-screen-container {
+    width: 90%;
+    height: 90%;
+    max-width: 140;
+    background: $layer-base;
+    border: round $primary $border-dim;
+    padding: 1 2;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+
+.diff-header {
+    height: 3;
+    align: center middle;
+    padding: 0 1;
+    background: $layer-raised;
+    margin-bottom: 1;
+}
+
+.diff-title {
+    text-style: bold;
+    color: $text-bright;
+}
+
+.diff-stats {
+    margin-left: 2;
+    color: $accent;
+    text-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+   Navigation Bar
+   -------------------------------------------------------------------------- */
+
+.diff-nav-bar {
+    height: 3;
+    align: center middle;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+.diff-nav-btn {
+    min-width: 14;
+    margin: 0 1;
+}
+
+.diff-change-indicator {
+    min-width: 20;
+    text-align: center;
+    color: $text-muted;
+}
+
+/* --------------------------------------------------------------------------
+   Jump Bar
+   -------------------------------------------------------------------------- */
+
+.diff-jump-bar {
+    height: auto;
+    align: left middle;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+.diff-jump-label {
+    color: $text-dim;
+    margin-right: 1;
+}
+
+.diff-jump-btn {
+    min-width: 4;
+    height: 1;
+    margin: 0 1 0 0;
+    padding: 0 1;
+    background: $layer-raised;
+    border: none;
+}
+
+.diff-jump-btn:hover {
+    background: $primary 30%;
+}
+
+/* --------------------------------------------------------------------------
+   Diff Scroll Container
+   -------------------------------------------------------------------------- */
+
+#diff-scroll {
+    height: 1fr;
+    border: round $panel;
+    background: $layer-void;
+    padding: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Diff Hunks
+   -------------------------------------------------------------------------- */
+
+.diff-hunk {
+    margin-bottom: 1;
+    padding: 0;
+}
+
+.diff-hunk-changed {
+    border-left: tall $warning;
+}
+
+.diff-hunk-current {
+    border-left: tall $accent;
+    background: $accent 10%;
+}
+
+.diff-hunk-header {
+    color: $primary;
+    text-style: bold;
+    padding: 0 1;
+    background: $layer-raised;
+    margin-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Diff Lines
+   -------------------------------------------------------------------------- */
+
+.diff-line {
+    height: 1;
+    padding: 0;
+}
+
+.diff-line-num {
+    width: 5;
+    color: $text-ghost;
+    text-align: right;
+    padding-right: 1;
+}
+
+.diff-line-num-a {
+    color: $text-ghost;
+}
+
+.diff-line-num-b {
+    color: $text-ghost;
+}
+
+.diff-indicator {
+    width: 2;
+    text-align: center;
+}
+
+.diff-content {
+    width: 1fr;
+}
+
+/* Line type styling */
+.diff-add {
+    background: $success 15%;
+}
+
+.diff-add .diff-indicator {
+    color: $success;
+    text-style: bold;
+}
+
+.diff-remove {
+    background: $error 15%;
+}
+
+.diff-remove .diff-indicator {
+    color: $error;
+    text-style: bold;
+}
+
+.diff-change {
+    background: $warning 10%;
+}
+
+.diff-change .diff-indicator {
+    color: $warning;
+    text-style: bold;
+}
+
+.diff-same {
+    background: transparent;
+}
+
+.diff-same .diff-indicator {
+    color: $text-ghost;
+}
+
+/* --------------------------------------------------------------------------
+   Unchanged Section (Collapsible)
+   -------------------------------------------------------------------------- */
+
+UnchangedSection {
+    margin: 1 0;
+    border: none;
+}
+
+UnchangedSection > CollapsibleTitle {
+    color: $text-dim;
+    text-style: italic;
+    background: $layer-raised 50%;
+    padding: 0 1;
+}
+
+UnchangedSection > CollapsibleTitle:hover {
+    background: $layer-raised;
+}
+
+.diff-unchanged-content {
+    padding: 0;
+    background: $layer-void 50%;
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.diff-footer {
+    height: 3;
+    align: center middle;
+    padding: 1 1 0 1;
+    margin-top: 1;
+}
+
+.diff-help {
+    color: $text-dim;
+    text-style: italic;
+}
+
+.diff-footer .btn-primary {
+    margin-left: auto;
+}
+
+/* --- _help-screen.tcss --- */
+
+/* ==========================================================================
+   Help Screen
+   ========================================================================== */
+
+HelpScreen {
+    /* Inherits from ModalScreen */
+}
+
+HelpScreen #help-container {
+    width: 60%;
+    height: auto;
+    max-height: 80%;
+    background: $layer-base;
+    border: double $primary $border-normal;
+    padding: 1 2;
+}
+
+HelpScreen #help-container > Label {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+HelpScreen DataTable {
+    height: auto;
+    max-height: 20;
+    margin-bottom: 1;
+    background: $layer-raised 50%;
+}
+
+HelpScreen #close_btn {
+    width: 100%;
+    height: 1;
+    min-width: 8;
+    border: none;
+    background: $layer-raised;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+HelpScreen #close_btn:hover {
+    background: $primary;
+    color: $layer-void;
+    text-style: bold;
+}
+
+/* --- _modal-base.tcss --- */
+
+/* ==========================================================================
+   Modal Screens - Base Styles
+   Dark overlays with neon-bordered containers
+   ========================================================================== */
+
+/* Base modal - dark void overlay */
+ModalScreen {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* --- _prompt-editor.tcss --- */
+
+/* ==========================================================================
+   Prompt Editor Screen - System prompt management with template variables
+   ========================================================================== */
+
+PromptEditorScreen {
+    align: center middle;
+}
+
+PromptEditorScreen #editor-container {
+    width: 90%;
+    height: 90%;
+    max-width: 120;
+    background: $layer-base;
+    border: solid $primary $border-dim;
+    padding: 1;
+}
+
+PromptEditorScreen #sidebar {
+    width: 28;
+    dock: left;
+    background: $layer-raised;
+    border-right: solid $primary $border-dim;
+    padding: 1;
+}
+
+PromptEditorScreen #sidebar-title {
+    text-style: bold;
+    color: $primary;
+    padding-bottom: 1;
+}
+
+PromptEditorScreen #prompt-list {
+    height: 1fr;
+    background: transparent;
+}
+
+PromptEditorScreen #prompt-list > ListItem {
+    padding: 0 1;
+    height: auto;
+}
+
+PromptEditorScreen #prompt-list > ListItem:hover {
+    background: $layer-float;
+}
+
+PromptEditorScreen #prompt-list > ListItem.-highlight {
+    background: $primary $glow-medium;
+}
+
+PromptEditorScreen #sidebar-buttons {
+    dock: bottom;
+    height: auto;
+    padding-top: 1;
+}
+
+PromptEditorScreen #main-content {
+    padding: 1 2;
+}
+
+PromptEditorScreen .field-label {
+    margin-top: 1;
+    color: $text-muted;
+}
+
+PromptEditorScreen Input {
+    margin-bottom: 1;
+}
+
+PromptEditorScreen #prompt-content-area {
+    height: 1fr;
+    min-height: 10;
+}
+
+/* Variable Toolbar */
+PromptEditorScreen #var-toolbar {
+    margin: 1 0;
+}
+
+PromptEditorScreen .var-hint {
+    color: $text-dim;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+PromptEditorScreen .var-buttons {
+    width: 100%;
+    height: auto;
+    padding: 0 1;
+}
+
+VariableButton {
+    padding: 0 1;
+    margin: 0 1 1 0;
+    background: $layer-raised;
+    border: solid $accent $border-dim;
+    color: $accent;
+    height: auto;
+}
+
+VariableButton:hover {
+    background: $accent $glow-medium;
+    border: solid $accent $border-focus;
+}
+
+/* Preview Panel */
+PromptEditorScreen #preview-panel {
+    margin: 1 0;
+    max-height: 15;
+}
+
+PromptEditorScreen #preview-content {
+    padding: 1;
+    background: $layer-void;
+}
+
+/* Help Panel */
+PromptEditorScreen #help-panel {
+    margin: 1 0;
+    max-height: 20;
+}
+
+PromptEditorScreen #help-content {
+    padding: 1;
+}
+
+/* Footer Buttons */
+PromptEditorScreen #footer-buttons {
+    dock: bottom;
+    height: auto;
+    padding-top: 1;
+    align: right middle;
+}
+
+PromptEditorScreen #footer-buttons .spacer {
+    width: 1fr;
+}
+
+PromptEditorScreen #footer-buttons Button {
+    margin-left: 1;
+}
+
+/* --- _providers-screen.tcss --- */
+
+/* ==========================================================================
+   Provider Config Screen
+   ========================================================================== */
+
+ProviderConfigScreen {
+    /* Inherits from ModalScreen */
+}
+
+ProviderConfigScreen #config-container {
+    width: 50%;
+    min-width: 40;
+    height: auto;
+    background: $surface;
+    border: solid $panel;
+    padding: 1 2;
+    layout: vertical;
+}
+
+ProviderConfigScreen #config-container > Label:first-child {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+ProviderConfigScreen .input-label {
+    margin-top: 1;
+    margin-bottom: 0;
+    color: $text-muted;
+}
+
+ProviderConfigScreen Input {
+    margin-bottom: 0;
+}
+
+ProviderConfigScreen #buttons {
+    layout: horizontal;
+    align: center middle;
+    margin-top: 1;
+    height: 1;
+    width: 100%;
+}
+
+ProviderConfigScreen #save {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $success;
+    color: $text;
+    margin-right: 1;
+}
+
+ProviderConfigScreen #save:hover {
+    background: $success;
+    text-style: bold;
+}
+
+ProviderConfigScreen #cancel {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+}
+
+ProviderConfigScreen #cancel:hover {
+    background: $error;
+    color: $text;
+}
+
+ProviderConfigScreen #connection-status {
+    height: 1;
+    margin: 1 0;
+    color: $text-muted;
+    text-style: italic;
+}
+
+ProviderConfigScreen #connection-status.success {
+    color: $success;
+    text-style: bold;
+}
+
+ProviderConfigScreen #connection-status.error {
+    color: $error;
+    text-style: bold;
+}
+
 /* ==========================================================================
    Providers Screen - Cyber Noir Provider Management
    ========================================================================== */
@@ -1757,7 +4978,7 @@ ProvidersScreen .section-header {
     margin: 1 0 0 0;
     padding: 0 1;
     background: $layer-raised 30%;
-    border-bottom: solid $secondary $border-dim;
+    border-bottom: solid $text-ghost;
 }
 
 ProvidersScreen ProviderRow {
@@ -1797,6 +5018,42 @@ ProvidersScreen .provider-name {
     width: 15;
     color: $text-bright;
     text-style: bold;
+}
+
+ProvidersScreen .provider-health {
+    width: 12;
+    color: $text-dim;
+    text-align: right;
+    margin-right: 1;
+}
+
+ProvidersScreen .provider-health.health-good {
+    color: $success;
+}
+
+ProvidersScreen .provider-health.health-slow {
+    color: $warning;
+}
+
+ProvidersScreen .provider-health.health-bad {
+    color: $error;
+}
+
+ProvidersScreen .provider-health.health-offline {
+    color: $text-dim;
+}
+
+ProvidersScreen .provider-health.health-error {
+    color: $error;
+}
+
+ProvidersScreen .provider-health.health-checking {
+    color: $primary;
+    text-style: italic;
+}
+
+ProvidersScreen .provider-health.health-none {
+    color: transparent;
 }
 
 ProvidersScreen .provider-desc {
@@ -1879,7 +5136,7 @@ ToolsScreen #tools-container {
     width: 70%;
     height: 80%;
     background: $surface;
-    border: solid $accent $border-dim;
+    border: solid $panel;
     padding: 1 2;
 }
 
@@ -1888,14 +5145,14 @@ ToolsScreen #tools-title {
     text-align: center;
     color: $accent;
     text-style: bold;
-    border-bottom: solid $accent $border-dim;
+    border-bottom: solid $surface;
     padding-bottom: 1;
     margin-bottom: 1;
 }
 
 ToolsScreen .server-block {
     height: auto;
-    border: wide $accent $border-dim;
+    border: wide $panel;
     padding: 1;
     margin-bottom: 1;
     background: $panel;
@@ -1904,7 +5161,7 @@ ToolsScreen .server-block {
 ToolsScreen .server-header {
     text-style: bold;
     color: $text-muted;
-    border-bottom: solid $text-dim;
+    border-bottom: solid $background;
 }
 
 ToolsScreen .server-header.connected {
@@ -1924,697 +5181,857 @@ ToolsScreen #close_btn:hover {
     text-style: bold;
 }
 
-/* Process Indicator */
-StatusBar .process-active {
+/* --- _selection-screen.tcss --- */
+
+/* ==========================================================================
+   Selection Screens
+   ========================================================================== */
+
+SelectionListScreen {
+    /* Inherits from ModalScreen */
+}
+
+SelectionListScreen #selection-container {
+    width: 40%;
+    min-width: 30;
+    height: auto;
+    max-height: 60%;
+    background: $surface;
+    border: solid $panel;
+    padding: 1 2;
+    layout: vertical;
+}
+
+SelectionListScreen #selection-container > Label {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+SelectionListScreen ListView {
+    height: auto;
+    max-height: 15;
+    margin: 0;
+    padding: 0;
+    background: $panel;
+}
+
+SelectionListScreen ListItem {
+    padding: 0 1;
+    height: 1;
+}
+
+SelectionListScreen ListItem:hover {
+    background: $surface;
+}
+
+SelectionListScreen #cancel_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+SelectionListScreen #cancel_btn:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   Model List Screen
+   ========================================================================== */
+
+ModelListScreen {
+    /* Inherits from ModalScreen */
+}
+
+ModelListScreen #model-selection-container {
+    width: 60%;
+    min-width: 50;
+    height: auto;
+    max-height: 80%;
+    background: $surface;
+    border: solid $panel;
+    padding: 1 2;
+    layout: vertical;
+}
+
+ModelListScreen #model-title {
+    margin-bottom: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+ModelListScreen #model-search {
+    margin-bottom: 1;
+    border: solid $panel;
+    background: $panel;
+    height: 3;
+}
+
+ModelListScreen #model-search:focus {
+    border: solid $primary;
+}
+
+ModelListScreen #loading-indicator {
+    height: 1;
+    color: $warning;
+    text-style: italic;
+    margin-bottom: 1;
+}
+
+ModelListScreen #loading-indicator.success {
     color: $success;
     text-style: bold;
 }
 
-StatusBar .process-inactive {
-    color: $text-muted;
-}
-
-/* TUI Mode Styles */
- CommandBlock.mode-tui {
-    border: double $accent;
-    background: #000000;
-}
-
-CommandBlock.mode-tui:focus-within {
-    border: double $accent;
-    background: #000000;
-}
-
-CommandBlock.mode-tui BlockHeader {
-    color: $accent;
-    border-bottom: solid $accent;
-}
-
-.prompt-symbol-tui {
-    color: $accent;
+ModelListScreen #loading-indicator.error {
+    color: $error;
     text-style: bold;
 }
 
-/* --- ExecutionWidget (Collapsible) --- */
-ExecutionWidget {
-    background: transparent;
-    border: none;
-    width: 100%;
+ModelListScreen #model-scroll {
     height: auto;
-    padding: 0;
-    margin: 0;
-    display: none;
-}
-
-ExecutionWidget.has-content {
-    display: block;
-}
-
-ExecutionWidget .hidden {
-    display: none;
-}
-
-ExecutionWidget #exec-container {
-    background: transparent;
-    layout: vertical;
-    width: 100%;
-    height: auto;
-    border: none;
-    border-left: solid $text-dim;
-    margin: 0 2;
-}
-
-ExecutionWidget .exec-header {
-    layout: horizontal;
-    height: 1;
-    width: 100%;
+    max-height: 25;
+    background: $panel;
     padding: 0 1;
-    background: transparent;
-    color: $text-muted;
-    border-bottom: none;
-    transition: background 150ms in_out_cubic;
 }
 
-ExecutionWidget .exec-header:hover {
+ModelListScreen Collapsible {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+}
+
+ModelListScreen CollapsibleTitle {
+    color: $accent;
+    text-style: bold;
+    padding: 0 1;
+}
+
+ModelListScreen CollapsibleTitle:hover {
+    background: $surface;
+}
+
+ModelListScreen .model-item {
+    padding: 0 2;
+    height: 1;
+    color: $text;
+}
+
+ModelListScreen .model-item:hover {
+    background: $primary 30%;
+    color: $text;
+    text-style: bold;
+}
+
+ModelListScreen .more-label {
+    color: $text-muted;
+    text-style: italic;
+    padding: 0 2;
+}
+
+ModelListScreen #cancel_btn {
+    width: 100%;
+    height: 1;
+    border: none;
+    background: $panel;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+ModelListScreen #cancel_btn:hover {
+    background: $error;
+    color: $text;
+}
+
+/* ==========================================================================
+   Prompt Editor Screen
+   ========================================================================== */
+
+PromptEditorScreen {
+    align: center middle;
+    background: $layer-void 80%;
+}
+
+PromptEditorScreen #editor-container {
+    width: 90%;
+    height: 90%;
+    background: $layer-base;
+    border: double $secondary $border-normal;
+    layout: horizontal;
+}
+
+/* Sidebar */
+PromptEditorScreen #sidebar {
+    width: 30%;
+    height: 100%;
+    border-right: solid $secondary $border-dim;
+    layout: vertical;
+}
+
+PromptEditorScreen #sidebar-title {
+    text-style: bold;
+    color: $secondary;
+    padding: 1;
+    text-align: center;
+    background: $layer-raised 30%;
+}
+
+PromptEditorScreen ListView {
+    height: 1fr;
+    background: $layer-raised 10%;
+}
+
+PromptEditorScreen PromptListItem {
+    padding: 1 2;
+    color: $text-muted;
+}
+
+PromptEditorScreen PromptListItem:hover {
     background: $layer-raised 30%;
     color: $text-bright;
 }
 
-ExecutionWidget .exec-title {
-    width: auto;
-    color: $text-muted;
-    text-style: bold;
-}
-
-ExecutionWidget .exec-icon {
-    width: 2;
-    color: $warning;
-    display: none;
-}
-
-ExecutionWidget .toggle-icon {
-    width: 2;
-    min-width: 2;
-    max-width: 2;
-    color: $warning;
-    text-align: center;
-}
-
-ExecutionWidget .exec-count {
-    width: 1fr;
-    margin-left: 1;
-    color: $text-muted;
-    text-style: italic;
-}
-
-ExecutionWidget .copy-btn {
-    width: 6;
-    min-width: 6;
-    content-align: center middle;
-    color: $text-muted;
-    background: transparent;
-    border: none;
-}
-
-ExecutionWidget .copy-btn:hover {
-    color: $success;
-    text-style: bold;
-}
-
-ExecutionWidget .exec-scroll {
-    width: 100%;
-    height: auto;
-    max-height: 20;
-    overflow-y: auto;
-    padding: 0 1;
-    background: transparent;
-}
-
-ExecutionWidget #exec-container.collapsed .exec-scroll {
-    display: none;
-}
-
-ExecutionWidget #exec-container.collapsed {
-    height: 1;
-    border-bottom: none;
-}
-
-ExecutionWidget #exec-content {
-    width: 100%;
-    height: auto;
-}
-
-/* --- Response Widget --- */
-
-ResponseWidget {
-    width: 100%;
-    height: auto;
-    margin: 1 0 0 0;
-    padding: 0;
-    background: transparent;
-    display: block;
-}
-
-ResponseWidget.hidden {
-    display: none;
-}
-
-ResponseWidget .response-container {
-    background: transparent;
-    border: round $success $border-dim;
-    layout: vertical;
-    width: 100%;
-    height: auto;
-    padding: 0;
-}
-
-ResponseWidget .response-header {
-    layout: horizontal;
-    height: 1;
-    width: 100%;
-    padding: 0 1;
-    background: transparent;
-    color: $success;
-    border-bottom: solid $success 15%;
-}
-
-ResponseWidget .response-icon {
-    width: 2;
-    color: $success;
-}
-
-ResponseWidget .response-title {
-    width: 1fr;
-    color: $success;
-    text-style: bold;
-}
-
-ResponseWidget #response-content {
-    width: 100%;
-    height: auto;
-    padding: 1 2;
+PromptEditorScreen PromptListItem.--highlight {
+    background: $secondary 20%;
     color: $text-bright;
+    text-style: bold;
 }
 
-/* --- Response Widget: Simple Mode --- */
-ResponseWidget .response-container.simple {
-    border: none;
-    background: transparent;
-}
-
-ResponseWidget .response-container.simple .response-header {
-    display: none;
-}
-
-ResponseWidget .response-container.simple #response-content {
-    padding: 0;
-}
-
-/* ==========================================================================
-   AI Block Redesign: Chat vs Agent Mode
-   ========================================================================== */
-
-/* --- ActionBar: Action buttons for AI blocks --- */
-
-ActionBar {
-    width: 100%;
-    height: 1;
-    padding: 0 2;
+PromptEditorScreen #sidebar-buttons {
+    height: auto;
+    padding: 1;
     layout: horizontal;
-    align: left middle;
-    background: transparent;
-    border-top: none;
+    align: center middle;
+    background: $layer-raised 20%;
+}
+
+PromptEditorScreen Button {
+    min-width: 8;
+    margin: 0 1;
+    border: none;
+}
+
+PromptEditorScreen #new-btn {
+    background: $success 20%;
+    color: $success;
+}
+PromptEditorScreen #new-btn:hover {
+    background: $success;
+    color: $layer-void;
+}
+
+/* Main Content */
+PromptEditorScreen #main-content {
+    width: 70%;
+    height: 100%;
+    layout: vertical;
+    padding: 1 2;
+}
+
+PromptEditorScreen .field-label {
+    color: $secondary;
+    text-style: bold;
     margin-top: 1;
 }
 
-ActionBar .action-spacer {
-    width: 1fr;
-}
-
-ActionBar .action-meta {
-    color: $text-muted;
-    text-style: dim italic;
-}
-
-ActionButton {
-    width: auto;
-    min-width: 0;
-    height: 1;
+PromptEditorScreen Input {
+    background: $layer-raised 10%;
+    border: none;
     padding: 0 1;
-    margin: 0 1 0 0;
-    border: none;
-    color: $text-muted;
-    background: transparent;
-}
-
-ActionButton:hover {
-    color: $accent;
-    background: $panel;
-    text-style: bold;
-    border: none;
-}
-
-ActionButton:focus {
-    border: none;
-    text-style: bold;
-}
-
-ActionButton.-disabled,
-ActionButton:disabled {
-    color: $text-dim;
-    background: transparent;
-}
-
-ActionButton.copied {
-    color: $success;
-    text-style: bold;
-}
-
-/* --- BlockFrame: Chat/Agent mode container --- */
-
-BlockFrame {
-    width: 100%;
-    height: auto;
-    padding: 0;
-}
-
-BlockFrame.mode-chat {
-    border: round $panel;
-    background: transparent;
-}
-
-BlockFrame.mode-chat .block-mode-tag {
-    color: $text-muted;
-    text-style: dim;
-}
-
-BlockFrame.mode-agent {
-    border: double $accent;
-    background: transparent;
-}
-
-BlockFrame.mode-agent .block-mode-tag {
-    color: $accent;
-    text-style: bold;
-}
-
-BlockFrame .frame-header {
-    width: 100%;
-    height: 1;
-    padding: 0 2;
-    background: transparent;
-    layout: horizontal;
-}
-
-BlockFrame .block-mode-tag {
-    width: auto;
-}
-
-BlockFrame .block-input-preview {
-    color: $text;
-    margin-left: 1;
-    width: 1fr;
-}
-
-FrameSeparator {
-    width: 100%;
-    height: 1;
-    background: $panel;
-    margin: 0;
-    padding: 0;
-}
-
-FrameSeparator.agent {
-    background: $accent 20%;
-}
-
-/* --- ToolAccordion: Collapsible tool calls --- */
-
-ToolAccordion {
-    width: 100%;
-    height: auto;
-    background: transparent;
-    padding: 0;
-    margin: 0 0 1 0;
-}
-
-ToolAccordion.empty {
-    display: none;
-}
-
-ToolAccordionItem {
-    width: 100%;
-    height: auto;
-    border-bottom: none;
-    padding: 0 0 1 0;
-    margin-bottom: 0;
-}
-
-ToolAccordionItem:hover {
-    background: transparent;
-}
-
-/* Tool Header */
-ToolHeader {
-    width: 100%;
-    height: 1;
-    padding: 0 2;
-    layout: horizontal;
-    border-left: solid $text-dim;
-}
-
-ToolHeader:hover {
-    border-left: solid $accent;
-    background: $panel 15%;
-}
-
-ToolHeader .tool-icon {
-    width: 2;
-    min-width: 2;
-    max-width: 2;
-    color: $text-muted;
-    text-align: center;
-}
-
-ToolHeader .tool-icon.expanded {
-    color: $accent;
-}
-
-ToolHeader .tool-name {
-    color: $text;
-    text-style: bold;
-}
-
-ToolHeader .tool-status {
-    width: auto;
-    margin-left: 1;
-}
-
-ToolHeader .tool-status.pending {
-    color: $text-muted;
-}
-
-ToolHeader .tool-status.running {
-    color: $warning;
-}
-
-ToolHeader .tool-status.success {
-    color: $success;
-}
-
-ToolHeader .tool-status.error {
-    color: $error;
-}
-
-ToolHeader .tool-duration {
-    color: $text-muted;
-    text-style: dim;
-    width: 8;
-    text-align: right;
-}
-
-ToolHeader .tool-spacer {
-    width: 1fr;
-}
-
-/* Tool Output */
-ToolOutput {
-    width: 100%;
-    height: auto;
-    max-height: 20;
-    padding: 1 2;
-    background: transparent;
-    display: none;
-    border-left: solid $accent 40%;
-    margin-left: 3;
-}
-
-ToolOutput.visible {
-    display: block;
-}
-
-ToolOutput .tool-output-content {
-    width: 100%;
-}
-
-ToolOutput .tool-args {
-    color: $text-muted;
     margin-bottom: 1;
 }
 
-ToolOutput .tool-result {
-    width: 100%;
+PromptEditorScreen TextArea {
+    height: 1fr;
+    background: $layer-raised 10%;
+    border: solid $secondary $border-dim;
+    margin-top: 1;
 }
 
-ToolOutput .tool-result.streaming {
+PromptEditorScreen TextArea:focus {
+    border: solid $secondary $border-normal;
+}
+
+PromptEditorScreen #footer-buttons {
+    height: 3;
+    margin-top: 1;
+    layout: horizontal;
+    align: right middle;
+}
+
+PromptEditorScreen #save-btn {
+    background: $success;
+    color: $layer-void;
+    margin-left: 2;
+}
+
+PromptEditorScreen #delete-btn {
+    background: $error;
     color: $text-bright;
-    background: $layer-void;
-    padding: 0 1;
-    height: auto;
-    max-height: 20;
-    overflow-y: auto;
+    margin-right: 1; 
+}
+
+PromptEditorScreen .spacer {
+    width: 1fr;
+}
+
+PromptEditorScreen #close-btn {
+    background: $layer-raised;
+    color: $text-muted;
 }
 
 /* ==========================================================================
-   AIResponseBlock (Chat Mode) - Subtle, Conversational Styling
+   Todo Screen
    ========================================================================== */
 
-/* Styles defined earlier in Block Types section */
-
-AIResponseBlock BlockHeader .prompt-symbol {
-    color: $primary;
+TodoScreen {
+    align: center middle;
+    background: $layer-void 80%;
 }
 
-AIResponseBlock BlockHeader .header-text {
+TodoScreen #todo-container {
+    width: 70%;
+    height: 80%;
+    background: $layer-base;
+    border: double $primary $border-normal;
+    layout: vertical;
+    padding: 1 2;
+}
+
+TodoScreen #title {
+    text-style: bold;
+    color: $primary;
+    text-align: center;
+    padding-bottom: 1;
+    border-bottom: solid $primary 20%;
+}
+
+TodoScreen DataTable {
+    height: 1fr;
+    background: $layer-raised 10%;
+    margin-bottom: 1;
+}
+
+TodoScreen DataTable > .datatable--header {
+    background: $layer-raised 30%;
+    color: $primary;
+    text-style: bold;
+}
+
+TodoScreen DataTable > .datatable--cursor {
+    background: $primary 30%;
+    color: $text-bright;
+}
+
+TodoScreen #input-area {
+    height: auto;
+    layout: horizontal;
+    align: center middle;
+    margin-top: 1;
+}
+
+TodoScreen Input {
+    width: 1fr;
+    margin-right: 1;
+}
+
+TodoScreen Button {
+    min-width: 8;
+}
+
+TodoScreen #add-btn {
+    background: $success;
+    color: $layer-void;
+}
+
+TodoScreen #close-btn {
+    background: $layer-raised;
+    margin-left: 1;
+}
+
+/* --- _theme-editor.tcss --- */
+
+/* ==========================================================================
+   Theme Editor Screen - Custom Theme Creation
+   ========================================================================== */
+
+ThemeEditorScreen {
+    align: center middle;
+}
+
+ThemeEditorScreen #theme-editor-outer {
+    width: 90%;
+    min-width: 70;
+    max-width: 100;
+    height: 90%;
+    min-height: 30;
+    background: $layer-base;
+    border: double $accent $border-normal;
+    padding: 1 2;
+    layout: vertical;
+}
+
+ThemeEditorScreen #theme-editor-header {
+    height: 1;
+    padding: 0;
+    border-bottom: solid $accent 20%;
+}
+
+ThemeEditorScreen #theme-editor-header Label {
+    text-style: bold;
+    color: $accent;
+}
+
+ThemeEditorScreen #theme-editor-scroll {
+    height: 1fr;
+    padding: 0 1;
+    scrollbar-size-vertical: 1;
+    scrollbar-background: transparent;
+    scrollbar-color: $text-dim;
+    scrollbar-color-hover: $accent;
+}
+
+ThemeEditorScreen .editor-section-header {
+    height: auto;
+    margin-top: 1;
+    margin-bottom: 0;
+    padding: 0;
+    color: $accent;
+    text-style: bold;
+    border-bottom: solid $accent 25%;
+}
+
+ThemeEditorScreen .editor-row {
+    height: auto;
+    min-height: 1;
+    padding: 0;
+    margin-top: 1;
+    margin-bottom: 0;
+    align-vertical: middle;
+}
+
+ThemeEditorScreen .editor-label {
+    width: 15;
+    color: $text-bright;
+}
+
+ThemeEditorScreen .editor-hint {
+    color: $text-muted;
+    text-style: italic;
+    margin-left: 1;
+}
+
+ThemeEditorScreen .color-row {
+    height: 1;
+}
+
+ThemeEditorScreen .color-input-group {
+    width: auto;
+    height: 1;
+    align-vertical: middle;
+}
+
+ThemeEditorScreen .color-swatch {
+    width: 4;
+    height: 1;
+    margin-right: 1;
+    border: tall $text-dim;
+}
+
+ThemeEditorScreen .color-input {
+    width: 12;
+    height: 1;
+    border: tall $primary 50%;
+    padding: 0;
+    margin: 0;
+    background: $surface;
+}
+
+ThemeEditorScreen .color-input:focus {
+    border: tall $accent;
+}
+
+ThemeEditorScreen .color-input.input-invalid {
+    border: tall $error;
+    background: $error 10%;
+}
+
+ThemeEditorScreen Input {
+    height: 1;
+    width: 1fr;
+    max-width: 40;
+    border: tall $primary 50%;
+    padding: 0;
+    margin: 0;
+    background: $surface;
+}
+
+ThemeEditorScreen Input:focus {
+    border: tall $accent;
+}
+
+ThemeEditorScreen Switch {
+    height: 1;
+    width: auto;
+    min-width: 8;
+    margin: 0;
+    border: tall $primary 50%;
+    background: $surface;
+}
+
+ThemeEditorScreen Switch:focus {
+    border: tall $accent;
+}
+
+ThemeEditorScreen Switch.-on {
+    background: $success 30%;
+}
+
+ThemeEditorScreen .switch-label {
+    margin-left: 1;
+    color: $text-muted;
+}
+
+/* Theme Preview Widget */
+ThemeEditorScreen #theme-preview-widget {
+    height: auto;
+    margin-top: 1;
+    padding: 1;
+    background: $layer-raised;
+    border: solid $primary 30%;
+}
+
+ThemeEditorScreen .theme-preview-row {
+    height: 3;
+    align: center middle;
+}
+
+ThemeEditorScreen .preview-color-item {
+    width: auto;
+    height: auto;
+    margin: 0 1;
+    align: center middle;
+}
+
+ThemeEditorScreen .preview-swatch {
+    width: 6;
+    height: 2;
+    border: tall $text-dim;
+}
+
+ThemeEditorScreen .preview-label {
+    color: $text-dim;
+    text-align: center;
+}
+
+/* Footer Buttons */
+ThemeEditorScreen #theme-editor-footer {
+    height: auto;
+    padding: 1 1;
+    dock: bottom;
+    align: left middle;
+    border-top: solid $accent 15%;
+}
+
+ThemeEditorScreen #theme-editor-footer Button {
+    height: 1;
+    min-width: 12;
+    margin-right: 1;
+    border: none;
+}
+
+ThemeEditorScreen #save-btn {
+    background: $success;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ThemeEditorScreen #save-btn:hover {
+    background: $success 85%;
+    tint: $success 10%;
+}
+
+ThemeEditorScreen #cancel-btn {
+    background: $layer-raised;
+    color: $text-muted;
+}
+
+ThemeEditorScreen #cancel-btn:hover {
+    background: $error;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ThemeEditorScreen .spacer {
+    width: 1fr;
+}
+
+ThemeEditorScreen #reset-btn {
+    color: $warning;
+    background: transparent;
+    border: solid $warning $border-dim;
+}
+
+ThemeEditorScreen #reset-btn:hover {
+    background: $warning;
+    color: $layer-void;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   Enhanced Theme Selection Screen - Color Palette Preview
+   ========================================================================== */
+
+ThemeSelectionScreen {
+    align: center middle;
+}
+
+ThemeSelectionScreen #selection-container {
+    width: 70;
+    max-width: 90%;
+    height: auto;
+    max-height: 80%;
+    background: $layer-base;
+    border: double $accent $border-normal;
+    padding: 1 2;
+}
+
+ThemeSelectionScreen #selection-container > Label:first-child {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+ThemeSelectionScreen ListView {
+    height: auto;
+    max-height: 20;
+    background: transparent;
+    scrollbar-size-vertical: 1;
+}
+
+ThemeSelectionScreen ListItem {
+    height: auto;
+    padding: 0;
+    background: transparent;
+}
+
+ThemeSelectionScreen ListItem:hover {
+    background: $primary 15%;
+}
+
+ThemeSelectionScreen ListItem.-highlight {
+    background: $primary 25%;
+}
+
+ThemeSelectionScreen .theme-list-item {
+    height: auto;
+    padding: 0 1;
+}
+
+ThemeSelectionScreen .theme-item-row {
+    height: 2;
+    align-vertical: middle;
+}
+
+ThemeSelectionScreen .theme-name {
+    width: 1fr;
+    color: $text-bright;
+}
+
+ThemeSelectionScreen .theme-description {
     color: $text-muted;
     text-style: italic;
 }
 
-AIResponseBlock ThinkingWidget .spinner {
-    color: $primary 80%;
+/* Palette preview in theme selection */
+ThemeSelectionScreen .palette-swatches {
+    height: 1;
+    width: auto;
+    align: right middle;
 }
 
-AIResponseBlock ThinkingWidget .peek-window {
-    border: none;
-    border-left: solid $primary 40%;
+ThemeSelectionScreen .palette-swatch {
+    width: 2;
+    height: 1;
+    margin-left: 0;
 }
 
-AIResponseBlock ToolAccordion {
-    margin: 0 1 0 3;
+ThemePalettePreview {
+    height: 1;
+    width: auto;
 }
 
-AIResponseBlock ToolAccordionItem:hover {
-    background: $primary 3%;
+ThemePalettePreview .palette-swatches {
+    height: 1;
+    width: auto;
 }
 
-AIResponseBlock ToolHeader .tool-icon.expanded {
-    color: $primary;
+ThemePalettePreview .palette-swatch {
+    width: 2;
+    height: 1;
 }
 
-AIResponseBlock ToolOutput {
-    border-left: solid $primary 30%;
-}
-
-AIResponseBlock ResponseWidget .response-container {
-    border: none;
-    border-left: thick $primary 30%;
-    margin-left: 3;
-}
-
-AIResponseBlock ResponseWidget .response-header {
-    border-bottom: none;
-    color: $primary 70%;
-}
-
-AIResponseBlock ResponseWidget .response-icon {
-    color: $primary;
-}
-
-AIResponseBlock ResponseWidget .response-title {
-    color: $primary;
-}
-
-AIResponseBlock ActionBar {
-    border-top: none;
-}
-
-AIResponseBlock ActionButton:hover {
-    color: $primary;
+ThemeSelectionScreen #cancel_btn {
+    margin-top: 1;
     background: $layer-raised;
-    text-style: bold;
-    border-bottom: solid $primary;
+    color: $text-muted;
 }
+
+ThemeSelectionScreen #cancel_btn:hover {
+    background: $error;
+    color: $layer-void;
+}
+
+ThemeSelectionScreen #edit-theme-btn {
+    margin-top: 1;
+    margin-left: 1;
+    background: $primary 30%;
+    color: $text-bright;
+}
+
+ThemeSelectionScreen #edit-theme-btn:hover {
+    background: $primary;
+    color: $layer-void;
+}
+
+ThemeSelectionScreen .empty-msg {
+    color: $text-muted;
+    text-style: italic;
+    padding: 1;
+}
+
 
 /* ==========================================================================
-   AgentResponseBlock - Cyber Noir Agent Mode (Vivid Magenta)
-   Bold, active, autonomous execution aesthetic with double border frame
+   FEATURES (5 files)
    ========================================================================== */
 
-AgentResponseBlock {
-    layout: vertical;
+/* --- _command-palette.tcss --- */
+
+/* ==========================================================================
+   Command Palette - Feature Styles
+   Extracted from main.tcss lines 1109-1223
+   ========================================================================== */
+
+CommandPalette {
+    layer: overlay;
+    align: center top;
+    width: 60%;
+    min-width: 50;
+    max-width: 80;
     height: auto;
-    min-height: 0;
-    background: $layer-base 50%;
-    color: $text-bright;
-    margin: 0 0 1 0;
+    max-height: 50%;
+    margin-top: 3;
+    background: $surface;
+    border: solid $panel;
     padding: 0;
-    border: double $secondary $border-normal;
+    display: none !important;
 }
 
-AgentResponseBlock:focus-within {
-    border: double $secondary $border-focus;
-    background: $secondary $glow-subtle;
-    tint: $secondary 4%;
+CommandPalette.visible {
+    display: block !important;
 }
 
-AgentResponseBlock BlockHeader {
-    background: transparent;
-    padding: 0 2;
-    color: $secondary;
-    border-bottom: solid $secondary 22%;
-}
-
-AgentResponseBlock BlockHeader .prompt-symbol {
-    color: $secondary;
+CommandPalette #palette-title {
+    width: 100%;
+    height: 1;
+    background: $primary;
+    color: $text;
     text-style: bold;
+    padding: 0 1;
 }
 
-AgentResponseBlock BlockHeader .header-text {
-    color: $text-bright;
-    text-style: bold;
-}
-
-AgentResponseBlock BlockHeader .timestamp {
-    color: $secondary 70%;
-}
-
-AgentResponseBlock BlockMeta {
-    background: transparent;
-    border-top: solid $secondary 15%;
-}
-
-/* Agent Iterations - Structured Workflow Display */
-AgentResponseBlock IterationContainer {
-    background: transparent;
-    border-top: none;
-    padding-top: 1;
-    margin: 1 0;
-}
-
-AgentResponseBlock IterationHeader {
-    background: $secondary 3%;
-    border-bottom: none;
-}
-
-AgentResponseBlock IterationHeader .iter-label {
-    color: $secondary;
-    text-style: bold;
-}
-
-AgentResponseBlock IterationHeader .iter-status.thinking {
-    color: $secondary;
-}
-
-AgentResponseBlock IterationHeader .iter-status.executing {
-    color: $warning;
-}
-
-AgentResponseBlock IterationHeader .iter-status.complete {
-    color: $success;
-}
-
-AgentResponseBlock ThinkingSection .thinking-icon.expanded {
-    color: $secondary;
-}
-
-AgentResponseBlock ThinkingSection .thinking-toggle:hover {
-    background: $secondary 10%;
-}
-
-AgentResponseBlock ThinkingSection .thinking-content {
-    border-left: solid $secondary 50%;
-    background: $secondary 2%;
-}
-
-AgentResponseBlock ToolCallItem .tool-name {
-    color: $secondary;
-}
-
-AgentResponseBlock IterationSeparator {
-    color: $secondary 50%;
-    border-top: none;
-}
-
-/* Agent Response Widget */
-AgentResponseBlock ResponseWidget .response-container {
+CommandPalette #palette-input {
+    width: 100%;
+    height: 1;
     border: none;
-    border-left: thick $secondary 50%;
-    background: $secondary 2%;
-    margin-left: 3;
+    background: $panel;
+    padding: 0 1;
+    margin: 1 1;
 }
 
-AgentResponseBlock ResponseWidget .response-header {
-    border-bottom: none;
-    color: $secondary;
-    background: transparent;
+CommandPalette #palette-results {
+    width: 100%;
+    height: auto;
+    max-height: 15;
+    padding: 0 1;
+    overflow-y: auto;
 }
 
-AgentResponseBlock ResponseWidget .response-icon {
-    color: $secondary;
+CommandPalette #palette-hint {
+    width: 100%;
+    height: 1;
+    background: $surface;
+    color: $text-muted;
+    text-style: italic dim;
+    padding: 0 1;
+}
+
+CommandPalette .palette-item {
+    layout: horizontal;
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text;
+}
+
+CommandPalette .palette-item:hover {
+    background: $panel;
+}
+
+CommandPalette .palette-item.selected {
+    background: $primary;
+    color: $text;
+}
+
+CommandPalette .palette-item-name {
+    width: auto;
+    min-width: 20;
+    color: $text;
     text-style: bold;
 }
 
-AgentResponseBlock ResponseWidget .response-title {
-    color: $secondary;
+CommandPalette .palette-item.selected .palette-item-name {
+    color: $text;
+}
+
+CommandPalette .palette-item-desc {
+    width: 1fr;
+    color: $text-muted;
+    padding-left: 2;
+}
+
+CommandPalette .palette-item.selected .palette-item-desc {
+    color: $text;
+}
+
+CommandPalette .palette-item-shortcut {
+    width: auto;
+    color: $primary;
+    text-style: dim;
+}
+
+CommandPalette .palette-item.selected .palette-item-shortcut {
+    color: $text;
     text-style: bold;
 }
 
-/* Agent Action Bar */
-AgentResponseBlock ActionBar {
-    border-top: none;
-    background: transparent;
+CommandPalette .palette-no-results {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text-muted;
+    text-style: italic;
 }
 
-AgentResponseBlock ActionButton:hover {
-    color: $secondary;
-    background: $layer-raised;
-    text-style: bold;
-    border-bottom: solid $secondary;
-}
-
-AgentResponseBlock ActionBar .action-meta {
-    color: $secondary 70%;
-}
-
-/* Agent Execution Widget */
-AgentResponseBlock ExecutionWidget #exec-container {
-    background: transparent;
-    border: none;
-    border-left: solid $secondary 40%;
-    margin-left: 3;
-}
-
-AgentResponseBlock ExecutionWidget .exec-header {
-    border-bottom: none;
-    background: transparent;
-}
-
-AgentResponseBlock ExecutionWidget .exec-title {
-    color: $secondary 80%;
-    text-style: bold;
-}
-
-AgentResponseBlock ExecutionWidget .toggle-icon {
-    color: $secondary;
-}
-
-AgentResponseBlock ExecutionWidget .exec-header:hover {
-    background: $secondary 8%;
-    color: $secondary;
-}
+/* --- _iterations.tcss --- */
 
 /* ==========================================================================
    Agent Iterations - Structured Think -> Tool -> Response Flow
+   Extracted from main.tcss lines 2598-2809
    ========================================================================== */
 
 /* --- IterationContainer --- */
@@ -2825,625 +6242,11 @@ IterationSeparator {
     background: transparent;
 }
 
-/* ==========================================================================
-   Tool Approval Screen
-   ========================================================================== */
-
-ToolApprovalScreen {
-    align: center middle;
-    background: $layer-void 80%;
-}
-
-ToolApprovalScreen #approval-container {
-    width: 80;
-    max-width: 90%;
-    height: auto;
-    max-height: 80%;
-    background: $surface;
-    border: double $warning;
-    padding: 1 2;
-}
-
-ToolApprovalScreen #approval-title {
-    text-align: center;
-    text-style: bold;
-    color: $warning;
-    margin-bottom: 1;
-}
-
-ToolApprovalScreen #approval-subtitle {
-    text-align: center;
-    color: $text-muted;
-    margin-bottom: 1;
-}
-
-ToolApprovalScreen #tools-scroll {
-    width: 100%;
-    height: auto;
-    max-height: 20;
-    margin-bottom: 1;
-}
-
-ToolApprovalScreen ToolPreview {
-    width: 100%;
-    height: auto;
-    padding: 1;
-    background: $panel;
-    border: none;
-    border-left: thick $accent 50%;
-    margin-bottom: 1;
-}
-
-ToolApprovalScreen ToolPreview .tool-name {
-    text-style: bold;
-    color: $accent;
-    margin-bottom: 1;
-}
-
-ToolApprovalScreen ToolPreview .tool-args {
-    width: 100%;
-    height: auto;
-    max-height: 10;
-}
-
-ToolApprovalScreen #approval-buttons {
-    width: 100%;
-    height: auto;
-    align: center middle;
-    layout: horizontal;
-}
-
-ToolApprovalScreen #approval-buttons Button {
-    margin: 0 1;
-}
-
-ToolApprovalScreen #approve {
-    background: $success;
-}
-
-ToolApprovalScreen #approve-all {
-    background: $primary;
-}
-
-ToolApprovalScreen #reject {
-    background: $warning;
-}
-
-ToolApprovalScreen #cancel {
-    background: $error;
-}
-
-ToolApprovalScreen #approval-hint {
-    text-align: center;
-    color: $text-muted;
-    text-style: dim;
-    margin-top: 1;
-}
-
-/* ----- Confirm Dialog / Disclaimer Dialog ----- */
-
-ConfirmDialog,
-DisclaimerScreen {
-    align: center middle;
-    background: $layer-void 80%;
-}
-
-ConfirmDialog #confirm-dialog {
-    width: 50;
-    max-width: 80%;
-    height: auto;
-    background: $surface;
-    border: double $warning;
-    padding: 1 2;
-}
-
-ConfirmDialog #confirm-content {
-    width: 100%;
-    height: auto;
-}
-
-ConfirmDialog #confirm-title {
-    text-align: center;
-    text-style: bold;
-    color: $warning;
-    margin-bottom: 1;
-}
-
-ConfirmDialog #confirm-message {
-    text-align: center;
-    margin-bottom: 1;
-    width: 100%;
-}
-
-ConfirmDialog #confirm-buttons {
-    width: 100%;
-    height: auto;
-    align: center middle;
-}
-
-ConfirmDialog #confirm-buttons Button {
-    margin: 0 1;
-}
-
-/* ----- Disclaimer Screen ----- */
-
-DisclaimerScreen #disclaimer-dialog {
-    width: 80;
-    max-width: 90%;
-    height: auto;
-    background: $surface;
-    border: double $warning;
-    padding: 2 3;
-}
-
-DisclaimerScreen #disclaimer-content {
-    width: 100%;
-    height: auto;
-}
-
-DisclaimerScreen #disclaimer-title {
-    text-align: center;
-    text-style: bold;
-    color: $warning;
-    margin-bottom: 1;
-}
-
-DisclaimerScreen #disclaimer-message {
-    margin-bottom: 1;
-    width: 100%;
-}
-
-DisclaimerScreen #disclaimer-buttons {
-    width: 100%;
-    height: auto;
-    align: center middle;
-}
-
-DisclaimerScreen #disclaimer-buttons Button {
-    margin: 0 1;
-}
+/* --- _planning.tcss --- */
 
 /* ==========================================================================
-   AppHeader Widget
-   ========================================================================== */
-
-AppHeader {
-    dock: top;
-    width: 100%;
-    height: auto;
-    min-height: 1;
-    layout: grid;
-    grid-size: 3 1;
-    grid-columns: 1fr auto 1fr;
-    background: $layer-raised;
-    color: $text;
-    border-bottom: solid $primary;
-}
-
-AppHeader .header-left {
-    column-span: 1;
-    width: 100%;
-    height: 1;
-    padding: 0 1;
-    color: $primary;
-}
-
-AppHeader .header-icon {
-    color: $success;
-    text-style: bold;
-}
-
-AppHeader.-disconnected .header-icon {
-    color: $error;
-}
-
-AppHeader .header-title {
-    column-span: 1;
-    width: 100%;
-    height: 1;
-    text-align: center;
-    text-style: bold;
-    color: $text-bright;
-}
-
-AppHeader .header-right {
-    column-span: 1;
-    width: 100%;
-    height: 1;
-    text-align: right;
-    padding: 0 1;
-    color: $text-muted;
-}
-
-/* ==========================================================================
-   TerminalBlock Widget
-   ========================================================================== */
-
-TerminalBlock {
-    height: 24;
-    max-height: 40;
-    background: #1a1b26;
-    color: #a9b1d6;
-    border: solid $primary;
-    overflow: hidden;
-}
-
-TerminalBlock:focus {
-    border: double $accent;
-}
-
-/* ==========================================================================
-   StopButton Widget
-   ========================================================================== */
-
-StopButton {
-    width: auto;
-    height: 1;
-    padding: 0 1;
-    color: $error;
-    text-style: bold;
-}
-
-StopButton:hover {
-    background: $error 15%;
-    text-style: bold underline;
-}
-
-
-
-/* ==========================================================================
-   Prompt Editor Screen
-   ========================================================================== */
-
-PromptEditorScreen {
-    align: center middle;
-    background: $layer-void 80%;
-}
-
-PromptEditorScreen #editor-container {
-    width: 90%;
-    height: 90%;
-    background: $layer-base;
-    border: double $secondary $border-normal;
-    layout: horizontal;
-}
-
-/* Sidebar */
-PromptEditorScreen #sidebar {
-    width: 30%;
-    height: 100%;
-    border-right: solid $secondary $border-normal;
-    layout: vertical;
-}
-
-PromptEditorScreen #sidebar-title {
-    text-style: bold;
-    color: $secondary;
-    padding: 1;
-    text-align: center;
-    background: $layer-raised 30%;
-}
-
-PromptEditorScreen ListView {
-    height: 1fr;
-    background: $layer-raised 10%;
-    border: solid $text-dim;
-}
-
-PromptEditorScreen PromptListItem {
-    padding: 1 2;
-    color: $text-muted;
-}
-
-PromptEditorScreen PromptListItem:hover {
-    background: $layer-raised 30%;
-    color: $text-bright;
-}
-
-PromptEditorScreen PromptListItem.--highlight {
-    background: $secondary 20%;
-    color: $text-bright;
-    text-style: bold;
-}
-
-PromptEditorScreen #sidebar-buttons {
-    height: auto;
-    padding: 1;
-    layout: horizontal;
-    align: center middle;
-    background: $layer-raised 20%;
-}
-
-PromptEditorScreen Button {
-    min-width: 8;
-    margin: 0 1;
-    border: none;
-}
-
-PromptEditorScreen #new-btn {
-    background: $success 20%;
-    color: $success;
-}
-PromptEditorScreen #new-btn:hover {
-    background: $success;
-    color: $layer-void;
-}
-
-/* Main Content */
-PromptEditorScreen #main-content {
-    width: 70%;
-    height: 100%;
-    layout: vertical;
-    padding: 1 2;
-}
-
-PromptEditorScreen .field-label {
-    color: $secondary;
-    text-style: bold;
-    margin-top: 1;
-}
-
-PromptEditorScreen Input {
-    background: $layer-raised 10%;
-    border: solid $text-dim;
-    padding: 0 1;
-    margin-bottom: 1;
-}
-
-PromptEditorScreen Input:focus {
-    border: solid $secondary;
-    background: $layer-raised 30%;
-}
-
-PromptEditorScreen TextArea {
-    height: 1fr;
-    background: $layer-raised 10%;
-    border: solid $secondary $border-dim;
-    margin-top: 1;
-}
-
-PromptEditorScreen TextArea:focus {
-    border: solid $secondary $border-normal;
-}
-
-PromptEditorScreen #footer-buttons {
-    height: 3;
-    margin-top: 1;
-    layout: horizontal;
-    align: right middle;
-}
-
-PromptEditorScreen #save-btn {
-    background: $success;
-    color: $layer-void;
-    margin-left: 2;
-}
-
-PromptEditorScreen #delete-btn {
-    background: $error;
-    color: $text-bright;
-    margin-right: 1; 
-}
-
-PromptEditorScreen .spacer {
-    width: 1fr;
-}
-
-PromptEditorScreen #close-btn {
-    background: $layer-raised;
-    color: $text-muted;
-}
-
-/* ==========================================================================
-   Todo Screen
-   ========================================================================== */
-
-TodoScreen {
-    align: center middle;
-    background: $layer-void 80%;
-}
-
-TodoScreen #todo-container {
-    width: 70%;
-    height: 80%;
-    background: $layer-base;
-    border: double $primary $border-normal;
-    layout: vertical;
-    padding: 1 2;
-}
-
-TodoScreen #title {
-    text-style: bold;
-    color: $primary;
-    text-align: center;
-    padding-bottom: 1;
-    border-bottom: solid $primary 20%;
-}
-
-TodoScreen DataTable {
-    height: 1fr;
-    background: $layer-raised 10%;
-    margin-bottom: 1;
-}
-
-TodoScreen DataTable > .datatable--header {
-    background: $layer-raised 30%;
-    color: $primary;
-    text-style: bold;
-}
-
-TodoScreen DataTable > .datatable--cursor {
-    background: $primary 30%;
-    color: $text-bright;
-}
-
-TodoScreen #input-area {
-    height: auto;
-    layout: horizontal;
-    align: center middle;
-    margin-top: 1;
-}
-
-TodoScreen Input {
-    width: 1fr;
-    margin-right: 1;
-    border: solid $text-dim;
-    background: $layer-raised 20%;
-}
-
-TodoScreen Input:focus {
-    border: solid $primary;
-}
-
-TodoScreen Button {
-    min-width: 8;
-}
-
-TodoScreen #add-btn {
-    background: $success;
-    color: $layer-void;
-}
-
-TodoScreen #close-btn {
-    background: $layer-raised;
-    margin-left: 1;
-}
-
-/* ==========================================================================
-   Sidebar Widget
-   ========================================================================== */
-
-Sidebar {
-    width: 30;
-    min-width: 25;
-    max-width: 50;
-    height: 100%;
-    dock: left;
-    background: $layer-base 80%;
-    border-right: solid $border-dim;
-    display: none;
-    padding: 0;
-}
-
-Sidebar #sidebar-content {
-    height: 100%;
-    width: 100%;
-}
-
-Sidebar TabbedContent {
-    height: 1fr;
-}
-
-Sidebar ContentSwitcher {
-    height: 1fr;
-}
-
-Sidebar TabPane {
-    padding: 0;
-    height: 1fr;
-}
-
-Sidebar DirectoryTree {
-    background: transparent;
-    border: none;
-    width: 100%;
-    height: 100%;
-}
-
-Sidebar DataTable {
-    background: transparent;
-    border: none;
-    width: 100%;
-    height: 100%;
-    color: $text;
-}
-
-Sidebar DataTable > .datatable--header {
-    background: $layer-raised 30%;
-    color: $secondary;
-}
-
-Sidebar DataTable > .datatable--cursor {
-    background: $primary 30%;
-    color: $text-bright;
-}
-
-Sidebar DataTable > .datatable--row {
-    background: transparent;
-    color: $text;
-}
-
-Sidebar DataTable > .datatable--row-hover {
-    background: $layer-raised 20%;
-}
-
-Sidebar Tabs {
-    dock: top;
-    height: 1;
-    min-height: 1;
-    background: $layer-raised 50%;
-}
-
-Sidebar Tab {
-    height: 1;
-    padding: 0 1;
-    min-width: 6;
-}
-
-AgentStatusWidget {
-    width: 100%;
-    height: auto;
-    padding: 1;
-}
-
-AgentStatusWidget Label {
-    width: 100%;
-    height: auto;
-    color: $text;
-    padding: 0;
-}
-
-AgentStatusWidget #agent-state-label {
-    text-style: bold;
-    color: $primary;
-}
-
-AgentStatusWidget #agent-recent-tools {
-    margin-top: 1;
-    color: $text-dim;
-}
-
-/* ==========================================================================
-   Streaming Tool Styles
-   ========================================================================== */
-
-.tool-progress {
-    width: 1fr;
-    height: 1;
-    margin: 0 1;
-    background: $layer-raised;
-    color: $primary;
-    display: none;
-}
-
-.tool-cancel-btn {
-    width: 3;
-    min-width: 3;
-    height: 1;
-    border: none;
-    background: transparent;
-    color: $error;
-    margin-left: 1;
-    display: none;
-}
-
-.tool-cancel-btn:hover {
-    background: $error;
-    color: $background;
-}
-
-/* ==========================================================================
-   Plan Block Styles
+   Plan Block Styles - Step-by-step execution planning UI
+   Extracted from main.tcss lines 3490-3625
    ========================================================================== */
 
 .plan-block {
@@ -3578,530 +6381,633 @@ PlanStepWidget:focus {
     text-style: bold;
 }
 
+/* --- _terminal.tcss --- */
+
 /* ==========================================================================
-   Screen Styles (Migrated from Python DEFAULT_CSS)
+   Terminal Block Widget - Interactive terminal/TUI mode styles
+   Extracted from main.tcss lines 1919-1938, 3040-3056
    ========================================================================== */
 
-/* --- HunkWidget (review.py) --- */
-HunkWidget {
+/* TUI Mode Styles for CommandBlock */
+CommandBlock.mode-tui {
+    border: double $accent;
+    background: #000000;
+}
+
+CommandBlock.mode-tui:focus-within {
+    border: double $accent;
+    background: #000000;
+}
+
+CommandBlock.mode-tui BlockHeader {
+    color: $accent;
+    border-bottom: solid $accent;
+}
+
+.prompt-symbol-tui {
+    color: $accent;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   TerminalBlock Widget
+   ========================================================================== */
+
+TerminalBlock {
+    height: 24;
+    max-height: 40;
+    background: #1a1b26;
+    color: #a9b1d6;
+    border: solid $primary;
+    overflow: hidden;
+}
+
+TerminalBlock:focus {
+    border: double $accent;
+}
+
+/* --- _thinking.tcss --- */
+
+/* ==========================================================================
+   Thinking Widget - AI Reasoning Display
+   Collapsible window showing model's chain of thought
+   Extracted from main.tcss lines 394-491
+   ========================================================================== */
+
+ThinkingWidget {
     height: auto;
-    margin-bottom: 1;
-    padding: 1;
-    border: solid $surface-lighten-2;
+    min-height: 0;
+    padding: 0;
+    margin: 0 0 1 0;
+    background: transparent;
 }
 
-HunkWidget.pending {
-    border-left: heavy $warning;
+ThinkingWidget.hidden {
+    display: none;
 }
 
-HunkWidget.accepted {
-    border-left: heavy $success;
-}
-
-HunkWidget.rejected {
-    border-left: heavy $error;
-}
-
-.hunk-header {
+ThinkingWidget .thinking-header {
     layout: horizontal;
     height: 1;
-    margin-bottom: 1;
+    min-height: 1;
+    width: 100%;
+    padding: 0 1;
+    margin-bottom: 0;
+    background: transparent;
+    border-left: solid $primary $border-dim;
+    transition: background 150ms in_out_cubic;
 }
 
-.hunk-location {
+ThinkingWidget .thinking-header:hover {
+    background: $layer-raised 30%;
+    border-left: solid $primary $border-normal;
+}
+
+ThinkingWidget .spinner {
+    color: $primary;
+    width: 2;
+    min-width: 2;
+    max-width: 2;
+    text-align: center;
+}
+
+ThinkingWidget .spinner.complete {
+    color: $success;
+}
+
+ThinkingWidget .thinking-label {
     color: $text-muted;
+    text-style: italic;
+    padding-left: 1;
     width: 1fr;
 }
 
-.hunk-status {
+ThinkingWidget .toggle-hint {
+    color: $text-dim;
+}
+
+ThinkingWidget .toggle-hint:hover {
+    color: $primary;
+    text-style: bold;
+}
+
+ThinkingWidget .peek-window {
+    height: auto;
+    min-height: 3;
+    max-height: 10;
+    margin: 0 1 1 3;
+    padding: 1 2;
+    background: transparent;
+    color: $text-muted;
+    scrollbar-size: 0 0;
+    border: none;
+    border-left: solid $primary $border-dim;
+}
+
+ThinkingWidget .peek-window.expanded {
+    height: auto;
+    min-height: 5;
+    max-height: 40;
+    scrollbar-size: 1 1;
+    overflow-y: auto;
+    background: $layer-raised 15%;
+    border-left: solid $primary $border-normal;
+    color: $text-bright;
+}
+
+ThinkingWidget .peek-content {
+    width: 100%;
+    padding: 0;
+}
+
+ThinkingWidget .peek-window.empty {
+    min-height: 0;
+    max-height: 1;
+    border: none;
+    background: transparent;
+}
+
+
+/* ==========================================================================
+   UTILITIES (2 files)
+   ========================================================================== */
+
+/* --- _badges.tcss --- */
+
+/* ==========================================================================
+   Badge/Pill System - Count Indicators and Status Badges
+   Utility classes for status bar counts and inline badges
+   ========================================================================== */
+
+/* ==========================================================================
+   Base Badge
+   Compact pill-shaped indicator with centered text
+   ========================================================================== */
+
+.badge {
+    padding: 0 1;
+    min-width: 2;
+    text-align: center;
+    background: $layer-raised;
+    color: $text;
+}
+
+/* ==========================================================================
+   Semantic Badge Variants
+   ========================================================================== */
+
+/* --- Primary Badge (Cyan) --- */
+.badge-primary {
+    background: $primary 30%;
+    color: $primary;
+}
+
+/* --- Success Badge (Green) --- */
+.badge-success {
+    background: $success 30%;
+    color: $success;
+}
+
+/* --- Warning Badge (Yellow) --- */
+.badge-warning {
+    background: $warning 30%;
     color: $warning;
 }
 
-.hunk-status.accepted {
-    color: $success;
-}
-
-.hunk-status.rejected {
+/* --- Danger Badge (Red) --- */
+.badge-danger {
+    background: $error 30%;
     color: $error;
 }
 
-.diff-content {
-    height: auto;
+/* --- Info Badge (Magenta/Secondary) --- */
+.badge-info {
+    background: $secondary 30%;
+    color: $secondary;
 }
 
-.diff-line-del {
-    color: $error;
-    background: $error 10%;
+/* --- Accent Badge (Green Accent) --- */
+.badge-accent {
+    background: $accent 30%;
+    color: $accent;
 }
 
-.diff-line-add {
-    color: $success;
-    background: $success 10%;
+/* ==========================================================================
+   Badge Size Variants
+   ========================================================================== */
+
+/* Small badge - minimal padding */
+.badge-sm {
+    padding: 0;
+    min-width: 1;
 }
 
-.diff-line-context {
+/* Large badge - extra padding */
+.badge-lg {
+    padding: 0 2;
+    min-width: 4;
+}
+
+/* ==========================================================================
+   Badge Style Variants
+   ========================================================================== */
+
+/* Outline badge - border instead of background */
+.badge-outline {
+    background: transparent;
+    border: solid $panel;
     color: $text-muted;
 }
 
-.hunk-actions {
-    layout: horizontal;
-    height: 3;
-    margin-top: 1;
-    align: right middle;
-}
-
-.hunk-actions Button {
-    margin-left: 1;
-    min-width: 10;
-}
-
-/* --- FileChangeWidget (review.py) --- */
-FileChangeWidget {
-    height: auto;
-    margin-bottom: 2;
-    padding: 1;
-    background: $surface;
-    border: solid $primary 50%;
-}
-
-.file-header {
-    layout: horizontal;
-    height: 2;
-    margin-bottom: 1;
-}
-
-.file-path {
-    color: $primary;
-    text-style: bold;
-    width: 1fr;
-}
-
-.file-stats {
-    color: $text-muted;
-}
-
-.file-stats-add {
-    color: $success;
-}
-
-.file-stats-del {
-    color: $error;
-}
-
-.file-rationale {
-    color: $text-muted;
-    text-style: italic;
-    margin-bottom: 1;
-}
-
-.file-actions {
-    layout: horizontal;
-    height: 3;
-    align: right middle;
-    margin-top: 1;
-}
-
-.file-actions Button {
-    margin-left: 1;
-}
-
-/* --- ReviewScreen (review.py) --- */
-ReviewScreen {
-    align: center middle;
-}
-
-#review-container {
-    width: 90%;
-    height: 90%;
-    background: $surface;
-    border: thick $primary;
-    padding: 1 2;
-}
-
-#review-header {
-    height: 3;
-    dock: top;
-}
-
-#review-title {
-    text-style: bold;
-    color: $primary;
-}
-
-#review-summary {
-    color: $text-muted;
-}
-
-#review-scroll {
-    height: 1fr;
-    margin: 1 0;
-}
-
-#review-footer {
-    height: 3;
-    dock: bottom;
-    layout: horizontal;
-    align: right middle;
-}
-
-#review-footer Button {
-    margin-left: 1;
-}
-
-/* --- BranchDiffScreen (branch_diff.py) --- */
-BranchDiffScreen {
-    align: center middle;
-}
-
-#diff-container {
-    width: 90%;
-    height: 80%;
-    background: $surface;
+.badge-outline-primary {
+    background: transparent;
     border: solid $primary;
+    color: $primary;
 }
 
-.column {
-    width: 1fr;
-    height: 100%;
-    border-right: solid $primary;
+.badge-outline-success {
+    background: transparent;
+    border: solid $success;
+    color: $success;
 }
 
-.column:last-child {
-    border-right: none;
+.badge-outline-warning {
+    background: transparent;
+    border: solid $warning;
+    color: $warning;
 }
 
-.header {
+.badge-outline-danger {
+    background: transparent;
+    border: solid $error;
+    color: $error;
+}
+
+/* Solid badge - full color background */
+.badge-solid-primary {
+    background: $primary;
+    color: $layer-void;
+}
+
+.badge-solid-success {
+    background: $success;
+    color: $layer-void;
+}
+
+.badge-solid-warning {
+    background: $warning;
+    color: $layer-void;
+}
+
+.badge-solid-danger {
+    background: $error;
+    color: $layer-void;
+}
+
+/* ==========================================================================
+   Pill Variant - Rounded appearance (same as badge, explicit name)
+   ========================================================================== */
+
+.pill {
+    padding: 0 1;
+    min-width: 2;
     text-align: center;
-    background: $primary;
+    background: $layer-raised;
     color: $text;
-    padding: 1;
-    text-style: bold;
-    width: 100%;
 }
 
-.block-item {
-    padding: 1;
-    border-bottom: solid $primary-darken-2;
-    height: auto;
+.pill-primary {
+    background: $primary 30%;
+    color: $primary;
 }
 
-.block-type {
+.pill-success {
+    background: $success 30%;
+    color: $success;
+}
+
+.pill-warning {
+    background: $warning 30%;
+    color: $warning;
+}
+
+.pill-danger {
+    background: $error 30%;
+    color: $error;
+}
+
+/* --- _states.tcss --- */
+
+/* ==========================================================================
+   State Utility Classes
+   ========================================================================== */
+
+/* Loading state - muted with warning tint */
+.is-loading {
+    color: $text-muted;
+    tint: $warning 5%;
+}
+
+/* Disabled state - ghosted, no interactions */
+.is-disabled {
+    color: $text-ghost;
+    background: $layer-base;
+    opacity: 0.5;
+}
+
+.is-disabled:hover {
+    background: $layer-base;
+}
+
+.is-disabled:focus {
+    border: solid $primary $border-dim;
+}
+
+/* Selected state - primary highlight with accent border */
+.is-selected {
+    background: $primary $glow-medium;
+    border-left: thick $primary;
+}
+
+/* Error state - error tint and border */
+.is-error {
+    background: $error $glow-subtle;
+    border: solid $error $border-normal;
+    color: $text-bright;
+}
+
+/* Success state - success tint and border */
+.is-success {
+    background: $success $glow-subtle;
+    border: solid $success $border-normal;
+    color: $text-bright;
+}
+
+/* Warning state - warning tint and border */
+.is-warning {
+    background: $warning $glow-subtle;
+    border: solid $warning $border-normal;
+    color: $text-bright;
+}
+
+/* Active state - primary highlight */
+.is-active {
+    background: $primary $glow-medium;
+    color: $text-bright;
+    border: solid $primary $border-focus;
+}
+
+/* Pending state - dashed border with warning tint */
+.is-pending {
+    background: $warning $glow-subtle;
+    border: dashed $warning $border-normal;
+    color: $text-muted;
+}
+
+/* Empty state - dim, italic, centered */
+.is-empty {
+    color: $text-dim;
+    text-style: italic;
+    text-align: center;
+    padding: 2 4;
+}
+
+/* Hidden state - not displayed */
+.is-hidden {
+    display: none;
+}
+
+/* Visible state - block display */
+.is-visible {
+    display: block;
+}
+
+/* Readonly state - muted with minimal focus */
+.is-readonly {
+    color: $text-muted;
+    background: $layer-base;
+    opacity: 0.9;
+}
+
+.is-readonly:focus {
+    border: solid $primary $border-dim;
+}
+
+/* Highlighted state - warning background for search matches */
+.is-highlighted {
+    background: $warning $glow-strong;
+    color: $text-bright;
+}
+
+/* Hoverable state - enhanced hover effect */
+.is-hoverable:hover {
+    background: $layer-raised;
+    color: $text-bright;
+}
+
+/* Clickable state - primary color with underline on hover */
+.is-clickable {
+    color: $primary;
+}
+
+.is-clickable:hover {
+    text-style: underline;
     color: $accent;
+}
+
+/* ==========================================================================
+   Message State Classes - Styled Text Blocks
+   ========================================================================== */
+
+/* --- Error Message --- */
+.error-message {
+    color: $error;
     text-style: bold;
-}
-
-.block-content {
-    color: $text-muted;
-}
-
-#close {
-    width: 100%;
-    dock: bottom;
-}
-
-/* --- MCPCatalogScreen (mcp_catalog.py) --- */
-MCPCatalogScreen {
-    align: center middle;
-}
-
-#catalog-container {
-    width: 80%;
-    height: 80%;
-    background: $surface;
-    border: tall $primary;
-    padding: 1 2;
-}
-
-#catalog-header {
-    height: auto;
-    margin-bottom: 1;
-}
-
-#catalog-title {
-    text-style: bold;
-    width: 100%;
-    content-align: center middle;
-}
-
-#catalog-search {
-    margin: 1 0;
-}
-
-#catalog-content {
-    height: 1fr;
-}
-
-#category-list {
-    width: 25%;
-    border-right: solid $primary-darken-2;
-    padding-right: 1;
-}
-
-#category-list > ListItem {
-    padding: 0 1;
-    height: 1;
-}
-
-#category-list > ListItem.--highlight {
-    background: $primary;
-}
-
-#server-list {
-    width: 75%;
+    border-left: thick $error;
     padding-left: 1;
+    background: $error $glow-subtle;
 }
 
-CatalogItemWidget {
-    height: auto;
-    margin: 0 0 1 0;
-}
-
-.catalog-item {
-    height: auto;
-    padding: 0 1;
-    background: $surface-lighten-1;
-    border: solid $primary-darken-3;
-}
-
-.catalog-item-info {
-    width: 1fr;
-    height: auto;
-}
-
-.catalog-name {
-    height: 1;
-}
-
-.catalog-desc {
-    color: $text-muted;
-    height: 1;
-}
-
-.catalog-env {
-    height: 1;
-}
-
-.catalog-install-btn {
-    width: auto;
-    min-width: 10;
-    height: 3;
-}
-
-#catalog-footer {
-    height: auto;
-    margin-top: 1;
-    align: center middle;
-}
-
-/* --- MCPServerConfigScreen (mcp.py) --- */
-MCPServerConfigScreen {
-    align: center middle;
-}
-
-#mcp-config-container {
-    width: 70;
-    height: auto;
-    max-height: 80%;
-    background: $surface;
-    border: tall $primary;
-    padding: 1 2;
-}
-
-#mcp-config-container > Label:first-child {
-    text-style: bold;
-    width: 100%;
-    content-align: center middle;
-    margin-bottom: 1;
-}
-
-.input-label {
-    margin-top: 1;
+.is-error .error-text {
+    color: $error;
     text-style: bold;
 }
 
-.input-hint {
+/* --- Success Message --- */
+.success-message {
+    color: $success;
+    text-style: bold;
+    border-left: thick $success;
+    padding-left: 1;
+    background: $success $glow-subtle;
+}
+
+.is-success .success-text {
+    color: $success;
+    text-style: bold;
+}
+
+/* --- Warning Message --- */
+.warning-message {
+    color: $warning;
+    text-style: bold;
+    border-left: thick $warning;
+    padding-left: 1;
+    background: $warning $glow-subtle;
+}
+
+.is-warning .warning-text {
+    color: $warning;
+    text-style: bold;
+}
+
+/* --- Info Message --- */
+.info-message {
+    color: $primary;
+    text-style: bold;
+    border-left: thick $primary;
+    padding-left: 1;
+    background: $primary $glow-subtle;
+}
+
+/* ==========================================================================
+   Success Feedback Styles (ui-14)
+   Enhanced visual feedback for successful actions
+   ========================================================================== */
+
+/* Text-based success feedback */
+.success-feedback {
+    color: $success;
+    text-style: bold;
+}
+
+/* Action success state - animated background */
+.action-success {
+    background: $success 20%;
+    border: solid $success;
+    transition: background 300ms in_out_cubic;
+}
+
+.action-success:hover {
+    background: $success 30%;
+}
+
+/* Flash success - for temporary feedback animations */
+.flash-success {
+    background: $success 25%;
+    border: solid $success $border-focus;
+    tint: $success 8%;
+    transition: background 300ms in_out_cubic, tint 300ms in_out_cubic;
+}
+
+/* ==========================================================================
+   Icon Color Consistency (ui-10)
+   Semantic icon color classes for status indicators
+   ========================================================================== */
+
+/* Success icon - green for completed/ok states */
+.icon-success {
+    color: $success;
+}
+
+/* Error icon - red for failed/error states */
+.icon-error {
+    color: $error;
+}
+
+/* Warning icon - yellow/amber for caution states */
+.icon-warning {
+    color: $warning;
+}
+
+/* Info icon - primary/cyan for informational states */
+.icon-info {
+    color: $primary;
+}
+
+/* Muted icon - dimmed for inactive/secondary states */
+.icon-muted {
     color: $text-muted;
+}
+
+/* Accent icon - accent color for highlights */
+.icon-accent {
+    color: $accent;
+}
+
+/* Secondary icon - magenta for agent/system */
+.icon-secondary {
+    color: $secondary;
+}
+
+/* Dim icon - very subtle for background elements */
+.icon-dim {
+    color: $text-dim;
+}
+
+/* Ghost icon - nearly invisible for subtle hints */
+.icon-ghost {
+    color: $text-ghost;
+}
+
+/* ==========================================================================
+   Loading Indicators (ui-5)
+   CSS-only loading state classes
+   ========================================================================== */
+
+/* Loading text - italic warning color */
+.loading-text {
+    color: $warning;
     text-style: italic;
 }
 
-#mcp-config-container Input {
-    margin-bottom: 0;
-}
-
-#buttons {
-    margin-top: 2;
-    height: auto;
-    align: center middle;
-}
-
-#buttons Button {
-    margin: 0 1;
-}
-
-/* --- ContextScreen (context.py) --- */
-ContextScreen {
-    align: center middle;
-}
-
-#context-dialog {
-    width: 80%;
-    height: 80%;
-    background: $surface;
-    border: thick $primary;
-    padding: 1;
-}
-
-#context-header {
-    dock: top;
-    height: 1;
-    border-bottom: solid $primary;
+/* Loading indicator - centered warning text */
+.loading-indicator {
+    color: $warning;
     text-align: center;
+}
+
+/* ==========================================================================
+   Progress Indicators (ui-17)
+   CSS-only progress state classes
+   ========================================================================== */
+
+/* Processing state - tinted with primary border */
+.is-processing {
+    tint: $primary 5%;
+    border: solid $primary $border-dim;
+}
+
+/* Progress text - primary color */
+.progress-text {
+    color: $primary;
+}
+
+/* Progress bar container - dark background */
+.progress-bar {
+    background: $layer-void;
+    height: 1;
+}
+
+/* Progress bar fill - primary colored */
+.progress-fill {
+    background: $primary;
+    height: 1;
+}
+
+/* ==========================================================================
+   Status Bar Busy Indicators
+   Classes for status bar activity states
+   ========================================================================== */
+
+/* Status busy - bold warning for active state */
+.status-busy {
+    color: $warning;
     text-style: bold;
 }
 
-#context-stats {
-    dock: bottom;
-    height: 3;
-    border-top: solid $primary;
+/* Status idle - muted for inactive state */
+.status-idle {
     color: $text-muted;
 }
 
-.msg-item {
-    margin-bottom: 1;
-    padding: 1;
-    background: $surface-lighten-1;
-}
-
-.msg-role {
-    color: $accent;
-    text-style: bold;
-    margin-bottom: 1;
-}
-
-/* --- AgentScreen (agent.py) --- */
-AgentScreen {
-    align: center middle;
-}
-
-#agent-dialog {
-    width: 85%;
-    height: 85%;
-    background: $surface;
-    border: thick $primary;
-    padding: 1;
-}
-
-#agent-header {
-    dock: top;
-    height: 1;
-    text-align: center;
-    text-style: bold;
-    border-bottom: solid $primary;
-}
-
-#agent-footer {
-    dock: bottom;
-    height: 3;
-    align: center middle;
-}
-
-#agent-content {
-    height: 1fr;
-}
-
-.section-title {
-    text-style: bold;
-    color: $accent;
-    margin-top: 1;
-    margin-bottom: 0;
-}
-
-.stat-row {
-    height: 1;
-}
-
-.stat-label {
-    width: 20;
-    color: $text-muted;
-}
-
-.stat-value {
-    width: 1fr;
-}
-
-#session-table {
-    height: 10;
-    margin-top: 1;
-}
-
-#tool-table {
-    height: 10;
-    margin-top: 1;
-}
-
-/* --- SSHAddScreen (ssh_add.py) --- */
-SSHAddScreen {
-    align: center middle;
-    background: $background 80%;
-}
-
-#ssh-form {
-    width: 50;
-    height: auto;
-    max-height: 90%;
-    background: $surface;
-    border: thick $primary;
-    padding: 0 1;
-}
-
-#ssh-form .header {
-    text-align: center;
-    text-style: bold;
-    border-bottom: solid $primary;
-    margin: 1 0;
-    color: $text;
-    height: auto;
-}
-
-#ssh-form Label {
-    margin-top: 1;
-    width: 100%;
-    color: $text-muted;
-    height: 1;
-}
-
-#ssh-form Input {
-    margin: 0;
-    height: 1;
-    border: none;
-    background: $panel;
-    padding: 0 1;
-    min-height: 1;
-}
-
-#creds-row {
-    height: auto;
-    grid-size: 2;
-    grid-gutter: 1;
-    margin-top: 0;
-}
-
-#creds-row Vertical {
-    height: auto;
-    width: 100%;
-}
-
-#form-actions {
-    margin-top: 1;
-    margin-bottom: 1;
-    align: right middle;
-    height: auto;
-    width: 100%;
-}
-
-#form-actions Button {
-    margin-left: 1;
-    min-width: 8;
-    height: 1;
-    border: none;
-}

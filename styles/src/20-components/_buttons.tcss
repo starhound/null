@@ -561,3 +561,55 @@ AgentResponseBlock ActionButton:hover {
     text-style: bold;
     border-bottom: solid $secondary;
 }
+
+/* ==========================================================================
+   Copy Menu Popup
+   ========================================================================== */
+
+.copy-menu {
+    layer: above;
+    dock: top;
+    width: 24;
+    height: auto;
+    max-height: 10;
+    background: $layer-float;
+    border: round $primary $border-normal;
+    padding: 0;
+    margin: 0;
+    offset: 0 -1;
+}
+
+.copy-menu:focus-within {
+    border: round $primary $border-focus;
+}
+
+.copy-menu-title {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $text-dim;
+    text-style: italic;
+    background: transparent;
+}
+
+.copy-menu-item {
+    width: 100%;
+    height: 1;
+    min-height: 1;
+    padding: 0 1;
+    background: transparent;
+    color: $text-muted;
+    border: none;
+    text-align: left;
+}
+
+.copy-menu-item:hover {
+    background: $primary $glow-medium;
+    color: $text-bright;
+}
+
+.copy-menu-item:focus {
+    background: $primary $glow-strong;
+    color: $text-bright;
+    text-style: bold;
+}

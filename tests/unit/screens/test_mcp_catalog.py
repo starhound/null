@@ -166,39 +166,11 @@ class TestMCPCatalogScreenCompose:
 
 
 class TestMCPCatalogScreenCSS:
-    """Tests for screen CSS."""
+    """Tests for screen CSS (styles moved to main.tcss)."""
 
-    def test_default_css_defined(self):
-        """Test that DEFAULT_CSS is defined."""
-        assert MCPCatalogScreen.DEFAULT_CSS is not None
-
-    def test_css_contains_main_selectors(self):
-        """Test that CSS contains expected selectors."""
-        css = MCPCatalogScreen.DEFAULT_CSS
-        assert "MCPCatalogScreen" in css
-        assert "#catalog-container" in css
-        assert "#catalog-header" in css
-        assert "#catalog-search" in css
-
-    def test_css_contains_content_selectors(self):
-        """Test that CSS contains content area selectors."""
-        css = MCPCatalogScreen.DEFAULT_CSS
-        assert "#catalog-content" in css
-        assert "#category-list" in css
-        assert "#server-list" in css
-
-    def test_css_contains_item_selectors(self):
-        """Test that CSS contains catalog item selectors."""
-        css = MCPCatalogScreen.DEFAULT_CSS
-        assert "CatalogItemWidget" in css
-        assert ".catalog-item" in css
-        assert ".catalog-name" in css
-        assert ".catalog-desc" in css
-
-    def test_css_contains_footer_selectors(self):
-        """Test that CSS contains footer selectors."""
-        css = MCPCatalogScreen.DEFAULT_CSS
-        assert "#catalog-footer" in css
+    def test_default_css_attribute_exists(self):
+        """Test that DEFAULT_CSS attribute exists on class."""
+        assert hasattr(MCPCatalogScreen, "DEFAULT_CSS")
 
 
 class TestMCPCatalogScreenActions:

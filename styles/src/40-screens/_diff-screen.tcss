@@ -1,0 +1,241 @@
+/* ==========================================================================
+   Branch Diff Screen - Syntax-highlighted diff viewer
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Main Container
+   -------------------------------------------------------------------------- */
+
+#diff-screen-container {
+    width: 90%;
+    height: 90%;
+    max-width: 140;
+    background: $layer-base;
+    border: round $primary $border-dim;
+    padding: 1 2;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+
+.diff-header {
+    height: 3;
+    align: center middle;
+    padding: 0 1;
+    background: $layer-raised;
+    margin-bottom: 1;
+}
+
+.diff-title {
+    text-style: bold;
+    color: $text-bright;
+}
+
+.diff-stats {
+    margin-left: 2;
+    color: $accent;
+    text-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+   Navigation Bar
+   -------------------------------------------------------------------------- */
+
+.diff-nav-bar {
+    height: 3;
+    align: center middle;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+.diff-nav-btn {
+    min-width: 14;
+    margin: 0 1;
+}
+
+.diff-change-indicator {
+    min-width: 20;
+    text-align: center;
+    color: $text-muted;
+}
+
+/* --------------------------------------------------------------------------
+   Jump Bar
+   -------------------------------------------------------------------------- */
+
+.diff-jump-bar {
+    height: auto;
+    align: left middle;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+.diff-jump-label {
+    color: $text-dim;
+    margin-right: 1;
+}
+
+.diff-jump-btn {
+    min-width: 4;
+    height: 1;
+    margin: 0 1 0 0;
+    padding: 0 1;
+    background: $layer-raised;
+    border: none;
+}
+
+.diff-jump-btn:hover {
+    background: $primary 30%;
+}
+
+/* --------------------------------------------------------------------------
+   Diff Scroll Container
+   -------------------------------------------------------------------------- */
+
+#diff-scroll {
+    height: 1fr;
+    border: round $panel;
+    background: $layer-void;
+    padding: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Diff Hunks
+   -------------------------------------------------------------------------- */
+
+.diff-hunk {
+    margin-bottom: 1;
+    padding: 0;
+}
+
+.diff-hunk-changed {
+    border-left: tall $warning;
+}
+
+.diff-hunk-current {
+    border-left: tall $accent;
+    background: $accent 10%;
+}
+
+.diff-hunk-header {
+    color: $primary;
+    text-style: bold;
+    padding: 0 1;
+    background: $layer-raised;
+    margin-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Diff Lines
+   -------------------------------------------------------------------------- */
+
+.diff-line {
+    height: 1;
+    padding: 0;
+}
+
+.diff-line-num {
+    width: 5;
+    color: $text-ghost;
+    text-align: right;
+    padding-right: 1;
+}
+
+.diff-line-num-a {
+    color: $text-ghost;
+}
+
+.diff-line-num-b {
+    color: $text-ghost;
+}
+
+.diff-indicator {
+    width: 2;
+    text-align: center;
+}
+
+.diff-content {
+    width: 1fr;
+}
+
+/* Line type styling */
+.diff-add {
+    background: $success 15%;
+}
+
+.diff-add .diff-indicator {
+    color: $success;
+    text-style: bold;
+}
+
+.diff-remove {
+    background: $error 15%;
+}
+
+.diff-remove .diff-indicator {
+    color: $error;
+    text-style: bold;
+}
+
+.diff-change {
+    background: $warning 10%;
+}
+
+.diff-change .diff-indicator {
+    color: $warning;
+    text-style: bold;
+}
+
+.diff-same {
+    background: transparent;
+}
+
+.diff-same .diff-indicator {
+    color: $text-ghost;
+}
+
+/* --------------------------------------------------------------------------
+   Unchanged Section (Collapsible)
+   -------------------------------------------------------------------------- */
+
+UnchangedSection {
+    margin: 1 0;
+    border: none;
+}
+
+UnchangedSection > CollapsibleTitle {
+    color: $text-dim;
+    text-style: italic;
+    background: $layer-raised 50%;
+    padding: 0 1;
+}
+
+UnchangedSection > CollapsibleTitle:hover {
+    background: $layer-raised;
+}
+
+.diff-unchanged-content {
+    padding: 0;
+    background: $layer-void 50%;
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.diff-footer {
+    height: 3;
+    align: center middle;
+    padding: 1 1 0 1;
+    margin-top: 1;
+}
+
+.diff-help {
+    color: $text-dim;
+    text-style: italic;
+}
+
+.diff-footer .btn-primary {
+    margin-left: auto;
+}

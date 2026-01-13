@@ -1,6 +1,7 @@
 """AI/LLM configuration management."""
 
 from .defaults import (
+    DEFAULT_AGENT_APPROVAL_TIMEOUT,
     DEFAULT_AI_ACTIVE_PROMPT,
     DEFAULT_AI_ENDPOINT,
     DEFAULT_AI_MODEL,
@@ -44,6 +45,11 @@ class Config:
             "1",
             "yes",
         )
+        agent_approval_timeout = int(
+            sm.get_config(
+                "ai.agent_approval_timeout", str(DEFAULT_AGENT_APPROVAL_TIMEOUT)
+            )
+        )
 
         embedding_provider = sm.get_config("ai.embedding_provider", "")
         embedding_model = sm.get_config(
@@ -67,6 +73,7 @@ class Config:
                 "agent_mode": agent_mode,
                 "agent_max_iterations": agent_max_iterations,
                 "agent_approval_mode": agent_approval_mode,
+                "agent_approval_timeout": agent_approval_timeout,
                 "agent_thinking_visible": agent_thinking_visible,
                 "embedding_provider": embedding_provider,
                 "embedding_model": embedding_model,

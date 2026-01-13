@@ -1,10 +1,30 @@
 """Settings management for TUI/appearance options using JSON config file."""
 
+from __future__ import annotations
+
 import json
 import os
+import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Optional
+
+
+class ValidationError(Exception):
+    """Configuration validation error with field-specific messages.
+
+    Attributes:
+        errors: Dictionary mapping field names to error messages.
+    """
+
+    def __init__(self, errors: dict[str, str]):
+        self.errors = errors
+        messages = [f"{field}: {msg}" for field, msg in errors.items()]
+        super().__init__("; ".join(messages))
+
+    def __str__(self) -> str:
+        return ", ".join(f"{k}: {v}" for k, v in self.errors.items())
+
 
 CONFIG_PATH = Path.home() / ".null" / "config.json"
 
@@ -78,6 +98,58 @@ class AISettings:
     embedding_endpoint: str = ""
     use_rag: bool = False
     rag_top_k: int = 3
+    custom_template_variables: dict[str, str] = field(default_factory=dict)
+
+    MODEL_NAME_PATTERN: re.Pattern[str] = field(
+        default_factory=lambda: re.compile(r"^[a-zA-Z0-9._:/-]+$"), repr=False
+    )
+
+    def validate(self, api_key: str = "") -> dict[str, str]:
+        """Validate settings. Returns errors dict, raises ValidationError if invalid."""
+        errors: dict[str, str] = {}
+
+        if not (0.0 <= self.temperature <= 2.0):
+            errors["temperature"] = "Must be between 0.0 and 2.0"
+
+        if self.max_tokens <= 0:
+            errors["max_tokens"] = "Must be a positive integer"
+
+        if self.context_window <= 0:
+            errors["context_window"] = "Must be a positive integer"
+
+        cloud_providers = {
+            "openai",
+            "anthropic",
+            "google",
+            "azure",
+            "bedrock",
+            "groq",
+            "mistral",
+            "deepseek",
+            "together",
+            "openrouter",
+        }
+        if self.provider and self.provider.lower() in cloud_providers:
+            if not api_key or not api_key.strip():
+                errors["api_key"] = f"Required for {self.provider}"
+
+        if self.default_model and not self.MODEL_NAME_PATTERN.match(self.default_model):
+            errors["model"] = "Invalid characters in model name"
+
+        if self.autocomplete_model and not self.MODEL_NAME_PATTERN.match(
+            self.autocomplete_model
+        ):
+            errors["autocomplete_model"] = "Invalid characters in model name"
+
+        if self.embedding_model and not self.MODEL_NAME_PATTERN.match(
+            self.embedding_model
+        ):
+            errors["embedding_model"] = "Invalid characters in model name"
+
+        if errors:
+            raise ValidationError(errors)
+
+        return errors
 
 
 @dataclass

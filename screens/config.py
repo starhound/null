@@ -4,6 +4,10 @@ from typing import Any, ClassVar
 
 from textual.binding import BindingType
 
+from textual import on
+
+from textual.css.query import NoMatches
+
 from .base import (
     Binding,
     Button,
@@ -21,6 +25,15 @@ from .base import (
     Vertical,
     VerticalScroll,
 )
+
+FIELD_TO_INPUT_ID: dict[str, str] = {
+    "temperature": "temperature",
+    "max_tokens": "max_tokens",
+    "context_window": "context_window",
+    "model": "autocomplete_model",
+    "autocomplete_model": "autocomplete_model",
+    "embedding_model": "embedding_model",
+}
 
 
 class ConfigScreen(ModalScreen):
@@ -50,6 +63,39 @@ class ConfigScreen(ModalScreen):
     def on_input_submitted(self, event: Input.Submitted) -> None:
         self.action_save()
 
+    @on(Input.Changed, "#temperature")
+    def validate_temperature(self, event: Input.Changed) -> None:
+        """Validate temperature is a float between 0.0 and 2.0."""
+        try:
+            val = float(event.value)
+            if 0.0 <= val <= 2.0:
+                event.input.remove_class("input-invalid")
+            else:
+                event.input.add_class("input-invalid")
+        except ValueError:
+            event.input.add_class("input-invalid")
+
+    @on(Input.Changed, "#max_tokens")
+    def validate_max_tokens(self, event: Input.Changed) -> None:
+        """Validate max_tokens is a positive integer."""
+        try:
+            val = int(event.value)
+            if val > 0:
+                event.input.remove_class("input-invalid")
+            else:
+                event.input.add_class("input-invalid")
+        except ValueError:
+            event.input.add_class("input-invalid")
+
+    @on(Switch.Changed)
+    def update_switch_labels(self, event: Switch.Changed) -> None:
+        label_id = f"{event.switch.id}_label"
+        try:
+            label = self.query_one(f"#{label_id}", Static)
+            label.update("On" if event.value else "Off")
+        except NoMatches:
+            pass
+
     def compose(self) -> ComposeResult:
         with Container(id="config-outer"):
             with Static(id="config-header"):
@@ -76,6 +122,10 @@ class ConfigScreen(ModalScreen):
                     with VerticalScroll(classes="settings-scroll"):
                         yield from self._voice_settings()
 
+                with TabPane("Keys", id="tab-keys"):
+                    with VerticalScroll(classes="settings-scroll"):
+                        yield from self._keybinding_settings()
+
             with Horizontal(id="config-footer"):
                 yield Button("Save", id="save-btn")
                 yield Button("Cancel", id="cancel-btn")
@@ -91,6 +141,12 @@ class ConfigScreen(ModalScreen):
             with Horizontal(classes="setting-control"):
                 self.controls[key] = control
                 yield control
+                # Add text label for Switch widgets (accessibility)
+                if isinstance(control, Switch):
+                    label_text = "On" if control.value else "Off"
+                    yield Static(
+                        label_text, id=f"{control.id}_label", classes="switch-label"
+                    )
 
     def _appearance_settings(self) -> ComposeResult:
         """Appearance tab settings."""
@@ -445,6 +501,65 @@ class ConfigScreen(ModalScreen):
             Switch(value=s.push_to_talk, id="push_to_talk"),
         )
 
+    def _keybinding_settings(self) -> ComposeResult:
+        from config import get_keybinding_manager
+
+        self._kb_manager = get_keybinding_manager()
+        conflicts = self._kb_manager.detect_all_conflicts()
+
+        if conflicts:
+            yield Static("⚠ Conflicts Detected", classes="settings-header warning")
+            for conflict in conflicts:
+                yield Label(conflict.description, classes="setting-warning")
+
+        yield Static("Global Shortcuts", classes="settings-header")
+        yield from self._keybinding_context_rows("app")
+
+        yield Static("Input Shortcuts", classes="settings-header")
+        yield from self._keybinding_context_rows("input")
+
+        yield Static("Block Shortcuts", classes="settings-header")
+        yield from self._keybinding_context_rows("block")
+
+        with Horizontal(classes="setting-row"):
+            yield Button("Reset All Keys", id="reset-keys-btn", variant="warning")
+
+    def _keybinding_context_rows(self, context: str) -> ComposeResult:
+        bindings = self._kb_manager.get_bindings_by_context(context)
+        for binding in bindings:
+            is_modified = self._kb_manager.is_modified(binding.id)
+            default_key = self._kb_manager.get_default_key(binding.id)
+            hint = (
+                f"Default: {self._kb_manager.format_key_display(default_key)}"
+                if default_key
+                else ""
+            )
+            if is_modified:
+                hint = f"⚡ Modified | {hint}"
+
+            input_widget = Input(
+                value=binding.key,
+                id=f"kb_{binding.id}",
+                classes="keybinding-input" + (" modified" if is_modified else ""),
+            )
+            yield from self._setting_row(
+                f"keybinding.{binding.id}",
+                binding.description,
+                hint,
+                input_widget,
+            )
+
+    @on(Input.Changed, ".keybinding-input")
+    def validate_keybinding(self, event: Input.Changed) -> None:
+        from config import KeybindingManager
+
+        key = event.value
+        is_valid, error = KeybindingManager.validate_key(key)
+        if is_valid:
+            event.input.remove_class("input-invalid")
+        else:
+            event.input.add_class("input-invalid")
+
     def _collect_values(self):
         """Collect all control values into settings structure."""
         from config import (
@@ -576,12 +691,45 @@ class ConfigScreen(ModalScreen):
             self.action_cancel()
         elif event.button.id == "reset-btn":
             self._reset_to_defaults()
+        elif event.button.id == "reset-keys-btn":
+            self._reset_keybindings()
+
+    def _validate_settings(self, settings) -> dict[str, str]:
+        from config import Config, ValidationError
+
+        for input_id in FIELD_TO_INPUT_ID.values():
+            try:
+                self.query_one(f"#{input_id}", Input).remove_class("input-invalid")
+            except NoMatches:
+                pass
+
+        api_key = Config.get(f"ai.{settings.ai.provider}.api_key", "")
+
+        try:
+            settings.ai.validate(api_key=api_key)
+            return {}
+        except ValidationError as e:
+            for field_name in e.errors:
+                input_id = FIELD_TO_INPUT_ID.get(field_name)
+                if input_id:
+                    try:
+                        self.query_one(f"#{input_id}", Input).add_class("input-invalid")
+                    except NoMatches:
+                        pass
+            return e.errors
 
     def action_save(self):
         """Save settings and close."""
         from config import Config, save_settings
 
         new_settings = self._collect_values()
+
+        errors = self._validate_settings(new_settings)
+        if errors:
+            error_msgs = [f"{k}: {v}" for k, v in errors.items()]
+            self.notify(f"Validation failed: {', '.join(error_msgs)}", severity="error")
+            return
+
         save_settings(new_settings)
 
         # SYNC TO SQLITE (Config)
@@ -646,6 +794,8 @@ class ConfigScreen(ModalScreen):
         except Exception:
             pass
 
+        self._save_keybindings()
+
         self.notify("Settings updated", timeout=2)
         self.dismiss(new_settings)
 
@@ -661,3 +811,36 @@ class ConfigScreen(ModalScreen):
         save_settings(default_settings)
         self.notify("Settings reset to defaults. Reopening...")
         self.dismiss(default_settings)
+
+    def _reset_keybindings(self):
+        from config import get_keybinding_manager
+
+        manager = get_keybinding_manager()
+        manager.reset_to_defaults()
+        self.notify("Keybindings reset to defaults. Reopening...")
+        self.dismiss(None)
+
+    def _save_keybindings(self):
+        from config import KeybindingManager, get_keybinding_manager
+
+        manager = get_keybinding_manager()
+        conflicts = []
+
+        for key, control in self.controls.items():
+            if key.startswith("keybinding."):
+                binding_id = key[11:]
+                new_key = getattr(control, "value", "")
+                if new_key:
+                    is_valid, _ = KeybindingManager.validate_key(new_key)
+                    if is_valid:
+                        binding_conflicts = manager.set_binding(binding_id, new_key)
+                        conflicts.extend(binding_conflicts)
+
+        manager.save()
+
+        if conflicts:
+            conflict_keys = list({c.key for c in conflicts})
+            self.notify(
+                f"Keybindings saved with conflicts: {', '.join(conflict_keys)}",
+                severity="warning",
+            )

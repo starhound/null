@@ -14,11 +14,8 @@ class TestSSHAddScreen:
         assert screen is not None
 
     def test_default_css_defined(self):
-        """Screen has DEFAULT_CSS defined."""
-        assert SSHAddScreen.DEFAULT_CSS is not None
-        assert len(SSHAddScreen.DEFAULT_CSS) > 0
-        assert "SSHAddScreen" in SSHAddScreen.DEFAULT_CSS
-        assert "#ssh-form" in SSHAddScreen.DEFAULT_CSS
+        """Screen has DEFAULT_CSS attribute."""
+        assert hasattr(SSHAddScreen, "DEFAULT_CSS")
 
 
 class TestSSHAddScreenOnMount:
@@ -393,37 +390,8 @@ class TestSSHAddScreenSaveHost:
 
 
 class TestSSHAddScreenCSSStyles:
-    """Tests for CSS style definitions."""
+    """Tests for CSS (styles moved to main.tcss)."""
 
-    def test_css_contains_form_container(self):
-        """CSS should define ssh-form container styles."""
-        css = SSHAddScreen.DEFAULT_CSS
-        assert "#ssh-form" in css
-        assert "width:" in css or "width" in css
-
-    def test_css_contains_header_styles(self):
-        """CSS should define header styles."""
-        css = SSHAddScreen.DEFAULT_CSS
-        assert ".header" in css
-        assert "text-align" in css or "text-style" in css
-
-    def test_css_contains_input_styles(self):
-        """CSS should define input field styles."""
-        css = SSHAddScreen.DEFAULT_CSS
-        assert "Input" in css
-
-    def test_css_contains_button_styles(self):
-        """CSS should define button styles."""
-        css = SSHAddScreen.DEFAULT_CSS
-        assert "Button" in css
-
-    def test_css_contains_form_actions(self):
-        """CSS should define form actions container."""
-        css = SSHAddScreen.DEFAULT_CSS
-        assert "#form-actions" in css
-
-    def test_css_contains_creds_row(self):
-        """CSS should define credentials row grid."""
-        css = SSHAddScreen.DEFAULT_CSS
-        assert "#creds-row" in css
-        assert "grid-size" in css
+    def test_screen_class_exists(self):
+        """SSHAddScreen class exists and is importable."""
+        assert SSHAddScreen is not None

@@ -44,15 +44,68 @@ class ConfigCommands(CommandMixin):
         await self.cmd_config(args)
 
     async def cmd_theme(self, args: list[str]):
-        """Set theme."""
+        """Set theme or open editor."""
         if not args:
             self.app.action_select_theme()
             return
 
-        theme_name = args[0]
-        if theme_name in self.app.available_themes:
-            Config.update_key(["theme"], theme_name)
-            self.app.theme = theme_name
-            self.notify(f"Theme set to {theme_name}")
+        arg = args[0]
+        arg_lower = arg.lower()
+
+        if arg_lower == "edit":
+            base_theme = args[1] if len(args) > 1 else self.app.theme
+            self._open_theme_editor(base_theme)
+        elif arg_lower == "new":
+            self._open_theme_editor(None)
+        elif arg_lower == "list":
+            self._list_themes()
+        elif arg in self.app.available_themes:
+            Config.update_key(["theme"], arg)
+            self.app.theme = arg
+            self.notify(f"Theme set to {arg}")
         else:
-            self.notify(f"Unknown theme: {theme_name}", severity="error")
+            self.notify(f"Unknown theme: {arg}", severity="error")
+
+    def _open_theme_editor(self, base_theme: str | None) -> None:
+        from screens import ThemeEditorScreen
+
+        def on_editor_result(result: str | None) -> None:
+            if result:
+                from themes import get_all_themes
+
+                for theme in get_all_themes().values():
+                    self.app.register_theme(theme)
+
+                if result in self.app.available_themes:
+                    self.app.theme = result
+                    Config.update_key(["theme"], result)
+                self.notify(f"Theme '{result}' saved and applied")
+
+        self.app.push_screen(ThemeEditorScreen(base_theme), on_editor_result)
+
+    def _list_themes(self) -> None:
+        from themes import get_all_themes, is_custom_theme
+
+        themes = get_all_themes()
+        lines = ["Available Themes:", ""]
+
+        builtin = []
+        custom = []
+        for name in sorted(themes.keys()):
+            marker = "*" if name == self.app.theme else " "
+            if is_custom_theme(name):
+                custom.append(f"  {marker} {name} (custom)")
+            else:
+                builtin.append(f"  {marker} {name}")
+
+        if builtin:
+            lines.append("Built-in:")
+            lines.extend(builtin)
+        if custom:
+            lines.append("")
+            lines.append("Custom:")
+            lines.extend(custom)
+
+        lines.append("")
+        lines.append("Commands: /theme <name>, /theme edit, /theme new")
+        self.show_output("\n".join(lines))

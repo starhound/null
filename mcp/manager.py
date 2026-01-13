@@ -1,6 +1,7 @@
 """MCP Manager - manages multiple MCP server connections."""
 
 import asyncio
+from collections.abc import Callable
 from typing import Any
 
 from .client import MCPClient, MCPResource, MCPTool
@@ -10,10 +11,19 @@ from .config import MCPConfig, MCPServerConfig
 class MCPManager:
     """Manages multiple MCP server connections."""
 
-    def __init__(self):
+    def __init__(
+        self,
+        on_reconnect_attempt: Callable[[str, int, float], None] | None = None,
+        on_reconnect_success: Callable[[str], None] | None = None,
+        on_reconnect_failed: Callable[[str, int], None] | None = None,
+    ):
         self.config = MCPConfig()
         self.clients: dict[str, MCPClient] = {}
         self._initialized = False
+
+        self._on_reconnect_attempt = on_reconnect_attempt
+        self._on_reconnect_success = on_reconnect_success
+        self._on_reconnect_failed = on_reconnect_failed
 
     async def initialize(self):
         """Initialize and connect to all enabled MCP servers in parallel."""
@@ -46,7 +56,12 @@ class MCPManager:
         if not server_config.enabled:
             return False
 
-        client = MCPClient(server_config)
+        client = MCPClient(
+            server_config,
+            on_reconnect_attempt=self._on_reconnect_attempt,
+            on_reconnect_success=self._on_reconnect_success,
+            on_reconnect_failed=self._on_reconnect_failed,
+        )
         success = await client.connect()
 
         if success:
@@ -56,8 +71,9 @@ class MCPManager:
         return False
 
     async def disconnect_server(self, name: str):
-        """Disconnect from a specific server."""
+        """Disconnect from a specific server (cancels any pending reconnection)."""
         if name in self.clients:
+            self.clients[name].cancel_reconnect()
             await self.clients[name].disconnect()
             del self.clients[name]
 

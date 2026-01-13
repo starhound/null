@@ -231,11 +231,13 @@ class TestThemeSelectionScreenOnMount:
         assert screen._original_theme == "nord"
 
 
-class TestThemeSelectionScreenOnListViewHighlighted:
-    """Tests for ThemeSelectionScreen on_list_view_highlighted method."""
+class TestThemeSelectionScreenOnDescendantFocus:
+    """Tests for ThemeSelectionScreen on_descendant_focus method."""
 
-    def test_on_list_view_highlighted_applies_theme_preview(self):
-        """on_list_view_highlighted should apply theme preview."""
+    def test_on_descendant_focus_applies_theme_preview(self):
+        """on_descendant_focus should apply theme preview for ThemeListItem."""
+        from screens.selection import ThemeListItem
+
         screen = ThemeSelectionScreen(
             title="Themes", items=["dark", "light", "dracula"]
         )
@@ -245,19 +247,19 @@ class TestThemeSelectionScreenOnListViewHighlighted:
         screen._app = mock_app
         type(screen).app = property(lambda self: self._app)
 
-        mock_listview = MagicMock()
-        mock_listview.index = 2
-        screen.query_one = MagicMock(return_value=mock_listview)
+        mock_item = MagicMock(spec=ThemeListItem)
+        mock_item._theme_name = "dracula"
 
-        mock_message = MagicMock()
-        mock_message.item = MagicMock()  # Not None
+        mock_event = MagicMock()
+        mock_event.widget = mock_item
 
-        screen.on_list_view_highlighted(mock_message)
+        screen.on_descendant_focus(mock_event)
 
         assert mock_app.theme == "dracula"
+        assert screen._highlighted_theme == "dracula"
 
-    def test_on_list_view_highlighted_returns_early_if_item_none(self):
-        """on_list_view_highlighted should return early if item is None."""
+    def test_on_descendant_focus_ignores_non_theme_items(self):
+        """on_descendant_focus should ignore non-ThemeListItem widgets."""
         screen = ThemeSelectionScreen(title="Themes", items=["dark"])
 
         mock_app = MagicMock()
@@ -265,137 +267,60 @@ class TestThemeSelectionScreenOnListViewHighlighted:
         screen._app = mock_app
         type(screen).app = property(lambda self: self._app)
 
-        mock_message = MagicMock()
-        mock_message.item = None
+        mock_event = MagicMock()
+        mock_event.widget = MagicMock()  # Not a ThemeListItem
 
-        screen.on_list_view_highlighted(mock_message)
+        screen.on_descendant_focus(mock_event)
 
-        # Theme should not be changed
         assert mock_app.theme == "original"
 
-    def test_on_list_view_highlighted_handles_exception(self):
-        """on_list_view_highlighted should handle invalid theme gracefully."""
+    def test_on_descendant_focus_handles_exception(self):
+        """on_descendant_focus should handle theme apply exception gracefully."""
+        from screens.selection import ThemeListItem
+
         screen = ThemeSelectionScreen(title="Themes", items=["invalid-theme"])
 
         mock_app = MagicMock()
-        mock_app.theme = "original"
-        type(mock_app).theme = property(
-            lambda self: self._theme,
-            lambda self, value: exec('raise ValueError("Invalid theme")'),
-        )
+
+        def raise_on_set(value):
+            raise ValueError("Invalid theme")
+
+        type(mock_app).theme = property(lambda self: "original", raise_on_set)
         screen._app = mock_app
         type(screen).app = property(lambda self: self._app)
 
-        mock_listview = MagicMock()
-        mock_listview.index = 0
-        screen.query_one = MagicMock(return_value=mock_listview)
+        mock_item = MagicMock(spec=ThemeListItem)
+        mock_item._theme_name = "invalid-theme"
 
-        mock_message = MagicMock()
-        mock_message.item = MagicMock()
+        mock_event = MagicMock()
+        mock_event.widget = mock_item
 
-        # Should not raise
-        screen.on_list_view_highlighted(mock_message)
-
-    def test_on_list_view_highlighted_index_none(self):
-        """on_list_view_highlighted should not change theme if index is None."""
-        screen = ThemeSelectionScreen(title="Themes", items=["dark"])
-
-        mock_app = MagicMock()
-        mock_app.theme = "original"
-        screen._app = mock_app
-        type(screen).app = property(lambda self: self._app)
-
-        mock_listview = MagicMock()
-        mock_listview.index = None
-        screen.query_one = MagicMock(return_value=mock_listview)
-
-        mock_message = MagicMock()
-        mock_message.item = MagicMock()
-
-        screen.on_list_view_highlighted(mock_message)
-
-        assert mock_app.theme == "original"
-
-    def test_on_list_view_highlighted_index_out_of_bounds(self):
-        """on_list_view_highlighted should not change theme if index out of bounds."""
-        screen = ThemeSelectionScreen(title="Themes", items=["dark"])
-
-        mock_app = MagicMock()
-        mock_app.theme = "original"
-        screen._app = mock_app
-        type(screen).app = property(lambda self: self._app)
-
-        mock_listview = MagicMock()
-        mock_listview.index = 99  # Out of bounds
-        screen.query_one = MagicMock(return_value=mock_listview)
-
-        mock_message = MagicMock()
-        mock_message.item = MagicMock()
-
-        screen.on_list_view_highlighted(mock_message)
-
-        assert mock_app.theme == "original"
+        screen.on_descendant_focus(mock_event)
 
 
-class TestThemeSelectionScreenOnListViewSelected:
-    """Tests for ThemeSelectionScreen on_list_view_selected method."""
+class TestThemeSelectionScreenOnThemeListItemSelected:
+    """Tests for ThemeSelectionScreen on_theme_list_item_selected method."""
 
-    def test_on_list_view_selected_valid_index(self):
-        """on_list_view_selected should dismiss with theme name."""
+    def test_on_theme_list_item_selected_dismisses_with_theme(self):
+        """on_theme_list_item_selected should dismiss with theme name."""
+        from screens.selection import ThemeListItem
+
         screen = ThemeSelectionScreen(title="Themes", items=["dark", "light"])
         screen.dismiss = MagicMock()
 
-        mock_listview = MagicMock()
-        mock_listview.index = 1
-        screen.query_one = MagicMock(return_value=mock_listview)
-
         mock_message = MagicMock()
-        screen.on_list_view_selected(mock_message)
+        mock_message.theme_name = "light"
+
+        screen.on_theme_list_item_selected(mock_message)
 
         screen.dismiss.assert_called_once_with("light")
-
-    def test_on_list_view_selected_restores_original_on_invalid_index(self):
-        """on_list_view_selected should restore original theme on invalid index."""
-        screen = ThemeSelectionScreen(title="Themes", items=["dark"])
-        screen._original_theme = "nord"
-        screen.dismiss = MagicMock()
-
-        mock_app = MagicMock()
-        mock_app.theme = "preview-theme"
-        screen._app = mock_app
-        type(screen).app = property(lambda self: self._app)
-
-        mock_listview = MagicMock()
-        mock_listview.index = None
-        screen.query_one = MagicMock(return_value=mock_listview)
-
-        mock_message = MagicMock()
-        screen.on_list_view_selected(mock_message)
-
-        assert mock_app.theme == "nord"
-        screen.dismiss.assert_called_once_with(None)
-
-    def test_on_list_view_selected_no_original_theme(self):
-        """on_list_view_selected should dismiss None without restoring if no original."""
-        screen = ThemeSelectionScreen(title="Themes", items=["dark"])
-        screen._original_theme = None
-        screen.dismiss = MagicMock()
-
-        mock_listview = MagicMock()
-        mock_listview.index = None
-        screen.query_one = MagicMock(return_value=mock_listview)
-
-        mock_message = MagicMock()
-        screen.on_list_view_selected(mock_message)
-
-        screen.dismiss.assert_called_once_with(None)
 
 
 class TestThemeSelectionScreenOnButtonPressed:
     """Tests for ThemeSelectionScreen on_button_pressed method."""
 
-    def test_on_button_pressed_restores_original_theme(self):
-        """on_button_pressed should restore original theme."""
+    def test_on_button_pressed_cancel_restores_original_theme(self):
+        """on_button_pressed cancel should restore original theme."""
         screen = ThemeSelectionScreen(title="Themes", items=["dark"])
         screen._original_theme = "gruvbox"
         screen.dismiss = MagicMock()
@@ -406,18 +331,20 @@ class TestThemeSelectionScreenOnButtonPressed:
         type(screen).app = property(lambda self: self._app)
 
         mock_event = MagicMock()
+        mock_event.button.id = "cancel_btn"
         screen.on_button_pressed(mock_event)
 
         assert mock_app.theme == "gruvbox"
         screen.dismiss.assert_called_once_with(None)
 
-    def test_on_button_pressed_no_original_theme(self):
-        """on_button_pressed should dismiss without restoring if no original."""
+    def test_on_button_pressed_cancel_no_original_theme(self):
+        """on_button_pressed cancel should dismiss without restoring if no original."""
         screen = ThemeSelectionScreen(title="Themes", items=["dark"])
         screen._original_theme = None
         screen.dismiss = MagicMock()
 
         mock_event = MagicMock()
+        mock_event.button.id = "cancel_btn"
         screen.on_button_pressed(mock_event)
 
         screen.dismiss.assert_called_once_with(None)
@@ -1312,34 +1239,33 @@ class TestSelectionScreensIntegration:
 
     def test_theme_selection_screen_workflow(self):
         """Test ThemeSelectionScreen typical workflow."""
+        from screens.selection import ThemeListItem
+
         themes = ["dark", "light", "monokai"]
         screen = ThemeSelectionScreen(title="Select Theme", items=themes)
 
-        # Set up mock app
         mock_app = MagicMock()
         mock_app.theme = "original"
         screen._app = mock_app
         type(screen).app = property(lambda self: self._app)
 
-        # Store original theme
         screen.on_mount()
         assert screen._original_theme == "original"
 
-        # Preview theme
-        mock_listview = MagicMock()
-        mock_listview.index = 2
-        screen.query_one = MagicMock(return_value=mock_listview)
+        mock_item = MagicMock(spec=ThemeListItem)
+        mock_item._theme_name = "monokai"
 
-        mock_message = MagicMock()
-        mock_message.item = MagicMock()
-        screen.on_list_view_highlighted(mock_message)
+        mock_event = MagicMock()
+        mock_event.widget = mock_item
+        screen.on_descendant_focus(mock_event)
 
         assert mock_app.theme == "monokai"
+        assert screen._highlighted_theme == "monokai"
 
-        # Cancel and restore
         screen.dismiss = MagicMock()
-        mock_event = MagicMock()
-        screen.on_button_pressed(mock_event)
+        mock_button_event = MagicMock()
+        mock_button_event.button.id = "cancel_btn"
+        screen.on_button_pressed(mock_button_event)
 
         assert mock_app.theme == "original"
         screen.dismiss.assert_called_once_with(None)

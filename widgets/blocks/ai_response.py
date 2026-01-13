@@ -7,7 +7,8 @@ from textual.app import ComposeResult
 
 from models import BlockState
 
-from .actions import ActionBar, ActionButton
+from .actions import ActionBar, ActionButton, CopyMenu
+from .copy_types import CopyType
 from .base import BaseBlockWidget
 from .execution import ExecutionWidget
 from .parts import BlockFooter, BlockHeader, BlockMeta
@@ -223,10 +224,8 @@ class AIResponseBlock(BaseBlockWidget):
     def on_action_pressed(self, event: ActionButton.ActionPressed) -> None:
         event.stop()
 
-        if event.action == "copy":
-            self.post_message(
-                self.CopyRequested(self.block.id, self.block.content_output or "")
-            )
+        if event.action == "copy_menu":
+            self.action_bar.show_copy_menu()
         elif event.action == "retry":
             self.post_message(self.RetryRequested(self.block.id))
         elif event.action == "edit":
@@ -235,3 +234,14 @@ class AIResponseBlock(BaseBlockWidget):
             )
         elif event.action == "fork":
             self.post_message(self.ForkRequested(self.block.id))
+
+    @on(CopyMenu.CopySelected)
+    def on_copy_selected(self, event: CopyMenu.CopySelected) -> None:
+        event.stop()
+        content = self.get_content_for_copy(event.copy_type)
+        if content:
+            self.post_message(
+                self.CopyRequested(self.block.id, content, event.copy_type)
+            )
+        else:
+            self.notify("No content to copy for this format", severity="warning")

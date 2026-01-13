@@ -1,0 +1,311 @@
+/* ==========================================================================
+   ErrorBlock - Structured Error Display with Severity Colors
+   ========================================================================== */
+
+ErrorBlock {
+    layout: vertical;
+    height: auto;
+    min-height: 0;
+    margin: 0 0 1 0;
+    padding: 0;
+}
+
+/* ==========================================================================
+   Error Container - Severity-Based Styling
+   ========================================================================== */
+
+.error-block-container {
+    border: round $error $border-normal;
+    background: $layer-base 50%;
+    padding: 0;
+}
+
+.error-block-container:focus-within {
+    border: round $error $border-focus;
+    tint: $error 5%;
+}
+
+/* --- Info Severity --- */
+
+.error-severity-info {
+    border: round $primary $border-normal;
+}
+
+.error-severity-info:focus-within {
+    border: round $primary $border-focus;
+    tint: $primary 5%;
+}
+
+.error-severity-info .error-icon {
+    color: $primary;
+}
+
+.error-severity-info .error-type {
+    color: $primary;
+}
+
+/* --- Warning Severity --- */
+
+.error-severity-warning {
+    border: round $warning $border-normal;
+}
+
+.error-severity-warning:focus-within {
+    border: round $warning $border-focus;
+    tint: $warning 5%;
+}
+
+.error-severity-warning .error-icon {
+    color: $warning;
+}
+
+.error-severity-warning .error-type {
+    color: $warning;
+}
+
+/* --- Error Severity (Default) --- */
+
+.error-severity-error {
+    border: round $error $border-normal;
+}
+
+.error-severity-error:focus-within {
+    border: round $error $border-focus;
+    tint: $error 5%;
+}
+
+.error-severity-error .error-icon {
+    color: $error;
+}
+
+.error-severity-error .error-type {
+    color: $error;
+}
+
+/* --- Critical Severity --- */
+
+.error-severity-critical {
+    border: double $error $border-focus;
+    background: $error 8%;
+}
+
+.error-severity-critical:focus-within {
+    border: double $error;
+    tint: $error 10%;
+}
+
+.error-severity-critical .error-icon {
+    color: $error;
+    text-style: bold;
+}
+
+.error-severity-critical .error-type {
+    color: $error;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   Error Header
+   ========================================================================== */
+
+.error-header {
+    layout: horizontal;
+    height: 1;
+    padding: 0 2;
+    background: transparent;
+    border-bottom: solid $text-ghost;
+}
+
+.error-icon {
+    width: 2;
+    text-style: bold;
+}
+
+.error-type {
+    text-style: bold;
+    margin-left: 1;
+}
+
+.error-spacer {
+    width: 1fr;
+}
+
+.error-timestamp {
+    color: $text-dim;
+}
+
+/* ==========================================================================
+   Error Body
+   ========================================================================== */
+
+.error-body {
+    padding: 1 2;
+}
+
+.error-message {
+    color: $text-bright;
+    margin-bottom: 1;
+}
+
+/* --- Details Section --- */
+
+.error-details-section {
+    margin-top: 1;
+    padding: 1;
+    background: $layer-void 50%;
+    border-left: solid $text-dim;
+}
+
+.error-section-label {
+    color: $text-muted;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.error-details {
+    color: $text-muted;
+}
+
+/* --- Suggestion Section --- */
+
+.error-suggestion-section {
+    layout: horizontal;
+    margin-top: 1;
+    padding: 1;
+    background: $success 5%;
+    border-left: solid $success;
+}
+
+.suggestion-icon {
+    width: 2;
+    color: $success;
+}
+
+.error-suggestion {
+    color: $success;
+}
+
+/* --- Context Section --- */
+
+.error-context-section {
+    margin-top: 1;
+    padding: 1;
+    background: $layer-void 50%;
+    border-left: solid $text-dim;
+}
+
+.error-context-item {
+    color: $text-dim;
+}
+
+/* ==========================================================================
+   Stack Trace Section (Collapsible)
+   ========================================================================== */
+
+.stack-trace-section {
+    margin: 0;
+    padding: 0;
+    border-top: solid $text-ghost;
+}
+
+.stack-trace-header {
+    layout: horizontal;
+    height: 1;
+    padding: 0 2;
+    background: $layer-raised 30%;
+    color: $text-muted;
+}
+
+.stack-trace-header:hover {
+    background: $layer-raised 50%;
+    color: $text-bright;
+}
+
+.stack-icon {
+    width: 2;
+    color: $text-dim;
+}
+
+.stack-icon.expanded {
+    color: $error;
+}
+
+.stack-label {
+    color: $text-muted;
+}
+
+.stack-content {
+    display: none;
+    height: 0;
+    max-height: 20;
+    padding: 0 2;
+    background: $layer-void;
+    overflow-y: auto;
+}
+
+.stack-content.visible {
+    display: block;
+    height: auto;
+    padding: 1 2;
+}
+
+.stack-text {
+    color: $text-dim;
+}
+
+/* ==========================================================================
+   Error Footer - Actions
+   ========================================================================== */
+
+.error-footer {
+    layout: horizontal;
+    height: auto;
+    min-height: 1;
+    padding: 1 2;
+    background: $layer-raised 20%;
+    border-top: solid $text-ghost;
+}
+
+.error-copy-btn {
+    height: 1;
+    min-width: 8;
+    padding: 0 2;
+    border: none;
+    background: $layer-raised;
+    color: $text-muted;
+    margin-right: 1;
+}
+
+.error-copy-btn:hover {
+    background: $primary;
+    color: $layer-void;
+    text-style: bold;
+}
+
+.error-copy-btn:focus {
+    border: none;
+    background: $primary 80%;
+    color: $layer-void;
+}
+
+.error-report-btn {
+    height: 1;
+    min-width: 12;
+    padding: 0 2;
+    border: none;
+    background: $warning 20%;
+    color: $warning;
+    margin-left: 1;
+}
+
+.error-report-btn:hover {
+    background: $warning;
+    color: $layer-void;
+    text-style: bold;
+}
+
+.error-report-btn:focus {
+    border: none;
+    background: $warning 80%;
+    color: $layer-void;
+}

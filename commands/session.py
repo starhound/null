@@ -19,10 +19,11 @@ class SessionCommands(CommandMixin):
         self.app = app
 
     async def cmd_export(self, args: list[str]):
-        """Export conversation."""
+        """Export conversation to various formats."""
         format = args[0] if args else "md"
-        if format not in ("md", "json", "markdown"):
-            self.notify("Usage: /export [md|json]", severity="error")
+        valid_formats = ("md", "json", "markdown", "html", "org")
+        if format not in valid_formats:
+            self.notify("Usage: /export [md|json|html|org]", severity="error")
             return
         if format == "markdown":
             format = "md"

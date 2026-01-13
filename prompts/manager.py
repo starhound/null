@@ -1,8 +1,12 @@
 """Prompt manager for loading and managing prompts."""
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
+from typing import Any
 
+from .engine import TemplateEngine, get_template_engine
 from .templates import BUILTIN_PROMPTS
 
 
@@ -136,16 +140,30 @@ To use this prompt:
             return BUILTIN_PROMPTS[key]
         return self._user_prompts.get(key)
 
-    def get_prompt_content(self, key: str, provider: str | None = None) -> str:
-        """Get prompt content, with optional provider-specific overrides."""
+    def get_prompt_content(
+        self,
+        key: str,
+        provider: str | None = None,
+        context: dict[str, Any] | None = None,
+        render_template: bool = True,
+    ) -> str:
+        """Get prompt content with optional provider overrides and template rendering.
+
+        Args:
+            key: The prompt key to retrieve.
+            provider: Optional provider for provider-specific overrides.
+            context: Template context for variable substitution.
+            render_template: If True, render template variables/conditionals.
+
+        Returns:
+            The processed prompt content.
+        """
         prompt = self.get_prompt(key)
         if not prompt:
-            # Fallback to default
             prompt = BUILTIN_PROMPTS["default"]
 
         content = prompt.get("content", "")
 
-        # Apply provider overrides if available
         if provider and "provider_overrides" in prompt:
             provider_overrides = prompt["provider_overrides"]
             if isinstance(provider_overrides, dict):
@@ -158,7 +176,39 @@ To use this prompt:
                     if "content" in overrides:
                         content = overrides["content"]
 
+        if render_template:
+            engine = get_template_engine()
+            ctx = context or {}
+            if provider:
+                ctx.setdefault("provider", provider)
+            ctx.setdefault("prompt_name", key)
+            content = engine.render(content, ctx)
+
         return content
+
+    def preview_prompt(self, key: str, context: dict[str, Any] | None = None) -> str:
+        """Preview a prompt with sample values for template variables."""
+        prompt = self.get_prompt(key)
+        if not prompt:
+            return ""
+
+        content = prompt.get("content", "")
+        engine = get_template_engine()
+        return engine.preview(content, context)
+
+    def validate_prompt(self, key: str) -> list[str]:
+        """Validate a prompt's template syntax. Returns list of errors."""
+        prompt = self.get_prompt(key)
+        if not prompt:
+            return ["Prompt not found"]
+
+        content = prompt.get("content", "")
+        engine = get_template_engine()
+        return engine.validate_template(content)
+
+    def get_template_engine(self) -> TemplateEngine:
+        """Get the template engine for direct access."""
+        return get_template_engine()
 
     def list_prompts(self) -> list[tuple[str, str, str, bool]]:
         """List all prompts: (key, name, description, is_user)"""

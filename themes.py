@@ -214,6 +214,102 @@ def get_all_themes_with_fallback() -> dict[str, Theme]:
     return themes
 
 
-# For backwards compatibility
+def save_custom_theme(theme_data: dict) -> Path | None:
+    """Save a custom theme to ~/.null/themes/.
+
+    Args:
+        theme_data: Dictionary with theme properties (name, primary, etc.)
+
+    Returns:
+        Path to saved file, or None on failure.
+    """
+    import re
+
+    name = theme_data.get("name", "").strip()
+    if not name:
+        return None
+
+    filename = re.sub(r"[^a-zA-Z0-9_-]", "-", name.lower())
+    if not filename:
+        filename = "custom-theme"
+
+    _ensure_user_themes_dir()
+    theme_path = USER_THEMES_DIR / f"{filename}.json"
+
+    try:
+        save_data = {k: v for k, v in theme_data.items() if not k.startswith("_")}
+        with open(theme_path, "w") as f:
+            json.dump(save_data, f, indent=2)
+        return theme_path
+    except Exception:
+        return None
+
+
+def delete_custom_theme(theme_name: str) -> bool:
+    """Delete a custom theme from ~/.null/themes/.
+
+    Args:
+        theme_name: Name of the theme to delete.
+
+    Returns:
+        True if deleted, False otherwise.
+    """
+    for theme_file in USER_THEMES_DIR.glob("*.json"):
+        try:
+            with open(theme_file) as f:
+                data = json.load(f)
+            if data.get("name") == theme_name:
+                theme_file.unlink()
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def get_theme_data(theme_name: str) -> dict | None:
+    """Get raw theme data dictionary by name.
+
+    Args:
+        theme_name: Name of the theme.
+
+    Returns:
+        Theme data dictionary or None if not found.
+    """
+    for themes_dir in [USER_THEMES_DIR, BUILTIN_THEMES_DIR]:
+        if themes_dir.exists():
+            for theme_file in themes_dir.glob("*.json"):
+                try:
+                    with open(theme_file) as f:
+                        data = json.load(f)
+                    if data.get("name") == theme_name:
+                        return data
+                except Exception:
+                    continue
+    return None
+
+
+def is_custom_theme(theme_name: str) -> bool:
+    """Check if a theme is a user custom theme (vs built-in).
+
+    Args:
+        theme_name: Name of the theme.
+
+    Returns:
+        True if custom theme, False if built-in or not found.
+    """
+    if not USER_THEMES_DIR.exists():
+        return False
+
+    for theme_file in USER_THEMES_DIR.glob("*.json"):
+        try:
+            with open(theme_file) as f:
+                data = json.load(f)
+            if data.get("name") == theme_name:
+                return True
+        except Exception:
+            continue
+    return False
+
+
 BUILTIN_THEMES = get_builtin_themes() or {"null-dark": _FALLBACK_NULL_DARK}
 THEMES = BUILTIN_THEMES

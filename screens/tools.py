@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, ClassVar
 from textual.app import ComposeResult
 from textual.binding import BindingType
 from textual.containers import Container, Vertical, VerticalScroll
+from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import (
     Button,
@@ -21,6 +22,9 @@ class ToolsScreen(ModalScreen):
     """Screen to list active MCP servers and tools."""
 
     BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "dismiss", "Close")]
+
+    # Reactive property to track loading state for testability
+    loading: reactive[bool] = reactive(True)
 
     def compose(self) -> ComposeResult:
         with Container(id="tools-container"):
@@ -78,6 +82,7 @@ class ToolsScreen(ModalScreen):
     async def _load_tools_refactored(self) -> None:
         """Fetch tools from MCP manager."""
         try:
+            self.loading = True
             app: NullApp = self.app  # type: ignore[assignment]
             mcp = app.mcp_manager
             status = mcp.get_status()
@@ -94,20 +99,16 @@ class ToolsScreen(ModalScreen):
                 enabled_status = "" if info["enabled"] else "(Disabled)"
                 header_text = f"{conn_status} {server_name} {enabled_status}"
 
-                # Check for tools if connected
                 tools_widgets: list[Widget] = []
                 if info["connected"]:
                     client = mcp.clients.get(server_name)
                     if client and client.tools:
                         for tool in client.tools:
                             desc = tool.description or "No description."
-                            # Create Collapsible for each tool
-                            c = Collapsible(title=f"🔧 {tool.name}")
-                            c.mount(
-                                Markdown(
-                                    f"{desc}\n\n**Schema:**\n```json\n{tool.input_schema}\n```"
-                                )
+                            content = Markdown(
+                                f"{desc}\n\n**Schema:**\n```json\n{tool.input_schema}\n```"
                             )
+                            c = Collapsible(content, title=f"🔧 {tool.name}")
                             tools_widgets.append(c)
                     else:
                         tools_widgets.append(
@@ -118,10 +119,8 @@ class ToolsScreen(ModalScreen):
                         Label("  Not connected", classes="server-disconnected")
                     )
 
-                # Create a group for this server
                 server_group = Vertical(classes="server-block")
                 header_lbl = Label(header_text, classes="server-header")
-                # Add some color to header based on status
                 if info["connected"]:
                     header_lbl.add_class("connected")
 
@@ -133,10 +132,12 @@ class ToolsScreen(ModalScreen):
 
         except Exception as e:
             self.notify(f"Error loading tools: {e}", severity="error")
+        finally:
+            self.loading = False
 
-    async def on_mount(self):
-        """Load tools on mount."""
-        self.run_worker(self._load_tools_refactored())
+    async def on_mount(self) -> None:
+        """Load tools on mount - awaits directly for test reliability."""
+        await self._load_tools_refactored()
 
     def on_button_pressed(self, event: Button.Pressed):
         self.dismiss()

@@ -1,0 +1,348 @@
+/* ==========================================================================
+   Theme Editor Screen - Custom Theme Creation
+   ========================================================================== */
+
+ThemeEditorScreen {
+    align: center middle;
+}
+
+ThemeEditorScreen #theme-editor-outer {
+    width: 90%;
+    min-width: 70;
+    max-width: 100;
+    height: 90%;
+    min-height: 30;
+    background: $layer-base;
+    border: double $accent $border-normal;
+    padding: 1 2;
+    layout: vertical;
+}
+
+ThemeEditorScreen #theme-editor-header {
+    height: 1;
+    padding: 0;
+    border-bottom: solid $accent 20%;
+}
+
+ThemeEditorScreen #theme-editor-header Label {
+    text-style: bold;
+    color: $accent;
+}
+
+ThemeEditorScreen #theme-editor-scroll {
+    height: 1fr;
+    padding: 0 1;
+    scrollbar-size-vertical: 1;
+    scrollbar-background: transparent;
+    scrollbar-color: $text-dim;
+    scrollbar-color-hover: $accent;
+}
+
+ThemeEditorScreen .editor-section-header {
+    height: auto;
+    margin-top: 1;
+    margin-bottom: 0;
+    padding: 0;
+    color: $accent;
+    text-style: bold;
+    border-bottom: solid $accent 25%;
+}
+
+ThemeEditorScreen .editor-row {
+    height: auto;
+    min-height: 1;
+    padding: 0;
+    margin-top: 1;
+    margin-bottom: 0;
+    align-vertical: middle;
+}
+
+ThemeEditorScreen .editor-label {
+    width: 15;
+    color: $text-bright;
+}
+
+ThemeEditorScreen .editor-hint {
+    color: $text-muted;
+    text-style: italic;
+    margin-left: 1;
+}
+
+ThemeEditorScreen .color-row {
+    height: 1;
+}
+
+ThemeEditorScreen .color-input-group {
+    width: auto;
+    height: 1;
+    align-vertical: middle;
+}
+
+ThemeEditorScreen .color-swatch {
+    width: 4;
+    height: 1;
+    margin-right: 1;
+    border: tall $text-dim;
+}
+
+ThemeEditorScreen .color-input {
+    width: 12;
+    height: 1;
+    border: tall $primary 50%;
+    padding: 0;
+    margin: 0;
+    background: $surface;
+}
+
+ThemeEditorScreen .color-input:focus {
+    border: tall $accent;
+}
+
+ThemeEditorScreen .color-input.input-invalid {
+    border: tall $error;
+    background: $error 10%;
+}
+
+ThemeEditorScreen Input {
+    height: 1;
+    width: 1fr;
+    max-width: 40;
+    border: tall $primary 50%;
+    padding: 0;
+    margin: 0;
+    background: $surface;
+}
+
+ThemeEditorScreen Input:focus {
+    border: tall $accent;
+}
+
+ThemeEditorScreen Switch {
+    height: 1;
+    width: auto;
+    min-width: 8;
+    margin: 0;
+    border: tall $primary 50%;
+    background: $surface;
+}
+
+ThemeEditorScreen Switch:focus {
+    border: tall $accent;
+}
+
+ThemeEditorScreen Switch.-on {
+    background: $success 30%;
+}
+
+ThemeEditorScreen .switch-label {
+    margin-left: 1;
+    color: $text-muted;
+}
+
+/* Theme Preview Widget */
+ThemeEditorScreen #theme-preview-widget {
+    height: auto;
+    margin-top: 1;
+    padding: 1;
+    background: $layer-raised;
+    border: solid $primary 30%;
+}
+
+ThemeEditorScreen .theme-preview-row {
+    height: 3;
+    align: center middle;
+}
+
+ThemeEditorScreen .preview-color-item {
+    width: auto;
+    height: auto;
+    margin: 0 1;
+    align: center middle;
+}
+
+ThemeEditorScreen .preview-swatch {
+    width: 6;
+    height: 2;
+    border: tall $text-dim;
+}
+
+ThemeEditorScreen .preview-label {
+    color: $text-dim;
+    text-align: center;
+}
+
+/* Footer Buttons */
+ThemeEditorScreen #theme-editor-footer {
+    height: auto;
+    padding: 1 1;
+    dock: bottom;
+    align: left middle;
+    border-top: solid $accent 15%;
+}
+
+ThemeEditorScreen #theme-editor-footer Button {
+    height: 1;
+    min-width: 12;
+    margin-right: 1;
+    border: none;
+}
+
+ThemeEditorScreen #save-btn {
+    background: $success;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ThemeEditorScreen #save-btn:hover {
+    background: $success 85%;
+    tint: $success 10%;
+}
+
+ThemeEditorScreen #cancel-btn {
+    background: $layer-raised;
+    color: $text-muted;
+}
+
+ThemeEditorScreen #cancel-btn:hover {
+    background: $error;
+    color: $layer-void;
+    text-style: bold;
+}
+
+ThemeEditorScreen .spacer {
+    width: 1fr;
+}
+
+ThemeEditorScreen #reset-btn {
+    color: $warning;
+    background: transparent;
+    border: solid $warning $border-dim;
+}
+
+ThemeEditorScreen #reset-btn:hover {
+    background: $warning;
+    color: $layer-void;
+    text-style: bold;
+}
+
+/* ==========================================================================
+   Enhanced Theme Selection Screen - Color Palette Preview
+   ========================================================================== */
+
+ThemeSelectionScreen {
+    align: center middle;
+}
+
+ThemeSelectionScreen #selection-container {
+    width: 70;
+    max-width: 90%;
+    height: auto;
+    max-height: 80%;
+    background: $layer-base;
+    border: double $accent $border-normal;
+    padding: 1 2;
+}
+
+ThemeSelectionScreen #selection-container > Label:first-child {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+ThemeSelectionScreen ListView {
+    height: auto;
+    max-height: 20;
+    background: transparent;
+    scrollbar-size-vertical: 1;
+}
+
+ThemeSelectionScreen ListItem {
+    height: auto;
+    padding: 0;
+    background: transparent;
+}
+
+ThemeSelectionScreen ListItem:hover {
+    background: $primary 15%;
+}
+
+ThemeSelectionScreen ListItem.-highlight {
+    background: $primary 25%;
+}
+
+ThemeSelectionScreen .theme-list-item {
+    height: auto;
+    padding: 0 1;
+}
+
+ThemeSelectionScreen .theme-item-row {
+    height: 2;
+    align-vertical: middle;
+}
+
+ThemeSelectionScreen .theme-name {
+    width: 1fr;
+    color: $text-bright;
+}
+
+ThemeSelectionScreen .theme-description {
+    color: $text-muted;
+    text-style: italic;
+}
+
+/* Palette preview in theme selection */
+ThemeSelectionScreen .palette-swatches {
+    height: 1;
+    width: auto;
+    align: right middle;
+}
+
+ThemeSelectionScreen .palette-swatch {
+    width: 2;
+    height: 1;
+    margin-left: 0;
+}
+
+ThemePalettePreview {
+    height: 1;
+    width: auto;
+}
+
+ThemePalettePreview .palette-swatches {
+    height: 1;
+    width: auto;
+}
+
+ThemePalettePreview .palette-swatch {
+    width: 2;
+    height: 1;
+}
+
+ThemeSelectionScreen #cancel_btn {
+    margin-top: 1;
+    background: $layer-raised;
+    color: $text-muted;
+}
+
+ThemeSelectionScreen #cancel_btn:hover {
+    background: $error;
+    color: $layer-void;
+}
+
+ThemeSelectionScreen #edit-theme-btn {
+    margin-top: 1;
+    margin-left: 1;
+    background: $primary 30%;
+    color: $text-bright;
+}
+
+ThemeSelectionScreen #edit-theme-btn:hover {
+    background: $primary;
+    color: $layer-void;
+}
+
+ThemeSelectionScreen .empty-msg {
+    color: $text-muted;
+    text-style: italic;
+    padding: 1;
+}

@@ -27,33 +27,58 @@ class HelpScreen(ModalScreen):
             yield Button("Close [Esc]", variant="default", id="close_btn")
 
     def on_mount(self):
+        from config import get_keybinding_manager
+
         table = self.query_one(DataTable)
         table.add_columns("Command", "Description", "Shortcut")
 
-        # Get commands from the handler if available
+        kb_manager = get_keybinding_manager()
+        shortcut_map = {
+            b.action: kb_manager.format_key_display(b.key)
+            for b in kb_manager.get_all_bindings()
+        }
+
         commands = []
         if hasattr(self.app, "command_handler"):
             for info in self.app.command_handler.get_all_commands():
-                commands.append(
-                    (f"/{info.name}", info.description, info.shortcut or "")
-                )
+                shortcut = info.shortcut or shortcut_map.get(info.name, "")
+                commands.append((f"/{info.name}", info.description, shortcut))
         else:
-            # Fallback hardcoded list
             commands = [
-                ("/help", "Show this help screen", "F1"),
+                ("/help", "Show this help screen", shortcut_map.get("open_help", "F1")),
                 ("/config", "Open settings", ""),
-                ("/provider", "Select and configure AI provider", "F4"),
+                (
+                    "/provider",
+                    "Select and configure AI provider",
+                    shortcut_map.get("select_provider", "F4"),
+                ),
                 ("/providers", "Manage all AI providers", ""),
-                ("/theme", "Change the UI theme", "F3"),
-                ("/model", "List and select AI models", "F2"),
+                (
+                    "/theme",
+                    "Change the UI theme",
+                    shortcut_map.get("select_theme", "F3"),
+                ),
+                (
+                    "/model",
+                    "List and select AI models",
+                    shortcut_map.get("select_model", "F2"),
+                ),
                 ("/prompts", "Manage system prompts", ""),
                 ("/agent", "Toggle autonomous agent mode", ""),
                 ("/mcp", "Manage MCP servers", ""),
                 ("/tools", "Browse available MCP tools", ""),
                 ("/session", "Manage sessions", ""),
-                ("/export", "Export conversation", "Ctrl+S"),
+                (
+                    "/export",
+                    "Export conversation",
+                    shortcut_map.get("quick_export", "Ctrl+S"),
+                ),
                 ("/status", "Show current status", ""),
-                ("/clear", "Clear history", "Ctrl+L"),
+                (
+                    "/clear",
+                    "Clear history",
+                    shortcut_map.get("clear_history", "Ctrl+L"),
+                ),
                 ("/compact", "Summarize context", ""),
                 ("/quit", "Exit the application", "Ctrl+C"),
             ]
@@ -65,5 +90,5 @@ class HelpScreen(ModalScreen):
         if event.button.id == "close_btn":
             self.dismiss()
 
-    async def action_dismiss(self, result: object = None) -> None:
-        self.dismiss(result)
+    def action_dismiss(self) -> None:
+        self.dismiss()

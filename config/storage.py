@@ -17,6 +17,9 @@ DB_PATH = Path.home() / ".null" / "null.db"
 APP_NAME = "null-terminal"
 KEYRING_SERVICE_NAME = "null-terminal-encryption-key"
 
+# History configuration
+HISTORY_LIMIT = 1000  # Maximum number of commands to store
+
 
 class SecurityManager:
     """Manages encryption/decryption of sensitive configuration values."""
@@ -236,14 +239,34 @@ class StorageManager:
         return result
 
     def add_history(self, command: str, exit_code: int = 0):
-        """Add a command to history."""
+        """Add a command to history with deduplication and limit enforcement."""
         if not command.strip():
             return
+
         cursor = self.conn.cursor()
+
+        # Check for consecutive duplicate (don't add if last command is identical)
+        cursor.execute("SELECT command FROM history ORDER BY id DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row and row["command"] == command:
+            return  # Skip consecutive duplicate
+
+        # Insert new command
         cursor.execute(
             "INSERT INTO history (command, exit_code) VALUES (?, ?)",
             (command, exit_code),
         )
+
+        # Enforce history limit - delete oldest entries if over limit
+        cursor.execute("SELECT COUNT(*) as cnt FROM history")
+        count = cursor.fetchone()["cnt"]
+        if count > HISTORY_LIMIT:
+            excess = count - HISTORY_LIMIT
+            cursor.execute(
+                "DELETE FROM history WHERE id IN (SELECT id FROM history ORDER BY id ASC LIMIT ?)",
+                (excess,),
+            )
+
         self.conn.commit()
 
     def get_last_history(self, limit: int = 50) -> list[str]:
@@ -252,6 +275,64 @@ class StorageManager:
         cursor.execute("SELECT command FROM history ORDER BY id DESC LIMIT ?", (limit,))
         # Return reversed so latest is last in list (for easy up/cycling)
         return [row["command"] for row in cursor.fetchall()][::-1]
+
+    def load_history(self, limit: int | None = None) -> list[str]:
+        """Load command history for input widget initialization.
+
+        Args:
+            limit: Maximum commands to load. Defaults to HISTORY_LIMIT.
+
+        Returns:
+            List of commands with oldest first (for up-arrow navigation).
+        """
+        if limit is None:
+            limit = HISTORY_LIMIT
+        return self.get_last_history(limit)
+
+    def save_history(self, commands: list[str]) -> None:
+        """Bulk save commands to history (for session restoration).
+
+        Args:
+            commands: List of commands to save.
+        """
+        cursor = self.conn.cursor()
+        for command in commands:
+            if command.strip():
+                cursor.execute(
+                    "INSERT INTO history (command, exit_code) VALUES (?, ?)",
+                    (command, 0),
+                )
+        self.conn.commit()
+
+        # Enforce limit after bulk insert
+        cursor.execute("SELECT COUNT(*) as cnt FROM history")
+        count = cursor.fetchone()["cnt"]
+        if count > HISTORY_LIMIT:
+            excess = count - HISTORY_LIMIT
+            cursor.execute(
+                "DELETE FROM history WHERE id IN (SELECT id FROM history ORDER BY id ASC LIMIT ?)",
+                (excess,),
+            )
+            self.conn.commit()
+
+    def clear_history(self) -> int:
+        """Clear all command history.
+
+        Returns:
+            Number of commands deleted.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT COUNT(*) as cnt FROM history")
+        count = cursor.fetchone()["cnt"]
+        cursor.execute("DELETE FROM history")
+        self.conn.commit()
+        return count
+
+    def get_history_count(self) -> int:
+        """Get the number of commands in history."""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT COUNT(*) as cnt FROM history")
+        return cursor.fetchone()["cnt"]
 
     def search_history(self, query: str, limit: int = 20) -> list[str]:
         """Search history for commands matching query."""

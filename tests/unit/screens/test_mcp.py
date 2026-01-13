@@ -406,17 +406,11 @@ class TestMCPServerConfigScreenCompose:
 
 
 class TestMCPServerConfigScreenCSS:
-    """Tests for screen CSS."""
+    """Tests for screen CSS (styles moved to main.tcss)."""
 
-    def test_default_css_defined(self):
-        """Test that DEFAULT_CSS is defined and contains expected selectors."""
-        assert MCPServerConfigScreen.DEFAULT_CSS is not None
-        css = MCPServerConfigScreen.DEFAULT_CSS
-        assert "MCPServerConfigScreen" in css
-        assert "#mcp-config-container" in css
-        assert "#buttons" in css
-        assert ".input-label" in css
-        assert ".input-hint" in css
+    def test_default_css_attribute_exists(self):
+        """Test that DEFAULT_CSS attribute exists on class."""
+        assert hasattr(MCPServerConfigScreen, "DEFAULT_CSS")
 
 
 class TestMCPServerConfigScreenArgsFormatting:

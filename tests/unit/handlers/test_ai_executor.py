@@ -330,3 +330,106 @@ class TestAIExecutorAgentMode:
             )
 
         mock_app.agent_manager.start_session.assert_called_once()
+
+
+class TestToolRunnerSessionApproval:
+    def test_reset_session_approvals(self, ai_executor):
+        tool_runner = ai_executor._tool_runner
+        tool_runner._session_approved_tools.add("read_file")
+        tool_runner._session_approved_tools.add("write_file")
+
+        tool_runner.reset_session_approvals()
+
+        assert len(tool_runner._session_approved_tools) == 0
+
+    def test_is_tool_session_approved(self, ai_executor):
+        tool_runner = ai_executor._tool_runner
+        tool_runner._session_approved_tools.add("read_file")
+
+        assert tool_runner.is_tool_session_approved("read_file") is True
+        assert tool_runner.is_tool_session_approved("write_file") is False
+
+    def test_add_session_approved_tools(self, ai_executor):
+        tool_runner = ai_executor._tool_runner
+
+        tool_runner.add_session_approved_tools(["read_file", "write_file"])
+
+        assert tool_runner.is_tool_session_approved("read_file") is True
+        assert tool_runner.is_tool_session_approved("write_file") is True
+        assert tool_runner.is_tool_session_approved("run_command") is False
+
+    @pytest.mark.asyncio
+    async def test_request_approval_skips_session_approved(self, ai_executor, mock_app):
+        tool_runner = ai_executor._tool_runner
+        tool_runner.add_session_approved_tools(["read_file"])
+
+        mock_tool_call = MagicMock()
+        mock_tool_call.name = "read_file"
+        mock_tool_call.arguments = {"path": "/tmp/test.txt"}
+
+        result = await tool_runner.request_approval(
+            [mock_tool_call], iteration_number=1
+        )
+
+        assert result == "approve"
+
+    @pytest.mark.asyncio
+    async def test_request_approval_shows_screen_for_unapproved(
+        self, ai_executor, mock_app
+    ):
+        tool_runner = ai_executor._tool_runner
+        tool_runner.reset_session_approvals()
+
+        mock_tool_call = MagicMock()
+        mock_tool_call.name = "write_file"
+        mock_tool_call.arguments = {"path": "/tmp/test.txt"}
+
+        mock_app.config.get.return_value = {"agent_approval_timeout": 60}
+        mock_app.push_screen_wait = AsyncMock(return_value="approve")
+
+        result = await tool_runner.request_approval(
+            [mock_tool_call], iteration_number=1
+        )
+
+        assert result == "approve"
+        mock_app.push_screen_wait.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_request_approval_timeout_returns_reject(self, ai_executor, mock_app):
+        tool_runner = ai_executor._tool_runner
+        tool_runner.reset_session_approvals()
+
+        mock_tool_call = MagicMock()
+        mock_tool_call.name = "run_command"
+        mock_tool_call.arguments = {"cmd": "ls"}
+
+        mock_app.config.get.return_value = {"agent_approval_timeout": 60}
+        mock_app.push_screen_wait = AsyncMock(return_value="timeout")
+        mock_app.notify = MagicMock()
+
+        result = await tool_runner.request_approval(
+            [mock_tool_call], iteration_number=1
+        )
+
+        assert result == "reject"
+        mock_app.notify.assert_called_once()
+        assert "timed out" in mock_app.notify.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_request_approval_session_adds_tools(self, ai_executor, mock_app):
+        tool_runner = ai_executor._tool_runner
+        tool_runner.reset_session_approvals()
+
+        mock_tool_call = MagicMock()
+        mock_tool_call.name = "read_file"
+        mock_tool_call.arguments = {"path": "/tmp/test.txt"}
+
+        mock_app.config.get.return_value = {"agent_approval_timeout": 60}
+        mock_app.push_screen_wait = AsyncMock(return_value="approve-session")
+
+        result = await tool_runner.request_approval(
+            [mock_tool_call], iteration_number=1
+        )
+
+        assert result == "approve"
+        assert tool_runner.is_tool_session_approved("read_file") is True

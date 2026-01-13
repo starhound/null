@@ -1,0 +1,140 @@
+/* ==========================================================================
+   Prompt Editor Screen - System prompt management with template variables
+   ========================================================================== */
+
+PromptEditorScreen {
+    align: center middle;
+}
+
+PromptEditorScreen #editor-container {
+    width: 90%;
+    height: 90%;
+    max-width: 120;
+    background: $layer-base;
+    border: solid $primary $border-dim;
+    padding: 1;
+}
+
+PromptEditorScreen #sidebar {
+    width: 28;
+    dock: left;
+    background: $layer-raised;
+    border-right: solid $primary $border-dim;
+    padding: 1;
+}
+
+PromptEditorScreen #sidebar-title {
+    text-style: bold;
+    color: $primary;
+    padding-bottom: 1;
+}
+
+PromptEditorScreen #prompt-list {
+    height: 1fr;
+    background: transparent;
+}
+
+PromptEditorScreen #prompt-list > ListItem {
+    padding: 0 1;
+    height: auto;
+}
+
+PromptEditorScreen #prompt-list > ListItem:hover {
+    background: $layer-float;
+}
+
+PromptEditorScreen #prompt-list > ListItem.-highlight {
+    background: $primary $glow-medium;
+}
+
+PromptEditorScreen #sidebar-buttons {
+    dock: bottom;
+    height: auto;
+    padding-top: 1;
+}
+
+PromptEditorScreen #main-content {
+    padding: 1 2;
+}
+
+PromptEditorScreen .field-label {
+    margin-top: 1;
+    color: $text-muted;
+}
+
+PromptEditorScreen Input {
+    margin-bottom: 1;
+}
+
+PromptEditorScreen #prompt-content-area {
+    height: 1fr;
+    min-height: 10;
+}
+
+/* Variable Toolbar */
+PromptEditorScreen #var-toolbar {
+    margin: 1 0;
+}
+
+PromptEditorScreen .var-hint {
+    color: $text-dim;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+PromptEditorScreen .var-buttons {
+    width: 100%;
+    height: auto;
+    padding: 0 1;
+}
+
+VariableButton {
+    padding: 0 1;
+    margin: 0 1 1 0;
+    background: $layer-raised;
+    border: solid $accent $border-dim;
+    color: $accent;
+    height: auto;
+}
+
+VariableButton:hover {
+    background: $accent $glow-medium;
+    border: solid $accent $border-focus;
+}
+
+/* Preview Panel */
+PromptEditorScreen #preview-panel {
+    margin: 1 0;
+    max-height: 15;
+}
+
+PromptEditorScreen #preview-content {
+    padding: 1;
+    background: $layer-void;
+}
+
+/* Help Panel */
+PromptEditorScreen #help-panel {
+    margin: 1 0;
+    max-height: 20;
+}
+
+PromptEditorScreen #help-content {
+    padding: 1;
+}
+
+/* Footer Buttons */
+PromptEditorScreen #footer-buttons {
+    dock: bottom;
+    height: auto;
+    padding-top: 1;
+    align: right middle;
+}
+
+PromptEditorScreen #footer-buttons .spacer {
+    width: 1fr;
+}
+
+PromptEditorScreen #footer-buttons Button {
+    margin-left: 1;
+}

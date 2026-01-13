@@ -40,8 +40,13 @@ class AIExecutor(BaseExecutor):
         await self._tool_runner.cancel_tool(tool_id)
 
     def _get_tool_registry(self) -> ToolRegistry:
-        """Get or create the tool registry."""
         return self._tool_runner.get_registry()
+
+    def _get_status_bar(self) -> StatusBar | None:
+        try:
+            return self.app.query_one("#status-bar", StatusBar)
+        except Exception:
+            return None
 
     async def execute_ai(
         self, prompt: str, block_state: BlockState, widget: BaseBlockWidget
@@ -93,9 +98,18 @@ class AIExecutor(BaseExecutor):
                         severity="warning",
                     )
 
-            if context_info.truncated:
+            if context_info.summarized:
+                summary_msg = (
+                    f"Context summarized: {context_info.summary_details} "
+                    f"(kept {context_info.message_count - 1} recent + summary)"
+                )
+                self.app.notify(summary_msg, severity="information")
+            elif context_info.truncated:
+                dropped = (
+                    context_info.original_message_count - context_info.message_count
+                )
                 self.app.notify(
-                    f"Context truncated to fit {max_tokens} token limit",
+                    f"Context truncated: dropped {dropped} oldest messages to fit {max_tokens} token limit",
                     severity="warning",
                 )
 
@@ -176,19 +190,24 @@ class AIExecutor(BaseExecutor):
         system_prompt: str,
         max_tokens: int,
     ):
-        """Execute AI generation without tool support (legacy mode)."""
         ai_provider = self.app.ai_provider
         assert ai_provider is not None, "AI provider must be set"
 
         full_response = ""
+        status_bar = self._get_status_bar()
 
         def update_callback(chunk: str):
             nonlocal full_response
             full_response += chunk
             block_state.content_output = full_response
             widget.update_output(full_response)
+            if status_bar:
+                status_bar.update_streaming_tokens(len(full_response))
 
         buffer = UIBuffer(self.app, update_callback)
+
+        if status_bar:
+            status_bar.start_streaming()
 
         try:
             async for chunk in ai_provider.generate(
@@ -208,6 +227,8 @@ class AIExecutor(BaseExecutor):
 
         finally:
             buffer.stop()
+            if status_bar:
+                status_bar.stop_streaming()
 
         self._finalize_response(
             block_state, widget, full_response, messages, max_tokens
@@ -336,11 +357,13 @@ class AIExecutor(BaseExecutor):
         system_prompt: str,
         buffer: UIBuffer,
     ) -> tuple[str, list[Any], TokenUsage | None]:
-        """Stream response from provider and update UI buffer."""
-
         pending_tool_calls: list[Any] = []
         usage_data: TokenUsage | None = None
         response_text = ""
+
+        status_bar = self._get_status_bar()
+        if status_bar:
+            status_bar.start_streaming()
 
         async for chunk in ai_provider.generate_with_tools(
             prompt,
@@ -355,6 +378,8 @@ class AIExecutor(BaseExecutor):
             if chunk.text:
                 buffer.write(chunk.text)
                 response_text += chunk.text
+                if status_bar:
+                    status_bar.update_streaming_tokens(len(response_text))
 
             if chunk.tool_calls:
                 pending_tool_calls.extend(chunk.tool_calls)
@@ -366,6 +391,8 @@ class AIExecutor(BaseExecutor):
                 break
 
         buffer.flush()
+        if status_bar:
+            status_bar.stop_streaming()
         return response_text, pending_tool_calls, usage_data
 
     def _finalize_response(

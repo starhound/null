@@ -300,14 +300,23 @@ def export_to_markdown(blocks: list[BlockState]) -> str:
 
 def save_export(blocks: list[BlockState], format: str = "md") -> Path:
     """Save export to file and return path."""
+    from utils.exporters import export_to_html, export_to_org
+
     export_dir = Path.home() / ".null" / "exports"
     export_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    if format == "json":
-        filename = f"null-export-{timestamp}.json"
-        content = export_to_json(blocks)
+    format_map = {
+        "json": ("json", export_to_json),
+        "html": ("html", export_to_html),
+        "org": ("org", export_to_org),
+    }
+
+    if format in format_map:
+        ext, exporter = format_map[format]
+        filename = f"null-export-{timestamp}.{ext}"
+        content = exporter(blocks)
     else:
         filename = f"null-export-{timestamp}.md"
         content = export_to_markdown(blocks)

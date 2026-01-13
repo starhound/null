@@ -1,6 +1,53 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 from typing import Any, TypedDict
+
+
+class HealthStatus(Enum):
+    """Provider connection health status."""
+
+    CONNECTED = "connected"
+    DISCONNECTED = "disconnected"
+    ERROR = "error"
+    CHECKING = "checking"
+    UNKNOWN = "unknown"
+
+
+@dataclass
+class ProviderHealth:
+    """Health status for an AI provider."""
+
+    status: HealthStatus = HealthStatus.UNKNOWN
+    latency_ms: float | None = None  # Last API call latency in milliseconds
+    last_check: datetime | None = None  # Timestamp of last health check
+    error_message: str | None = None  # Error details if status is ERROR
+
+    @property
+    def is_healthy(self) -> bool:
+        """Check if provider is in a healthy state."""
+        return self.status == HealthStatus.CONNECTED
+
+    @property
+    def latency_category(self) -> str:
+        """Categorize latency as fast/normal/slow for UI display."""
+        if self.latency_ms is None:
+            return "unknown"
+        if self.latency_ms < 500:
+            return "fast"  # Green - under 500ms
+        if self.latency_ms < 2000:
+            return "normal"  # Yellow - under 2s
+        return "slow"  # Red - over 2s
+
+    @property
+    def latency_display(self) -> str:
+        """Format latency for display (e.g., '150ms' or '2.1s')."""
+        if self.latency_ms is None:
+            return ""
+        if self.latency_ms < 1000:
+            return f"{int(self.latency_ms)}ms"
+        return f"{self.latency_ms / 1000:.1f}s"
 
 
 class Message(TypedDict, total=False):
@@ -578,6 +625,36 @@ class LLMProvider(ABC):
     async def validate_connection(self) -> bool:
         """Check if the provider is reachable."""
         pass
+
+    async def check_health(self) -> ProviderHealth:
+        """Check provider health with latency measurement."""
+        import time
+
+        start = time.perf_counter()
+        try:
+            is_valid = await self.validate_connection()
+            elapsed_ms = (time.perf_counter() - start) * 1000
+
+            if is_valid:
+                return ProviderHealth(
+                    status=HealthStatus.CONNECTED,
+                    latency_ms=elapsed_ms,
+                    last_check=datetime.now(),
+                )
+            else:
+                return ProviderHealth(
+                    status=HealthStatus.DISCONNECTED,
+                    latency_ms=elapsed_ms,
+                    last_check=datetime.now(),
+                )
+        except Exception as e:
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            return ProviderHealth(
+                status=HealthStatus.ERROR,
+                latency_ms=elapsed_ms,
+                last_check=datetime.now(),
+                error_message=str(e)[:100],
+            )
 
     async def close(self) -> None:
         """Clean up provider resources. Override in subclasses if needed."""

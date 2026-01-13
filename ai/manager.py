@@ -5,7 +5,7 @@ from collections.abc import AsyncGenerator
 
 from config import Config
 
-from .base import LLMProvider
+from .base import HealthStatus, LLMProvider, ProviderHealth
 from .factory import AIFactory
 
 
@@ -14,7 +14,7 @@ class AIManager:
 
     def __init__(self):
         self._providers: dict[str, LLMProvider] = {}
-        # Pre-load the active provider
+        self._health_cache: dict[str, ProviderHealth] = {}
         self.get_active_provider()
 
     async def close_all(self) -> None:
@@ -199,6 +199,55 @@ class AIManager:
                 models_by_provider[provider_name] = models
 
         return models_by_provider
+
+    def get_provider_health(self, name: str) -> ProviderHealth:
+        """Get cached health status for a provider."""
+        return self._health_cache.get(name, ProviderHealth())
+
+    def get_active_provider_health(self) -> ProviderHealth:
+        """Get health status for the currently active provider."""
+        provider_name = Config.get("ai.provider")
+        if provider_name:
+            return self.get_provider_health(provider_name)
+        return ProviderHealth()
+
+    async def check_provider_health(self, name: str) -> ProviderHealth:
+        """Check and cache health for a specific provider."""
+        self._health_cache[name] = ProviderHealth(status=HealthStatus.CHECKING)
+
+        provider = self.get_provider(name)
+        if not provider:
+            health = ProviderHealth(
+                status=HealthStatus.ERROR,
+                error_message="Provider not initialized",
+            )
+            self._health_cache[name] = health
+            return health
+
+        health = await provider.check_health()
+        self._health_cache[name] = health
+        return health
+
+    async def check_all_health(self) -> dict[str, ProviderHealth]:
+        """Check health for all usable providers in parallel."""
+        usable = self.get_usable_providers()
+        if not usable:
+            return {}
+
+        async def check_one(name: str) -> tuple[str, ProviderHealth]:
+            health = await self.check_provider_health(name)
+            return (name, health)
+
+        tasks = [check_one(p) for p in usable]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        health_map: dict[str, ProviderHealth] = {}
+        for result in results:
+            if isinstance(result, tuple):
+                name, health = result
+                health_map[name] = health
+
+        return health_map
 
     async def list_all_models_streaming(
         self,

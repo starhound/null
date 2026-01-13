@@ -13,6 +13,7 @@ from .providers import ProvidersScreen
 from .review import ReviewScreen
 from .save_dialog import SaveFileDialog
 from .selection import ModelListScreen, SelectionListScreen, ThemeSelectionScreen
+from .theme_editor import ThemeEditorScreen
 from .tools import ToolsScreen
 
 __all__ = [
@@ -31,6 +32,7 @@ __all__ = [
     "ReviewScreen",
     "SaveFileDialog",
     "SelectionListScreen",
+    "ThemeEditorScreen",
     "ThemeSelectionScreen",
     "ToolApprovalScreen",
     "ToolsScreen",

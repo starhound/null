@@ -3,10 +3,16 @@
 import asyncio
 import json
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
 from .config import MCPServerConfig
+
+# Reconnection constants
+MAX_RECONNECT_ATTEMPTS = 5
+INITIAL_BACKOFF_SECONDS = 1.0
+MAX_BACKOFF_SECONDS = 60.0
 
 
 @dataclass
@@ -33,7 +39,13 @@ class MCPResource:
 class MCPClient:
     """Client for communicating with a single MCP server via stdio."""
 
-    def __init__(self, config: MCPServerConfig):
+    def __init__(
+        self,
+        config: MCPServerConfig,
+        on_reconnect_attempt: Callable[[str, int, float], None] | None = None,
+        on_reconnect_success: Callable[[str], None] | None = None,
+        on_reconnect_failed: Callable[[str, int], None] | None = None,
+    ):
         self.config = config
         self.process: asyncio.subprocess.Process | None = None
         self.tools: list[MCPTool] = []
@@ -43,14 +55,22 @@ class MCPClient:
         self._read_task: asyncio.Task | None = None
         self._connected = False
 
+        self._reconnect_task: asyncio.Task | None = None
+        self._reconnect_attempts = 0
+        self._manual_disconnect = False
+
+        self._on_reconnect_attempt = on_reconnect_attempt
+        self._on_reconnect_success = on_reconnect_success
+        self._on_reconnect_failed = on_reconnect_failed
+
     @property
     def is_connected(self) -> bool:
         return self._connected and self.process is not None
 
     async def connect(self) -> bool:
         """Start the MCP server process and initialize."""
+        self._manual_disconnect = False
         try:
-            # Prepare environment
             env = os.environ.copy()
             env.update(self.config.env)
 
@@ -94,9 +114,13 @@ class MCPClient:
 
         return False
 
-    async def disconnect(self):
+    async def disconnect(self, manual: bool = True):
         """Disconnect from the MCP server."""
         self._connected = False
+
+        if manual:
+            self._manual_disconnect = True
+            self.cancel_reconnect()
 
         if self._read_task:
             self._read_task.cancel()
@@ -120,12 +144,22 @@ class MCPClient:
         self.resources = []
         self._pending_requests.clear()
 
+    def cancel_reconnect(self):
+        """Cancel any pending reconnection attempts."""
+        if self._reconnect_task and not self._reconnect_task.done():
+            self._reconnect_task.cancel()
+            self._reconnect_task = None
+        self._reconnect_attempts = 0
+
     async def _read_loop(self):
         """Read responses from the server."""
+        unexpected_disconnect = False
         try:
             while self.process and self.process.stdout:
                 line = await self.process.stdout.readline()
                 if not line:
+                    if self._connected and not self._manual_disconnect:
+                        unexpected_disconnect = True
                     break
 
                 try:
@@ -138,6 +172,50 @@ class MCPClient:
             pass
         except Exception as e:
             print(f"MCP read error ({self.config.name}): {e}")
+            if self._connected and not self._manual_disconnect:
+                unexpected_disconnect = True
+        finally:
+            if unexpected_disconnect:
+                self._connected = False
+                self._reconnect_task = asyncio.create_task(self._attempt_reconnect())
+
+    async def _attempt_reconnect(self):
+        """Attempt to reconnect with exponential backoff."""
+        self._reconnect_attempts = 0
+
+        while self._reconnect_attempts < MAX_RECONNECT_ATTEMPTS:
+            if self._manual_disconnect:
+                return
+
+            self._reconnect_attempts += 1
+            backoff = min(
+                INITIAL_BACKOFF_SECONDS * (2 ** (self._reconnect_attempts - 1)),
+                MAX_BACKOFF_SECONDS,
+            )
+
+            if self._on_reconnect_attempt:
+                self._on_reconnect_attempt(
+                    self.config.name, self._reconnect_attempts, backoff
+                )
+
+            await asyncio.sleep(backoff)
+
+            if self._manual_disconnect:
+                return
+
+            await self.disconnect(manual=False)
+            success = await self.connect()
+
+            if success:
+                self._reconnect_attempts = 0
+                self._manual_disconnect = False
+                if self._on_reconnect_success:
+                    self._on_reconnect_success(self.config.name)
+                return
+
+        if self._on_reconnect_failed:
+            self._on_reconnect_failed(self.config.name, MAX_RECONNECT_ATTEMPTS)
+        self._reconnect_attempts = 0
 
     async def _handle_message(self, message: dict[str, Any]):
         """Handle incoming message from server."""

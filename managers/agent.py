@@ -25,12 +25,18 @@ class AgentSession:
     started_at: datetime
     ended_at: datetime | None = None
     iterations: int = 0
+    max_iterations: int = 10
     tool_calls: int = 0
     tokens_used: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    estimated_cost: float = 0.0
     state: AgentState = AgentState.IDLE
     current_task: str = ""
+    model_name: str = ""
     errors: list[str] = field(default_factory=list)
     tool_history: list[dict[str, Any]] = field(default_factory=list)
+    tool_usage_session: dict[str, int] = field(default_factory=dict)
 
     @property
     def duration(self) -> float:
@@ -48,12 +54,18 @@ class AgentSession:
             "ended_at": self.ended_at.isoformat() if self.ended_at else None,
             "duration": self.duration,
             "iterations": self.iterations,
+            "max_iterations": self.max_iterations,
             "tool_calls": self.tool_calls,
             "tokens_used": self.tokens_used,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
+            "estimated_cost": self.estimated_cost,
             "state": self.state.value,
             "current_task": self.current_task,
+            "model_name": self.model_name,
             "errors": self.errors,
             "tool_history": self.tool_history,
+            "tool_usage_session": self.tool_usage_session,
         }
 
     @classmethod
@@ -65,12 +77,18 @@ class AgentSession:
             if data.get("ended_at")
             else None,
             iterations=data.get("iterations", 0),
+            max_iterations=data.get("max_iterations", 10),
             tool_calls=data.get("tool_calls", 0),
             tokens_used=data.get("tokens_used", 0),
+            input_tokens=data.get("input_tokens", 0),
+            output_tokens=data.get("output_tokens", 0),
+            estimated_cost=data.get("estimated_cost", 0.0),
             state=AgentState(data.get("state", "idle")),
             current_task=data.get("current_task", ""),
+            model_name=data.get("model_name", ""),
             errors=data.get("errors", []),
             tool_history=data.get("tool_history", []),
+            tool_usage_session=data.get("tool_usage_session", {}),
         )
 
 
@@ -80,6 +98,9 @@ class AgentStats:
     total_iterations: int = 0
     total_tool_calls: int = 0
     total_tokens: int = 0
+    total_input_tokens: int = 0
+    total_output_tokens: int = 0
+    total_cost: float = 0.0
     total_duration: float = 0.0
     tool_usage: dict[str, int] = field(default_factory=dict)
     error_count: int = 0
@@ -90,6 +111,9 @@ class AgentStats:
             "total_iterations": self.total_iterations,
             "total_tool_calls": self.total_tool_calls,
             "total_tokens": self.total_tokens,
+            "total_input_tokens": self.total_input_tokens,
+            "total_output_tokens": self.total_output_tokens,
+            "total_cost": self.total_cost,
             "total_duration": self.total_duration,
             "tool_usage": self.tool_usage,
             "error_count": self.error_count,
@@ -97,6 +121,7 @@ class AgentStats:
             / max(1, self.total_sessions),
             "avg_tools_per_session": self.total_tool_calls
             / max(1, self.total_sessions),
+            "avg_cost_per_session": self.total_cost / max(1, self.total_sessions),
         }
 
 
@@ -130,7 +155,9 @@ class AgentManager:
     def stats(self) -> AgentStats:
         return self._stats
 
-    def start_session(self, task: str) -> AgentSession:
+    def start_session(
+        self, task: str, max_iterations: int = 10, model_name: str = ""
+    ) -> AgentSession:
         if self._current_session and self._current_session.is_active:
             self.end_session()
 
@@ -140,6 +167,8 @@ class AgentManager:
             id=str(uuid.uuid4())[:8],
             started_at=datetime.now(),
             current_task=task,
+            max_iterations=max_iterations,
+            model_name=model_name,
             state=AgentState.THINKING,
         )
         self._current_session = session
@@ -148,9 +177,9 @@ class AgentManager:
         self._notify_state_change()
         return session
 
-    def end_session(self, cancelled: bool = False):
+    def end_session(self, cancelled: bool = False) -> dict[str, Any] | None:
         if not self._current_session:
-            return
+            return None
 
         session = self._current_session
         session.ended_at = datetime.now()
@@ -160,8 +189,13 @@ class AgentManager:
         self._stats.total_iterations += session.iterations
         self._stats.total_tool_calls += session.tool_calls
         self._stats.total_tokens += session.tokens_used
+        self._stats.total_input_tokens += session.input_tokens
+        self._stats.total_output_tokens += session.output_tokens
+        self._stats.total_cost += session.estimated_cost
         self._stats.total_duration += session.duration
         self._stats.error_count += len(session.errors)
+
+        summary = self.get_session_summary()
 
         self._session_history.append(session)
         if len(self._session_history) > self._max_history:
@@ -169,6 +203,7 @@ class AgentManager:
 
         self._current_session = None
         self._notify_state_change()
+        return summary
 
     def update_state(self, state: AgentState):
         if self._current_session:
@@ -195,6 +230,10 @@ class AgentManager:
                 }
             )
 
+            self._current_session.tool_usage_session[tool_name] = (
+                self._current_session.tool_usage_session.get(tool_name, 0) + 1
+            )
+
             self._stats.tool_usage[tool_name] = (
                 self._stats.tool_usage.get(tool_name, 0) + 1
             )
@@ -202,9 +241,29 @@ class AgentManager:
             if not success:
                 self._current_session.errors.append(f"Tool {tool_name} failed")
 
-    def record_tokens(self, tokens: int):
+            self._notify_state_change()
+
+    def record_tokens(self, tokens: int, input_tokens: int = 0, output_tokens: int = 0):
         if self._current_session:
             self._current_session.tokens_used += tokens
+            self._current_session.input_tokens += input_tokens
+            self._current_session.output_tokens += output_tokens
+            self._update_cost()
+            self._notify_state_change()
+
+    def _update_cost(self):
+        if not self._current_session or not self._current_session.model_name:
+            return
+
+        from ai.base import TokenUsage, calculate_cost
+
+        usage = TokenUsage(
+            input_tokens=self._current_session.input_tokens,
+            output_tokens=self._current_session.output_tokens,
+        )
+        self._current_session.estimated_cost = calculate_cost(
+            usage, self._current_session.model_name
+        )
 
     def record_error(self, error: str):
         if self._current_session:
@@ -250,9 +309,16 @@ class AgentManager:
                 "task": self._current_session.current_task[:100],
                 "state": self._current_session.state.value,
                 "iterations": self._current_session.iterations,
+                "max_iterations": self._current_session.max_iterations,
                 "tool_calls": self._current_session.tool_calls,
                 "duration": self._current_session.duration,
                 "errors": len(self._current_session.errors),
+                "input_tokens": self._current_session.input_tokens,
+                "output_tokens": self._current_session.output_tokens,
+                "tokens_used": self._current_session.tokens_used,
+                "estimated_cost": self._current_session.estimated_cost,
+                "model_name": self._current_session.model_name,
+                "tool_usage_session": self._current_session.tool_usage_session,
             }
 
         return {
@@ -261,6 +327,37 @@ class AgentManager:
             "current_session": session_info,
             "history_count": len(self._session_history),
             "stats": self._stats.to_dict(),
+        }
+
+    def get_session_summary(self) -> dict[str, Any] | None:
+        if not self._current_session:
+            return None
+
+        session = self._current_session
+        top_tools = sorted(
+            session.tool_usage_session.items(), key=lambda x: x[1], reverse=True
+        )[:5]
+
+        return {
+            "id": session.id,
+            "task": session.current_task,
+            "status": "cancelled"
+            if session.state == AgentState.CANCELLED
+            else "completed",
+            "steps": f"{session.iterations}/{session.max_iterations}",
+            "duration": session.duration,
+            "tokens": {
+                "total": session.tokens_used,
+                "input": session.input_tokens,
+                "output": session.output_tokens,
+            },
+            "cost": session.estimated_cost,
+            "tools": {
+                "total_calls": session.tool_calls,
+                "by_type": dict(top_tools),
+            },
+            "errors": len(session.errors),
+            "model": session.model_name,
         }
 
     def clear_history(self):

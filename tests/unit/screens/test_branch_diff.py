@@ -4,7 +4,13 @@ from unittest.mock import MagicMock
 
 from managers.branch import BranchManager
 from models import BlockState, BlockType
-from screens.branch_diff import BranchDiffScreen
+from screens.branch_diff import (
+    BranchDiffScreen,
+    DiffHunk,
+    DiffHunkWidget,
+    DiffLineWidget,
+    UnchangedSection,
+)
 
 
 class TestBranchDiffScreenInit:
@@ -43,6 +49,18 @@ class TestBranchDiffScreenInit:
         screen = BranchDiffScreen("feature/test-123", "bugfix_456", manager)
         assert screen.branch_a_id == "feature/test-123"
         assert screen.branch_b_id == "bugfix_456"
+
+    def test_init_creates_empty_change_positions(self):
+        """Test that change_positions is initialized as empty list."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        assert screen.change_positions == []
+
+    def test_init_creates_empty_diff_hunks(self):
+        """Test that _diff_hunks is initialized as empty list."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        assert screen._diff_hunks == []
 
 
 class TestBranchDiffScreenBindings:
@@ -83,6 +101,38 @@ class TestBranchDiffScreenBindings:
         q_binding = next(b for b in screen.BINDINGS if b.key == "q")
         assert q_binding.show is False
 
+    def test_n_binding_for_next_change(self):
+        """Test that 'n' binding exists for next change."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        binding_keys = [b.key for b in screen.BINDINGS]
+        assert "n" in binding_keys
+        n_binding = next(b for b in screen.BINDINGS if b.key == "n")
+        assert n_binding.action == "next_change"
+
+    def test_p_binding_for_prev_change(self):
+        """Test that 'p' binding exists for previous change."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        binding_keys = [b.key for b in screen.BINDINGS]
+        assert "p" in binding_keys
+        p_binding = next(b for b in screen.BINDINGS if b.key == "p")
+        assert p_binding.action == "prev_change"
+
+    def test_j_binding_for_scroll_down(self):
+        """Test that 'j' binding exists for scroll down."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        binding_keys = [b.key for b in screen.BINDINGS]
+        assert "j" in binding_keys
+
+    def test_k_binding_for_scroll_up(self):
+        """Test that 'k' binding exists for scroll up."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        binding_keys = [b.key for b in screen.BINDINGS]
+        assert "k" in binding_keys
+
 
 class TestBranchDiffScreenActions:
     """Tests for screen action methods."""
@@ -103,6 +153,51 @@ class TestBranchDiffScreenActions:
         screen.action_dismiss()
         screen.dismiss.assert_called_once_with()
 
+    def test_action_next_change_increments_current_change(self):
+        """Test that action_next_change increments current_change."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        screen.change_positions = [0, 1, 2]
+        screen.current_change = 0
+        screen.action_next_change()
+        assert screen.current_change == 1
+
+    def test_action_next_change_wraps_around(self):
+        """Test that action_next_change wraps around at end."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        screen.change_positions = [0, 1, 2]
+        screen.current_change = 2
+        screen.action_next_change()
+        assert screen.current_change == 0
+
+    def test_action_prev_change_decrements_current_change(self):
+        """Test that action_prev_change decrements current_change."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        screen.change_positions = [0, 1, 2]
+        screen.current_change = 2
+        screen.action_prev_change()
+        assert screen.current_change == 1
+
+    def test_action_prev_change_wraps_around(self):
+        """Test that action_prev_change wraps around at start."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        screen.change_positions = [0, 1, 2]
+        screen.current_change = 0
+        screen.action_prev_change()
+        assert screen.current_change == 2
+
+    def test_action_next_change_no_changes(self):
+        """Test that action_next_change does nothing when no changes."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        screen.change_positions = []
+        screen.current_change = 0
+        screen.action_next_change()
+        assert screen.current_change == 0
+
 
 class TestBranchDiffScreenButtonHandling:
     """Tests for button press handling."""
@@ -121,19 +216,48 @@ class TestBranchDiffScreenButtonHandling:
         screen.on_button_pressed(mock_event)
         screen.dismiss.assert_called_once()
 
-    def test_other_button_does_not_dismiss(self):
-        """Test that other button IDs don't dismiss the screen."""
+    def test_next_button_calls_action(self):
+        """Test that btn-next calls action_next_change."""
         manager = BranchManager()
         screen = BranchDiffScreen("a", "b", manager)
-        screen.dismiss = MagicMock()
+        screen.action_next_change = MagicMock()
 
         mock_button = MagicMock()
-        mock_button.id = "other-button"
+        mock_button.id = "btn-next"
         mock_event = MagicMock()
         mock_event.button = mock_button
 
         screen.on_button_pressed(mock_event)
-        screen.dismiss.assert_not_called()
+        screen.action_next_change.assert_called_once()
+
+    def test_prev_button_calls_action(self):
+        """Test that btn-prev calls action_prev_change."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        screen.action_prev_change = MagicMock()
+
+        mock_button = MagicMock()
+        mock_button.id = "btn-prev"
+        mock_event = MagicMock()
+        mock_event.button = mock_button
+
+        screen.on_button_pressed(mock_event)
+        screen.action_prev_change.assert_called_once()
+
+    def test_jump_button_sets_current_change(self):
+        """Test that jump button sets current_change correctly."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        screen.change_positions = [0, 2, 5]
+        screen.current_change = 0
+
+        mock_button = MagicMock()
+        mock_button.id = "jump-2"
+        mock_event = MagicMock()
+        mock_event.button = mock_button
+
+        screen.on_button_pressed(mock_event)
+        assert screen.current_change == 1  # Index of 2 in change_positions
 
     def test_none_button_id_does_not_dismiss(self):
         """Test that None button ID doesn't dismiss the screen."""
@@ -150,147 +274,188 @@ class TestBranchDiffScreenButtonHandling:
         screen.dismiss.assert_not_called()
 
 
-class TestBranchDiffScreenCreateBlockWidget:
-    """Tests for the _create_block_widget method."""
+class TestBlocksToLines:
+    """Tests for the _blocks_to_lines method."""
 
-    def _get_widget_text(self, widget):
-        return str(widget._Static__content)
-
-    def test_create_block_widget_short_content(self):
-        """Test widget creation with short content."""
+    def test_empty_blocks_returns_empty_list(self):
+        """Test that empty blocks list returns empty list."""
         manager = BranchManager()
         screen = BranchDiffScreen("a", "b", manager)
+        result = screen._blocks_to_lines([])
+        assert result == []
 
-        block = BlockState(
-            type=BlockType.COMMAND,
-            content_input="ls -la",
+    def test_single_block_converts_correctly(self):
+        """Test that a single block converts to lines."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        block = BlockState(type=BlockType.COMMAND, content_input="ls -la")
+        result = screen._blocks_to_lines([block])
+        assert "[COMMAND]" in result
+        assert "ls -la" in result
+
+    def test_multiline_content_splits(self):
+        """Test that multiline content is split into lines."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        block = BlockState(type=BlockType.COMMAND, content_input="line1\nline2\nline3")
+        result = screen._blocks_to_lines([block])
+        assert "line1" in result
+        assert "line2" in result
+        assert "line3" in result
+
+    def test_multiple_blocks_have_separators(self):
+        """Test that multiple blocks have empty line separators."""
+        manager = BranchManager()
+        screen = BranchDiffScreen("a", "b", manager)
+        blocks = [
+            BlockState(type=BlockType.COMMAND, content_input="cmd1"),
+            BlockState(type=BlockType.AI_RESPONSE, content_input="response"),
+        ]
+        result = screen._blocks_to_lines(blocks)
+        # Should have block headers
+        assert "[COMMAND]" in result
+        assert "[AI_RESPONSE]" in result
+
+
+class TestComputeDiff:
+    """Tests for the _compute_diff method."""
+
+    def test_empty_branches_returns_empty_hunks(self):
+        """Test that comparing empty branches returns empty hunks."""
+        manager = BranchManager()
+        manager.branches = {"a": [], "b": []}
+        screen = BranchDiffScreen("a", "b", manager)
+        result = screen._compute_diff()
+        assert result == []
+
+    def test_identical_branches_returns_unchanged_hunks(self):
+        """Test that identical branches return unchanged hunks."""
+        manager = BranchManager()
+        block = BlockState(type=BlockType.COMMAND, content_input="test")
+        manager.branches = {"a": [block], "b": [block]}
+        screen = BranchDiffScreen("a", "b", manager)
+        result = screen._compute_diff()
+        # All hunks should be unchanged
+        assert all(not h.is_change for h in result)
+
+    def test_different_content_creates_change_hunks(self):
+        """Test that different content creates change hunks."""
+        manager = BranchManager()
+        block_a = BlockState(type=BlockType.COMMAND, content_input="original")
+        block_b = BlockState(type=BlockType.COMMAND, content_input="modified")
+        manager.branches = {"a": [block_a], "b": [block_b]}
+        screen = BranchDiffScreen("a", "b", manager)
+        result = screen._compute_diff()
+        # Should have at least one change hunk
+        assert any(h.is_change for h in result)
+
+    def test_added_block_creates_insert_hunk(self):
+        """Test that an added block creates an insert hunk."""
+        manager = BranchManager()
+        block = BlockState(type=BlockType.COMMAND, content_input="test")
+        manager.branches = {"a": [], "b": [block]}
+        screen = BranchDiffScreen("a", "b", manager)
+        result = screen._compute_diff()
+        # Should have change hunks for additions
+        assert any(h.is_change for h in result)
+
+    def test_removed_block_creates_delete_hunk(self):
+        """Test that a removed block creates a delete hunk."""
+        manager = BranchManager()
+        block = BlockState(type=BlockType.COMMAND, content_input="test")
+        manager.branches = {"a": [block], "b": []}
+        screen = BranchDiffScreen("a", "b", manager)
+        result = screen._compute_diff()
+        # Should have change hunks for deletions
+        assert any(h.is_change for h in result)
+
+
+class TestDiffHunk:
+    """Tests for the DiffHunk dataclass."""
+
+    def test_diff_hunk_creation(self):
+        """Test that DiffHunk can be created."""
+        hunk = DiffHunk(
+            start_line_a=1,
+            start_line_b=1,
+            lines=[("same", "line1", "line1")],
+            is_change=False,
         )
+        assert hunk.start_line_a == 1
+        assert hunk.start_line_b == 1
+        assert len(hunk.lines) == 1
 
-        widget = screen._create_block_widget(block)
-        text = self._get_widget_text(widget)
-        assert BlockType.COMMAND.name in text
-        assert "ls -la" in text
+    def test_diff_hunk_is_change_default(self):
+        """Test that is_change defaults to False."""
+        hunk = DiffHunk(start_line_a=1, start_line_b=1, lines=[])
+        assert hunk.is_change is False
 
-    def test_create_block_widget_long_content_truncated(self):
-        """Test widget creation truncates content over 50 chars."""
-        manager = BranchManager()
-        screen = BranchDiffScreen("a", "b", manager)
 
-        long_content = "x" * 100
-        block = BlockState(
-            type=BlockType.AI_RESPONSE,
-            content_input=long_content,
+class TestDiffLineWidget:
+    """Tests for the DiffLineWidget."""
+
+    def test_diff_line_widget_creation(self):
+        """Test that DiffLineWidget can be created."""
+        widget = DiffLineWidget("add", "10", "11", "new content", "python")
+        assert widget.line_type == "add"
+        assert widget.line_num_a == "10"
+        assert widget.line_num_b == "11"
+        assert widget.content == "new content"
+        assert widget.language == "python"
+
+    def test_diff_line_widget_default_language(self):
+        """Test that DiffLineWidget defaults to python language."""
+        widget = DiffLineWidget("same", "1", "1", "code")
+        assert widget.language == "python"
+
+
+class TestDiffHunkWidget:
+    """Tests for the DiffHunkWidget."""
+
+    def test_diff_hunk_widget_creation(self):
+        """Test that DiffHunkWidget can be created."""
+        hunk = DiffHunk(
+            start_line_a=1,
+            start_line_b=1,
+            lines=[("same", "line1", "line1")],
+            is_change=False,
         )
+        widget = DiffHunkWidget(hunk, 0, "python")
+        assert widget.hunk is hunk
+        assert widget.hunk_index == 0
+        assert widget.language == "python"
 
-        widget = screen._create_block_widget(block)
-        text = self._get_widget_text(widget)
-        assert "..." in text
-        assert "x" * 50 in text
 
-    def test_create_block_widget_exactly_50_chars(self):
-        """Test widget creation with exactly 50 characters."""
-        manager = BranchManager()
-        screen = BranchDiffScreen("a", "b", manager)
+class TestUnchangedSection:
+    """Tests for the UnchangedSection collapsible."""
 
-        content_50 = "y" * 50
-        block = BlockState(
-            type=BlockType.COMMAND,
-            content_input=content_50,
-        )
+    def test_unchanged_section_creation(self):
+        """Test that UnchangedSection can be created."""
+        lines_data = [(1, 1, "line1"), (2, 2, "line2")]
+        section = UnchangedSection(lines_data, "python")
+        assert section.lines_data == lines_data
+        assert section.language == "python"
 
-        widget = screen._create_block_widget(block)
-        text = self._get_widget_text(widget)
-        assert "..." not in text
-        assert content_50 in text
-
-    def test_create_block_widget_51_chars_truncated(self):
-        """Test widget creation with 51 characters gets truncated."""
-        manager = BranchManager()
-        screen = BranchDiffScreen("a", "b", manager)
-
-        content_51 = "z" * 51
-        block = BlockState(
-            type=BlockType.COMMAND,
-            content_input=content_51,
-        )
-
-        widget = screen._create_block_widget(block)
-        text = self._get_widget_text(widget)
-        assert "..." in text
-
-    def test_create_block_widget_has_block_item_class(self):
-        """Test widget has the correct CSS class."""
-        manager = BranchManager()
-        screen = BranchDiffScreen("a", "b", manager)
-
-        block = BlockState(
-            type=BlockType.COMMAND,
-            content_input="test",
-        )
-
-        widget = screen._create_block_widget(block)
-        assert "block-item" in widget.classes
-
-    def test_create_block_widget_shows_block_type_name(self):
-        """Test widget displays the block type name."""
-        manager = BranchManager()
-        screen = BranchDiffScreen("a", "b", manager)
-
-        for block_type in [
-            BlockType.COMMAND,
-            BlockType.AI_RESPONSE,
-            BlockType.AGENT_RESPONSE,
-        ]:
-            block = BlockState(
-                type=block_type,
-                content_input="test content",
-            )
-            widget = screen._create_block_widget(block)
-            text = self._get_widget_text(widget)
-            assert block_type.name in text
-
-    def test_create_block_widget_empty_content(self):
-        """Test widget creation with empty content."""
-        manager = BranchManager()
-        screen = BranchDiffScreen("a", "b", manager)
-
-        block = BlockState(
-            type=BlockType.COMMAND,
-            content_input="",
-        )
-
-        widget = screen._create_block_widget(block)
-        text = self._get_widget_text(widget)
-        assert BlockType.COMMAND.name in text
+    def test_unchanged_section_collapsed_by_default(self):
+        """Test that UnchangedSection is collapsed by default."""
+        lines_data = [(1, 1, "line1")]
+        section = UnchangedSection(lines_data, "python")
+        assert section.collapsed is True
 
 
 class TestBranchDiffScreenCSS:
-    """Tests for CSS definition."""
+    """Tests for screen class attributes."""
 
-    def test_default_css_defined(self):
-        """Test that DEFAULT_CSS is defined."""
-        assert hasattr(BranchDiffScreen, "DEFAULT_CSS")
-        assert len(BranchDiffScreen.DEFAULT_CSS) > 0
+    def test_screen_is_importable(self):
+        """Test that BranchDiffScreen can be imported."""
+        assert BranchDiffScreen is not None
 
-    def test_css_contains_diff_container(self):
-        """Test that CSS includes diff-container styles."""
-        assert "#diff-container" in BranchDiffScreen.DEFAULT_CSS
-
-    def test_css_contains_column_styles(self):
-        """Test that CSS includes column styles."""
-        assert ".column" in BranchDiffScreen.DEFAULT_CSS
-
-    def test_css_contains_header_styles(self):
-        """Test that CSS includes header styles."""
-        assert ".header" in BranchDiffScreen.DEFAULT_CSS
-
-    def test_css_contains_block_item_styles(self):
-        """Test that CSS includes block-item styles."""
-        assert ".block-item" in BranchDiffScreen.DEFAULT_CSS
-
-    def test_css_contains_close_button_styles(self):
-        """Test that CSS includes close button styles."""
-        assert "#close" in BranchDiffScreen.DEFAULT_CSS
+    def test_screen_can_be_instantiated(self):
+        """Test that BranchDiffScreen can be created."""
+        branch_mgr = MagicMock()
+        branch_mgr.branches = {}
+        screen = BranchDiffScreen("branch_a", "branch_b", branch_mgr)
+        assert screen is not None
 
 
 class TestBranchDiffScreenBranchData:
@@ -408,71 +573,65 @@ class TestBranchDiffScreenIntegration:
 
 
 class TestBranchDiffScreenBlockTypes:
-    """Tests ensuring all block types are handled correctly."""
+    """Tests ensuring all block types are handled correctly in diff."""
 
-    def _get_widget_text(self, widget):
-        return str(widget._Static__content)
-
-    def test_command_block_type(self):
-        """Test handling of COMMAND block type."""
+    def test_command_block_type_in_diff(self):
+        """Test handling of COMMAND block type in diff."""
         manager = BranchManager()
-        screen = BranchDiffScreen("a", "b", manager)
-
         block = BlockState(type=BlockType.COMMAND, content_input="ls")
-        widget = screen._create_block_widget(block)
-        assert "COMMAND" in self._get_widget_text(widget)
-
-    def test_ai_response_block_type(self):
-        """Test handling of AI_RESPONSE block type."""
-        manager = BranchManager()
+        manager.branches = {"a": [block], "b": []}
         screen = BranchDiffScreen("a", "b", manager)
+        lines = screen._blocks_to_lines([block])
+        assert "COMMAND" in str(lines)
 
+    def test_ai_response_block_type_in_diff(self):
+        """Test handling of AI_RESPONSE block type in diff."""
+        manager = BranchManager()
         block = BlockState(type=BlockType.AI_RESPONSE, content_input="help me")
-        widget = screen._create_block_widget(block)
-        assert "AI_RESPONSE" in self._get_widget_text(widget)
-
-    def test_agent_response_block_type(self):
-        """Test handling of AGENT_RESPONSE block type."""
-        manager = BranchManager()
+        manager.branches = {"a": [block], "b": []}
         screen = BranchDiffScreen("a", "b", manager)
+        lines = screen._blocks_to_lines([block])
+        assert "AI_RESPONSE" in str(lines)
 
+    def test_agent_response_block_type_in_diff(self):
+        """Test handling of AGENT_RESPONSE block type in diff."""
+        manager = BranchManager()
         block = BlockState(type=BlockType.AGENT_RESPONSE, content_input="run task")
-        widget = screen._create_block_widget(block)
-        assert "AGENT_RESPONSE" in self._get_widget_text(widget)
-
-    def test_ai_query_block_type(self):
-        """Test handling of AI_QUERY block type."""
-        manager = BranchManager()
+        manager.branches = {"a": [block], "b": []}
         screen = BranchDiffScreen("a", "b", manager)
+        lines = screen._blocks_to_lines([block])
+        assert "AGENT_RESPONSE" in str(lines)
 
+    def test_ai_query_block_type_in_diff(self):
+        """Test handling of AI_QUERY block type in diff."""
+        manager = BranchManager()
         block = BlockState(type=BlockType.AI_QUERY, content_input="what is python?")
-        widget = screen._create_block_widget(block)
-        assert "AI_QUERY" in self._get_widget_text(widget)
-
-    def test_system_msg_block_type(self):
-        """Test handling of SYSTEM_MSG block type."""
-        manager = BranchManager()
+        manager.branches = {"a": [block], "b": []}
         screen = BranchDiffScreen("a", "b", manager)
+        lines = screen._blocks_to_lines([block])
+        assert "AI_QUERY" in str(lines)
 
+    def test_system_msg_block_type_in_diff(self):
+        """Test handling of SYSTEM_MSG block type in diff."""
+        manager = BranchManager()
         block = BlockState(type=BlockType.SYSTEM_MSG, content_input="system message")
-        widget = screen._create_block_widget(block)
-        assert "SYSTEM_MSG" in self._get_widget_text(widget)
-
-    def test_tool_call_block_type(self):
-        """Test handling of TOOL_CALL block type."""
-        manager = BranchManager()
+        manager.branches = {"a": [block], "b": []}
         screen = BranchDiffScreen("a", "b", manager)
+        lines = screen._blocks_to_lines([block])
+        assert "SYSTEM_MSG" in str(lines)
 
+    def test_tool_call_block_type_in_diff(self):
+        """Test handling of TOOL_CALL block type in diff."""
+        manager = BranchManager()
         block = BlockState(type=BlockType.TOOL_CALL, content_input="read_file")
-        widget = screen._create_block_widget(block)
-        assert "TOOL_CALL" in self._get_widget_text(widget)
+        manager.branches = {"a": [block], "b": []}
+        screen = BranchDiffScreen("a", "b", manager)
+        lines = screen._blocks_to_lines([block])
+        assert "TOOL_CALL" in str(lines)
 
 
 class TestBranchDiffScreenEdgeCases:
     """Edge case tests."""
-
-    def _get_widget_text(self, widget):
-        return str(widget._Static__content)
 
     def test_same_branch_comparison(self):
         """Test comparing a branch with itself."""
@@ -491,16 +650,16 @@ class TestBranchDiffScreenEdgeCases:
         assert "\u26a0" in screen.branch_b_id
 
     def test_unicode_in_block_content(self):
-        """Test blocks with unicode content."""
+        """Test blocks with unicode content in diff."""
         manager = BranchManager()
-        screen = BranchDiffScreen("a", "b", manager)
-
         block = BlockState(
             type=BlockType.COMMAND,
             content_input="echo 'Hello \u4e16\u754c \ud83c\udf0d'",
         )
-        widget = screen._create_block_widget(block)
-        assert "\u4e16\u754c" in self._get_widget_text(widget)
+        manager.branches = {"a": [block], "b": []}
+        screen = BranchDiffScreen("a", "b", manager)
+        lines = screen._blocks_to_lines([block])
+        assert "\u4e16\u754c" in str(lines)
 
     def test_very_long_branch_name(self):
         """Test with very long branch names."""
@@ -510,25 +669,43 @@ class TestBranchDiffScreenEdgeCases:
         assert screen.branch_a_id == long_name
 
     def test_whitespace_in_content(self):
-        """Test blocks with whitespace-only content."""
+        """Test blocks with whitespace-only content in diff."""
         manager = BranchManager()
-        screen = BranchDiffScreen("a", "b", manager)
-
         block = BlockState(
             type=BlockType.COMMAND,
             content_input="   \t\n   ",
         )
-        widget = screen._create_block_widget(block)
-        assert widget is not None
+        manager.branches = {"a": [block], "b": []}
+        screen = BranchDiffScreen("a", "b", manager)
+        lines = screen._blocks_to_lines([block])
+        assert lines is not None
 
     def test_special_characters_in_content(self):
-        """Test blocks with special/control characters."""
+        """Test blocks with special/control characters in diff."""
         manager = BranchManager()
-        screen = BranchDiffScreen("a", "b", manager)
-
         block = BlockState(
             type=BlockType.COMMAND,
             content_input="echo $HOME && cat /etc/passwd | grep 'root'",
         )
-        widget = screen._create_block_widget(block)
-        assert "$HOME" in self._get_widget_text(widget)
+        manager.branches = {"a": [block], "b": []}
+        screen = BranchDiffScreen("a", "b", manager)
+        lines = screen._blocks_to_lines([block])
+        assert "$HOME" in str(lines)
+
+    def test_empty_content_input(self):
+        """Test block with empty content_input."""
+        manager = BranchManager()
+        block = BlockState(type=BlockType.COMMAND, content_input="")
+        manager.branches = {"a": [block], "b": []}
+        screen = BranchDiffScreen("a", "b", manager)
+        lines = screen._blocks_to_lines([block])
+        assert "[COMMAND]" in lines
+
+    def test_none_content_input(self):
+        """Test block with None content_input."""
+        manager = BranchManager()
+        block = BlockState(type=BlockType.COMMAND, content_input=None)
+        manager.branches = {"a": [block], "b": []}
+        screen = BranchDiffScreen("a", "b", manager)
+        lines = screen._blocks_to_lines([block])
+        assert "[COMMAND]" in lines

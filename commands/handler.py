@@ -414,7 +414,8 @@ class SlashCommandHandler:
                     subcommands=[
                         ("md", "Export to Markdown"),
                         ("json", "Export to JSON"),
-                        ("txt", "Export to plain text"),
+                        ("html", "Export to HTML with syntax highlighting"),
+                        ("org", "Export to Emacs org-mode"),
                     ],
                 ),
             ),
@@ -470,7 +471,17 @@ class SlashCommandHandler:
             ),
             "theme": (
                 self._config.cmd_theme,
-                CommandInfo("theme", "Change UI theme", "F3"),
+                CommandInfo(
+                    "theme",
+                    "Change UI theme",
+                    "F3",
+                    subcommands=[
+                        ("<name>", "Apply a theme"),
+                        ("edit [name]", "Edit/customize a theme"),
+                        ("new", "Create a new theme"),
+                        ("list", "List all themes"),
+                    ],
+                ),
             ),
             "profile": (
                 self._ai.cmd_profile,
