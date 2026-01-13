@@ -23,9 +23,9 @@ class TestGhostLabelInit:
         """GhostLabel should be on overlay layer."""
         assert "layer: overlay" in GhostLabel.DEFAULT_CSS
 
-    def test_default_css_sets_gray_color(self):
-        """GhostLabel should have gray color for ghost text."""
-        assert "#666666" in GhostLabel.DEFAULT_CSS
+    def test_default_css_sets_dim_color(self):
+        """GhostLabel should use TCSS variable for ghost text color."""
+        assert "$text-dim" in GhostLabel.DEFAULT_CSS
 
 
 class TestInputControllerInit:

@@ -13,80 +13,6 @@ from managers.review import DiffHunk, HunkStatus, ProposedChange, ReviewManager
 
 
 class HunkWidget(Static):
-    DEFAULT_CSS = """
-    HunkWidget {
-        height: auto;
-        margin-bottom: 1;
-        padding: 1;
-        border: solid $surface-lighten-2;
-    }
-
-    HunkWidget.pending {
-        border-left: heavy $warning;
-    }
-
-    HunkWidget.accepted {
-        border-left: heavy $success;
-    }
-
-    HunkWidget.rejected {
-        border-left: heavy $error;
-    }
-
-    .hunk-header {
-        layout: horizontal;
-        height: 1;
-        margin-bottom: 1;
-    }
-
-    .hunk-location {
-        color: $text-muted;
-        width: 1fr;
-    }
-
-    .hunk-status {
-        color: $warning;
-    }
-
-    .hunk-status.accepted {
-        color: $success;
-    }
-
-    .hunk-status.rejected {
-        color: $error;
-    }
-
-    .diff-content {
-        height: auto;
-    }
-
-    .diff-line-del {
-        color: $error;
-        background: $error 10%;
-    }
-
-    .diff-line-add {
-        color: $success;
-        background: $success 10%;
-    }
-
-    .diff-line-context {
-        color: $text-muted;
-    }
-
-    .hunk-actions {
-        layout: horizontal;
-        height: 3;
-        margin-top: 1;
-        align: right middle;
-    }
-
-    .hunk-actions Button {
-        margin-left: 1;
-        min-width: 10;
-    }
-    """
-
     class Accepted(Message):
         def __init__(self, hunk_id: str):
             self.hunk_id = hunk_id
@@ -136,57 +62,6 @@ class HunkWidget(Static):
 
 
 class FileChangeWidget(Static):
-    DEFAULT_CSS = """
-    FileChangeWidget {
-        height: auto;
-        margin-bottom: 2;
-        padding: 1;
-        background: $surface;
-        border: solid $primary 50%;
-    }
-
-    .file-header {
-        layout: horizontal;
-        height: 2;
-        margin-bottom: 1;
-    }
-
-    .file-path {
-        color: $primary;
-        text-style: bold;
-        width: 1fr;
-    }
-
-    .file-stats {
-        color: $text-muted;
-    }
-
-    .file-stats-add {
-        color: $success;
-    }
-
-    .file-stats-del {
-        color: $error;
-    }
-
-    .file-rationale {
-        color: $text-muted;
-        text-style: italic;
-        margin-bottom: 1;
-    }
-
-    .file-actions {
-        layout: horizontal;
-        height: 3;
-        align: right middle;
-        margin-top: 1;
-    }
-
-    .file-actions Button {
-        margin-left: 1;
-    }
-    """
-
     def __init__(self, file: str, change: ProposedChange, **kwargs):
         super().__init__(**kwargs)
         self.file = file
@@ -223,50 +98,6 @@ class ReviewScreen(ModalScreen[bool]):
         Binding("a", "accept_all", "Accept All"),
         Binding("r", "reject_all", "Reject All"),
     ]
-
-    DEFAULT_CSS = """
-    ReviewScreen {
-        align: center middle;
-    }
-
-    #review-container {
-        width: 90%;
-        height: 90%;
-        background: $surface;
-        border: thick $primary;
-        padding: 1 2;
-    }
-
-    #review-header {
-        height: 3;
-        dock: top;
-    }
-
-    #review-title {
-        text-style: bold;
-        color: $primary;
-    }
-
-    #review-summary {
-        color: $text-muted;
-    }
-
-    #review-scroll {
-        height: 1fr;
-        margin: 1 0;
-    }
-
-    #review-footer {
-        height: 3;
-        dock: bottom;
-        layout: horizontal;
-        align: right middle;
-    }
-
-    #review-footer Button {
-        margin-left: 1;
-    }
-    """
 
     def __init__(self, manager: ReviewManager, **kwargs):
         super().__init__(**kwargs)

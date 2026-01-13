@@ -250,20 +250,27 @@ SelectCurrent:hover {
 }
 
 /* Label showing current value */
-SelectCurrent #label {
-    color: $text;
+SelectCurrent Static {
+    color: $text-bright;
 }
 
 /* Ensure selected value is clearly visible */
-SelectCurrent.-has-value #label {
-    color: $text;
+SelectCurrent.-has-value Static {
+    color: $text-bright;
     text-style: bold;
 }
 
-/* Dropdown arrow indicators */
+/* Dropdown arrow indicators - accent colored and visible */
+SelectCurrent .arrow {
+    color: $accent;
+    text-style: bold;
+    padding: 0 1;
+}
+
 SelectCurrent .down-arrow,
 SelectCurrent .up-arrow {
     color: $accent;
+    text-style: bold;
     padding: 0 1;
 }
 
@@ -302,6 +309,82 @@ SelectOverlay > OptionList > .option-list--option-hover-highlighted {
 
 SelectOverlay > OptionList > .option-list--option-disabled {
     color: $text-dim;
+}
+
+/* --- Switch Widget (Global Toggles) --- */
+
+/* Base switch styling */
+Switch {
+    height: auto;
+    width: auto;
+    border: tall $text-dim;
+    background: $panel;
+    padding: 0 2;
+}
+
+Switch:focus {
+    border: tall $accent;
+}
+
+/* Off state - muted slider */
+Switch > .switch--slider {
+    color: $text-muted;
+    background: $panel;
+}
+
+/* On state - success/green slider */
+Switch.-on {
+    border: tall $success 60%;
+    background: $panel;
+}
+
+Switch.-on > .switch--slider {
+    color: $success;
+    background: $panel;
+}
+
+Switch.-on:focus {
+    border: tall $success;
+}
+
+/* --- Input Widget (Global Text Fields) --- */
+
+/* Base input styling */
+Input {
+    height: 1;
+    border: tall $text-dim;
+    padding: 0 1;
+    background: $panel;
+    color: $text;
+}
+
+Input:focus {
+    border: tall $accent;
+    background: $surface;
+}
+
+/* Placeholder text styling */
+Input.-placeholder {
+    color: $text-dim;
+    text-style: italic;
+}
+
+Input > .input--placeholder {
+    color: $text-dim;
+    text-style: italic;
+}
+
+/* --- Button Widget (Global Disabled State) --- */
+
+/* Disabled buttons should be visually muted */
+Button:disabled {
+    opacity: 50%;
+    color: $text-dim;
+    text-style: none;
+}
+
+Button:disabled:hover {
+    opacity: 50%;
 }
 
 /* ==========================================================================
@@ -807,20 +890,12 @@ ToolCallBlock {
     margin: 0 0 1 0;
     padding: 0;
     border: round $accent $border-normal;
-    transition: background 200ms in_out_cubic, border 200ms in_out_cubic;
 }
 
 ToolCallBlock:focus-within {
     border: round $accent $border-focus;
-    background: $accent $glow-medium;
-    tint: $accent 4%;
-}
-
-
-SystemBlock:focus-within {
-    border: round $secondary $border-focus;
-    background: $secondary $glow-subtle;
-    tint: $secondary 3%;
+    background: $accent $glow-subtle;
+    tint: $accent 3%;
 }
 
 SystemBlock BlockHeader {
@@ -833,28 +908,6 @@ SystemBlock BlockHeader {
 SystemBlock BlockBody {
     background: transparent;
     padding: 1 2;
-}
-
-/* ==========================================================================
-   ToolCallBlock - Tool Execution (Accent Green)
-   Technical, functional, precise
-   ========================================================================== */
-
-ToolCallBlock {
-    layout: vertical;
-    height: auto;
-    min-height: 0;
-    background: $layer-base 40%;
-    color: $text-bright;
-    margin: 0 0 1 0;
-    padding: 0;
-    border: round $accent $border-normal;
-}
-
-ToolCallBlock:focus-within {
-    border: round $accent $border-focus;
-    background: $accent $glow-subtle;
-    tint: $accent 3%;
 }
 
 ToolCallBlock BlockHeader {
@@ -1597,55 +1650,9 @@ ConfigScreen .setting-control {
     align: right middle;
 }
 
-/* Config Screen Inputs - text fields */
-ConfigScreen Input {
-    height: 1;
-    border: tall $primary-darken-3;
-    padding: 0 1;
-    background: $background;
-    color: $text;
-}
-
-ConfigScreen Input:focus {
-    border: tall $accent;
-    background: $background;
-}
-
-/* Config Screen Dropdowns - inherit global styles, minimal overrides */
+/* Config Screen - use global Input/Select/Switch styles, only set width */
 ConfigScreen Select {
     width: 100%;
-}
-
-ConfigScreen Select:focus {
-    border: tall $accent;
-}
-
-/* Config Screen Toggles */
-ConfigScreen Switch {
-    height: auto;
-    width: auto;
-    border: tall $primary-darken-2;
-    background: $panel;
-    padding: 0 2;
-}
-
-ConfigScreen Switch:focus {
-    border: tall $accent;
-}
-
-ConfigScreen Switch > .switch--slider {
-    color: $text-muted;
-    background: $panel-darken-2;
-}
-
-ConfigScreen Switch.-on {
-    border: tall $primary-darken-2;
-    background: $panel;
-}
-
-ConfigScreen Switch.-on > .switch--slider {
-    color: $success;
-    background: $panel-darken-2;
 }
 
 ConfigScreen #config-footer {
@@ -3082,82 +3089,7 @@ StopButton:hover {
     text-style: bold underline;
 }
 
-/* ==========================================================================
-   BlockFrame Widget
-   ========================================================================== */
 
-BlockFrame {
-    width: 100%;
-    height: auto;
-    padding: 0;
-}
-
-/* Chat mode - subtle single border */
-BlockFrame.mode-chat {
-    border: round $surface-lighten-1;
-    background: $surface;
-}
-
-BlockFrame.mode-chat .block-mode-tag {
-    color: $text-muted;
-    text-style: dim;
-}
-
-/* Agent mode - bold double border */
-BlockFrame.mode-agent {
-    border: double $accent;
-    background: $surface;
-}
-
-BlockFrame.mode-agent .block-mode-tag {
-    color: $accent;
-    text-style: bold;
-}
-
-/* Header styling */
-BlockFrame .frame-header {
-    width: 100%;
-    height: 1;
-    padding: 0 1;
-    background: $surface-darken-1;
-}
-
-BlockFrame .frame-header .block-mode-tag {
-    width: auto;
-}
-
-BlockFrame .frame-header .block-input-preview {
-    color: $text;
-    margin-left: 1;
-    width: 1fr;
-}
-
-/* Separator between sections */
-BlockFrame .frame-separator {
-    width: 100%;
-    height: 1;
-    background: $surface-lighten-1 50%;
-}
-
-BlockFrame.mode-agent .frame-separator {
-    background: $accent 30%;
-}
-
-/* ==========================================================================
-   FrameSeparator Widget
-   ========================================================================== */
-
-FrameSeparator {
-    width: 100%;
-    height: 1;
-    background: $surface-lighten-1 50%;
-    margin: 0;
-    padding: 0;
-}
-
-FrameSeparator.agent {
-    background: $accent 30%;
-}
 
 /* ==========================================================================
    Prompt Editor Screen
@@ -3644,4 +3576,532 @@ PlanStepWidget:focus {
     color: $background;
     background: $error;
     text-style: bold;
+}
+
+/* ==========================================================================
+   Screen Styles (Migrated from Python DEFAULT_CSS)
+   ========================================================================== */
+
+/* --- HunkWidget (review.py) --- */
+HunkWidget {
+    height: auto;
+    margin-bottom: 1;
+    padding: 1;
+    border: solid $surface-lighten-2;
+}
+
+HunkWidget.pending {
+    border-left: heavy $warning;
+}
+
+HunkWidget.accepted {
+    border-left: heavy $success;
+}
+
+HunkWidget.rejected {
+    border-left: heavy $error;
+}
+
+.hunk-header {
+    layout: horizontal;
+    height: 1;
+    margin-bottom: 1;
+}
+
+.hunk-location {
+    color: $text-muted;
+    width: 1fr;
+}
+
+.hunk-status {
+    color: $warning;
+}
+
+.hunk-status.accepted {
+    color: $success;
+}
+
+.hunk-status.rejected {
+    color: $error;
+}
+
+.diff-content {
+    height: auto;
+}
+
+.diff-line-del {
+    color: $error;
+    background: $error 10%;
+}
+
+.diff-line-add {
+    color: $success;
+    background: $success 10%;
+}
+
+.diff-line-context {
+    color: $text-muted;
+}
+
+.hunk-actions {
+    layout: horizontal;
+    height: 3;
+    margin-top: 1;
+    align: right middle;
+}
+
+.hunk-actions Button {
+    margin-left: 1;
+    min-width: 10;
+}
+
+/* --- FileChangeWidget (review.py) --- */
+FileChangeWidget {
+    height: auto;
+    margin-bottom: 2;
+    padding: 1;
+    background: $surface;
+    border: solid $primary 50%;
+}
+
+.file-header {
+    layout: horizontal;
+    height: 2;
+    margin-bottom: 1;
+}
+
+.file-path {
+    color: $primary;
+    text-style: bold;
+    width: 1fr;
+}
+
+.file-stats {
+    color: $text-muted;
+}
+
+.file-stats-add {
+    color: $success;
+}
+
+.file-stats-del {
+    color: $error;
+}
+
+.file-rationale {
+    color: $text-muted;
+    text-style: italic;
+    margin-bottom: 1;
+}
+
+.file-actions {
+    layout: horizontal;
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+.file-actions Button {
+    margin-left: 1;
+}
+
+/* --- ReviewScreen (review.py) --- */
+ReviewScreen {
+    align: center middle;
+}
+
+#review-container {
+    width: 90%;
+    height: 90%;
+    background: $surface;
+    border: thick $primary;
+    padding: 1 2;
+}
+
+#review-header {
+    height: 3;
+    dock: top;
+}
+
+#review-title {
+    text-style: bold;
+    color: $primary;
+}
+
+#review-summary {
+    color: $text-muted;
+}
+
+#review-scroll {
+    height: 1fr;
+    margin: 1 0;
+}
+
+#review-footer {
+    height: 3;
+    dock: bottom;
+    layout: horizontal;
+    align: right middle;
+}
+
+#review-footer Button {
+    margin-left: 1;
+}
+
+/* --- BranchDiffScreen (branch_diff.py) --- */
+BranchDiffScreen {
+    align: center middle;
+}
+
+#diff-container {
+    width: 90%;
+    height: 80%;
+    background: $surface;
+    border: solid $primary;
+}
+
+.column {
+    width: 1fr;
+    height: 100%;
+    border-right: solid $primary;
+}
+
+.column:last-child {
+    border-right: none;
+}
+
+.header {
+    text-align: center;
+    background: $primary;
+    color: $text;
+    padding: 1;
+    text-style: bold;
+    width: 100%;
+}
+
+.block-item {
+    padding: 1;
+    border-bottom: solid $primary-darken-2;
+    height: auto;
+}
+
+.block-type {
+    color: $accent;
+    text-style: bold;
+}
+
+.block-content {
+    color: $text-muted;
+}
+
+#close {
+    width: 100%;
+    dock: bottom;
+}
+
+/* --- MCPCatalogScreen (mcp_catalog.py) --- */
+MCPCatalogScreen {
+    align: center middle;
+}
+
+#catalog-container {
+    width: 80%;
+    height: 80%;
+    background: $surface;
+    border: tall $primary;
+    padding: 1 2;
+}
+
+#catalog-header {
+    height: auto;
+    margin-bottom: 1;
+}
+
+#catalog-title {
+    text-style: bold;
+    width: 100%;
+    content-align: center middle;
+}
+
+#catalog-search {
+    margin: 1 0;
+}
+
+#catalog-content {
+    height: 1fr;
+}
+
+#category-list {
+    width: 25%;
+    border-right: solid $primary-darken-2;
+    padding-right: 1;
+}
+
+#category-list > ListItem {
+    padding: 0 1;
+    height: 1;
+}
+
+#category-list > ListItem.--highlight {
+    background: $primary;
+}
+
+#server-list {
+    width: 75%;
+    padding-left: 1;
+}
+
+CatalogItemWidget {
+    height: auto;
+    margin: 0 0 1 0;
+}
+
+.catalog-item {
+    height: auto;
+    padding: 0 1;
+    background: $surface-lighten-1;
+    border: solid $primary-darken-3;
+}
+
+.catalog-item-info {
+    width: 1fr;
+    height: auto;
+}
+
+.catalog-name {
+    height: 1;
+}
+
+.catalog-desc {
+    color: $text-muted;
+    height: 1;
+}
+
+.catalog-env {
+    height: 1;
+}
+
+.catalog-install-btn {
+    width: auto;
+    min-width: 10;
+    height: 3;
+}
+
+#catalog-footer {
+    height: auto;
+    margin-top: 1;
+    align: center middle;
+}
+
+/* --- MCPServerConfigScreen (mcp.py) --- */
+MCPServerConfigScreen {
+    align: center middle;
+}
+
+#mcp-config-container {
+    width: 70;
+    height: auto;
+    max-height: 80%;
+    background: $surface;
+    border: tall $primary;
+    padding: 1 2;
+}
+
+#mcp-config-container > Label:first-child {
+    text-style: bold;
+    width: 100%;
+    content-align: center middle;
+    margin-bottom: 1;
+}
+
+.input-label {
+    margin-top: 1;
+    text-style: bold;
+}
+
+.input-hint {
+    color: $text-muted;
+    text-style: italic;
+}
+
+#mcp-config-container Input {
+    margin-bottom: 0;
+}
+
+#buttons {
+    margin-top: 2;
+    height: auto;
+    align: center middle;
+}
+
+#buttons Button {
+    margin: 0 1;
+}
+
+/* --- ContextScreen (context.py) --- */
+ContextScreen {
+    align: center middle;
+}
+
+#context-dialog {
+    width: 80%;
+    height: 80%;
+    background: $surface;
+    border: thick $primary;
+    padding: 1;
+}
+
+#context-header {
+    dock: top;
+    height: 1;
+    border-bottom: solid $primary;
+    text-align: center;
+    text-style: bold;
+}
+
+#context-stats {
+    dock: bottom;
+    height: 3;
+    border-top: solid $primary;
+    color: $text-muted;
+}
+
+.msg-item {
+    margin-bottom: 1;
+    padding: 1;
+    background: $surface-lighten-1;
+}
+
+.msg-role {
+    color: $accent;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+/* --- AgentScreen (agent.py) --- */
+AgentScreen {
+    align: center middle;
+}
+
+#agent-dialog {
+    width: 85%;
+    height: 85%;
+    background: $surface;
+    border: thick $primary;
+    padding: 1;
+}
+
+#agent-header {
+    dock: top;
+    height: 1;
+    text-align: center;
+    text-style: bold;
+    border-bottom: solid $primary;
+}
+
+#agent-footer {
+    dock: bottom;
+    height: 3;
+    align: center middle;
+}
+
+#agent-content {
+    height: 1fr;
+}
+
+.section-title {
+    text-style: bold;
+    color: $accent;
+    margin-top: 1;
+    margin-bottom: 0;
+}
+
+.stat-row {
+    height: 1;
+}
+
+.stat-label {
+    width: 20;
+    color: $text-muted;
+}
+
+.stat-value {
+    width: 1fr;
+}
+
+#session-table {
+    height: 10;
+    margin-top: 1;
+}
+
+#tool-table {
+    height: 10;
+    margin-top: 1;
+}
+
+/* --- SSHAddScreen (ssh_add.py) --- */
+SSHAddScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+#ssh-form {
+    width: 50;
+    height: auto;
+    max-height: 90%;
+    background: $surface;
+    border: thick $primary;
+    padding: 0 1;
+}
+
+#ssh-form .header {
+    text-align: center;
+    text-style: bold;
+    border-bottom: solid $primary;
+    margin: 1 0;
+    color: $text;
+    height: auto;
+}
+
+#ssh-form Label {
+    margin-top: 1;
+    width: 100%;
+    color: $text-muted;
+    height: 1;
+}
+
+#ssh-form Input {
+    margin: 0;
+    height: 1;
+    border: none;
+    background: $panel;
+    padding: 0 1;
+    min-height: 1;
+}
+
+#creds-row {
+    height: auto;
+    grid-size: 2;
+    grid-gutter: 1;
+    margin-top: 0;
+}
+
+#creds-row Vertical {
+    height: auto;
+    width: 100%;
+}
+
+#form-actions {
+    margin-top: 1;
+    margin-bottom: 1;
+    align: right middle;
+    height: auto;
+    width: 100%;
+}
+
+#form-actions Button {
+    margin-left: 1;
+    min-width: 8;
+    height: 1;
+    border: none;
 }

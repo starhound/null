@@ -6,6 +6,12 @@ from textual.widgets import Label, Static
 class StatusBar(Static):
     """Status bar showing mode, context size, provider status, and token usage."""
 
+    def _safe_log_warning(self, message: str) -> None:
+        try:
+            self.log.warning(message)
+        except Exception:
+            pass
+
     mode = reactive("CLI")
     agent_mode = reactive(False)
     context_chars = reactive(0)
@@ -104,8 +110,8 @@ class StatusBar(Static):
             else:
                 indicator.update("󱔗 MCP: 0")
                 indicator.add_class("mcp-inactive")
-        except Exception:
-            pass
+        except Exception as e:
+            self._safe_log_warning(f"Status update failed: {e}")
 
     def _update_process_display(self):
         try:
@@ -118,8 +124,8 @@ class StatusBar(Static):
             else:
                 indicator.update("󰅖 PROC: 0")
                 indicator.add_class("process-inactive")
-        except Exception:
-            pass
+        except Exception as e:
+            self._safe_log_warning(f"Status update failed: {e}")
 
     def _update_voice_display(self):
         try:
@@ -132,8 +138,8 @@ class StatusBar(Static):
             else:
                 indicator.update("")
                 indicator.add_class("voice-inactive")
-        except Exception:
-            pass
+        except Exception as e:
+            self._safe_log_warning(f"Status update failed: {e}")
 
     def _update_git_display(self):
         try:
@@ -152,8 +158,8 @@ class StatusBar(Static):
                 indicator.add_class("git-dirty")
             else:
                 indicator.add_class("git-clean")
-        except Exception:
-            pass
+        except Exception as e:
+            self._safe_log_warning(f"Status update failed: {e}")
 
     def _update_mode_display(self):
         try:
@@ -170,8 +176,8 @@ class StatusBar(Static):
                 else:
                     indicator.update("◆ AI")
                     indicator.add_class("mode-ai")
-        except Exception:
-            pass
+        except Exception as e:
+            self._safe_log_warning(f"Status update failed: {e}")
 
     def _update_context_display(self):
         try:
@@ -201,9 +207,8 @@ class StatusBar(Static):
                 indicator.add_class("context-medium")
             else:
                 indicator.add_class("context-high")
-        except Exception:
-            # Debug: show error
-            pass
+        except Exception as e:
+            self._safe_log_warning(f"Status update failed: {e}")
 
     def _update_provider_display(self):
         try:
@@ -226,8 +231,8 @@ class StatusBar(Static):
             else:
                 indicator.update(name)
                 indicator.add_class("provider-checking")
-        except Exception:
-            pass
+        except Exception as e:
+            self._safe_log_warning(f"Status update failed: {e}")
 
     def _update_token_display(self):
         """Update the token usage and cost display."""
@@ -265,8 +270,8 @@ class StatusBar(Static):
 
             indicator.update(f"󱓞 tok: {token_str} / {cost_str}")
 
-        except Exception:
-            pass
+        except Exception as e:
+            self._safe_log_warning(f"Status update failed: {e}")
 
     def set_mode(self, mode: str):
         """Set current mode (CLI or AI)."""

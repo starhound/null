@@ -16,58 +16,6 @@ class BranchDiffScreen(ModalScreen):
     def action_dismiss(self) -> None:
         self.dismiss()
 
-    DEFAULT_CSS = """
-    BranchDiffScreen {
-        align: center middle;
-    }
-
-    #diff-container {
-        width: 90%;
-        height: 80%;
-        background: $surface;
-        border: solid $primary;
-    }
-
-    .column {
-        width: 1fr;
-        height: 100%;
-        border-right: solid $primary;
-    }
-
-    .column:last-child {
-        border-right: none;
-    }
-
-    .header {
-        text-align: center;
-        background: $primary;
-        color: $text;
-        padding: 1;
-        text-style: bold;
-        width: 100%;
-    }
-
-    .block-item {
-        padding: 1;
-        border-bottom: solid $primary-darken-2;
-        height: auto;
-    }
-
-    .block-type {
-        color: $accent;
-        text-style: bold;
-    }
-
-    .block-content {
-        color: $text-muted;
-    }
-
-    #close {
-        width: 100%;
-        dock: bottom;
-    }
-    """
-
     def __init__(self, branch_a_id: str, branch_b_id: str, branch_manager):
         super().__init__()
         self.branch_a_id = branch_a_id

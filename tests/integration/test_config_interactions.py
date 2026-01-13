@@ -6,6 +6,7 @@ not just that they exist.
 
 import pytest
 from textual.widgets import Input, Select, Switch
+from textual.widgets._select import SelectCurrent
 
 from app import NullApp
 from screens.config import ConfigScreen
@@ -118,6 +119,46 @@ class TestSelectInteractions:
         for sel in selects:
             assert sel.can_focus, f"Select #{sel.id} should be focusable"
 
+    @pytest.mark.asyncio
+    async def test_select_shows_value_after_selection(self, config_app):
+        """Select should show the selected value text in SelectCurrent."""
+        app, pilot = config_app
+        screen = app.screen
+
+        select = screen.query_one("#theme", Select)
+        select.focus()
+        await pilot.pause()
+
+        # Check that select has a value
+        assert select.value is not Select.BLANK, "Select should have a value"
+
+        # Find the SelectCurrent child and verify it shows text
+        select_current = select.query_one(SelectCurrent)
+        # The SelectCurrent should have the .-has-value class when value is set
+        assert select_current.has_class("-has-value"), (
+            "SelectCurrent should have -has-value class when value is set"
+        )
+
+    @pytest.mark.asyncio
+    async def test_select_arrow_indicator_visible(self, config_app):
+        """Select dropdown arrow indicator (▼) should be visible."""
+        from textual.widgets import Static
+
+        app, pilot = config_app
+        screen = app.screen
+
+        select = screen.query_one("#theme", Select)
+
+        select_current = select.query_one(SelectCurrent)
+        assert select_current is not None, "SelectCurrent should exist"
+
+        arrow_widgets = list(select_current.query(".arrow"))
+        assert len(arrow_widgets) > 0, "Select should have arrow indicator widget"
+
+        down_arrow = select_current.query_one(".down-arrow", Static)
+        assert down_arrow is not None, "Select should have down-arrow indicator"
+        assert "▼" in str(down_arrow._Static__content), "Down arrow should contain ▼"
+
 
 class TestSwitchInteractions:
     """Test that Switch widgets can be toggled."""
@@ -167,6 +208,33 @@ class TestSwitchInteractions:
             assert sw.can_focus, f"Switch #{sw.id} should be focusable"
             assert not sw.disabled, f"Switch #{sw.id} should not be disabled"
 
+    @pytest.mark.asyncio
+    async def test_switch_has_visual_state_class(self, config_app):
+        """Switch should have -on class when value is True."""
+        app, pilot = config_app
+        screen = app.screen
+
+        switch = screen.query_one("#voice_enabled", Switch)
+
+        # Set switch to True and check for -on class
+        if not switch.value:
+            switch.focus()
+            await pilot.pause()
+            await pilot.press("enter")
+            await pilot.pause()
+
+        assert switch.value is True, "Switch should be on"
+        assert switch.has_class("-on"), "Switch should have -on class when True"
+
+        # Toggle off and verify class changes
+        await pilot.press("enter")
+        await pilot.pause()
+
+        assert switch.value is False, "Switch should be off after toggle"
+        assert not switch.has_class("-on"), (
+            "Switch should not have -on class when False"
+        )
+
 
 class TestConfigScreenNavigation:
     """Test tab navigation in config screen."""
@@ -188,4 +256,32 @@ class TestConfigScreenNavigation:
         # Focus should have moved
         assert first_focused != second_focused or first_focused is None, (
             "Tab should move focus between controls"
+        )
+
+
+class TestVisualVerification:
+    """Test visual state verification for config controls."""
+
+    @pytest.mark.asyncio
+    async def test_input_shows_typed_text(self, config_app):
+        """Input should show the text that was typed."""
+        app, pilot = config_app
+        screen = app.screen
+
+        inp = screen.query_one("#voice_language", Input)
+        inp.focus()
+        await pilot.pause()
+
+        # Clear existing text
+        await pilot.press("ctrl+a")
+        await pilot.pause()
+
+        # Type test text
+        test_text = "test123"
+        for char in test_text:
+            await pilot.press(char)
+        await pilot.pause()
+
+        assert inp.value == test_text, (
+            f"Input value should be '{test_text}', got '{inp.value}'"
         )

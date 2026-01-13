@@ -7,42 +7,6 @@ from context import ContextManager
 
 
 class ContextScreen(ModalScreen):
-    DEFAULT_CSS = """
-    ContextScreen {
-        align: center middle;
-    }
-    #context-dialog {
-        width: 80%;
-        height: 80%;
-        background: $surface;
-        border: thick $primary;
-        padding: 1;
-    }
-    #context-header {
-        dock: top;
-        height: 1;
-        border-bottom: solid $primary;
-        text-align: center;
-        text-style: bold;
-    }
-    #context-stats {
-        dock: bottom;
-        height: 3;
-        border-top: solid $primary;
-        color: $text-muted;
-    }
-    .msg-item {
-        margin-bottom: 1;
-        padding: 1;
-        background: $surface-lighten-1;
-    }
-    .msg-role {
-        color: $accent;
-        text-style: bold;
-        margin-bottom: 1;
-    }
-    """
-
     def compose(self) -> ComposeResult:
         with Container(id="context-dialog"):
             yield Label("Context Inspector", id="context-header")

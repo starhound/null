@@ -10,58 +10,6 @@ from managers.agent import AgentState
 
 
 class AgentScreen(ModalScreen):
-    DEFAULT_CSS = """
-    AgentScreen {
-        align: center middle;
-    }
-    #agent-dialog {
-        width: 85%;
-        height: 85%;
-        background: $surface;
-        border: thick $primary;
-        padding: 1;
-    }
-    #agent-header {
-        dock: top;
-        height: 1;
-        text-align: center;
-        text-style: bold;
-        border-bottom: solid $primary;
-    }
-    #agent-footer {
-        dock: bottom;
-        height: 3;
-        align: center middle;
-    }
-    #agent-content {
-        height: 1fr;
-    }
-    .section-title {
-        text-style: bold;
-        color: $accent;
-        margin-top: 1;
-        margin-bottom: 0;
-    }
-    .stat-row {
-        height: 1;
-    }
-    .stat-label {
-        width: 20;
-        color: $text-muted;
-    }
-    .stat-value {
-        width: 1fr;
-    }
-    #session-table {
-        height: 10;
-        margin-top: 1;
-    }
-    #tool-table {
-        height: 10;
-        margin-top: 1;
-    }
-    """
-
     BINDINGS: ClassVar[list[BindingType]] = [
         ("escape", "dismiss", "Close"),
         ("c", "clear_history", "Clear History"),

@@ -50,6 +50,44 @@ class VizButton(Label):
         self.post_message(self.Pressed(self._block_id))
 
 
+class EditButton(Label):
+    """Clickable edit button for AI responses."""
+
+    class Pressed(Message, bubble=True):
+        """Message sent when edit button is pressed."""
+
+        def __init__(self, block_id: str):
+            super().__init__()
+            self.block_id = block_id
+
+    def __init__(self, block_id: str):
+        super().__init__("edit", id="edit-btn", classes="meta-action")
+        self._block_id = block_id
+
+    def on_click(self, event) -> None:
+        event.stop()
+        self.post_message(self.Pressed(self._block_id))
+
+
+class RetryButton(Label):
+    """Clickable retry button for AI responses."""
+
+    class Pressed(Message, bubble=True):
+        """Message sent when retry button is pressed."""
+
+        def __init__(self, block_id: str):
+            super().__init__()
+            self.block_id = block_id
+
+    def __init__(self, block_id: str):
+        super().__init__("retry", id="retry-btn", classes="meta-action")
+        self._block_id = block_id
+
+    def on_click(self, event) -> None:
+        event.stop()
+        self.post_message(self.Pressed(self._block_id))
+
+
 # URL pattern for making links clickable in plain text output
 URL_PATTERN = re.compile(r"(https?://|ftp://)[^\s<>\[\]\"\'`\)]+", re.IGNORECASE)
 
@@ -161,10 +199,10 @@ class BlockMeta(Static):
         # Spacer to push actions to right
         yield Label("", classes="meta-spacer")
 
-        # Action labels for AI responses (click handlers in AIResponseBlock)
+        # Action buttons for AI responses
         if self.block.type == BlockType.AI_RESPONSE and not self.block.is_running:
-            yield Label("edit", id="edit-btn", classes="meta-action")
-            yield Label("retry", id="retry-btn", classes="meta-action")
+            yield EditButton(self.block.id)
+            yield RetryButton(self.block.id)
 
 
 class BlockBody(Static):
