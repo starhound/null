@@ -1,4 +1,5 @@
 import json
+import os
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -6,37 +7,47 @@ import httpx
 
 from .base import LLMProvider, Message, StreamChunk, TokenUsage, ToolCallData
 
+# Default timeouts (can be overridden via environment variables)
+DEFAULT_CONNECT_TIMEOUT = 10.0  # Seconds to establish connection
+DEFAULT_READ_TIMEOUT = 60.0  # Seconds for model generation
+
 
 class OllamaProvider(LLMProvider):
     def __init__(self, endpoint: str, model: str):
         self.endpoint = endpoint
         self.model = model
-        # Short connect timeout (3s) to fail fast if Ollama isn't running
-        # Longer read timeout (60s) for model generation
-        self.client = httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=3.0))
+        # Timeouts configurable via env vars for slow machines
+        connect_timeout = float(
+            os.environ.get("OLLAMA_CONNECT_TIMEOUT", DEFAULT_CONNECT_TIMEOUT)
+        )
+        read_timeout = float(
+            os.environ.get("OLLAMA_READ_TIMEOUT", DEFAULT_READ_TIMEOUT)
+        )
+        self.client = httpx.AsyncClient(
+            timeout=httpx.Timeout(read_timeout, connect=connect_timeout)
+        )
 
     def supports_tools(self) -> bool:
         """Ollama supports tool calling for compatible models."""
         return True
 
+    def _convert_message(self, msg: Message) -> dict[str, Any]:
+        """Convert a single Message to API format."""
+        result: dict[str, Any] = {"role": msg.get("role", "user")}
+        if content := msg.get("content"):
+            result["content"] = content
+        if tool_calls := msg.get("tool_calls"):
+            result["tool_calls"] = tool_calls
+        return result
+
     def _build_messages(
         self, prompt: str, messages: list[Message], system_prompt: str | None
     ) -> list[dict[str, Any]]:
         """Build the messages array for the API call."""
-        chat_messages = []
-
+        chat_messages: list[dict[str, Any]] = []
         if system_prompt:
             chat_messages.append({"role": "system", "content": system_prompt})
-
-        for msg in messages:
-            msg_role = msg.get("role", "user")
-            msg_dict: dict[str, Any] = {"role": msg_role}
-            if msg.get("content"):
-                msg_dict["content"] = msg.get("content")
-            if "tool_calls" in msg:
-                msg_dict["tool_calls"] = msg["tool_calls"]
-            chat_messages.append(msg_dict)
-
+        chat_messages.extend(self._convert_message(msg) for msg in messages)
         chat_messages.append({"role": "user", "content": prompt})
         return chat_messages
 
@@ -62,8 +73,12 @@ class OllamaProvider(LLMProvider):
                             break
                     except json.JSONDecodeError:
                         continue
+        except httpx.ConnectError as e:
+            yield f"[Connection failed: {e!s}]"
+        except httpx.TimeoutException as e:
+            yield f"[Connection timeout: {e!s}]"
         except httpx.HTTPError as e:
-            yield f"Error: Could not connect to Ollama. {e!s}"
+            yield f"[HTTP error: {e!s}]"
 
     async def generate_with_tools(
         self,
@@ -134,10 +149,16 @@ class OllamaProvider(LLMProvider):
                     except json.JSONDecodeError:
                         continue
 
-        except httpx.HTTPError as e:
+        except httpx.ConnectError as e:
             yield StreamChunk(
-                text=f"Error: Could not connect to Ollama. {e!s}", is_complete=True
+                text="", is_complete=True, error=f"Connection failed: {e!s}"
             )
+        except httpx.TimeoutException as e:
+            yield StreamChunk(
+                text="", is_complete=True, error=f"Connection timeout: {e!s}"
+            )
+        except httpx.HTTPError as e:
+            yield StreamChunk(text="", is_complete=True, error=f"HTTP error: {e!s}")
 
     async def embed_text(self, text: str) -> list[float] | None:
         """Get vector embedding for text using Ollama /api/embeddings."""

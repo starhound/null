@@ -25,10 +25,10 @@ class TestOllamaProviderInit:
         assert isinstance(provider.client, httpx.AsyncClient)
 
     def test_init_sets_timeout_config(self):
-        """Client should have short connect timeout and longer read timeout."""
+        """Client should have configurable connect/read timeouts with sensible defaults."""
         provider = OllamaProvider(endpoint="http://localhost:11434", model="llama3.2")
-        # Timeout is set to 60s read, 3s connect
-        assert provider.client.timeout.connect == 3.0
+        # Default: 10s connect, 60s read (configurable via env vars)
+        assert provider.client.timeout.connect == 10.0
         assert provider.client.timeout.read == 60.0
 
 
@@ -210,7 +210,45 @@ class TestOllamaProviderGenerate:
                 chunks.append(chunk)
 
         assert len(chunks) == 1
-        assert "Error: Could not connect to Ollama" in chunks[0]
+        assert "[HTTP error:" in chunks[0]
+
+    @pytest.mark.asyncio
+    async def test_generate_handles_connect_error(self):
+        """Should yield error message on connection error."""
+        provider = OllamaProvider(endpoint="http://localhost:11434", model="llama3.2")
+
+        with patch.object(
+            provider.client,
+            "stream",
+            side_effect=httpx.ConnectError("Connection refused"),
+        ):
+            chunks = []
+            async for chunk in provider.generate(
+                prompt="Hi", messages=[], system_prompt=None
+            ):
+                chunks.append(chunk)
+
+        assert len(chunks) == 1
+        assert "[Connection failed:" in chunks[0]
+
+    @pytest.mark.asyncio
+    async def test_generate_handles_timeout_error(self):
+        """Should yield error message on timeout."""
+        provider = OllamaProvider(endpoint="http://localhost:11434", model="llama3.2")
+
+        with patch.object(
+            provider.client,
+            "stream",
+            side_effect=httpx.TimeoutException("Timed out"),
+        ):
+            chunks = []
+            async for chunk in provider.generate(
+                prompt="Hi", messages=[], system_prompt=None
+            ):
+                chunks.append(chunk)
+
+        assert len(chunks) == 1
+        assert "[Connection timeout:" in chunks[0]
 
     @pytest.mark.asyncio
     async def test_generate_stops_on_done(self):
@@ -393,7 +431,51 @@ class TestOllamaProviderGenerateWithTools:
                 chunks.append(chunk)
 
         assert len(chunks) == 1
-        assert "Error: Could not connect to Ollama" in chunks[0].text
+        assert chunks[0].error is not None
+        assert "HTTP error:" in chunks[0].error
+        assert chunks[0].is_complete is True
+        assert chunks[0].text == ""
+
+    @pytest.mark.asyncio
+    async def test_generate_with_tools_handles_connect_error(self):
+        """Should yield error StreamChunk on connection error."""
+        provider = OllamaProvider(endpoint="http://localhost:11434", model="llama3.2")
+
+        with patch.object(
+            provider.client,
+            "stream",
+            side_effect=httpx.ConnectError("Connection refused"),
+        ):
+            chunks = []
+            async for chunk in provider.generate_with_tools(
+                prompt="Hi", messages=[], tools=[], system_prompt=None
+            ):
+                chunks.append(chunk)
+
+        assert len(chunks) == 1
+        assert chunks[0].error is not None
+        assert "Connection failed:" in chunks[0].error
+        assert chunks[0].is_complete is True
+
+    @pytest.mark.asyncio
+    async def test_generate_with_tools_handles_timeout_error(self):
+        """Should yield error StreamChunk on timeout."""
+        provider = OllamaProvider(endpoint="http://localhost:11434", model="llama3.2")
+
+        with patch.object(
+            provider.client,
+            "stream",
+            side_effect=httpx.TimeoutException("Timed out"),
+        ):
+            chunks = []
+            async for chunk in provider.generate_with_tools(
+                prompt="Hi", messages=[], tools=[], system_prompt=None
+            ):
+                chunks.append(chunk)
+
+        assert len(chunks) == 1
+        assert chunks[0].error is not None
+        assert "Connection timeout:" in chunks[0].error
         assert chunks[0].is_complete is True
 
     @pytest.mark.asyncio

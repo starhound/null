@@ -1,0 +1,480 @@
+/* ==========================================================================
+   BUTTON SYSTEM
+   Consistent button classes for all interactive elements
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   BASE BUTTON
+   -------------------------------------------------------------------------- */
+
+.btn {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    border: round $panel;
+    background: $layer-raised;
+    color: $text-bright;
+    text-style: none;
+    transition: background 150ms, border 150ms;
+}
+
+.btn:hover {
+    background: $layer-raised 120%;
+    text-style: bold;
+    border: round $primary $border-dim;
+}
+
+.btn:focus {
+    background: $layer-raised 110%;
+    border: round $primary $border-normal;
+}
+
+.btn:disabled,
+.btn.-disabled {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn:disabled:hover,
+.btn.-disabled:hover {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   PRIMARY BUTTON
+   Main call-to-action
+   -------------------------------------------------------------------------- */
+
+.btn-primary {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: $primary;
+    color: $layer-void;
+    border: round $primary;
+    text-style: bold;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-primary:hover {
+    background: $primary 130%;
+    border: round $primary 130%;
+    tint: $primary 15%;
+    text-style: bold;
+}
+
+.btn-primary:focus {
+    background: $primary 120%;
+    border: round $primary $border-normal;
+    tint: $primary 10%;
+}
+
+.btn-primary:disabled,
+.btn-primary.-disabled {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-primary:disabled:hover,
+.btn-primary.-disabled:hover {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   SECONDARY BUTTON
+   Alternate action with border emphasis
+   -------------------------------------------------------------------------- */
+
+.btn-secondary {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: $layer-raised;
+    color: $primary;
+    border: round $primary;
+    text-style: none;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-secondary:hover {
+    background: $layer-raised 120%;
+    border: round $primary 130%;
+    tint: $primary 10%;
+    text-style: bold;
+}
+
+.btn-secondary:focus {
+    background: $layer-raised 110%;
+    border: round $primary $border-normal;
+    tint: $primary 5%;
+}
+
+.btn-secondary:disabled,
+.btn-secondary.-disabled {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-secondary:disabled:hover,
+.btn-secondary.-disabled:hover {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   SUCCESS BUTTON
+   -------------------------------------------------------------------------- */
+
+.btn-success {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: $success;
+    color: $layer-void;
+    border: round $success;
+    text-style: bold;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-success:hover {
+    background: $success 130%;
+    border: round $success 130%;
+    tint: $success 15%;
+    text-style: bold;
+}
+
+.btn-success:focus {
+    background: $success 120%;
+    border: round $success $border-normal;
+    tint: $success 10%;
+}
+
+.btn-success:disabled,
+.btn-success.-disabled {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-success:disabled:hover,
+.btn-success.-disabled:hover {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   DANGER BUTTON
+   -------------------------------------------------------------------------- */
+
+.btn-danger {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: $error;
+    color: $layer-void;
+    border: round $error;
+    text-style: bold;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-danger:hover {
+    background: $error 130%;
+    border: round $error 130%;
+    tint: $error 15%;
+    text-style: bold;
+}
+
+.btn-danger:focus {
+    background: $error 120%;
+    border: round $error $border-normal;
+    tint: $error 10%;
+}
+
+.btn-danger:disabled,
+.btn-danger.-disabled {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-danger:disabled:hover,
+.btn-danger.-disabled:hover {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   WARNING BUTTON
+   -------------------------------------------------------------------------- */
+
+.btn-warning {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: $warning;
+    color: $layer-void;
+    border: round $warning;
+    text-style: bold;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-warning:hover {
+    background: $warning 130%;
+    border: round $warning 130%;
+    tint: $warning 15%;
+    text-style: bold;
+}
+
+.btn-warning:focus {
+    background: $warning 120%;
+    border: round $warning $border-normal;
+    tint: $warning 10%;
+}
+
+.btn-warning:disabled,
+.btn-warning.-disabled {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-warning:disabled:hover,
+.btn-warning.-disabled:hover {
+    background: $layer-void;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   GHOST BUTTON
+   Minimal, transparent style
+   -------------------------------------------------------------------------- */
+
+.btn-ghost {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: transparent;
+    color: $text-muted;
+    border: round transparent;
+    text-style: none;
+    transition: background 150ms, color 150ms;
+}
+
+.btn-ghost:hover {
+    background: $layer-raised 50%;
+    color: $text-bright;
+    text-style: bold;
+    border: round $primary $border-dim;
+}
+
+.btn-ghost:focus {
+    background: $layer-raised 30%;
+    color: $text-bright;
+    border: round $primary $border-normal;
+}
+
+.btn-ghost:disabled,
+.btn-ghost.-disabled {
+    background: transparent;
+    color: $text-ghost;
+    border: round transparent;
+    text-style: none;
+}
+
+.btn-ghost:disabled:hover,
+.btn-ghost.-disabled:hover {
+    background: transparent;
+    color: $text-ghost;
+    border: round transparent;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   OUTLINE BUTTONS
+   Border-only variants
+   -------------------------------------------------------------------------- */
+
+/* Outline Primary */
+.btn-outline-primary {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: transparent;
+    color: $primary;
+    border: round $primary;
+    text-style: none;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-outline-primary:hover {
+    background: $primary 20%;
+    border: round $primary 130%;
+    tint: $primary 10%;
+    text-style: bold;
+}
+
+.btn-outline-primary:focus {
+    background: $primary 15%;
+    border: round $primary $border-normal;
+    tint: $primary 5%;
+}
+
+.btn-outline-primary:disabled,
+.btn-outline-primary.-disabled {
+    background: transparent;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-outline-primary:disabled:hover,
+.btn-outline-primary.-disabled:hover {
+    background: transparent;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* Outline Danger */
+.btn-outline-danger {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: transparent;
+    color: $error;
+    border: round $error;
+    text-style: none;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-outline-danger:hover {
+    background: $error 20%;
+    border: round $error 130%;
+    tint: $error 10%;
+    text-style: bold;
+}
+
+.btn-outline-danger:focus {
+    background: $error 15%;
+    border: round $error $border-normal;
+    tint: $error 5%;
+}
+
+.btn-outline-danger:disabled,
+.btn-outline-danger.-disabled {
+    background: transparent;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-outline-danger:disabled:hover,
+.btn-outline-danger.-disabled:hover {
+    background: transparent;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* Outline Success */
+.btn-outline-success {
+    padding: 0 2;
+    height: 3;
+    min-width: 10;
+    text-align: center;
+    background: transparent;
+    color: $success;
+    border: round $success;
+    text-style: none;
+    transition: background 150ms, border 150ms;
+}
+
+.btn-outline-success:hover {
+    background: $success 20%;
+    border: round $success 130%;
+    tint: $success 10%;
+    text-style: bold;
+}
+
+.btn-outline-success:focus {
+    background: $success 15%;
+    border: round $success $border-normal;
+    tint: $success 5%;
+}
+
+.btn-outline-success:disabled,
+.btn-outline-success.-disabled {
+    background: transparent;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+.btn-outline-success:disabled:hover,
+.btn-outline-success.-disabled:hover {
+    background: transparent;
+    color: $text-ghost;
+    border: round $panel $border-dim;
+    text-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   BUTTON SIZE MODIFIERS
+   -------------------------------------------------------------------------- */
+
+.btn-sm {
+    padding: 0 1;
+    height: 1;
+    min-width: 6;
+}
+
+.btn-lg {
+    padding: 0 3;
+    height: 5;
+    min-width: 14;
+}
+
+/* --------------------------------------------------------------------------
+   BUTTON UTILITY MODIFIERS
+   -------------------------------------------------------------------------- */
+
+.btn-block {
+    width: 100%;
+}
+
+.btn-icon {
+    min-width: 3;
+    padding: 0;
+}

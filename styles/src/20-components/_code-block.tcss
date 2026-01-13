@@ -1,0 +1,78 @@
+/* ==========================================================================
+   Code Block Widget - Syntax Highlighted Code Display
+   Deep background with accent border and action buttons
+   ========================================================================== */
+
+.code-block-container {
+    margin: 1 0;
+    border: solid $accent $border-normal;
+    background: $layer-void 80%;
+    padding: 0;
+}
+
+.code-block-container:focus-within {
+    border: solid $accent $border-focus;
+    tint: $accent 3%;
+}
+
+.code-block-header {
+    height: 1;
+    padding: 0 1;
+    background: $layer-raised 40%;
+    border-bottom: solid $accent 30%;
+    layout: horizontal;
+}
+
+.code-lang-label {
+    color: $accent;
+    text-style: bold;
+}
+
+.code-header-spacer {
+    width: 1fr;
+}
+
+.code-action {
+    margin-left: 1;
+    min-width: 6;
+    padding: 0 1;
+    color: $text-muted;
+    background: transparent;
+    border: none;
+}
+
+.code-action:hover {
+    color: $accent;
+    background: $layer-raised;
+    text-style: bold;
+}
+
+.code-action:focus {
+    color: $accent;
+    text-style: bold;
+}
+
+.code-action-copy {
+    color: $text-dim;
+}
+
+.code-action-copy:hover {
+    color: $primary;
+    background: $primary 10%;
+}
+
+.code-action-copy.copied {
+    color: $success;
+    text-style: bold;
+}
+
+.code-action-run:hover {
+    color: $success;
+    background: $success 10%;
+}
+
+.code-block-content {
+    padding: 1 2;
+    background: $layer-void 90%;
+    color: $text-bright;
+}

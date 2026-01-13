@@ -49,6 +49,14 @@ class TestSuggestion:
         )
         assert sugg.icon == "✨"
 
+    def test_suggestion_icon_internal(self):
+        sugg = Suggestion(
+            command="/help",
+            description="Show help",
+            source="internal",
+        )
+        assert sugg.icon == "⚡"
+
     def test_suggestion_custom_icon(self):
         sugg = Suggestion(
             command="test",
@@ -534,7 +542,8 @@ class TestSuggestionEngine:
         assert engine.history_provider is not None
         assert engine.context_provider is not None
         assert engine.ai_provider is not None
-        assert engine.enabled_sources == ["history", "context", "ai"]
+        assert engine.internal_provider is not None
+        assert engine.enabled_sources == ["internal", "history", "context", "ai"]
 
     def test_add_to_history(self):
         engine = SuggestionEngine()
@@ -823,3 +832,42 @@ class TestSuggestionEngine:
             assert sugg.source
             assert sugg.icon
             assert sugg.score >= 0.0
+
+    def test_set_internal_commands(self):
+        engine = SuggestionEngine()
+        commands = [("help", "Show help"), ("settings", "Open settings")]
+        engine.set_internal_commands(commands)
+        assert engine.internal_provider._commands == commands
+
+    @pytest.mark.asyncio
+    async def test_suggest_internal_commands_with_slash(self):
+        engine = SuggestionEngine()
+        engine.set_internal_commands(
+            [
+                ("help", "Show help"),
+                ("settings", "Open settings"),
+                ("theme", "Change theme"),
+            ]
+        )
+        suggestions = await engine.suggest("/he")
+        assert len(suggestions) >= 1
+        assert suggestions[0].command == "/help"
+        assert suggestions[0].source == "internal"
+        assert suggestions[0].icon == "⚡"
+
+    @pytest.mark.asyncio
+    async def test_suggest_internal_commands_returns_early(self):
+        engine = SuggestionEngine()
+        engine.set_internal_commands([("help", "Show help")])
+        engine.add_to_history("/help")
+        suggestions = await engine.suggest("/he")
+        assert len(suggestions) == 1
+        assert suggestions[0].source == "internal"
+
+    @pytest.mark.asyncio
+    async def test_suggest_no_internal_without_slash(self):
+        engine = SuggestionEngine()
+        engine.set_internal_commands([("help", "Show help")])
+        suggestions = await engine.suggest("he")
+        for s in suggestions:
+            assert s.source != "internal"

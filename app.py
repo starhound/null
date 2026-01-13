@@ -141,6 +141,15 @@ class NullApp(App):
         self.execution_handler = ExecutionHandler(self)
         self.input_handler = InputHandler(self)
 
+        self._register_internal_commands()
+
+    def _register_internal_commands(self):
+        commands = [
+            (cmd.name, cmd.description)
+            for cmd in self.command_handler.get_all_commands()
+        ]
+        self.suggestion_engine.set_internal_commands(commands)
+
     def compose(self) -> ComposeResult:
         yield AppHeader(id="app-header")
         yield CommandSuggester(id="suggester")

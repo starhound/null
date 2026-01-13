@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from screens.providers import ProvidersScreen
+
 if TYPE_CHECKING:
     from app import NullApp
 
@@ -15,11 +17,9 @@ class AIProvider:
             return
 
         provider_name = args[0]
-        # Logic from original ai.py...
-        # Simplified for now as we are decomposing
         await self.app.ai_manager.set_provider(provider_name)
         self.app.notify(f"Provider set to {provider_name}")
 
     async def cmd_providers(self, args: list[str]):
         """Manage all AI providers."""
-        self.app.push_screen("providers")
+        self.app.push_screen(ProvidersScreen())

@@ -181,7 +181,7 @@ InputController.cursor-underline > .text-area--cursor {
 CommandSuggester {
     layer: overlay;
     dock: bottom;
-    margin-bottom: 4;
+    margin-bottom: 7;
     margin-left: 2;
     margin-right: 2;
     width: auto;
@@ -260,13 +260,11 @@ SelectCurrent.-has-value #label {
     text-style: bold;
 }
 
-/* Dropdown arrow indicator */
-SelectCurrent .arrow {
-    color: $text-muted;
-}
-
-Select:focus SelectCurrent .arrow {
+/* Dropdown arrow indicators */
+SelectCurrent .down-arrow,
+SelectCurrent .up-arrow {
     color: $accent;
+    padding: 0 1;
 }
 
 /* Dropdown overlay (the list that appears) */
@@ -1599,60 +1597,55 @@ ConfigScreen .setting-control {
     align: right middle;
 }
 
-/* Compact inputs for config - HIGH VISIBILITY */
+/* Config Screen Inputs - text fields */
 ConfigScreen Input {
     height: 1;
-    border: tall $primary 50%;
-    padding: 0;
-    margin: 0;
-    background: $surface;
+    border: tall $primary-darken-3;
+    padding: 0 1;
+    background: $background;
     color: $text;
 }
 
 ConfigScreen Input:focus {
     border: tall $accent;
-    background: $surface;
+    background: $background;
 }
 
-/* Select widget - HIGH VISIBILITY */
+/* Config Screen Dropdowns - inherit global styles, minimal overrides */
 ConfigScreen Select {
     width: 100%;
-    height: 1;
-    margin: 0;
-    border: tall $primary 50%;
-    background: $surface;
 }
 
 ConfigScreen Select:focus {
     border: tall $accent;
 }
 
-ConfigScreen SelectOverlay {
-    max-height: 12;
-    background: $surface;
-    border: tall $accent;
-}
-
-/* Switch - HIGH VISIBILITY */
+/* Config Screen Toggles */
 ConfigScreen Switch {
-    height: 1;
+    height: auto;
     width: auto;
-    min-width: 8;
-    margin: 0;
-    border: tall $primary 50%;
-    background: $surface;
+    border: tall $primary-darken-2;
+    background: $panel;
+    padding: 0 2;
 }
 
 ConfigScreen Switch:focus {
     border: tall $accent;
 }
 
+ConfigScreen Switch > .switch--slider {
+    color: $text-muted;
+    background: $panel-darken-2;
+}
+
 ConfigScreen Switch.-on {
-    background: $success 30%;
+    border: tall $primary-darken-2;
+    background: $panel;
 }
 
 ConfigScreen Switch.-on > .switch--slider {
     color: $success;
+    background: $panel-darken-2;
 }
 
 ConfigScreen #config-footer {

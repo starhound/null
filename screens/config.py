@@ -633,38 +633,20 @@ class ConfigScreen(ModalScreen):
         except Exception:
             pass
 
-        # Sync font and cursor settings to host terminal's config file
+        # Sync font and cursor settings to host terminal's config file (silently)
         try:
-            from utils.terminal import (
-                TerminalType,
-                get_terminal_info,
-                sync_terminal_config,
-            )
+            from utils.terminal import sync_terminal_config
 
-            if sync_terminal_config(
+            sync_terminal_config(
                 font_family=new_settings.appearance.font_family,
                 font_size=float(new_settings.appearance.font_size),
                 cursor_style=new_settings.terminal.cursor_style,
                 cursor_blink=new_settings.terminal.cursor_blink,
-            ):
-                info = get_terminal_info()
-
-                # Customize message based on terminal type
-                if info.type == TerminalType.WINDOWS_TERMINAL:
-                    self.notify(
-                        "Use the 'Null Terminal' profile in Windows Terminal dropdown",
-                        title="Profile Created/Updated",
-                        timeout=5,
-                    )
-                else:
-                    self.notify(
-                        f"Settings synced to {info.name} config",
-                        title="Terminal Config Updated",
-                        timeout=3,
-                    )
+            )
         except Exception:
             pass
 
+        self.notify("Settings updated", timeout=2)
         self.dismiss(new_settings)
 
     def action_cancel(self):

@@ -210,9 +210,12 @@ class CommandSuggester(Static):
         self._selected_index = 0
 
         for s in suggestions:
-            source_icon = {"history": "📜", "context": "📁", "ai": "🤖"}.get(
-                s.source, ""
-            )
+            source_icon = {
+                "history": "📜",
+                "context": "📁",
+                "ai": "🤖",
+                "internal": "⚡",
+            }.get(s.source, "")
             label = f"{source_icon} {s.command}"
             lv.append(CommandItem(label, s.command, is_ai=(s.source == "ai")))
 

@@ -1,0 +1,336 @@
+/* ==========================================================================
+   Cards - Panel and Card Component Styles
+   
+   Modular card system with semantic variants and focus states.
+   Cards are container components for grouping related content.
+   ========================================================================== */
+
+/* ==========================================================================
+   Base Card
+   ========================================================================== */
+
+.card {
+    border: round $panel;
+    background: $layer-base;
+    padding: 1 2;
+    margin: 0;
+    height: auto;
+    width: 100%;
+}
+
+.card:focus-within {
+    border: round $primary $border-normal;
+    tint: $primary $glow-subtle;
+}
+
+/* ==========================================================================
+   Card Structure Parts
+   ========================================================================== */
+
+/* --- Card Header --- */
+
+.card-header {
+    layout: horizontal;
+    height: auto;
+    min-height: 1;
+    padding: 0 0 1 0;
+    margin-bottom: 1;
+    border-bottom: solid $text-ghost;
+    background: transparent;
+    color: $text-bright;
+}
+
+.card-header:focus-within {
+    border-bottom: solid $primary $border-normal;
+    color: $text-bright;
+}
+
+/* --- Card Body --- */
+
+.card-body {
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    color: $text-muted;
+}
+
+/* --- Card Footer --- */
+
+.card-footer {
+    layout: horizontal;
+    height: auto;
+    min-height: 1;
+    padding: 1 0 0 0;
+    margin-top: 1;
+    border-top: solid $text-ghost;
+    background: transparent;
+    color: $text-dim;
+}
+
+.card-footer:focus-within {
+    border-top: solid $primary $border-normal;
+}
+
+/* ==========================================================================
+   Semantic Card Variants - Border Colors
+   ========================================================================== */
+
+/* --- Primary (Cyan) --- */
+
+.card-primary {
+    border: round $primary $border-normal;
+}
+
+.card-primary:focus-within {
+    border: round $primary $border-focus;
+    background: $primary $glow-subtle;
+    tint: $primary 3%;
+}
+
+.card-primary .card-header {
+    border-bottom: solid $primary $border-dim;
+}
+
+.card-primary:focus-within .card-header {
+    border-bottom: solid $primary $border-normal;
+}
+
+.card-primary .card-footer {
+    border-top: solid $primary $border-dim;
+}
+
+.card-primary:focus-within .card-footer {
+    border-top: solid $primary $border-normal;
+}
+
+/* --- Success (Green) --- */
+
+.card-success {
+    border: round $success $border-normal;
+}
+
+.card-success:focus-within {
+    border: round $success $border-focus;
+    background: $success $glow-subtle;
+    tint: $success 3%;
+}
+
+.card-success .card-header {
+    border-bottom: solid $success $border-dim;
+}
+
+.card-success:focus-within .card-header {
+    border-bottom: solid $success $border-normal;
+}
+
+.card-success .card-footer {
+    border-top: solid $success $border-dim;
+}
+
+.card-success:focus-within .card-footer {
+    border-top: solid $success $border-normal;
+}
+
+/* --- Warning (Yellow) --- */
+
+.card-warning {
+    border: round $warning $border-normal;
+}
+
+.card-warning:focus-within {
+    border: round $warning $border-focus;
+    background: $warning $glow-subtle;
+    tint: $warning 3%;
+}
+
+.card-warning .card-header {
+    border-bottom: solid $warning $border-dim;
+}
+
+.card-warning:focus-within .card-header {
+    border-bottom: solid $warning $border-normal;
+}
+
+.card-warning .card-footer {
+    border-top: solid $warning $border-dim;
+}
+
+.card-warning:focus-within .card-footer {
+    border-top: solid $warning $border-normal;
+}
+
+/* --- Error (Red) --- */
+
+.card-error {
+    border: round $error $border-normal;
+}
+
+.card-error:focus-within {
+    border: round $error $border-focus;
+    background: $error $glow-subtle;
+    tint: $error 3%;
+}
+
+.card-error .card-header {
+    border-bottom: solid $error $border-dim;
+}
+
+.card-error:focus-within .card-header {
+    border-bottom: solid $error $border-normal;
+}
+
+.card-error .card-footer {
+    border-top: solid $error $border-dim;
+}
+
+.card-error:focus-within .card-footer {
+    border-top: solid $error $border-normal;
+}
+
+/* --- Info (Magenta/Secondary) --- */
+
+.card-info {
+    border: round $secondary $border-normal;
+}
+
+.card-info:focus-within {
+    border: round $secondary $border-focus;
+    background: $secondary $glow-subtle;
+    tint: $secondary 3%;
+}
+
+.card-info .card-header {
+    border-bottom: solid $secondary $border-dim;
+}
+
+.card-info:focus-within .card-header {
+    border-bottom: solid $secondary $border-normal;
+}
+
+.card-info .card-footer {
+    border-top: solid $secondary $border-dim;
+}
+
+.card-info:focus-within .card-footer {
+    border-top: solid $secondary $border-normal;
+}
+
+/* ==========================================================================
+   Card Style Variants
+   ========================================================================== */
+
+/* --- Elevated Card (Floating Appearance) --- */
+
+.card-elevated {
+    background: $layer-float;
+    border: round $accent $border-normal;
+    padding: 2 3;
+}
+
+.card-elevated:focus-within {
+    border: round $accent $border-focus;
+    background: $accent $glow-medium;
+    tint: $accent 4%;
+}
+
+.card-elevated .card-header {
+    border-bottom: solid $accent $border-dim;
+    color: $text-bright;
+    text-style: bold;
+}
+
+.card-elevated:focus-within .card-header {
+    border-bottom: solid $accent $border-normal;
+}
+
+.card-elevated .card-body {
+    padding: 1 0;
+}
+
+.card-elevated .card-footer {
+    border-top: solid $accent $border-dim;
+}
+
+.card-elevated:focus-within .card-footer {
+    border-top: solid $accent $border-normal;
+}
+
+/* --- Flat Card (Minimal/Subtle) --- */
+
+.card-flat {
+    border: none;
+    background: $layer-base 50%;
+    padding: 1 2;
+}
+
+.card-flat:focus-within {
+    border: none;
+    background: $layer-raised;
+    tint: $primary 2%;
+}
+
+.card-flat .card-header {
+    border-bottom: dashed $text-ghost;
+    padding-bottom: 1;
+}
+
+.card-flat:focus-within .card-header {
+    border-bottom: dashed $text-dim;
+}
+
+.card-flat .card-body {
+    color: $text-dim;
+}
+
+.card-flat:focus-within .card-body {
+    color: $text-muted;
+}
+
+.card-flat .card-footer {
+    border-top: dashed $text-ghost;
+    padding-top: 1;
+}
+
+.card-flat:focus-within .card-footer {
+    border-top: dashed $text-dim;
+}
+
+/* ==========================================================================
+   Card Utility Classes
+   ========================================================================== */
+
+/* Compact card with less padding */
+.card-compact {
+    padding: 0 1;
+}
+
+.card-compact .card-header {
+    padding: 0;
+    margin-bottom: 0;
+}
+
+.card-compact .card-footer {
+    padding: 0;
+    margin-top: 0;
+}
+
+/* Card with no internal spacing */
+.card-flush {
+    padding: 0;
+}
+
+.card-flush .card-header {
+    padding: 1 2 1 2;
+    margin-bottom: 0;
+}
+
+.card-flush .card-body {
+    padding: 1 2;
+}
+
+.card-flush .card-footer {
+    padding: 1 2 1 2;
+    margin-top: 0;
+}

@@ -12,7 +12,8 @@ from .oauth import BaseOAuthFlow, OAuthTokens, OAuthTokenStore, PKCEHelper
 
 CLAUDE_OAUTH_CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
 CLAUDE_OAUTH_SCOPES = "org:create_api_key user:profile user:inference"
-CLAUDE_REDIRECT_URI = "https://console.anthropic.com/oauth/code/callback"
+CLAUDE_CALLBACK_PORT = 51122
+CLAUDE_REDIRECT_URI = f"http://localhost:{CLAUDE_CALLBACK_PORT}/oauth-callback"
 
 AVAILABLE_MODELS = [
     "claude-sonnet-4-20250514",
@@ -117,12 +118,16 @@ class ClaudeOAuthProvider(LLMProvider):
         return self._tokens is not None
 
     async def login(self) -> bool:
+        import asyncio
+
         url, verifier = self._oauth_flow.get_authorization_url()
 
         self._oauth_flow._start_callback_server()
         self._oauth_flow._open_browser(url)
 
-        code, state, error = self._oauth_flow._wait_for_callback(timeout=120)
+        code, state, error = await asyncio.to_thread(
+            self._oauth_flow._wait_for_callback, 120
+        )
 
         if error or not code:
             return False

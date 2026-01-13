@@ -16,15 +16,18 @@ logger = logging.getLogger(__name__)
 class Suggestion:
     command: str
     description: str
-    source: Literal["history", "context", "ai"]
+    source: Literal["history", "context", "ai", "internal"]
     score: float = 0.0
     icon: str = ""
 
     def __post_init__(self):
         if not self.icon:
-            self.icon = {"history": "⏱", "context": "📁", "ai": "✨"}.get(
-                self.source, ""
-            )
+            self.icon = {
+                "history": "⏱",
+                "context": "📁",
+                "ai": "✨",
+                "internal": "⚡",
+            }.get(self.source, "")
 
 
 @dataclass
@@ -163,6 +166,41 @@ class ContextProvider:
         return suggestions[:limit]
 
 
+class InternalCommandProvider:
+    def __init__(self):
+        self._commands: list[tuple[str, str]] = []
+
+    def set_commands(self, commands: list[tuple[str, str]]):
+        self._commands = commands
+
+    def suggest(self, prefix: str, limit: int = 5) -> list[Suggestion]:
+        if not prefix.startswith("/"):
+            return []
+
+        suggestions = []
+        prefix_lower = prefix.lower()
+
+        for name, description in self._commands:
+            cmd = f"/{name}"
+            if cmd.lower().startswith(prefix_lower):
+                if cmd.lower() == prefix_lower:
+                    score = 1.0
+                else:
+                    score = 0.95 - (len(cmd) - len(prefix)) * 0.01
+
+                suggestions.append(
+                    Suggestion(
+                        command=cmd,
+                        description=description,
+                        source="internal",
+                        score=score,
+                    )
+                )
+
+        suggestions.sort(key=lambda x: x.score, reverse=True)
+        return suggestions[:limit]
+
+
 class AISuggestionProvider:
     async def suggest(
         self,
@@ -230,7 +268,11 @@ class SuggestionEngine:
         self.history_provider = HistoryProvider()
         self.context_provider = ContextProvider()
         self.ai_provider = AISuggestionProvider()
-        self.enabled_sources: list[str] = ["history", "context", "ai"]
+        self.internal_provider = InternalCommandProvider()
+        self.enabled_sources: list[str] = ["internal", "history", "context", "ai"]
+
+    def set_internal_commands(self, commands: list[tuple[str, str]]):
+        self.internal_provider.set_commands(commands)
 
     def add_to_history(self, command: str):
         self.history_provider.add_command(command)
@@ -292,6 +334,21 @@ class SuggestionEngine:
             return []
 
         all_suggestions: list[Suggestion] = []
+
+        if "internal" in self.enabled_sources and input_text.startswith("/"):
+            internal_suggestions = self.internal_provider.suggest(
+                input_text, limit=max_suggestions
+            )
+            all_suggestions.extend(internal_suggestions)
+            if internal_suggestions:
+                seen = set()
+                unique: list[Suggestion] = []
+                for s in all_suggestions:
+                    if s.command not in seen:
+                        seen.add(s.command)
+                        unique.append(s)
+                return unique[:max_suggestions]
+
         context = await self.get_context()
 
         if "history" in self.enabled_sources:

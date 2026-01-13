@@ -210,12 +210,16 @@ class AntigravityProvider(LLMProvider):
         return self._tokens is not None
 
     async def login(self) -> bool:
+        import asyncio
+
         url, verifier = self._oauth_flow.get_authorization_url()
 
         self._oauth_flow._start_callback_server()
         self._oauth_flow._open_browser(url)
 
-        code, _, error = self._oauth_flow._wait_for_callback(timeout=120)
+        code, _, error = await asyncio.to_thread(
+            self._oauth_flow._wait_for_callback, 120
+        )
 
         if error or not code:
             return False

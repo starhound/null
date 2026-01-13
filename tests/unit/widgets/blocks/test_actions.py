@@ -5,18 +5,18 @@ from widgets.blocks.actions import ActionBar, ActionButton
 
 class TestActionButtonMessage:
     def test_pressed_message_carries_action_type(self):
-        msg = ActionButton.Pressed("copy", "block_123")
+        msg = ActionButton.ActionPressed("copy", "block_123")
         assert msg.action == "copy"
 
     def test_pressed_message_carries_block_id(self):
-        msg = ActionButton.Pressed("retry", "block_456")
+        msg = ActionButton.ActionPressed("retry", "block_456")
         assert msg.block_id == "block_456"
 
     def test_different_action_types_distinguishable(self):
-        copy_msg = ActionButton.Pressed("copy", "b1")
-        retry_msg = ActionButton.Pressed("retry", "b1")
-        edit_msg = ActionButton.Pressed("edit", "b1")
-        fork_msg = ActionButton.Pressed("fork", "b1")
+        copy_msg = ActionButton.ActionPressed("copy", "b1")
+        retry_msg = ActionButton.ActionPressed("retry", "b1")
+        edit_msg = ActionButton.ActionPressed("edit", "b1")
+        fork_msg = ActionButton.ActionPressed("fork", "b1")
 
         assert copy_msg.action == "copy"
         assert retry_msg.action == "retry"

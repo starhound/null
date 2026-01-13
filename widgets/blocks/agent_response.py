@@ -178,10 +178,8 @@ class AgentResponseBlock(BaseBlockWidget):
         """Get the most recently added iteration widget."""
         return self.iteration_container.get_current_iteration()
 
-    # Action button handlers
-    @on(ActionButton.Pressed)
-    def on_action_pressed(self, event: ActionButton.Pressed) -> None:
-        """Handle action button clicks."""
+    @on(ActionButton.ActionPressed)
+    def on_action_pressed(self, event: ActionButton.ActionPressed) -> None:
         event.stop()
 
         if event.action == "copy":

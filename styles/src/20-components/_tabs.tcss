@@ -1,0 +1,79 @@
+/* ==========================================================================
+   Tab System - TabbedContent Active Tab Indicators
+   Global styles for Tab, Tabs, and TabbedContent widgets
+   ========================================================================== */
+
+/* ==========================================================================
+   Tabs Container
+   ========================================================================== */
+
+Tabs {
+    height: auto;
+    min-height: 1;
+    background: transparent;
+}
+
+/* ==========================================================================
+   Individual Tab - Base State
+   ========================================================================== */
+
+Tab {
+    padding: 0 2;
+    color: $text-muted;
+    background: transparent;
+    border-bottom: solid $text-ghost;
+}
+
+/* ==========================================================================
+   Tab - Hover State
+   ========================================================================== */
+
+Tab:hover {
+    color: $text;
+    background: $layer-raised 30%;
+}
+
+/* ==========================================================================
+   Tab - Active State
+   Stronger indicator with thick bottom border and bright color
+   ========================================================================== */
+
+Tab.-active {
+    color: $text-bright;
+    text-style: bold;
+    border-bottom: thick $primary;
+}
+
+/* ==========================================================================
+   Tab - Focus State
+   Accent border for keyboard navigation
+   ========================================================================== */
+
+Tab:focus {
+    border-bottom: thick $accent;
+}
+
+/* ==========================================================================
+   TabbedContent Container
+   ========================================================================== */
+
+TabbedContent {
+    background: transparent;
+}
+
+/* ==========================================================================
+   ContentSwitcher (Tab Panel Container)
+   ========================================================================== */
+
+ContentSwitcher {
+    background: transparent;
+}
+
+/* ==========================================================================
+   TabPane - Individual Tab Content Area
+   ========================================================================== */
+
+TabPane {
+    padding: 1 0;
+    background: transparent;
+}

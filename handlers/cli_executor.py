@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from config import get_settings
 from executor import ExecutionEngine
 from widgets.blocks import CommandBlock
 
+from .base_executor import BaseExecutor, ExecutorContext
 from .common import UIBuffer
 
 if TYPE_CHECKING:
@@ -17,14 +17,13 @@ if TYPE_CHECKING:
     from widgets import BaseBlockWidget
 
 
-class CLIExecutor:
+class CLIExecutor(BaseExecutor):
     """Handles CLI command execution."""
 
-    _background_tasks: ClassVar[set[asyncio.Task[None]]] = set()
-
-    def __init__(self, app: NullApp):
+    def __init__(self, app: NullApp) -> None:
         self.app = app
-        self._current_exec_task: asyncio.Task | None = None
+        super().__init__(ExecutorContext.from_app(app))
+        self._current_exec_task: asyncio.Task[int] | None = None
 
     async def execute_cli(self, block: BlockState, widget: BaseBlockWidget) -> None:
         """Execute a CLI command and stream output."""
@@ -112,15 +111,4 @@ class CLIExecutor:
             block.content_output += f"\n[exit: {exit_code}]\n"
             widget.update_output()
 
-        if get_settings().terminal.auto_save_session:
-            self.app._auto_save()
-
-        try:
-            from managers.recall import RecallManager
-
-            recall_manager = RecallManager()
-            task = asyncio.create_task(recall_manager.index_interaction(block))
-            self._background_tasks.add(task)
-            task.add_done_callback(self._background_tasks.discard)
-        except Exception:
-            pass
+        self._finalize_block(block)

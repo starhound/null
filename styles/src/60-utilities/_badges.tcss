@@ -1,0 +1,161 @@
+/* ==========================================================================
+   Badge/Pill System - Count Indicators and Status Badges
+   Utility classes for status bar counts and inline badges
+   ========================================================================== */
+
+/* ==========================================================================
+   Base Badge
+   Compact pill-shaped indicator with centered text
+   ========================================================================== */
+
+.badge {
+    padding: 0 1;
+    min-width: 2;
+    text-align: center;
+    background: $layer-raised;
+    color: $text;
+}
+
+/* ==========================================================================
+   Semantic Badge Variants
+   ========================================================================== */
+
+/* --- Primary Badge (Cyan) --- */
+.badge-primary {
+    background: $primary 30%;
+    color: $primary;
+}
+
+/* --- Success Badge (Green) --- */
+.badge-success {
+    background: $success 30%;
+    color: $success;
+}
+
+/* --- Warning Badge (Yellow) --- */
+.badge-warning {
+    background: $warning 30%;
+    color: $warning;
+}
+
+/* --- Danger Badge (Red) --- */
+.badge-danger {
+    background: $error 30%;
+    color: $error;
+}
+
+/* --- Info Badge (Magenta/Secondary) --- */
+.badge-info {
+    background: $secondary 30%;
+    color: $secondary;
+}
+
+/* --- Accent Badge (Green Accent) --- */
+.badge-accent {
+    background: $accent 30%;
+    color: $accent;
+}
+
+/* ==========================================================================
+   Badge Size Variants
+   ========================================================================== */
+
+/* Small badge - minimal padding */
+.badge-sm {
+    padding: 0;
+    min-width: 1;
+}
+
+/* Large badge - extra padding */
+.badge-lg {
+    padding: 0 2;
+    min-width: 4;
+}
+
+/* ==========================================================================
+   Badge Style Variants
+   ========================================================================== */
+
+/* Outline badge - border instead of background */
+.badge-outline {
+    background: transparent;
+    border: solid $panel;
+    color: $text-muted;
+}
+
+.badge-outline-primary {
+    background: transparent;
+    border: solid $primary;
+    color: $primary;
+}
+
+.badge-outline-success {
+    background: transparent;
+    border: solid $success;
+    color: $success;
+}
+
+.badge-outline-warning {
+    background: transparent;
+    border: solid $warning;
+    color: $warning;
+}
+
+.badge-outline-danger {
+    background: transparent;
+    border: solid $error;
+    color: $error;
+}
+
+/* Solid badge - full color background */
+.badge-solid-primary {
+    background: $primary;
+    color: $layer-void;
+}
+
+.badge-solid-success {
+    background: $success;
+    color: $layer-void;
+}
+
+.badge-solid-warning {
+    background: $warning;
+    color: $layer-void;
+}
+
+.badge-solid-danger {
+    background: $error;
+    color: $layer-void;
+}
+
+/* ==========================================================================
+   Pill Variant - Rounded appearance (same as badge, explicit name)
+   ========================================================================== */
+
+.pill {
+    padding: 0 1;
+    min-width: 2;
+    text-align: center;
+    background: $layer-raised;
+    color: $text;
+}
+
+.pill-primary {
+    background: $primary 30%;
+    color: $primary;
+}
+
+.pill-success {
+    background: $success 30%;
+    color: $success;
+}
+
+.pill-warning {
+    background: $warning 30%;
+    color: $warning;
+}
+
+.pill-danger {
+    background: $error 30%;
+    color: $error;
+}

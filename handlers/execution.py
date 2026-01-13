@@ -14,9 +14,23 @@ if TYPE_CHECKING:
 
 
 class ExecutionHandler:
-    """Facade for AI and CLI command execution."""
+    """Facade for AI and CLI command execution.
 
-    def __init__(self, app: NullApp):
+    Provides a unified interface for executing both AI prompts and CLI commands,
+    delegating to specialized executor classes for each type.
+
+    Attributes:
+        app: The main NullApp instance.
+        ai_executor: Handler for AI-related execution (prompts, regeneration, tools).
+        cli_executor: Handler for CLI command execution.
+    """
+
+    def __init__(self, app: NullApp) -> None:
+        """Initialize the execution handler.
+
+        Args:
+            app: The main NullApp instance for accessing global state and managers.
+        """
         self.app = app
         self.ai_executor = AIExecutor(app)
         self.cli_executor = CLIExecutor(app)
@@ -48,4 +62,9 @@ class ExecutionHandler:
         await self.cli_executor.execute_cli_append(cmd, block, widget)
 
     async def cancel_tool(self, tool_id: str) -> None:
+        """Cancel a running tool execution.
+
+        Args:
+            tool_id: Unique identifier of the tool execution to cancel.
+        """
         await self.ai_executor.cancel_tool(tool_id)

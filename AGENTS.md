@@ -55,7 +55,7 @@ Null Terminal is a cyber-noir TUI that blends a standard shell with AI capabilit
 *   **No Synchronous AI**: All AI calls must be async/streaming.
 *   **No Direct Styles**: Do NOT hardcode colors in Python; use TCSS classes.
 *   **No Print**: Use `self.notify()` or `self.log()`; stdout is captured.
-*   **No NPM**: Remove legacy `npm` references from `nullrc.py`.
+*   **No NPM in Core**: npm/npx are only for MCP servers (external processes), not app logic.
 
 ## COMMANDS
 ```bash

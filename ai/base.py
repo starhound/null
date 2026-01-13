@@ -47,6 +47,7 @@ class StreamChunk:
     tool_calls: list[ToolCallData] = field(default_factory=list)
     is_complete: bool = False
     usage: TokenUsage | None = None
+    error: str | None = None
 
 
 # Model pricing per 1M tokens (input_cost, output_cost) in USD

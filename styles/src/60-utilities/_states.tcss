@@ -1,0 +1,312 @@
+/* ==========================================================================
+   State Utility Classes
+   ========================================================================== */
+
+/* Loading state - muted with warning tint */
+.is-loading {
+    color: $text-muted;
+    tint: $warning 5%;
+}
+
+/* Disabled state - ghosted, no interactions */
+.is-disabled {
+    color: $text-ghost;
+    background: $layer-base;
+    opacity: 0.5;
+}
+
+.is-disabled:hover {
+    background: $layer-base;
+}
+
+.is-disabled:focus {
+    border: solid $primary $border-dim;
+}
+
+/* Selected state - primary highlight with accent border */
+.is-selected {
+    background: $primary $glow-medium;
+    border-left: thick $primary;
+}
+
+/* Error state - error tint and border */
+.is-error {
+    background: $error $glow-subtle;
+    border: solid $error $border-normal;
+    color: $text-bright;
+}
+
+/* Success state - success tint and border */
+.is-success {
+    background: $success $glow-subtle;
+    border: solid $success $border-normal;
+    color: $text-bright;
+}
+
+/* Warning state - warning tint and border */
+.is-warning {
+    background: $warning $glow-subtle;
+    border: solid $warning $border-normal;
+    color: $text-bright;
+}
+
+/* Active state - primary highlight */
+.is-active {
+    background: $primary $glow-medium;
+    color: $text-bright;
+    border: solid $primary $border-focus;
+}
+
+/* Pending state - dashed border with warning tint */
+.is-pending {
+    background: $warning $glow-subtle;
+    border: dashed $warning $border-normal;
+    color: $text-muted;
+}
+
+/* Empty state - dim, italic, centered */
+.is-empty {
+    color: $text-dim;
+    text-style: italic;
+    text-align: center;
+    padding: 2 4;
+}
+
+/* Hidden state - not displayed */
+.is-hidden {
+    display: none;
+}
+
+/* Visible state - block display */
+.is-visible {
+    display: block;
+}
+
+/* Readonly state - muted with minimal focus */
+.is-readonly {
+    color: $text-muted;
+    background: $layer-base;
+    opacity: 0.9;
+}
+
+.is-readonly:focus {
+    border: solid $primary $border-dim;
+}
+
+/* Highlighted state - warning background for search matches */
+.is-highlighted {
+    background: $warning $glow-strong;
+    color: $text-bright;
+}
+
+/* Hoverable state - enhanced hover effect */
+.is-hoverable:hover {
+    background: $layer-raised;
+    color: $text-bright;
+}
+
+/* Clickable state - primary color with underline on hover */
+.is-clickable {
+    color: $primary;
+}
+
+.is-clickable:hover {
+    text-style: underline;
+    color: $accent;
+}
+
+/* ==========================================================================
+   Message State Classes - Styled Text Blocks
+   ========================================================================== */
+
+/* --- Error Message --- */
+.error-message {
+    color: $error;
+    text-style: bold;
+    border-left: thick $error;
+    padding-left: 1;
+    background: $error $glow-subtle;
+}
+
+.is-error .error-text {
+    color: $error;
+    text-style: bold;
+}
+
+/* --- Success Message --- */
+.success-message {
+    color: $success;
+    text-style: bold;
+    border-left: thick $success;
+    padding-left: 1;
+    background: $success $glow-subtle;
+}
+
+.is-success .success-text {
+    color: $success;
+    text-style: bold;
+}
+
+/* --- Warning Message --- */
+.warning-message {
+    color: $warning;
+    text-style: bold;
+    border-left: thick $warning;
+    padding-left: 1;
+    background: $warning $glow-subtle;
+}
+
+.is-warning .warning-text {
+    color: $warning;
+    text-style: bold;
+}
+
+/* --- Info Message --- */
+.info-message {
+    color: $primary;
+    text-style: bold;
+    border-left: thick $primary;
+    padding-left: 1;
+    background: $primary $glow-subtle;
+}
+
+/* ==========================================================================
+   Success Feedback Styles (ui-14)
+   Enhanced visual feedback for successful actions
+   ========================================================================== */
+
+/* Text-based success feedback */
+.success-feedback {
+    color: $success;
+    text-style: bold;
+}
+
+/* Action success state - animated background */
+.action-success {
+    background: $success 20%;
+    border: solid $success;
+    transition: background 300ms in_out_cubic;
+}
+
+.action-success:hover {
+    background: $success 30%;
+}
+
+/* Flash success - for temporary feedback animations */
+.flash-success {
+    background: $success 25%;
+    border: solid $success $border-focus;
+    tint: $success 8%;
+    transition: background 300ms in_out_cubic, tint 300ms in_out_cubic;
+}
+
+/* ==========================================================================
+   Icon Color Consistency (ui-10)
+   Semantic icon color classes for status indicators
+   ========================================================================== */
+
+/* Success icon - green for completed/ok states */
+.icon-success {
+    color: $success;
+}
+
+/* Error icon - red for failed/error states */
+.icon-error {
+    color: $error;
+}
+
+/* Warning icon - yellow/amber for caution states */
+.icon-warning {
+    color: $warning;
+}
+
+/* Info icon - primary/cyan for informational states */
+.icon-info {
+    color: $primary;
+}
+
+/* Muted icon - dimmed for inactive/secondary states */
+.icon-muted {
+    color: $text-muted;
+}
+
+/* Accent icon - accent color for highlights */
+.icon-accent {
+    color: $accent;
+}
+
+/* Secondary icon - magenta for agent/system */
+.icon-secondary {
+    color: $secondary;
+}
+
+/* Dim icon - very subtle for background elements */
+.icon-dim {
+    color: $text-dim;
+}
+
+/* Ghost icon - nearly invisible for subtle hints */
+.icon-ghost {
+    color: $text-ghost;
+}
+
+/* ==========================================================================
+   Loading Indicators (ui-5)
+   CSS-only loading state classes
+   ========================================================================== */
+
+/* Loading text - italic warning color */
+.loading-text {
+    color: $warning;
+    text-style: italic;
+}
+
+/* Loading indicator - centered warning text */
+.loading-indicator {
+    color: $warning;
+    text-align: center;
+}
+
+/* ==========================================================================
+   Progress Indicators (ui-17)
+   CSS-only progress state classes
+   ========================================================================== */
+
+/* Processing state - tinted with primary border */
+.is-processing {
+    tint: $primary 5%;
+    border: solid $primary $border-dim;
+}
+
+/* Progress text - primary color */
+.progress-text {
+    color: $primary;
+}
+
+/* Progress bar container - dark background */
+.progress-bar {
+    background: $layer-void;
+    height: 1;
+}
+
+/* Progress bar fill - primary colored */
+.progress-fill {
+    background: $primary;
+    height: 1;
+}
+
+/* ==========================================================================
+   Status Bar Busy Indicators
+   Classes for status bar activity states
+   ========================================================================== */
+
+/* Status busy - bold warning for active state */
+.status-busy {
+    color: $warning;
+    text-style: bold;
+}
+
+/* Status idle - muted for inactive state */
+.status-idle {
+    color: $text-muted;
+}

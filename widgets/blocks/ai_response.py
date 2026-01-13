@@ -219,10 +219,8 @@ class AIResponseBlock(BaseBlockWidget):
         if item:
             item.update_progress(progress)
 
-    # Action button handlers
-    @on(ActionButton.Pressed)
-    def on_action_pressed(self, event: ActionButton.Pressed) -> None:
-        """Handle action button clicks."""
+    @on(ActionButton.ActionPressed)
+    def on_action_pressed(self, event: ActionButton.ActionPressed) -> None:
         event.stop()
 
         if event.action == "copy":

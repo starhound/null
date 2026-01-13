@@ -1,6 +1,7 @@
 """Action bar widget for AI response blocks."""
 
 from textual.app import ComposeResult
+from textual import on
 from textual.containers import Horizontal
 from textual.message import Message
 from textual.widgets import Button, Label, Static
@@ -9,7 +10,7 @@ from textual.widgets import Button, Label, Static
 class ActionButton(Button):
     """Action button using proper Textual Button widget."""
 
-    class Pressed(Message, bubble=True):
+    class ActionPressed(Message, bubble=True):
         """Message sent when an action button is clicked."""
 
         def __init__(self, action: str, block_id: str):
@@ -27,13 +28,8 @@ class ActionButton(Button):
         classes: str | None = None,
     ):
         super().__init__(label, id=id, classes=classes, disabled=disabled)
-        self.action = action
+        self.action_name = action
         self.block_id = block_id
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle button press - emit our custom Pressed message."""
-        event.stop()
-        self.post_message(self.Pressed(self.action, self.block_id))
 
 
 class ActionBar(Horizontal):
@@ -69,6 +65,16 @@ class ActionBar(Horizontal):
         if self.meta_text:
             yield Label(self.meta_text, classes="action-meta")
 
+    @on(Button.Pressed)
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Catch Button.Pressed from child ActionButtons and emit ActionPressed."""
+        button = event.button
+        if isinstance(button, ActionButton):
+            event.stop()
+            self.post_message(
+                ActionButton.ActionPressed(button.action_name, button.block_id)
+            )
+
     def update_meta(self, meta_text: str) -> None:
         """Update the meta text."""
         self.meta_text = meta_text
@@ -87,13 +93,6 @@ class ActionBar(Horizontal):
             self.set_timer(
                 1.5, lambda: self._reset_copy_button(copy_btn, original_label)
             )
-        except Exception:
-            pass
-
-    def _reset_copy_button(self, btn: ActionButton, original_label) -> None:
-        try:
-            btn.label = original_label
-            btn.remove_class("copied")
         except Exception:
             pass
 

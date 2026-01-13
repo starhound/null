@@ -100,7 +100,7 @@ class TestStatusBarCompose:
         bar = StatusBar()
         children = list(bar.compose())
 
-        assert len(children) == 13
+        assert len(children) == 15
         assert all(isinstance(child, Label) for child in children)
 
     def test_compose_mode_indicator(self):
@@ -148,12 +148,21 @@ class TestStatusBarCompose:
         assert process_indicator.id == "process-indicator"
         assert "status-section" in process_indicator.classes
 
+    def test_compose_voice_indicator(self):
+        """Voice indicator should have correct id."""
+        bar = StatusBar()
+        children = list(bar.compose())
+
+        voice_indicator = children[10]
+        assert voice_indicator.id == "voice-indicator"
+        assert "status-section" in voice_indicator.classes
+
     def test_compose_spacer(self):
         """Spacer label should have spacer class."""
         bar = StatusBar()
         children = list(bar.compose())
 
-        spacer = children[9]
+        spacer = children[11]
         assert "spacer" in spacer.classes
 
     def test_compose_token_indicator(self):
@@ -161,7 +170,7 @@ class TestStatusBarCompose:
         bar = StatusBar()
         children = list(bar.compose())
 
-        token_indicator = children[10]
+        token_indicator = children[12]
         assert token_indicator.id == "token-indicator"
         assert "status-section" in token_indicator.classes
 
@@ -170,7 +179,7 @@ class TestStatusBarCompose:
         bar = StatusBar()
         children = list(bar.compose())
 
-        context_indicator = children[12]
+        context_indicator = children[14]
         assert context_indicator.id == "context-indicator"
         assert "status-section" in context_indicator.classes
         assert "context-low" in context_indicator.classes
