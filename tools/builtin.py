@@ -1,6 +1,7 @@
 """Built-in tools for the AI to use."""
 
 import asyncio
+import logging
 import os
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -8,9 +9,12 @@ from typing import TYPE_CHECKING, Any
 
 from commands.todo import TodoManager
 from managers.review import ProposedChange
+from security.sanitizer import configure_sanitizer, get_sanitizer
 
 if TYPE_CHECKING:
     from managers.agent import AgentManager
+
+logger = logging.getLogger(__name__)
 
 _agent_manager: "AgentManager | None" = None
 
@@ -22,6 +26,20 @@ def set_agent_manager(manager: "AgentManager") -> None:
 
 def get_agent_manager() -> "AgentManager | None":
     return _agent_manager
+
+
+def init_command_sanitizer() -> None:
+    """Initialize the command sanitizer from settings."""
+    try:
+        from config.settings import get_settings
+
+        settings = get_settings()
+        configure_sanitizer(
+            allowlist_mode=settings.security.command_allowlist_mode,
+            custom_blocked_patterns=settings.security.blocked_command_patterns,
+        )
+    except Exception as e:
+        logger.warning(f"Failed to load security settings: {e}")
 
 
 @dataclass
@@ -45,6 +63,14 @@ async def run_command(
 
     If on_progress is provided, streams output in real-time via callbacks.
     """
+    sanitizer = get_sanitizer()
+    is_safe, _, warnings = sanitizer.sanitize_command(command)
+
+    if not is_safe:
+        warning_text = "; ".join(warnings)
+        logger.warning(f"Blocked command: {command[:100]} - {warning_text}")
+        return f"[Security Error: Command blocked]\n{warning_text}"
+
     cwd = working_dir or os.getcwd()
 
     if on_progress:

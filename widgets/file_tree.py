@@ -8,15 +8,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 from textual.app import ComposeResult
+from rich.text import Text
 from textual.binding import Binding
 from textual.containers import Horizontal, ScrollableContainer, Vertical
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widgets import Button, DirectoryTree, Label, Static
-from textual.widgets._tree import TreeNode
-
-if TYPE_CHECKING:
-    pass
 
 
 # File type icons mapping
@@ -210,18 +207,20 @@ class RecentFileEntry:
 class EnhancedDirectoryTree(DirectoryTree):
     """DirectoryTree with file type icons."""
 
-    def render_label(self, node: TreeNode[Path], base_style, style) -> str:
-        """Render node label with appropriate icon."""
-        path = node.data
-        if path is None:
-            return ""
+    def render_label(self, node, base_style, style):
+        data = node.data
+        if data is None:
+            return Text("")
 
-        if path.is_dir():
+        path_obj = data.path if hasattr(data, "path") else Path(data)
+        is_directory = node.allow_expand
+
+        if is_directory:
             icon = FOLDER_OPEN_ICON if node.is_expanded else FOLDER_ICON
-            return f"{icon} {path.name}"
         else:
-            icon = get_file_icon(path)
-            return f"{icon} {path.name}"
+            icon = get_file_icon(path_obj)
+
+        return Text(f"{icon} {path_obj.name}")
 
 
 class FileTreeWidget(Static):
@@ -580,7 +579,7 @@ class FileBrowserWidget(Static):
         except Exception:
             pass
 
-    def refresh(self) -> None:
+    def refresh_tree(self) -> None:
         """Refresh the file tree."""
         try:
             tree = self.query_one(FileTreeWidget)

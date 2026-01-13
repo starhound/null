@@ -4,7 +4,7 @@
    AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
    Edit source files in styles/src/ and run: python styles/bundle.py
    
-   Generated: 2026-01-13 16:33:55 UTC
+   Generated: 2026-01-13 20:28:23 UTC
    ========================================================================== */
 
 
@@ -12,45 +12,7 @@
    BASE (2 files)
    ========================================================================== */
 
-/* --- _reset.tcss --- */
-
-/* ==========================================================================
-   Global Scrollbar Styles - Minimal Neon Accents
-   ========================================================================== */
-
-VerticalScroll, HorizontalScroll {
-    scrollbar-size: 1 1;
-    scrollbar-background: transparent;
-    scrollbar-color: $text-ghost;
-    scrollbar-color-hover: $primary 60%;
-    scrollbar-color-active: $primary;
-}
-
-/* ==========================================================================
-   Layout
-   ========================================================================== */
-
-/* Main app - fill entire terminal */
-NullApp {
-    width: 100%;
-    height: 100%;
-    background: $background;
-}
-
-/* Main app screen - not modal screens */
-NullApp > Screen {
-    layout: vertical;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    margin: 0;
-    background: $background;
-    overflow: hidden;
-}
-
-/* Modal screens - handled in Modal Screens section */
-
-/* --- _variables.tcss --- */
+/* --- _00-variables.tcss --- */
 
 /* ==========================================================================
    Color Variables - Layered Noir Palette
@@ -91,6 +53,44 @@ $input-bg: $surface;
 $input-focus-border: $accent;
 $switch-on-bg: $success 30%;
 $switch-on-color: $success;
+
+/* --- _reset.tcss --- */
+
+/* ==========================================================================
+   Global Scrollbar Styles - Minimal Neon Accents
+   ========================================================================== */
+
+VerticalScroll, HorizontalScroll {
+    scrollbar-size: 1 1;
+    scrollbar-background: transparent;
+    scrollbar-color: $text-ghost;
+    scrollbar-color-hover: $primary 60%;
+    scrollbar-color-active: $primary;
+}
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+
+/* Main app - fill entire terminal */
+NullApp {
+    width: 100%;
+    height: 100%;
+    background: $background;
+}
+
+/* Main app screen - not modal screens */
+NullApp > Screen {
+    layout: vertical;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    background: $background;
+    overflow: hidden;
+}
+
+/* Modal screens - handled in Modal Screens section */
 
 
 /* ==========================================================================
@@ -173,6 +173,38 @@ AppHeader .header-right {
     text-align: right;
     padding: 0 1;
     color: $text-muted;
+}
+
+#main-area {
+    width: 100%;
+    height: 1fr;
+    layout: horizontal;
+}
+
+#input-container {
+    dock: bottom;
+    width: 100%;
+    height: auto;
+    min-height: 3;
+    max-height: 10;
+    padding: 0 1;
+    background: $layer-base;
+    border-top: solid $border-dim;
+}
+
+#input-container #prompt-line {
+    width: 100%;
+    height: 1;
+    color: $primary;
+    text-style: bold;
+}
+
+#input-container:focus-within {
+    border-top: solid $primary;
+}
+
+#input-container.ai-mode #prompt-line {
+    color: $accent;
 }
 
 /* --- _sidebar.tcss --- */
@@ -580,7 +612,6 @@ RecentFilesWidget {
 
 .recent-file-item:hover {
     background: $primary 20%;
-    cursor: pointer;
 }
 
 .recent-file-name {
@@ -4634,7 +4665,7 @@ UnchangedSection > CollapsibleTitle:hover {
 }
 
 .diff-footer .btn-primary {
-    margin-left: auto;
+    margin: 0 0 0 2;
 }
 
 /* --- _help-screen.tcss --- */

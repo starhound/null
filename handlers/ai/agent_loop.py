@@ -11,9 +11,9 @@ from ai.base import Message, TokenUsage
 from config import Config
 from managers.agent import AgentState
 from models import AgentIteration, BlockState
-from widgets import AgentResponseBlock, BaseBlockWidget, StatusBar
 
 if TYPE_CHECKING:
+    from widgets import AgentResponseBlock, BaseBlockWidget, StatusBar
     from app import NullApp
     from handlers.ai.tool_runner import ToolRunner
 
@@ -102,6 +102,8 @@ class AgentLoop:
         current_messages: list[Message] = list(messages)
         iteration_num = 0
         total_usage: TokenUsage | None = None
+
+        from widgets import AgentResponseBlock
 
         agent_widget: AgentResponseBlock | None = (
             widget if isinstance(widget, AgentResponseBlock) else None

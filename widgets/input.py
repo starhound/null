@@ -38,6 +38,16 @@ class InputController(TextArea):
     Supports Shift+Enter for newlines, Enter to submit.
     """
 
+    DEFAULT_CSS = """
+    InputController {
+        height: auto;
+        min-height: 1;
+        max-height: 8;
+        border: none;
+        background: transparent;
+    }
+    """
+
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("enter", "submit", "Submit", priority=True),
         Binding("shift+enter", "newline", "New Line", priority=True),

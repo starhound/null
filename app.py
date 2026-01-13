@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
 from textual.containers import Container, Horizontal
-from textual.widgets import DirectoryTree, Footer, Label, TextArea
+from textual.widgets import DirectoryTree, Label, TextArea
 
 from ai.factory import AIFactory
 from ai.manager import AIManager
@@ -189,7 +189,6 @@ class NullApp(App):
             yield input_widget
 
         yield StatusBar(id="status-bar")
-        yield Footer()
 
     async def push_screen_wait(self, screen) -> Any:
         """Push a screen and wait for it to be dismissed with a result."""

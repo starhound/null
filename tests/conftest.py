@@ -113,3 +113,31 @@ def mock_prompt_manager(temp_dir):
     manager = PromptManager()
     manager.prompts_dir = prompts_dir
     return manager
+
+
+@pytest.fixture(autouse=True)
+def reset_global_singletons():
+    """Reset global singletons between tests to ensure isolation."""
+    yield
+
+    try:
+        import security.sanitizer as sanitizer_mod
+
+        sanitizer_mod._default_sanitizer = None
+    except (ImportError, AttributeError):
+        pass
+
+    try:
+        import security.rate_limiter as rate_mod
+
+        rate_mod._rate_limiter = None
+        rate_mod._cost_tracker = None
+    except (ImportError, AttributeError):
+        pass
+
+    try:
+        import security.sandbox as sandbox_mod
+
+        sandbox_mod._sandbox = None
+    except (ImportError, AttributeError):
+        pass

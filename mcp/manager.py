@@ -6,6 +6,8 @@ from typing import Any
 
 from .client import MCPClient, MCPResource, MCPTool
 from .config import MCPConfig, MCPServerConfig
+from .health_check import HealthStatus, MCPHealthChecker, ServerHealth
+from .request_dedup import RequestDeduplicator
 
 
 class MCPManager:
@@ -16,14 +18,33 @@ class MCPManager:
         on_reconnect_attempt: Callable[[str, int, float], None] | None = None,
         on_reconnect_success: Callable[[str], None] | None = None,
         on_reconnect_failed: Callable[[str, int], None] | None = None,
+        dedup_enabled: bool = True,
+        dedup_window: float = 1.0,
     ):
         self.config = MCPConfig()
         self.clients: dict[str, MCPClient] = {}
         self._initialized = False
+        self.deduplicator = RequestDeduplicator(
+            enabled=dedup_enabled, dedup_window=dedup_window
+        )
 
         self._on_reconnect_attempt = on_reconnect_attempt
         self._on_reconnect_success = on_reconnect_success
         self._on_reconnect_failed = on_reconnect_failed
+
+        self._health_checker: MCPHealthChecker | None = None
+        self._on_health_change: (
+            Callable[[str, HealthStatus, HealthStatus], None] | None
+        ) = None
+
+    @property
+    def health_checker(self) -> MCPHealthChecker | None:
+        return self._health_checker
+
+    def set_health_change_callback(
+        self, callback: Callable[[str, HealthStatus, HealthStatus], None] | None
+    ):
+        self._on_health_change = callback
 
     async def initialize(self):
         """Initialize and connect to all enabled MCP servers in parallel."""
@@ -42,6 +63,32 @@ class MCPManager:
 
         await asyncio.gather(*tasks)
         self._initialized = True
+
+    async def start_health_checks(self, check_interval: float = 30.0):
+        if self._health_checker:
+            await self._health_checker.stop()
+
+        self._health_checker = MCPHealthChecker(
+            manager=self,
+            check_interval=check_interval,
+            on_status_change=self._on_health_change,
+        )
+        await self._health_checker.start()
+
+    async def stop_health_checks(self):
+        if self._health_checker:
+            await self._health_checker.stop()
+            self._health_checker = None
+
+    def get_server_health(self, name: str) -> ServerHealth | None:
+        if self._health_checker:
+            return self._health_checker.get_health(name)
+        return None
+
+    def get_all_server_health(self) -> dict[str, ServerHealth]:
+        if self._health_checker:
+            return self._health_checker.get_all_health()
+        return {}
 
     async def connect_server(self, name: str) -> bool:
         """Connect to a specific server."""
@@ -79,6 +126,7 @@ class MCPManager:
 
     async def disconnect_all(self):
         """Disconnect from all servers."""
+        await self.stop_health_checks()
         for name in list(self.clients.keys()):
             await self.disconnect_server(name)
         self._initialized = False
@@ -112,6 +160,10 @@ class MCPManager:
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> Any:
         """Call a tool by name."""
+        hit, cached_result = await self.deduplicator.get_cached(tool_name, arguments)
+        if hit:
+            return cached_result
+
         tool = self.get_tool(tool_name)
         if not tool:
             raise Exception(f"Tool not found: {tool_name}")
@@ -120,7 +172,9 @@ class MCPManager:
         if not client or not client.is_connected:
             raise Exception(f"Server not connected: {tool.server_name}")
 
-        return await client.call_tool(tool_name, arguments)
+        result = await client.call_tool(tool_name, arguments)
+        await self.deduplicator.cache_result(tool_name, arguments, result)
+        return result
 
     async def read_resource(self, uri: str) -> str:
         """Read a resource by URI."""

@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import datetime
 from typing import TYPE_CHECKING
+
+logger = logging.getLogger(__name__)
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, ScrollableContainer, Vertical
@@ -18,6 +21,7 @@ from textual.widgets import (
 )
 
 from commands.todo import TodoManager
+from config import get_timing_config
 from widgets.file_tree import FileBrowserWidget
 
 if TYPE_CHECKING:
@@ -83,8 +87,8 @@ class AgentStatusWidget(Static):
                 self.query_one("#agent-cost-label", Label).update("Cost: $0.0000")
                 self.query_one("#agent-duration-label", Label).update("Duration: 0.0s")
                 self.query_one("#agent-tool-usage", Static).update("")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to reset agent status: %s", e)
 
     def _update_tool_usage(self, tool_usage: dict[str, int]):
         try:
@@ -99,8 +103,8 @@ class AgentStatusWidget(Static):
                 lines.append(f"  {short_name}: {count}")
 
             self.query_one("#agent-tool-usage", Static).update("\n".join(lines))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to update tool usage: %s", e)
 
     def update_recent_tools(self, tool_history: list[dict]):
         try:
@@ -112,8 +116,8 @@ class AgentStatusWidget(Static):
 
             content = "\n".join(lines) if lines else "  No tool calls yet"
             self.query_one("#agent-recent-tools", Static).update(f"Recent:\n{content}")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to update recent tools: %s", e)
 
 
 class ProcessItemWidget(Static):
@@ -210,7 +214,8 @@ class ProcessListWidget(Static):
                     self.refresh_processes()
                 except Exception:
                     pass
-                await asyncio.sleep(2.0)
+                timing = get_timing_config()
+                await asyncio.sleep(timing.sidebar_update_interval)
 
         self._update_timer = asyncio.create_task(periodic_update())
 
@@ -227,8 +232,8 @@ class ProcessListWidget(Static):
             manager = self.app.process_manager
             manager.on_change(self._on_process_change)
             self._process_callback_registered = True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to register process callback: %s", e)
 
     def _on_process_change(self):
         self.call_later(self.refresh_processes)
@@ -255,8 +260,8 @@ class ProcessListWidget(Static):
                 for proc in processes:
                     container.mount(ProcessItemWidget(proc))
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to refresh processes: %s", e)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         button_id = event.button.id or ""

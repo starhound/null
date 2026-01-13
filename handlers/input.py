@@ -8,11 +8,15 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app import NullApp
+    from widgets import (
+        BaseBlockWidget,
+        CommandSuggester,
+        HistoryViewport,
+        InputController,
+    )
 
 from config import Config, get_settings
 from models import BlockState, BlockType
-from widgets import BaseBlockWidget, CommandSuggester, HistoryViewport, InputController
-from widgets.blocks import create_block
 
 
 class InputHandler:
@@ -24,6 +28,9 @@ class InputHandler:
 
     async def handle_submission(self, value: str):
         """Process submitted input."""
+        # Local imports to avoid circular import
+        from widgets import CommandSuggester, InputController
+
         # Hide suggester
         self.app.query_one("#suggester", CommandSuggester).display = False
 
@@ -47,6 +54,8 @@ class InputHandler:
 
     def _trim_history(self):
         """Ensure history size doesn't exceed maximum blocks."""
+        from widgets import BaseBlockWidget, HistoryViewport
+
         try:
             max_blocks = get_settings().terminal.max_history_blocks
             if len(self.app.blocks) >= max_blocks:
@@ -67,7 +76,9 @@ class InputHandler:
 
     async def _handle_ai_input(self, text: str, input_ctrl: InputController):
         """Handle AI mode input."""
-        # Switching to AI mode ends CLI session
+        from widgets import BaseBlockWidget, HistoryViewport
+        from widgets.blocks import create_block
+
         self.app.current_cli_block = None
         self.app.current_cli_widget = None
 
@@ -80,23 +91,19 @@ class InputHandler:
 
         self._trim_history()
 
-        # Determine block type based on agent mode setting
         ai_config = self.app.config.get("ai", {})
         agent_mode = ai_config.get("agent_mode", False)
         use_tools = self.app.ai_provider.supports_tools()
 
-        # Use AGENT_RESPONSE for agent mode with tool-supporting providers
         if agent_mode and use_tools:
             block_type = BlockType.AGENT_RESPONSE
         else:
             block_type = BlockType.AI_RESPONSE
 
-        # Create AI/Agent block
         block = BlockState(type=block_type, content_input=text, content_output="")
         self.app.blocks.append(block)
         input_ctrl.value = ""
 
-        # Mount widget - create_block factory creates correct widget type
         history_vp = self.app.query_one("#history", HistoryViewport)
         block_widget: BaseBlockWidget = create_block(block)
         await history_vp.add_block(block_widget)
@@ -197,22 +204,22 @@ class InputHandler:
 
     async def _create_cli_block(self, cmd: str):
         """Create a new CLI block."""
+        from widgets import BaseBlockWidget, HistoryViewport
+        from widgets.blocks import create_block
+
         self._trim_history()
 
         block = BlockState(type=BlockType.COMMAND, content_input=cmd)
         self.app.blocks.append(block)
 
-        # Track as current CLI session
         self.app.current_cli_block = block
 
-        # Mount widget
         history_vp = self.app.query_one("#history", HistoryViewport)
         block_widget: BaseBlockWidget = create_block(block)
         self.app.current_cli_widget = block_widget
         await history_vp.add_block(block_widget)
         block_widget.scroll_visible()
 
-        # Execute command
         self.app.run_worker(self.app.execution_handler.execute_cli(block, block_widget))
 
     async def handle_builtin(self, cmd: str) -> bool:

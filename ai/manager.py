@@ -1,12 +1,19 @@
 """AI Manager - handles multiple AI providers."""
 
+from __future__ import annotations
+
 import asyncio
 from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING
 
 from config import Config
 
 from .base import HealthStatus, LLMProvider, ProviderHealth
 from .factory import AIFactory
+from .model_cache import ModelCache
+
+if TYPE_CHECKING:
+    from .fallback import FallbackConfig, ProviderFallback
 
 
 class AIManager:
@@ -15,6 +22,8 @@ class AIManager:
     def __init__(self):
         self._providers: dict[str, LLMProvider] = {}
         self._health_cache: dict[str, ProviderHealth] = {}
+        self._model_cache = ModelCache()
+        self._fallback: ProviderFallback | None = None
         self.get_active_provider()
 
     async def close_all(self) -> None:
@@ -137,34 +146,37 @@ class AIManager:
         return usable
 
     async def _fetch_models_for_provider(
-        self, provider_name: str
+        self, provider_name: str, skip_cache: bool = False
     ) -> tuple[str, list[str], str | None]:
         """Fetch models for a single provider.
 
         Returns: (provider_name, models_list, error_message)
         """
+        if not skip_cache:
+            cached = await self._model_cache.get_models(provider_name)
+            if cached is not None:
+                return (provider_name, cached, None)
+
         try:
-            # Get or create provider (cached after first call)
             provider = self.get_provider(provider_name)
 
             if not provider:
                 return (provider_name, [], "Failed to initialize")
 
-            # Fetch models with timeout
             models = await asyncio.wait_for(
                 provider.list_models(),
-                timeout=10.0,  # 10 second timeout per provider
+                timeout=10.0,
             )
 
-            # Auto-update model name for local providers using default
             local_providers = {"lm_studio", "ollama"}
             if provider_name in local_providers and models:
                 current_model = provider.model
-                # If using a default/placeholder model name, update to first available
                 if current_model in ("local-model", "llama3.2", ""):
                     provider.model = models[0]
-                    # Also save to config so it persists
                     Config.set(f"ai.{provider_name}.model", models[0])
+
+            if models:
+                await self._model_cache.set_models(provider_name, models)
 
             return (provider_name, models or [], None)
 
@@ -176,15 +188,17 @@ class AIManager:
                 error_msg = error_msg[:50] + "..."
             return (provider_name, [], error_msg)
 
-    async def list_all_models(self) -> dict[str, list[str]]:
+    async def list_all_models(self, skip_cache: bool = False) -> dict[str, list[str]]:
         """Fetch models from ALL configured providers in parallel."""
         usable_providers = self.get_usable_providers()
 
         if not usable_providers:
             return {}
 
-        # Fetch all providers in parallel
-        tasks = [self._fetch_models_for_provider(p_name) for p_name in usable_providers]
+        tasks = [
+            self._fetch_models_for_provider(p_name, skip_cache=skip_cache)
+            for p_name in usable_providers
+        ]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -249,8 +263,30 @@ class AIManager:
 
         return health_map
 
+    async def invalidate_model_cache(self, provider_id: str) -> bool:
+        """Invalidate cached models for a provider."""
+        return await self._model_cache.invalidate(provider_id)
+
+    async def clear_model_cache(self) -> int:
+        """Clear all cached model lists."""
+        return await self._model_cache.clear_all()
+
+    def get_fallback_handler(
+        self, config: FallbackConfig | None = None
+    ) -> ProviderFallback:
+        """Get or create the provider fallback handler."""
+        if self._fallback is None:
+            from .fallback import ProviderFallback, get_fallback_config_from_settings
+
+            if config is None:
+                config = get_fallback_config_from_settings()
+            self._fallback = ProviderFallback(self, config)
+        elif config is not None:
+            self._fallback.config = config
+        return self._fallback
+
     async def list_all_models_streaming(
-        self,
+        self, skip_cache: bool = False
     ) -> AsyncGenerator[tuple[str, list[str], str | None, int, int], None]:
         """Fetch models from providers, yielding results as they complete.
 
@@ -262,9 +298,10 @@ class AIManager:
         if total == 0:
             return
 
-        # Create tasks
         tasks = {
-            asyncio.create_task(self._fetch_models_for_provider(p_name)): p_name
+            asyncio.create_task(
+                self._fetch_models_for_provider(p_name, skip_cache=skip_cache)
+            ): p_name
             for p_name in usable_providers
         }
 

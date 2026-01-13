@@ -6,26 +6,33 @@ from typing import Any
 import httpx
 
 from .base import LLMProvider, Message, StreamChunk, TokenUsage, ToolCallData
+from .connection_pool import get_pooled_client
 
-# Default timeouts (can be overridden via environment variables)
-DEFAULT_CONNECT_TIMEOUT = 10.0  # Seconds to establish connection
-DEFAULT_READ_TIMEOUT = 60.0  # Seconds for model generation
+DEFAULT_CONNECT_TIMEOUT = 10.0
+DEFAULT_READ_TIMEOUT = 60.0
 
 
 class OllamaProvider(LLMProvider):
     def __init__(self, endpoint: str, model: str):
         self.endpoint = endpoint
         self.model = model
-        # Timeouts configurable via env vars for slow machines
-        connect_timeout = float(
+        self._client: httpx.AsyncClient | None = None
+        self._connect_timeout = float(
             os.environ.get("OLLAMA_CONNECT_TIMEOUT", DEFAULT_CONNECT_TIMEOUT)
         )
-        read_timeout = float(
+        self._read_timeout = float(
             os.environ.get("OLLAMA_READ_TIMEOUT", DEFAULT_READ_TIMEOUT)
         )
-        self.client = httpx.AsyncClient(
-            timeout=httpx.Timeout(read_timeout, connect=connect_timeout)
-        )
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None:
+            self._client = await get_pooled_client(
+                f"ollama:{self.endpoint}",
+                base_url=self.endpoint,
+                connect_timeout=self._connect_timeout,
+                read_timeout=self._read_timeout,
+            )
+        return self._client
 
     def supports_tools(self) -> bool:
         """Ollama supports tool calling for compatible models."""
@@ -54,14 +61,14 @@ class OllamaProvider(LLMProvider):
     async def generate(
         self, prompt: str, messages: list[Message], system_prompt: str | None = None
     ) -> AsyncGenerator[str, None]:
-        """Generate response using Ollama's chat API with proper message format."""
-        url = f"{self.endpoint}/api/chat"
+        client = await self._get_client()
+        url = "/api/chat"
         chat_messages = self._build_messages(prompt, messages, system_prompt)
 
         payload = {"model": self.model, "messages": chat_messages, "stream": True}
 
         try:
-            async with self.client.stream("POST", url, json=payload) as response:
+            async with client.stream("POST", url, json=payload) as response:
                 async for line in response.aiter_lines():
                     if not line:
                         continue
@@ -87,18 +94,17 @@ class OllamaProvider(LLMProvider):
         tools: list[dict[str, Any]],
         system_prompt: str | None = None,
     ) -> AsyncGenerator[StreamChunk, None]:
-        """Generate response with tool calling support."""
-        url = f"{self.endpoint}/api/chat"
+        client = await self._get_client()
+        url = "/api/chat"
         chat_messages = self._build_messages(prompt, messages, system_prompt)
 
         payload = {"model": self.model, "messages": chat_messages, "stream": True}
 
-        # Add tools if provided
         if tools:
             payload["tools"] = tools
 
         try:
-            async with self.client.stream("POST", url, json=payload) as response:
+            async with client.stream("POST", url, json=payload) as response:
                 collected_tool_calls: list[ToolCallData] = []
 
                 async for line in response.aiter_lines():
@@ -161,12 +167,12 @@ class OllamaProvider(LLMProvider):
             yield StreamChunk(text="", is_complete=True, error=f"HTTP error: {e!s}")
 
     async def embed_text(self, text: str) -> list[float] | None:
-        """Get vector embedding for text using Ollama /api/embeddings."""
-        url = f"{self.endpoint}/api/embeddings"
+        client = await self._get_client()
+        url = "/api/embeddings"
         payload = {"model": self.model, "prompt": text}
 
         try:
-            response = await self.client.post(url, json=payload)
+            response = await client.post(url, json=payload)
             if response.status_code == 200:
                 data = response.json()
                 return data.get("embedding")
@@ -175,9 +181,10 @@ class OllamaProvider(LLMProvider):
         return None
 
     async def list_models(self) -> list[str]:
-        url = f"{self.endpoint}/api/tags"
+        client = await self._get_client()
+        url = "/api/tags"
         try:
-            response = await self.client.get(url)
+            response = await client.get(url)
             if response.status_code == 200:
                 data = response.json()
                 return [model["name"] for model in data.get("models", [])]
@@ -186,12 +193,13 @@ class OllamaProvider(LLMProvider):
         return []
 
     async def validate_connection(self) -> bool:
-        url = f"{self.endpoint}/api/tags"
+        client = await self._get_client()
+        url = "/api/tags"
         try:
-            response = await self.client.get(url)
+            response = await client.get(url)
             return response.status_code == 200
         except httpx.HTTPError:
             return False
 
     async def close(self) -> None:
-        await self.client.aclose()
+        pass

@@ -1,22 +1,38 @@
-"""Anthropic Claude API provider."""
-
 import json
 from collections.abc import AsyncGenerator
 from typing import Any
 
 from .base import LLMProvider, Message, StreamChunk, TokenUsage, ToolCallData
+from .connection_pool import get_pooled_client
 
 
 class AnthropicProvider(LLMProvider):
-    """Anthropic Claude API provider."""
-
     def __init__(self, api_key: str, model: str = "claude-3-5-sonnet-20241022"):
         self.api_key = api_key
         self.model = model
         self._client: Any = None
 
+    async def _get_client_async(self) -> Any:
+        if self._client is None:
+            try:
+                import anthropic
+
+                http_client = await get_pooled_client(
+                    "anthropic",
+                    connect_timeout=10.0,
+                    read_timeout=60.0,
+                )
+                self._client = anthropic.AsyncAnthropic(
+                    api_key=self.api_key,
+                    http_client=http_client,
+                )
+            except ImportError as e:
+                raise ImportError(
+                    "anthropic package required. Install with: pip install anthropic"
+                ) from e
+        return self._client
+
     def _get_client(self) -> Any:
-        """Lazy-load the Anthropic client."""
         if self._client is None:
             try:
                 import anthropic

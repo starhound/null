@@ -59,6 +59,17 @@ class ClickableSection(Static):
 class StatusBar(Static):
     """Status bar showing mode, context size, provider status, and token usage."""
 
+    DEFAULT_CSS = """
+    StatusBar {
+        dock: bottom;
+        width: 100%;
+        height: 1;
+        background: $surface;
+        color: $text-muted;
+        layout: horizontal;
+    }
+    """
+
     def _safe_log_warning(self, message: str) -> None:
         try:
             self.log.warning(message)
@@ -276,7 +287,9 @@ class StatusBar(Static):
         try:
             indicator = self.query_one("#network-indicator", ClickableSection)
             sep = self.query_one("#network-sep", Label)
-            indicator.remove_class("network-online", "network-offline", "network-unknown")
+            indicator.remove_class(
+                "network-online", "network-offline", "network-unknown"
+            )
 
             if self.network_status == "online":
                 indicator.update("󰖩 ")

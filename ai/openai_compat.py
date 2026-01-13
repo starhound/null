@@ -6,20 +6,42 @@ import httpx
 import openai
 
 from .base import LLMProvider, Message, StreamChunk, TokenUsage, ToolCallData
+from .connection_pool import get_pooled_client
 
 
 class OpenAICompatibleProvider(LLMProvider):
     def __init__(
         self, api_key: str, base_url: str | None = None, model: str = "gpt-3.5-turbo"
     ):
-        # Short connect timeout (3s) to fail fast if server isn't available
-        # Longer read timeout (120s) for model generation
-        self.client = openai.AsyncOpenAI(
-            api_key=api_key,
-            base_url=base_url,
-            timeout=httpx.Timeout(120.0, connect=3.0),
-        )
+        self._api_key = api_key
+        self._base_url = base_url
         self.model = model
+        self._client: openai.AsyncOpenAI | None = None
+
+    async def _get_client(self) -> openai.AsyncOpenAI:
+        if self._client is None:
+            pool_key = f"openai:{self._base_url or 'api.openai.com'}"
+            http_client = await get_pooled_client(
+                pool_key,
+                connect_timeout=3.0,
+                read_timeout=120.0,
+            )
+            self._client = openai.AsyncOpenAI(
+                api_key=self._api_key,
+                base_url=self._base_url,
+                http_client=http_client,
+            )
+        return self._client
+
+    @property
+    def client(self) -> openai.AsyncOpenAI:
+        if self._client is None:
+            self._client = openai.AsyncOpenAI(
+                api_key=self._api_key,
+                base_url=self._base_url,
+                timeout=httpx.Timeout(120.0, connect=3.0),
+            )
+        return self._client
 
     def supports_tools(self) -> bool:
         """OpenAI models support tool calling."""

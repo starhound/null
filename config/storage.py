@@ -354,6 +354,92 @@ class StorageManager:
         """Get path to current session file."""
         return self._get_sessions_dir() / "current.json"
 
+    def _is_encrypted_session(self, data: dict) -> bool:
+        """Check if session data is in encrypted format.
+        
+        Encrypted format: {"encrypted": true, "data": "<base64 encrypted blob>"}
+        """
+        return (
+            isinstance(data, dict)
+            and data.get("encrypted") is True
+            and "data" in data
+        )
+
+    def _is_plain_session(self, data: dict) -> bool:
+        """Check if session data is plain (unencrypted) JSON.
+        
+        Plain format has "blocks" key with session content.
+        """
+        return isinstance(data, dict) and "blocks" in data
+
+    def _encrypt_session_data(self, data: dict) -> dict:
+        """Encrypt session data dictionary.
+        
+        Args:
+            data: Plain session data with "blocks" key
+            
+        Returns:
+            Encrypted format: {"encrypted": true, "data": "<encrypted blob>"}
+        """
+        json_str = json.dumps(data)
+        encrypted = self.security.encrypt(json_str)
+        return {"encrypted": True, "data": encrypted}
+
+    def _decrypt_session_data(self, data: dict) -> dict:
+        """Decrypt encrypted session data.
+        
+        Args:
+            data: Encrypted format with "encrypted" and "data" keys
+            
+        Returns:
+            Decrypted plain session data, or empty dict on failure
+        """
+        try:
+            encrypted_blob = data.get("data", "")
+            if not encrypted_blob:
+                return {}
+            decrypted_str = self.security.decrypt(encrypted_blob)
+            if decrypted_str == "[Decryption Failed]":
+                logger.error("Session decryption failed - possibly corrupted or wrong key")
+                return {}
+            return json.loads(decrypted_str)
+        except json.JSONDecodeError as e:
+            logger.error("Failed to parse decrypted session data: %s", e)
+            return {}
+        except Exception as e:
+            logger.error("Unexpected error decrypting session: %s", e)
+            return {}
+
+    def _should_encrypt_sessions(self) -> bool:
+        """Check if session encryption is enabled in settings."""
+        try:
+            from config.settings import get_settings
+            return get_settings().security.encrypt_sessions
+        except Exception:
+            # Default to True if settings unavailable
+            return True
+
+    def _migrate_session_if_needed(self, filepath: Path, data: dict) -> dict:
+        """Migrate plain session to encrypted format if encryption is enabled.
+        
+        Args:
+            filepath: Path to the session file
+            data: Session data (may be plain or already encrypted)
+            
+        Returns:
+            Session data (encrypted if migration occurred)
+        """
+        if self._is_plain_session(data) and self._should_encrypt_sessions():
+            # Plain session but encryption is enabled - migrate it
+            logger.info("Migrating session to encrypted format: %s", filepath.name)
+            encrypted_data = self._encrypt_session_data(data)
+            try:
+                filepath.write_text(json.dumps(encrypted_data), encoding="utf-8")
+            except OSError as e:
+                logger.warning("Failed to write migrated session %s: %s", filepath, e)
+            return data  # Return original plain data for use
+        return data
+
     def save_session(self, blocks: list[Any], name: str | None = None) -> Path:
         """Save session to JSON file."""
         from models import BlockState

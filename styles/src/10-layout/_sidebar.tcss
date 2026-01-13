@@ -401,7 +401,6 @@ RecentFilesWidget {
 
 .recent-file-item:hover {
     background: $primary 20%;
-    cursor: pointer;
 }
 
 .recent-file-name {

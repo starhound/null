@@ -79,6 +79,9 @@ class TerminalSettings:
     lang: str = field(default_factory=lambda: os.environ.get("LANG", "en_US.UTF-8"))
 
 
+MODEL_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9._:/-]+$")
+
+
 @dataclass
 class AISettings:
     """AI provider settings."""
@@ -99,10 +102,6 @@ class AISettings:
     use_rag: bool = False
     rag_top_k: int = 3
     custom_template_variables: dict[str, str] = field(default_factory=dict)
-
-    MODEL_NAME_PATTERN: re.Pattern[str] = field(
-        default_factory=lambda: re.compile(r"^[a-zA-Z0-9._:/-]+$"), repr=False
-    )
 
     def validate(self, api_key: str = "") -> dict[str, str]:
         """Validate settings. Returns errors dict, raises ValidationError if invalid."""
@@ -133,17 +132,15 @@ class AISettings:
             if not api_key or not api_key.strip():
                 errors["api_key"] = f"Required for {self.provider}"
 
-        if self.default_model and not self.MODEL_NAME_PATTERN.match(self.default_model):
+        if self.default_model and not MODEL_NAME_PATTERN.match(self.default_model):
             errors["model"] = "Invalid characters in model name"
 
-        if self.autocomplete_model and not self.MODEL_NAME_PATTERN.match(
+        if self.autocomplete_model and not MODEL_NAME_PATTERN.match(
             self.autocomplete_model
         ):
             errors["autocomplete_model"] = "Invalid characters in model name"
 
-        if self.embedding_model and not self.MODEL_NAME_PATTERN.match(
-            self.embedding_model
-        ):
+        if self.embedding_model and not MODEL_NAME_PATTERN.match(self.embedding_model):
             errors["embedding_model"] = "Invalid characters in model name"
 
         if errors:
@@ -165,6 +162,16 @@ class VoiceSettings:
 
 
 @dataclass
+class SecuritySettings:
+    """Security and encryption settings."""
+
+    encrypt_sessions: bool = True
+    session_encryption_key_rotation: bool = False
+    command_allowlist_mode: bool = False
+    blocked_command_patterns: list[str] = field(default_factory=list)
+
+
+@dataclass
 class Settings:
     """Application settings container."""
 
@@ -173,6 +180,7 @@ class Settings:
     terminal: TerminalSettings = field(default_factory=TerminalSettings)
     ai: AISettings = field(default_factory=AISettings)
     voice: VoiceSettings = field(default_factory=VoiceSettings)
+    security: SecuritySettings = field(default_factory=SecuritySettings)
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
@@ -182,6 +190,7 @@ class Settings:
             "terminal": asdict(self.terminal),
             "ai": asdict(self.ai),
             "voice": asdict(self.voice),
+            "security": asdict(self.security),
         }
 
     @classmethod
@@ -213,6 +222,11 @@ class Settings:
             for key, value in data["voice"].items():
                 if hasattr(settings.voice, key):
                     setattr(settings.voice, key, value)
+
+        if "security" in data:
+            for key, value in data["security"].items():
+                if hasattr(settings.security, key):
+                    setattr(settings.security, key, value)
 
         return settings
 

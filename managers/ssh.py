@@ -6,9 +6,12 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 import asyncssh
+
+from managers.ssh_known_hosts import HostKeyStatus, KnownHostsManager
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +112,9 @@ class SSHConnectionPool:
 
         # Locks for thread-safe operations
         self._connection_locks: dict[str, asyncio.Lock] = {}
+
+        self._known_hosts_manager = KnownHostsManager()
+        self._known_hosts_manager.load()
 
     def _get_connection_key(
         self, host: str, port: int = 22, username: str | None = None
@@ -232,15 +238,17 @@ class SSHConnectionPool:
                     await self._connect(tunnel_info)
                 tunnel_conn = tunnel_info.connection
 
-            # Build connection options
             client_keys = [info.key_path] if info.key_path else None
+            known_hosts_path = self._known_hosts_manager.known_hosts_path
             connect_kwargs = {
                 "host": info.host,
                 "port": info.port,
                 "username": info.username,
                 "password": info.password,
                 "client_keys": client_keys,
-                "known_hosts": None,  # TODO: Add known_hosts support
+                "known_hosts": str(known_hosts_path)
+                if known_hosts_path.exists()
+                else (),
                 "keepalive_interval": self._keep_alive_interval,
                 "keepalive_count_max": 3,
             }

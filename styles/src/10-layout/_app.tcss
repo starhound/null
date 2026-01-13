@@ -73,3 +73,35 @@ AppHeader .header-right {
     padding: 0 1;
     color: $text-muted;
 }
+
+#main-area {
+    width: 100%;
+    height: 1fr;
+    layout: horizontal;
+}
+
+#input-container {
+    dock: bottom;
+    width: 100%;
+    height: auto;
+    min-height: 3;
+    max-height: 10;
+    padding: 0 1;
+    background: $layer-base;
+    border-top: solid $border-dim;
+}
+
+#input-container #prompt-line {
+    width: 100%;
+    height: 1;
+    color: $primary;
+    text-style: bold;
+}
+
+#input-container:focus-within {
+    border-top: solid $primary;
+}
+
+#input-container.ai-mode #prompt-line {
+    color: $accent;
+}

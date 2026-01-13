@@ -3,28 +3,30 @@
 from __future__ import annotations
 
 import asyncio
-import json
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 from textual.css.query import NoMatches
 
-from ai.base import KNOWN_MODEL_CONTEXTS, Message, TokenUsage, calculate_cost
+from ai.base import KNOWN_MODEL_CONTEXTS, Message, TokenUsage
 from config import Config, get_settings
 from context import ContextManager
 from executor import ExecutionEngine
 from handlers.ai.agent_loop import AgentLoop
+from handlers.ai.response_formatter import ResponseFormatter
+from handlers.ai.stream_handler import StreamHandler
+from handlers.ai.tool_processor import append_tool_messages
 from handlers.ai.tool_runner import ToolRunner
+from handlers.common import UIBuffer
 from models import BlockType
 from prompts import get_prompt_manager
 from tools import ToolRegistry
-from widgets import BaseBlockWidget, StatusBar
 
 from .base_executor import BaseExecutor, ExecutorContext
-from .common import UIBuffer
 
 if TYPE_CHECKING:
     from app import NullApp
     from models import BlockState
+    from widgets import BaseBlockWidget, StatusBar
 
 
 class AIExecutor(BaseExecutor):
@@ -35,6 +37,8 @@ class AIExecutor(BaseExecutor):
         super().__init__(ExecutorContext.from_app(app))
         self._tool_runner = ToolRunner(app)
         self._agent_loop = AgentLoop(app, self._tool_runner)
+        self._stream_handler = StreamHandler(app)
+        self._response_formatter = ResponseFormatter(app)
 
     async def cancel_tool(self, tool_id: str) -> None:
         await self._tool_runner.cancel_tool(tool_id)
@@ -51,7 +55,6 @@ class AIExecutor(BaseExecutor):
     async def execute_ai(
         self, prompt: str, block_state: BlockState, widget: BaseBlockWidget
     ) -> None:
-        """Execute AI generation with streaming response and tool support."""
         try:
             provider_name = Config.get("ai.provider") or ""
             model_override = None
@@ -194,41 +197,23 @@ class AIExecutor(BaseExecutor):
         assert ai_provider is not None, "AI provider must be set"
 
         full_response = ""
-        status_bar = self._get_status_bar()
 
         def update_callback(chunk: str):
             nonlocal full_response
             full_response += chunk
             block_state.content_output = full_response
             widget.update_output(full_response)
-            if status_bar:
-                status_bar.update_streaming_tokens(len(full_response))
 
-        buffer = UIBuffer(self.app, update_callback)
+        full_response, _ = await self._stream_handler.stream_response(
+            ai_provider,
+            prompt,
+            messages,
+            system_prompt,
+            update_callback,
+        )
 
-        if status_bar:
-            status_bar.start_streaming()
-
-        try:
-            async for chunk in ai_provider.generate(
-                prompt, messages, system_prompt=system_prompt
-            ):
-                if self.app._ai_cancelled:
-                    buffer.flush()
-                    full_response += "\n\n[Cancelled]"
-                    block_state.content_output = full_response
-                    widget.update_output(full_response)
-                    break
-
-                if chunk.text:
-                    buffer.write(chunk.text)
-
-            buffer.flush()
-
-        finally:
-            buffer.stop()
-            if status_bar:
-                status_bar.stop_streaming()
+        block_state.content_output = full_response
+        widget.update_output(full_response)
 
         self._finalize_response(
             block_state, widget, full_response, messages, max_tokens
@@ -243,7 +228,6 @@ class AIExecutor(BaseExecutor):
         system_prompt: str,
         max_tokens: int,
     ):
-        """Execute AI generation with tool calling support."""
         ai_provider = self.app.ai_provider
         assert ai_provider is not None, "AI provider must be set"
 
@@ -268,8 +252,11 @@ class AIExecutor(BaseExecutor):
             while iteration < max_iterations:
                 iteration += 1
 
-                # Stream response and collect tool calls
-                response_text, tool_calls, usage = await self._stream_tool_response(
+                (
+                    response_text,
+                    tool_calls,
+                    usage,
+                ) = await self._stream_handler.stream_tool_response(
                     ai_provider,
                     prompt if iteration == 1 else "",
                     current_messages,
@@ -293,7 +280,6 @@ class AIExecutor(BaseExecutor):
                 if not tool_calls:
                     break
 
-                # Execute tools and update history
                 tool_results = await self._tool_runner.process_chat_tools(
                     tool_calls, block_state, widget, registry
                 )
@@ -301,42 +287,11 @@ class AIExecutor(BaseExecutor):
                 if not tool_results:
                     break
 
-                # Append assistant message with tool calls
-                assistant_msg: Message = {
-                    "role": "assistant",
-                    "content": response_text,
-                    "tool_calls": [
-                        {
-                            "id": tc.id,
-                            "type": "function",
-                            "function": {
-                                "name": tc.name,
-                                "arguments": json.dumps(tc.arguments),
-                            },
-                        }
-                        for tc in tool_calls
-                    ],
-                }
-                current_messages.append(assistant_msg)
-
-                # Append tool results
-                for result in tool_results:
-                    tool_result_msg: Message = {
-                        "role": "tool",
-                        "tool_call_id": result.tool_call_id,
-                        "content": result.content,
-                    }
-                    current_messages.append(tool_result_msg)
+                append_tool_messages(
+                    current_messages, response_text, tool_calls, tool_results
+                )
 
                 if iteration == 1 and tool_results and not tool_results[0].is_error:
-                    # Break early if it's the first iteration and successful tool call?
-                    # Original logic had this check, preserving it but it seems odd to stop after 1 iteration if successful.
-                    # Wait, original code: if iteration == 1 and tool_results and not tool_results[0].is_error: break
-                    # This implies we stop *after* the first tool execution? That prevents chaining?
-                    # I will keep it for fidelity to original logic, but this might be a bug or feature.
-                    # Re-reading original:
-                    # if iteration == 1 and tool_results and not tool_results[0].is_error: break
-                    # Yes, it breaks.
                     break
 
                 prompt = ""
@@ -348,53 +303,6 @@ class AIExecutor(BaseExecutor):
             block_state, widget, full_response, messages, max_tokens, total_usage
         )
 
-    async def _stream_tool_response(
-        self,
-        ai_provider,
-        prompt: str,
-        messages: list[Message],
-        tools: list[Any],
-        system_prompt: str,
-        buffer: UIBuffer,
-    ) -> tuple[str, list[Any], TokenUsage | None]:
-        pending_tool_calls: list[Any] = []
-        usage_data: TokenUsage | None = None
-        response_text = ""
-
-        status_bar = self._get_status_bar()
-        if status_bar:
-            status_bar.start_streaming()
-
-        async for chunk in ai_provider.generate_with_tools(
-            prompt,
-            messages,
-            tools,
-            system_prompt=system_prompt,
-        ):
-            if self.app._ai_cancelled:
-                buffer.flush()
-                break
-
-            if chunk.text:
-                buffer.write(chunk.text)
-                response_text += chunk.text
-                if status_bar:
-                    status_bar.update_streaming_tokens(len(response_text))
-
-            if chunk.tool_calls:
-                pending_tool_calls.extend(chunk.tool_calls)
-
-            if chunk.is_complete and chunk.usage:
-                usage_data = chunk.usage
-
-            if chunk.is_complete:
-                break
-
-        buffer.flush()
-        if status_bar:
-            status_bar.stop_streaming()
-        return response_text, pending_tool_calls, usage_data
-
     def _finalize_response(
         self,
         block_state: BlockState,
@@ -404,83 +312,9 @@ class AIExecutor(BaseExecutor):
         max_tokens: int,
         usage: TokenUsage | None = None,
     ) -> None:
-        """Finalize the AI response."""
-        block_state.is_running = False
-        self.app._active_worker = None
-
-        model_name = self.app.ai_provider.model if self.app.ai_provider else ""
-
-        # Calculate token metadata
-        usage, cost = self._calculate_token_metadata(
-            usage, full_response, messages, model_name, block_state
+        self._response_formatter.finalize_response(
+            block_state, widget, full_response, messages, max_tokens, usage
         )
-
-        widget.update_metadata()
-
-        try:
-            status_bar = self.app.query_one("#status-bar", StatusBar)
-
-            context_chars = sum(len(m.get("content", "")) for m in messages)
-            total_context = context_chars + len(full_response)
-            limit_chars = max_tokens * 4
-            status_bar.set_context(total_context, limit_chars)
-
-            status_bar.add_token_usage(
-                input_tokens=usage.input_tokens,
-                output_tokens=usage.output_tokens,
-                cost=cost,
-            )
-        except (ImportError, NoMatches):
-            pass
-        except Exception as e:
-            self.app.log(f"Error updating status bar: {e}")
-
-        widget.set_loading(False)
-        self._finalize_block(block_state)
-
-    def _calculate_token_metadata(
-        self,
-        usage: TokenUsage | None,
-        full_response: str,
-        messages: list[Message],
-        model_name: str,
-        block_state: BlockState,
-    ) -> tuple[TokenUsage, float]:
-        """Calculate token usage metadata and cost.
-
-        Args:
-            usage: Token usage from provider, or None to estimate.
-            full_response: The full AI response text.
-            messages: Conversation messages for context calculation.
-            model_name: Model name for cost calculation.
-            block_state: Block state to update with metadata.
-
-        Returns:
-            Tuple of (TokenUsage, cost as float).
-        """
-        if usage:
-            input_tokens = usage.input_tokens
-            output_tokens = usage.output_tokens
-            cost = calculate_cost(usage, model_name)
-            block_state.metadata["tokens"] = (
-                f"{input_tokens:,} in / {output_tokens:,} out"
-            )
-            if cost > 0:
-                block_state.metadata["cost"] = f"${cost:.4f}"
-        else:
-            # Estimate tokens when usage not provided
-            response_tokens = len(full_response) // 4
-            context_chars = sum(len(m.get("content", "")) for m in messages)
-            context_tokens = context_chars // 4
-            block_state.metadata["tokens"] = (
-                f"~{response_tokens} out / ~{context_tokens} ctx"
-            )
-            input_tokens = context_tokens
-            output_tokens = response_tokens
-            usage = TokenUsage(input_tokens=input_tokens, output_tokens=output_tokens)
-            cost = calculate_cost(usage, model_name)
-
-        return usage, cost
 
     async def _inject_rag_context(
         self,
@@ -516,8 +350,6 @@ class AIExecutor(BaseExecutor):
     def run_agent_command(
         self, command: str, ai_block: BlockState, ai_widget: BaseBlockWidget
     ) -> None:
-        """Execute a command requested by the AI agent."""
-
         async def run_inline():
             try:
                 output_buffer: list[str] = []
@@ -554,7 +386,6 @@ class AIExecutor(BaseExecutor):
         self.app.run_worker(run_inline())
 
     async def regenerate_ai(self, block: BlockState, widget: BaseBlockWidget) -> None:
-        """Regenerate an AI response block."""
         if not self.app.ai_provider:
             self.app.notify("AI Provider not configured", severity="error")
             return

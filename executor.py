@@ -9,7 +9,7 @@ import termios
 from collections.abc import Callable
 from typing import Literal
 
-from config import get_settings
+from config import get_settings, get_timing_config
 
 
 def _waitpid_nohang(pid: int) -> tuple[int, int]:
@@ -156,8 +156,8 @@ class ExecutionEngine:
             try:
                 winsize = struct.pack("HHHH", 24, 120, 0, 0)
                 fcntl.ioctl(slave_fd, termios.TIOCSWINSZ, winsize)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Failed to set window size: %s", e)
 
             # Fork the process
             pid = os.fork()
@@ -285,11 +285,11 @@ class ExecutionEngine:
                     except ChildProcessError:
                         break
 
-                    # Wait for data availability (yield to loop)
-                    await asyncio.sleep(0.01)
+                    timing = get_timing_config()
+                    await asyncio.sleep(timing.executor_poll_interval)
                 else:
-                    # We read data, so we yield briefly to let UI update, then loop back immediately
-                    await asyncio.sleep(0)
+                    timing = get_timing_config()
+                    await asyncio.sleep(timing.executor_yield_interval)
 
             # Output any remaining buffer
             if buffer:
@@ -299,8 +299,8 @@ class ExecutionEngine:
             if self._cancelled:
                 try:
                     os.kill(pid, signal.SIGTERM)
-                    # Give it a moment to terminate gracefully
-                    await asyncio.sleep(0.1)
+                    timing = get_timing_config()
+                    await asyncio.sleep(timing.executor_cancel_grace_period)
                     # Force kill if still running
                     try:
                         os.kill(pid, 0)  # Check if still alive
@@ -339,8 +339,8 @@ class ExecutionEngine:
             if self._master_fd is not None:
                 try:
                     os.close(self._master_fd)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Failed to close master fd: %s", e)
                 self._master_fd = None
 
     def cancel(self) -> None:
@@ -351,11 +351,12 @@ class ExecutionEngine:
                 os.kill(self._pid, signal.SIGTERM)
             except ProcessLookupError:
                 pass
-            except Exception:
+            except Exception as e:
+                logger.debug("SIGTERM failed, trying SIGKILL: %s", e)
                 try:
                     os.kill(self._pid, signal.SIGKILL)
-                except Exception:
-                    pass
+                except Exception as e2:
+                    logger.debug("SIGKILL also failed: %s", e2)
 
     @property
     def is_running(self) -> bool:
